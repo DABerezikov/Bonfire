@@ -23,4 +23,8 @@
     <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BonfireDB\BonfireDB.csproj" />
+  </ItemGroup>
+
 </Project>
