@@ -13,7 +13,7 @@ namespace Bonfire.Services
         private readonly IRepository<Plant> _plants;
         private readonly IRepository<Seed> _seeds;
 
-        public IEnumerable<Seed> Seeds => _seeds.Items;
+        public IQueryable<Seed> Seeds => _seeds.Items;
 
         public SeedsService(IRepository<Plant> plants, IRepository<Seed> seeds)
         {

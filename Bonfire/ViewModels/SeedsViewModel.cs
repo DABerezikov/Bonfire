@@ -1,9 +1,16 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Data;
+using System.Windows.Input;
+using Bonfire.Infrastructure.Commands;
+using Bonfire.Models;
+using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Bonfire.ViewModels;
@@ -23,7 +30,7 @@ public class SeedsViewModel : ViewModel
         {
             SortDescriptions =
             {
-                new SortDescription(nameof(Seed.Plant.PlantCulture.Name), ListSortDirection.Ascending)
+                new SortDescription(nameof(SeedsFromViewModel.Culture), ListSortDirection.Ascending)
 
             }
 
@@ -59,25 +66,25 @@ public class SeedsViewModel : ViewModel
     #endregion
     private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is Seed seed) || string.IsNullOrEmpty(SeedFilter)) return;
-        if (!seed.Plant.PlantCulture.Name.Contains(SeedFilter))
+        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter)) return;
+        if (!seed.Culture.Contains(SeedFilter))
             e.Accepted = false;
     }
 
     #endregion
 
-    #region Seeds : ObservableCollection<Seed> - Коллекция семян
+    #region Seeds : ObservableCollection<SeedsFromViewModel> - Коллекция семян
 
     /// <summary>Коллекция семян</summary>
-    private ObservableCollection<Seed> _Seeds;
+    private ObservableCollection<SeedsFromViewModel> _SeedsFromViewModels = new ();
 
     /// <summary>Коллекция семян</summary>
-    public ObservableCollection<Seed> Seeds
+    public ObservableCollection<SeedsFromViewModel> SeedsFromViewModels
     {
-        get => _Seeds;
+        get => _SeedsFromViewModels;
         set
         {
-            if (Set(ref _Seeds, value))
+            if (Set(ref _SeedsFromViewModels, value))
             {
                 _SeedsViewSource.Source = value;
                 OnPropertyChanged(nameof(SeedsView));
@@ -86,4 +93,35 @@ public class SeedsViewModel : ViewModel
     }
     #endregion
 
+    #region Command LoadDataCommand - Команда для загрузки данных из репозитория
+
+    /// <summary> Команда для загрузки данных из репозитория </summary>
+    private ICommand _LoadDataCommand;
+
+    /// <summary> Команда для загрузки данных из репозитория </summary>
+    public ICommand LoadDataCommand => _LoadDataCommand
+        ??= new LambdaCommandAsync(OnLoadDataCommandExecuted, CanLoadDataCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для загрузки данных из репозитория </summary>
+    private bool CanLoadDataCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
+    private async Task OnLoadDataCommandExecuted()
+    {
+      var seedsQuery  = _seedsService.Seeds
+            .Select(seeds=>new SeedsFromViewModel
+            {
+                Culture = seeds.Plant.PlantCulture.Name,
+                Sort = seeds.Plant.PlantSort.Name,
+                Producer = seeds.Plant.PlantSort.Producer.Name,
+                ExpirationDate = seeds.SeedsInfo.ExpirationDate,
+                QuantityPack = seeds.SeedsInfo.QuantityPack,
+                WeightPack = seeds.SeedsInfo.WeightPack,
+                AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
+                AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+            });
+        SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+    }
+
+    #endregion
 }

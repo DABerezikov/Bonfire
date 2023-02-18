@@ -1,7 +1,8 @@
 ﻿using System.Windows.Input;
+using Bonfire.Infrastructure.Commands;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using MathCore.WPF.Commands;
+
 
 namespace Bonfire.ViewModels
 {
@@ -13,7 +14,7 @@ namespace Bonfire.ViewModels
         #region Title : string - Заголовок окна
 
         /// <summary>Заголовок окна</summary>
-        private string _Title = "Главное окно";
+        private string _Title = "Огородик";
 
         /// <summary>Заголовок окна</summary>
         public string Title { get => _Title; set => Set(ref _Title, value); }
