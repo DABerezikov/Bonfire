@@ -48,7 +48,7 @@ public class SeedsViewModel : ViewModel
     #region SeedFilter : string - Искомое слово
 
     /// <summary>Искомое слово</summary>
-    private string _SeedFilter;
+    private string _SeedFilter = "Выбрать все";
 
     /// <summary>Искомое слово</summary>
     public string SeedFilter
@@ -119,7 +119,43 @@ public class SeedsViewModel : ViewModel
                 WeightPack = seeds.SeedsInfo.WeightPack,
                 AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                 AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-            });
+            })
+            ;
+        SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+    }
+
+    #endregion
+
+    #region Command IsVegetablesCommand - Команда для выбора фруктов
+
+    /// <summary> Команда для выбора фруктов </summary>
+    private ICommand _IsVegetablesCommand;
+
+    /// <summary> Команда для выбора фруктов </summary>
+    public ICommand IsVegetablesCommand => _IsVegetablesCommand
+        ??= new LambdaCommandAsync(OnIsVegetablesCommandExecuted, CanIsVegetablesCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для выбора фруктов </summary>
+    private bool CanIsVegetablesCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для выбора фруктов </summary>
+    private async Task OnIsVegetablesCommandExecuted()
+    {
+        var seedsQuery = _seedsService.Seeds
+                .Where(seeds => seeds.Plant.PlantCulture.Name == "Культура 1")
+                .Select(seeds => new SeedsFromViewModel
+                {
+                    Culture = seeds.Plant.PlantCulture.Name,
+                    Sort = seeds.Plant.PlantSort.Name,
+                    Producer = seeds.Plant.PlantSort.Producer.Name,
+                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
+                    QuantityPack = seeds.SeedsInfo.QuantityPack,
+                    WeightPack = seeds.SeedsInfo.WeightPack,
+                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
+                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+                })
+                
+            ;
         SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
     }
 

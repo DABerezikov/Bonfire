@@ -34,13 +34,13 @@
                               VerticalAlignment="Top"
                               Grid.Row="1"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                              SelectedItem="{Binding SelectedItem}" Grid.ColumnSpan="3">
+                              SelectedItem="{Binding SelectedItem}" Grid.ColumnSpan="3" HorizontalAlignment="Center">
 
             <DataGrid.Columns >
-                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150" />
+                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
-                <DataGridTextColumn Header="Срок годности" Binding="{Binding ExpirationDate}" Width="110"/>
+                <DataGridTextColumn Header="Срок годности" Binding="{Binding ExpirationDate, StringFormat=12.yyyy}" Width="110"/>
                 <DataGridTextColumn Header="Кол-во, г" Binding="{Binding WeightPack}" Width="80"/>
                 <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding QuantityPack}" Width="80"/>
                 <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight}" Width="80"/>

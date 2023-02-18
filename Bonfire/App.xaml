@@ -9,13 +9,12 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Infrastructure/Commands/Commands.xaml"/>
                 <ResourceDictionary Source="Resources/Base/Brushes.xaml"/>
-                <ResourceDictionary Source="Templates/ModelMainView.xaml"></ResourceDictionary>
+                <ResourceDictionary Source="Templates/ModelMainView.xaml"/>
+                <ResourceDictionary Source="Templates/DataGridStyle.xaml"></ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
 
             <vm:ViewModelLocator x:Key="Locator"/>
-            <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
-                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            </Style>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>
