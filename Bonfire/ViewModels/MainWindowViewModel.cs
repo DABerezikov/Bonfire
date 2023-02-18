@@ -59,7 +59,7 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Отобразить представление семян </summary>
         private void OnShowSeedViewModelCommandExecuted()
         {
-            CurrentViewModel = new SeedsViewModel(_SeedsService, _UserDialog)
+            CurrentViewModel = new SeedsViewModel(_SeedsService, _UserDialog);
         }
 
         #endregion

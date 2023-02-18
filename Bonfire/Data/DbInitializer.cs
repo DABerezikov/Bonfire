@@ -26,14 +26,18 @@ namespace Bonfire.Data
         {
             var timer = Stopwatch.StartNew();
             _Logger.LogInformation("Инициализация БД...");
-            _Logger.LogInformation("Удаление существующей БД...");
-            await _db.Database.EnsureDeletedAsync().ConfigureAwait(false);
-            _Logger.LogInformation("Удаление существующей БД выполнено за {0} мс", timer.ElapsedMilliseconds);
+            //_Logger.LogInformation("Удаление существующей БД...");
+            //await _db.Database.EnsureDeletedAsync().ConfigureAwait(false);
+            //_Logger.LogInformation("Удаление существующей БД выполнено за {0} мс", timer.ElapsedMilliseconds);
             //_db.Database.EnsureCreated();
             _Logger.LogInformation("Миграция БД...");
             await _db.Database.MigrateAsync().ConfigureAwait(false);
             _Logger.LogInformation("Миграция БД выполнена за {0} мс", timer.ElapsedMilliseconds);
-            if (await _db.Seeds.AnyAsync()) return;
+            if (await _db.Seeds.AnyAsync())
+            {
+                _Logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
+                return;
+            }
 
             await InitializePlantCulture();
             await InitializeProducers();
