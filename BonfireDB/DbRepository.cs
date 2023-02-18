@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB;
 
-internal class DbRepository<T> : IRepository<T> where T : Entity, new()
+public class DbRepository<T> : IRepository<T> where T : Entity, new()
 {
 
     private readonly DbBonfire _db;
@@ -17,7 +17,7 @@ internal class DbRepository<T> : IRepository<T> where T : Entity, new()
         _Set = _db.Set<T>();
     }
 
-    public IQueryable<T> Items => _Set;
+    public virtual IQueryable<T> Items => _Set;
 
     public T Add(T item)
     {

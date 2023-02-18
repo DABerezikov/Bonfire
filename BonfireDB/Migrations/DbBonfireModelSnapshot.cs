@@ -129,9 +129,15 @@ namespace BonfireDB.Migrations
                     b.Property<int>("PlantId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("SeedsInfoId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PlantId");
+
+                    b.HasIndex("SeedsInfoId")
+                        .IsUnique();
 
                     b.ToTable("Seeds");
                 });
@@ -166,9 +172,6 @@ namespace BonfireDB.Migrations
                     b.Property<int>("QuantityPack")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SeedId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("SeedSource")
                         .HasColumnType("TEXT");
 
@@ -176,9 +179,6 @@ namespace BonfireDB.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SeedId")
-                        .IsUnique();
 
                     b.ToTable("SeedsInfo");
                 });
@@ -221,18 +221,15 @@ namespace BonfireDB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Plant");
-                });
-
-            modelBuilder.Entity("BonfireDB.Entities.SeedsInfo", b =>
-                {
-                    b.HasOne("BonfireDB.Entities.Seed", "Seed")
-                        .WithOne("SeedsInfo")
-                        .HasForeignKey("BonfireDB.Entities.SeedsInfo", "SeedId")
+                    b.HasOne("BonfireDB.Entities.SeedsInfo", "SeedsInfo")
+                        .WithOne("Seed")
+                        .HasForeignKey("BonfireDB.Entities.Seed", "SeedsInfoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Seed");
+                    b.Navigation("Plant");
+
+                    b.Navigation("SeedsInfo");
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.PlantCulture", b =>
@@ -250,9 +247,9 @@ namespace BonfireDB.Migrations
                     b.Navigation("PlantSorts");
                 });
 
-            modelBuilder.Entity("BonfireDB.Entities.Seed", b =>
+            modelBuilder.Entity("BonfireDB.Entities.SeedsInfo", b =>
                 {
-                    b.Navigation("SeedsInfo")
+                    b.Navigation("Seed")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

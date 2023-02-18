@@ -39,6 +39,8 @@ namespace Bonfire.Data
             await InitializeProducers();
             await InitializePlantSort();
             await InitializePlant();
+            await InitializeSeedsInfo();
+            await InitializeSeeds();
             _Logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
         }
 
@@ -129,6 +131,54 @@ namespace Bonfire.Data
             await _db.Plants.AddRangeAsync(_Plants);
             await _db.SaveChangesAsync();
             _Logger.LogInformation("Инициализация растений выполнена за {0} мс", timer.ElapsedMilliseconds);
+        }
+
+        private const int __SeedsInfoCount = 10;
+        private SeedsInfo[] _SeedsInfo;
+
+        private async Task InitializeSeedsInfo()
+        {
+            var timer = Stopwatch.StartNew();
+            _Logger.LogInformation("Инициализация описания семян...");
+            _SeedsInfo = Enumerable.Range(1, __SeedsInfoCount)
+                .Select(i => new SeedsInfo()
+                {
+                    WeightPack = i,
+                    AmountSeedsWeight = 10*i,
+                    AmountSeeds = i,
+                    CostPack = 100*i,
+                    ExpirationDate = DateTime.Now + TimeSpan.FromDays(730),
+                    Note = $"Примечание {i}",
+                    PurchaseDate = DateTime.Now,
+                    QuantityPack = 5*i,
+                    SeedSource = "Куплено"
+
+                }).ToArray();
+
+            await _db.SeedsInfo.AddRangeAsync(_SeedsInfo);
+            await _db.SaveChangesAsync();
+            _Logger.LogInformation("Инициализация описания семян выполнена за {0} мс", timer.ElapsedMilliseconds);
+        }
+
+        private const int __SeedsCount = 10;
+        private Seed[] _Seeds;
+
+        private async Task InitializeSeeds()
+        {
+            var rnd = new Random();
+            var timer = Stopwatch.StartNew();
+            _Logger.LogInformation("Инициализация семян...");
+            _Seeds = Enumerable.Range(1, __SeedsCount)
+                .Select(i => new Seed()
+                {
+                    Plant = rnd.NextItem((IList<Plant>)_Plants),
+                    SeedsInfo = rnd.NextItem((IList<SeedsInfo>)_SeedsInfo)
+
+                }).ToArray();
+
+            await _db.Seeds.AddRangeAsync(_Seeds);
+            await _db.SaveChangesAsync();
+            _Logger.LogInformation("Инициализация семян выполнена за {0} мс", timer.ElapsedMilliseconds);
         }
     }
 }

@@ -47,6 +47,6 @@ public class SeedsInfo: Entity
     /// </summary>
     public string? Note { get; set; }
 
-    public int SeedId { get; set; }
+    
     public Seed Seed { get; set; }
 }

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using BonfireDB;
 using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +27,7 @@ namespace Bonfire.Data
                 }
             })
             .AddTransient<DbInitializer>()
-            //.AddRepositoriesInDB()
+            .AddRepositoriesInDb()
         ;
     }
 }

@@ -39,6 +39,28 @@ namespace BonfireDB.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SeedsInfo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    WeightPack = table.Column<int>(type: "INTEGER", nullable: false),
+                    QuantityPack = table.Column<int>(type: "INTEGER", nullable: false),
+                    PurchaseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExpirationDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CostPack = table.Column<decimal>(type: "TEXT", nullable: false),
+                    DisposeComment = table.Column<string>(type: "TEXT", nullable: true),
+                    AmountSeeds = table.Column<int>(type: "INTEGER", nullable: false),
+                    AmountSeedsWeight = table.Column<int>(type: "INTEGER", nullable: true),
+                    SeedSource = table.Column<string>(type: "TEXT", nullable: true),
+                    Note = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SeedsInfo", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PlantsSort",
                 columns: table => new
                 {
@@ -99,7 +121,8 @@ namespace BonfireDB.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    PlantId = table.Column<int>(type: "INTEGER", nullable: false)
+                    PlantId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SeedsInfoId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -110,33 +133,10 @@ namespace BonfireDB.Migrations
                         principalTable: "Plants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SeedsInfo",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    WeightPack = table.Column<int>(type: "INTEGER", nullable: false),
-                    QuantityPack = table.Column<int>(type: "INTEGER", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CostPack = table.Column<decimal>(type: "TEXT", nullable: false),
-                    DisposeComment = table.Column<string>(type: "TEXT", nullable: true),
-                    AmountSeeds = table.Column<int>(type: "INTEGER", nullable: false),
-                    AmountSeedsWeight = table.Column<int>(type: "INTEGER", nullable: true),
-                    SeedSource = table.Column<string>(type: "TEXT", nullable: true),
-                    Note = table.Column<string>(type: "TEXT", nullable: true),
-                    SeedId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SeedsInfo", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SeedsInfo_Seeds_SeedId",
-                        column: x => x.SeedId,
-                        principalTable: "Seeds",
+                        name: "FK_Seeds_SeedsInfo_SeedsInfoId",
+                        column: x => x.SeedsInfoId,
+                        principalTable: "SeedsInfo",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -162,9 +162,9 @@ namespace BonfireDB.Migrations
                 column: "PlantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SeedsInfo_SeedId",
-                table: "SeedsInfo",
-                column: "SeedId",
+                name: "IX_Seeds_SeedsInfoId",
+                table: "Seeds",
+                column: "SeedsInfoId",
                 unique: true);
         }
 
@@ -172,13 +172,13 @@ namespace BonfireDB.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "SeedsInfo");
-
-            migrationBuilder.DropTable(
                 name: "Seeds");
 
             migrationBuilder.DropTable(
                 name: "Plants");
+
+            migrationBuilder.DropTable(
+                name: "SeedsInfo");
 
             migrationBuilder.DropTable(
                 name: "PlantsCulture");
