@@ -1,6 +1,9 @@
-﻿namespace BonfireDB.Entityes.Base;
+﻿namespace BonfireDB.Entities.Base;
 
 public class Entity : IEntity
 {
-    public string Id { get; set; }
+    /// <summary>
+    /// Идентификатор
+    /// </summary>
+    public int Id { get; set; }
 }
