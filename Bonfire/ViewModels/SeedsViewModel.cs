@@ -126,23 +126,26 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Command IsVegetablesCommand - Команда для выбора фруктов
+    #region Command SeedsChoiceCommand - Команда для выбора фруктов
 
     /// <summary> Команда для выбора фруктов </summary>
-    private ICommand _IsVegetablesCommand;
+    private ICommand _SeedsChoiceCommand;
 
     /// <summary> Команда для выбора фруктов </summary>
-    public ICommand IsVegetablesCommand => _IsVegetablesCommand
-        ??= new LambdaCommandAsync(OnIsVegetablesCommandExecuted, CanIsVegetablesCommandExecute);
+    public ICommand SeedsChoiceCommand => _SeedsChoiceCommand
+        ??= new LambdaCommandAsync(OnSeedsChoiceCommandExecuted, CanSeedsChoiceCommandExecute);
 
     /// <summary> Проверка возможности выполнения - Команда для выбора фруктов </summary>
-    private bool CanIsVegetablesCommandExecute() => true;
+    private bool CanSeedsChoiceCommandExecute(object p) => true;
 
     /// <summary> Логика выполнения - Команда для выбора фруктов </summary>
-    private async Task OnIsVegetablesCommandExecuted()
+    private async Task OnSeedsChoiceCommandExecuted(object p)
     {
-        var seedsQuery = _seedsService.Seeds
-                .Where(seeds => seeds.Plant.PlantCulture.Name == "Культура 1")
+        
+        var seedsQuery = p.ToString()!="Выбрать все"
+                ? _seedsService.Seeds
+                
+                .Where(seeds => seeds.Plant.PlantCulture.Name == p.ToString())
                 .Select(seeds => new SeedsFromViewModel
                 {
                     Culture = seeds.Plant.PlantCulture.Name,
@@ -154,7 +157,20 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
-                
+
+                : _seedsService.Seeds
+                .Select(seeds => new SeedsFromViewModel
+                {
+                    Culture = seeds.Plant.PlantCulture.Name,
+                    Sort = seeds.Plant.PlantSort.Name,
+                    Producer = seeds.Plant.PlantSort.Producer.Name,
+                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
+                    QuantityPack = seeds.SeedsInfo.QuantityPack,
+                    WeightPack = seeds.SeedsInfo.WeightPack,
+                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
+                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+                })
+
             ;
         SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
     }

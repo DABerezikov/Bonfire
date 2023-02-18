@@ -52,15 +52,15 @@
                             HorizontalAlignment="Left"
                             Margin="20,0,0,0" ToolTip="Овощи"
                             Background="Azure"
-                            Command="{Binding IsVegetablesCommand}" Grid.ColumnSpan="2">
-            <Image Source="/Views/Image/Vegetables 7.jpg"></Image>
+                            Command="{Binding SeedsChoiceCommand}" CommandParameter="Культура 1" Grid.ColumnSpan="2">
+            <Image Source="/Views/Image/Vegetables 7.jpg" ></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="1" Width="40"
                             HorizontalAlignment="Left"
                             Margin="22,0,0,0"
                             ToolTip="Фрукты"
                             Background="Azure"
-                            Command="{Binding IsFruitCommand}">
+                            Command="{Binding SeedsChoiceCommand}">
             <Image Source="/Views/Image/Fruit 1.jpg" ></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="1" Width="40"
@@ -68,7 +68,7 @@
                             Margin="82,0,0,0"
                             ToolTip="Ягоды"
                             Background="Azure"
-                            Command="{Binding IsBerryCommand}" Grid.ColumnSpan="2">
+                            Command="{Binding SeedsChoiceCommand}" Grid.ColumnSpan="2">
             <Image Source="/Views/Image/Berry 2.jpg"></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="2" Width="40"
@@ -76,7 +76,7 @@
                             Margin="30,0,0,0"
                             ToolTip="Зелень"
                             Background="Azure"
-                            Command="{Binding IsHerbCommand}">
+                            Command="{Binding SeedsChoiceCommand}">
             <Image  Source="/Views/Image/Herb 2.jpg"></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="2" Width="40"
@@ -84,7 +84,7 @@
                             Margin="90,0,0,0"
                             ToolTip="Цветы"
                             Background="Azure"
-                            Command="{Binding IsFlowerCommand}">
+                            Command="{Binding SeedsChoiceCommand}">
             <Image Source="/Views/Image/Flower 4.jpg" ></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="2" Width="40"
@@ -92,7 +92,8 @@
                             Margin="150,0,0,0"
                             ToolTip="Выбрать все"
                             Background="Azure"
-                            Command="{Binding IsAllCommand}"
+                            Command="{Binding SeedsChoiceCommand}"
+                            CommandParameter="Выбрать все"
                             >
             <Image Source="/Views/Image/All.jpg"></Image>
 
