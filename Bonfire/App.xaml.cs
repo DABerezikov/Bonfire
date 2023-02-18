@@ -39,7 +39,7 @@ namespace Bonfire
 
             using (var scope = Services.CreateScope())
             {
-                scope.ServiceProvider.GetRequiredService<DbInitializer>().InitialazeAsync().Wait();
+                scope.ServiceProvider.GetRequiredService<DbInitializer>().InitializeAsync().Wait();
             }
 
             base.OnStartup(e);

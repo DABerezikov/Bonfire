@@ -22,7 +22,7 @@ namespace Bonfire.Data
             _Logger = logger;
         }
 
-        public async Task InitialazeAsync()
+        public async Task InitializeAsync()
         {
             var timer = Stopwatch.StartNew();
             _Logger.LogInformation("Инициализация БД...");
