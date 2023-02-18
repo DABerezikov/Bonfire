@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Bonfire.Services
 {
-    internal static class ServiceRegistrator
+    internal static class ServiceRegister
     {
         public static IServiceCollection AddServices(this IServiceCollection services) => services
-           .AddTransient<IDataService, DataService>()
+           .AddTransient<ISeedsService, SeedsService>()
            .AddTransient<IUserDialog, UserDialog>()
         ;
     }

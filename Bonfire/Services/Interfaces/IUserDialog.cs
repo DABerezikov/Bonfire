@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Bonfire.Services.Interfaces
 {
-    internal interface IUserDialog
+    public interface IUserDialog
     {
     }
 }

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Bonfire.ViewModels.Base
 {
-    internal abstract class ViewModel : INotifyPropertyChanged
+    public abstract class ViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
