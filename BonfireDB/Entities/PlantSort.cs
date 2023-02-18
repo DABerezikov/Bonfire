@@ -12,7 +12,7 @@ public class PlantSort : NamedEntity
     /// <summary>
     /// Производитель семян
     /// </summary>
-    public string? Producer { get; set; }
+    public Producer Producer { get; set; }
 
     /// <summary>
     /// Минимальное время вегетации, дней

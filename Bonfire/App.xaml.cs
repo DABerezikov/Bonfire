@@ -1,10 +1,12 @@
 ﻿using Bonfire.Services;
 using Bonfire.ViewModels;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
 using System.Windows;
+using Bonfire.Data;
 
 namespace Bonfire
 {
@@ -43,5 +45,11 @@ namespace Bonfire
             using var host = Host;
             await host.StopAsync();
         }
+
+        internal static void ConfigureServices(HostBuilderContext host, IServiceCollection services) => services
+            .AddViews()
+            .AddServices()
+            .AddDatabase(host.Configuration.GetSection("Database"))
+        ;
     }
 }
