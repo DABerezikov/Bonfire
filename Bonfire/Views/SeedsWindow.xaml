@@ -16,6 +16,11 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid>
+        <Grid.Resources>
+            <CollectionViewSource x:Key="SeedsCollection" 
+                                  Source="{Binding SeedsFromViewModels}"
+                                 />
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition/>
@@ -29,13 +34,17 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto" MinWidth="400"/>
         </Grid.ColumnDefinitions>
-        <DataGrid ItemsSource="{Binding SeedsFromViewModels}"
+        <DataGrid ItemsSource="{Binding SeedsView}"
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                              SelectedItem="{Binding SelectedItem}" Grid.ColumnSpan="3" HorizontalAlignment="Center">
+                              SelectedItem="{Binding SelectedItem}" Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                              EnableColumnVirtualization="True"
+                              EnableRowVirtualization="True"
+                              >
 
+            
             <DataGrid.Columns >
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
@@ -98,10 +107,14 @@
             <Image Source="/Views/Image/All.jpg"></Image>
 
         </Button>
-        <ComboBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
+        <TextBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
+                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                  Width="300" HorizontalAlignment="Left" Height="30" Text="{Binding SeedFilter, UpdateSourceTrigger=PropertyChanged}"
+                  ></TextBox>
+        <!--<ComboBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                              Width="300" HorizontalAlignment="Left" Height="30" SelectedItem="{Binding SelectedCulture}"
-                             ItemsSource="{Binding CultureList}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>
+                              Width="300" HorizontalAlignment="Left" Height="30" SelectedItem="{Binding SeedFilter}"
+                             ItemsSource="{Binding CultureList}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>-->
         <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True"></CheckBox>
         <TextBlock Grid.Column="2"  Margin="560,0,0,0" HorizontalAlignment="Left"
                                Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>

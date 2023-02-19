@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 
 namespace Bonfire.ViewModels;
@@ -26,7 +28,7 @@ public class SeedsViewModel : ViewModel
     {
         _seedsService = seedsService;
         _userDialog = userDialog;
-        _SeedsViewSource = new CollectionViewSource
+        _SeedsView = new CollectionViewSource
         {
             SortDescriptions =
             {
@@ -35,15 +37,15 @@ public class SeedsViewModel : ViewModel
             }
 
         };
-        _SeedsViewSource.Filter += _SeedsViewSource_Filter;
+        _SeedsView.Filter += _SeedsViewSource_Filter;
     }
 
     
 
     #region FilterSeeds - Фильтрация по культуре
 
-    public ICollectionView SeedsView => _SeedsViewSource.View;
-    private readonly CollectionViewSource _SeedsViewSource;
+    public ICollectionView SeedsView => _SeedsView?.View;
+    private readonly CollectionViewSource _SeedsView;
 
     #region SeedFilter : string - Искомое слово
 
@@ -58,7 +60,7 @@ public class SeedsViewModel : ViewModel
         {
             if (Set(ref _SeedFilter, value))
             {
-                _SeedsViewSource.View.Refresh();
+               SeedsView.Refresh();
             }
         } 
     }
@@ -66,8 +68,8 @@ public class SeedsViewModel : ViewModel
     #endregion
     private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter)) return;
-        if (!seed.Culture.Contains(SeedFilter))
+        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter) || SeedFilter == "Выбрать все") return;
+        if (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
@@ -76,20 +78,13 @@ public class SeedsViewModel : ViewModel
     #region Seeds : ObservableCollection<SeedsFromViewModel> - Коллекция семян
 
     /// <summary>Коллекция семян</summary>
-    private ObservableCollection<SeedsFromViewModel> _SeedsFromViewModels = new ();
+    private ObservableCollection<SeedsFromViewModel> _SeedsFromViewModels = new();
 
     /// <summary>Коллекция семян</summary>
     public ObservableCollection<SeedsFromViewModel> SeedsFromViewModels
     {
         get => _SeedsFromViewModels;
-        set
-        {
-            if (Set(ref _SeedsFromViewModels, value))
-            {
-                _SeedsViewSource.Source = value;
-                OnPropertyChanged(nameof(SeedsView));
-            };
-        }
+        set => Set(ref _SeedsFromViewModels, value);
     }
     #endregion
 
@@ -122,6 +117,13 @@ public class SeedsViewModel : ViewModel
             })
             ;
         SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+        RefreshSeedsView();
+    }
+
+    private void RefreshSeedsView()
+    {
+        _SeedsView.Source = SeedsFromViewModels;
+        OnPropertyChanged(nameof(SeedsView));
     }
 
     #endregion
@@ -173,6 +175,7 @@ public class SeedsViewModel : ViewModel
 
             ;
         SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+        RefreshSeedsView();
     }
 
     #endregion
