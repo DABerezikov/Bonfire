@@ -88,6 +88,20 @@ public class SeedsViewModel : ViewModel
     }
     #endregion
 
+    #region SelectedItem : SeedsFromViewModel - Выбранный объект
+
+    /// <summary>Выбранный объект</summary>
+    private SeedsFromViewModel _SelectedItem;
+
+    /// <summary>Выбранный объект</summary>
+    public SeedsFromViewModel SelectedItem
+    {
+        get => _SelectedItem;
+        set => Set(ref _SelectedItem, value);
+    }
+
+    #endregion
+
     #region Command LoadDataCommand - Команда для загрузки данных из репозитория
 
     /// <summary> Команда для загрузки данных из репозитория </summary>

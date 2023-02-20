@@ -48,17 +48,19 @@ namespace Bonfire.Data
             _Logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
         }
 
-        private const int __PlantCulturesCount = 10;
+        private const int __PlantCulturesCount = 20;
         private PlantCulture[] _PlantCultures;
 
         private async Task InitializePlantCulture()
         {
             var timer = Stopwatch.StartNew();
+            var rnd = new Random();
             _Logger.LogInformation("Инициализация культур...");
+            var CultureList = new[] { "Овощи", "Фрукты", "Ягоды", "Зелень", "Цветы"};
             _PlantCultures = Enumerable.Range(1, __PlantCulturesCount)
                 .Select(i => new PlantCulture()
                 {
-                    Name = $"Культура {i}",
+                    Name = rnd.NextItem(CultureList),
                     Class = $"Класс {i}"
                 }).ToArray();
 
@@ -67,7 +69,7 @@ namespace Bonfire.Data
             _Logger.LogInformation("Инициализация культур выполнена за {0} мс", timer.ElapsedMilliseconds);
         }
 
-        private const int __ProducersCount = 10;
+        private const int __ProducersCount = 20;
         private Producer[] _Producers;
 
         private async Task InitializeProducers()
@@ -86,7 +88,7 @@ namespace Bonfire.Data
             _Logger.LogInformation("Инициализация производителей выполнена за {0} мс", timer.ElapsedMilliseconds);
         }
 
-        private const int __PlantSortsCount = 10;
+        private const int __PlantSortsCount = 20;
         private PlantSort[] _PlantSorts;
 
         private async Task InitializePlantSort()
@@ -115,7 +117,7 @@ namespace Bonfire.Data
             _Logger.LogInformation("Инициализация сортов выполнена за {0} мс", timer.ElapsedMilliseconds);
         }
 
-        private const int __PlantsCount = 10;
+        private const int __PlantsCount = 20;
         private Plant[] _Plants;
 
         private async Task InitializePlant()
@@ -137,7 +139,7 @@ namespace Bonfire.Data
             _Logger.LogInformation("Инициализация растений выполнена за {0} мс", timer.ElapsedMilliseconds);
         }
 
-        private const int __SeedsInfoCount = 10;
+        private const int __SeedsInfoCount = 20;
         private SeedsInfo[] _SeedsInfo;
 
         private async Task InitializeSeedsInfo()
@@ -164,7 +166,7 @@ namespace Bonfire.Data
             _Logger.LogInformation("Инициализация описания семян выполнена за {0} мс", timer.ElapsedMilliseconds);
         }
 
-        private const int __SeedsCount = 10;
+        private const int __SeedsCount = 20;
         private Seed[] _Seeds;
 
         private async Task InitializeSeeds()
