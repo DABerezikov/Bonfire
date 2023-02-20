@@ -142,26 +142,26 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Command SeedsChoiceCommand - Команда для выбора фруктов
+    #region Command SeedsChoiceClassCommand - Команда для выбора растений по классам
 
-    /// <summary> Команда для выбора фруктов </summary>
-    private ICommand _SeedsChoiceCommand;
+    /// <summary> Команда для выбора растений по классам </summary>
+    private ICommand _SeedsChoiceClassCommand;
 
-    /// <summary> Команда для выбора фруктов </summary>
-    public ICommand SeedsChoiceCommand => _SeedsChoiceCommand
-        ??= new LambdaCommandAsync(OnSeedsChoiceCommandExecuted, CanSeedsChoiceCommandExecute);
+    /// <summary> Команда для выбора растений по классам </summary>
+    public ICommand SeedsChoiceClassCommand => _SeedsChoiceClassCommand
+        ??= new LambdaCommandAsync(OnSeedsChoiceClassCommandExecuted, CanSeedsChoiceClassCommandExecute);
 
-    /// <summary> Проверка возможности выполнения - Команда для выбора фруктов </summary>
-    private bool CanSeedsChoiceCommandExecute(object p) => true;
+    /// <summary> Проверка возможности выполнения - Команда для выбора растений по классам </summary>
+    private bool CanSeedsChoiceClassCommandExecute(object p) => true;
 
-    /// <summary> Логика выполнения - Команда для выбора фруктов </summary>
-    private async Task OnSeedsChoiceCommandExecuted(object p)
+    /// <summary> Логика выполнения - Команда для выбора растений по классам </summary>
+    private async Task OnSeedsChoiceClassCommandExecuted(object p)
     {
         
         var seedsQuery = p.ToString()!="Выбрать все"
                 ? _seedsService.Seeds
                 
-                .Where(seeds => seeds.Plant.PlantCulture.Name == p.ToString())
+                .Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
                 .Select(seeds => new SeedsFromViewModel
                 {
                     Culture = seeds.Plant.PlantCulture.Name,

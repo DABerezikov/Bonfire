@@ -38,6 +38,7 @@
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
+                              Margin="5,5,0,0"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
                               SelectedItem="{Binding SelectedItem}" Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
@@ -58,50 +59,45 @@
         <Button Grid.Row="0" Grid.Column="0" Width="40"
                             HorizontalAlignment="Left"
                             Margin="20,0,0,0" ToolTip="Овощи"
-                            Background="Azure"
-                            Command="{Binding SeedsChoiceCommand}" CommandParameter="Овощи" Grid.ColumnSpan="2">
-            <Image Source="/Views/Image/Vegetables 7.jpg" ></Image>
+                            Grid.ColumnSpan="2"
+                            Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Овощи" >
+           
+                <Image Source="/Views/Image/Vegetables 7.jpg"></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="1" Width="40"
                             HorizontalAlignment="Left"
                             Margin="22,0,0,0"
                             ToolTip="Фрукты"
-                            Background="Azure"
-                            Command="{Binding SeedsChoiceCommand}" CommandParameter="Фрукты">
+                            Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Фрукты">
             <Image Source="/Views/Image/Fruit 1.jpg" ></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="1" Width="40"
                             HorizontalAlignment="Left"
                             Margin="82,0,0,0"
                             ToolTip="Ягоды"
-                            Background="Azure"
-                            Command="{Binding SeedsChoiceCommand}" CommandParameter="Ягоды" Grid.ColumnSpan="2">
+                            Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Ягоды" Grid.ColumnSpan="2">
             <Image Source="/Views/Image/Berry 2.jpg"></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="2" Width="40"
                             HorizontalAlignment="Left"
                             Margin="30,0,0,0"
                             ToolTip="Зелень"
-                            Background="Azure"
-                            Command="{Binding SeedsChoiceCommand}"  CommandParameter="Зелень">
+                            Command="{Binding SeedsChoiceClassCommand}"  CommandParameter="Зелень">
             <Image  Source="/Views/Image/Herb 2.jpg"></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="2" Width="40"
                             HorizontalAlignment="Left"
                             Margin="90,0,0,0"
                             ToolTip="Цветы"
-                            Background="Azure"
-                            Command="{Binding SeedsChoiceCommand}" CommandParameter="Цветы">
+                            Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Цветы">
             <Image Source="/Views/Image/Flower 4.jpg" ></Image>
         </Button>
         <Button Grid.Row="0" Grid.Column="2" Width="40"
                             HorizontalAlignment="Left"
                             Margin="150,0,0,0"
                             ToolTip="Выбрать все"
-                            Background="Azure"
-                            Command="{Binding SeedsChoiceCommand}"
-                            CommandParameter="Выбрать все"
-                            >
+                            Command="{Binding SeedsChoiceClassCommand}"
+                            CommandParameter="Выбрать все">
             <Image Source="/Views/Image/All.jpg"></Image>
 
         </Button>

@@ -6,7 +6,22 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <StartupObject>Bonfire.Program</StartupObject>
+    <ApplicationIcon>Views\Image\VegetableGardenIcon_.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Views\Image\All.jpg" />
+    <None Remove="Views\Image\Berry 2.jpg" />
+    <None Remove="Views\Image\Flower 4.jpg" />
+    <None Remove="Views\Image\Fruit 1.jpg" />
+    <None Remove="Views\Image\Herb 2.jpg" />
+    <None Remove="Views\Image\VegetableGardenIcon_.ico" />
+    <None Remove="Views\Image\Vegetables 7.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Views\Image\VegetableGardenIcon_.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Models\" />
@@ -27,6 +42,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BonfireDB\BonfireDB.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Views\Image\All.jpg" />
+    <Resource Include="Views\Image\Berry 2.jpg" />
+    <Resource Include="Views\Image\Flower 4.jpg" />
+    <Resource Include="Views\Image\Fruit 1.jpg" />
+    <Resource Include="Views\Image\Herb 2.jpg" />
+    <Resource Include="Views\Image\Vegetables 7.jpg" />
   </ItemGroup>
 
   <ItemGroup>

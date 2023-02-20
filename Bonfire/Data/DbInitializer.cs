@@ -56,12 +56,12 @@ namespace Bonfire.Data
             var timer = Stopwatch.StartNew();
             var rnd = new Random();
             _Logger.LogInformation("Инициализация культур...");
-            var CultureList = new[] { "Овощи", "Фрукты", "Ягоды", "Зелень", "Цветы"};
+            var ClassList = new[] { "Овощи", "Фрукты", "Ягоды", "Зелень", "Цветы"};
             _PlantCultures = Enumerable.Range(1, __PlantCulturesCount)
                 .Select(i => new PlantCulture()
                 {
-                    Name = rnd.NextItem(CultureList),
-                    Class = $"Класс {i}"
+                    Name = $"Культура {i}",
+                    Class = rnd.NextItem(ClassList)
                 }).ToArray();
 
             await _db.PlantsCulture.AddRangeAsync(_PlantCultures);
