@@ -101,14 +101,14 @@
             <Image Source="/Views/Image/All.jpg"></Image>
 
         </Button>
-        <TextBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
+        <!--<TextBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
                   HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                   Width="300" HorizontalAlignment="Left" Height="30" Text="{Binding SeedFilter, UpdateSourceTrigger=PropertyChanged}"
-                  ></TextBox>
-        <!--<ComboBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
+                  ></TextBox>-->
+        <ComboBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                               Width="300" HorizontalAlignment="Left" Height="30" SelectedItem="{Binding SeedFilter}"
-                             ItemsSource="{Binding CultureList}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>-->
+                             ItemsSource="{Binding ListCulture}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>
         <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True"></CheckBox>
         <TextBlock Grid.Column="2"  Margin="560,0,0,0" HorizontalAlignment="Left"
                                Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
@@ -137,7 +137,7 @@
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"  
-                              ItemsSource="{Binding AddCultureList}"
+                              ItemsSource="{Binding ListCulture}"
                               Text="{Binding AddCulture }"></ComboBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
                                Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>

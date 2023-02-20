@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
@@ -102,6 +105,20 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
+    #region ListCulture : IEnumerable - Список культур
+
+    /// <summary>Список культур</summary>
+    private List<string> _ListCulture = new List<string> { "Выбрать все" };
+
+    /// <summary>Список культур</summary>
+    public List<string> ListCulture
+    {
+        get => _ListCulture;
+        set => Set(ref _ListCulture, value);
+    }
+
+    #endregion
+
     #region Command LoadDataCommand - Команда для загрузки данных из репозитория
 
     /// <summary> Команда для загрузки данных из репозитория </summary>
@@ -130,8 +147,12 @@ public class SeedsViewModel : ViewModel
                 AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
             })
             ;
+      var listCultureQuery = _seedsService.Seeds
+          .Select(seeds =>  seeds.Plant.PlantCulture.Name)
+          .OrderBy(s=>s);
         SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
         RefreshSeedsView();
+        ListCulture.AddRange(await listCultureQuery.ToListAsync());
     }
 
     private void RefreshSeedsView()
