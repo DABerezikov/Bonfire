@@ -119,6 +119,57 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
+    #region Методы
+
+    #region Метод обновления представления
+
+    private void RefreshSeedsView()
+    {
+        _SeedsView.Source = SeedsFromViewModels;
+        OnPropertyChanged(nameof(SeedsView));
+    }
+
+    #endregion
+
+    #region Метод загрузки семян
+
+    private async Task LoadSeed()
+    {
+        var seedsQuery = _seedsService.Seeds
+                .Select(seeds => new SeedsFromViewModel
+                {
+                    Id = seeds.Id,
+                    Culture = seeds.Plant.PlantCulture.Name,
+                    Sort = seeds.Plant.PlantSort.Name,
+                    Producer = seeds.Plant.PlantSort.Producer.Name,
+                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
+                    QuantityPack = seeds.SeedsInfo.QuantityPack,
+                    WeightPack = seeds.SeedsInfo.WeightPack,
+                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
+                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+                })
+            ;
+        SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+        RefreshSeedsView();
+    }
+
+    #endregion
+
+    #region Метод загрузки списка культур
+
+    private void LoadListCulture()
+    {
+        var listCultureQuery = _seedsService.Seeds
+            .Select(seeds => seeds.Plant.PlantCulture.Name)
+            .OrderBy(s => s);
+        ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
+    }
+
+    #endregion
+
+    #endregion
+
+
     #region Command LoadDataCommand - Команда для загрузки данных из репозитория
 
     /// <summary> Команда для загрузки данных из репозитория </summary>
@@ -134,32 +185,12 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
     private async Task OnLoadDataCommandExecuted()
     {
-      var seedsQuery  = _seedsService.Seeds
-            .Select(seeds=>new SeedsFromViewModel
-            {
-                Culture = seeds.Plant.PlantCulture.Name,
-                Sort = seeds.Plant.PlantSort.Name,
-                Producer = seeds.Plant.PlantSort.Producer.Name,
-                ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                QuantityPack = seeds.SeedsInfo.QuantityPack,
-                WeightPack = seeds.SeedsInfo.WeightPack,
-                AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-            })
-            ;
-      var listCultureQuery = _seedsService.Seeds
-          .Select(seeds =>  seeds.Plant.PlantCulture.Name)
-          .OrderBy(s=>s);
-        SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
-        RefreshSeedsView();
-        ListCulture.AddRange(await listCultureQuery.ToListAsync());
+        await LoadSeed();
+
+        LoadListCulture();
     }
 
-    private void RefreshSeedsView()
-    {
-        _SeedsView.Source = SeedsFromViewModels;
-        OnPropertyChanged(nameof(SeedsView));
-    }
+    
 
     #endregion
 
@@ -185,6 +216,7 @@ public class SeedsViewModel : ViewModel
                 .Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
                 .Select(seeds => new SeedsFromViewModel
                 {
+                    Id = seeds.Id,
                     Culture = seeds.Plant.PlantCulture.Name,
                     Sort = seeds.Plant.PlantSort.Name,
                     Producer = seeds.Plant.PlantSort.Producer.Name,
@@ -198,6 +230,7 @@ public class SeedsViewModel : ViewModel
                 : _seedsService.Seeds
                 .Select(seeds => new SeedsFromViewModel
                 {
+                    Id = seeds.Id,
                     Culture = seeds.Plant.PlantCulture.Name,
                     Sort = seeds.Plant.PlantSort.Name,
                     Producer = seeds.Plant.PlantSort.Producer.Name,
