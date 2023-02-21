@@ -1,21 +1,17 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
-using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 
 namespace Bonfire.ViewModels;
@@ -41,9 +37,16 @@ public class SeedsViewModel : ViewModel
 
         };
         _SeedsView.Filter += _SeedsViewSource_Filter;
+
+        _CultureListView = new CollectionViewSource();
+        
+        //_CultureListView.Filter += _CultureListView_Filter;
     }
 
-    
+   
+
+
+    #region Свойства
 
     #region FilterSeeds - Фильтрация по культуре
 
@@ -63,7 +66,7 @@ public class SeedsViewModel : ViewModel
         {
             if (Set(ref _SeedFilter, value))
             {
-               SeedsView.Refresh();
+                SeedsView.Refresh();
             }
         } 
     }
@@ -78,16 +81,16 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Seeds : ObservableCollection<SeedsFromViewModel> - Коллекция семян
+    #region Seeds : ObservableCollection<Seed> - Коллекция семян
 
     /// <summary>Коллекция семян</summary>
-    private ObservableCollection<SeedsFromViewModel> _SeedsFromViewModels = new();
+    private ObservableCollection<Seed> _Seeds;
 
     /// <summary>Коллекция семян</summary>
-    public ObservableCollection<SeedsFromViewModel> SeedsFromViewModels
+    public ObservableCollection<Seed> Seeds
     {
-        get => _SeedsFromViewModels;
-        set => Set(ref _SeedsFromViewModels, value);
+        get => _Seeds;
+        set => Set(ref _Seeds, value);
     }
     #endregion
 
@@ -105,7 +108,7 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region ListCulture : IEnumerable - Список культур
+    #region ListCulture : List<string> - Список культур
 
     /// <summary>Список культур</summary>
     private List<string> _ListCulture = new List<string> { "Выбрать все" };
@@ -117,19 +120,201 @@ public class SeedsViewModel : ViewModel
         set => Set(ref _ListCulture, value);
     }
 
+
+    #endregion
+
+    #region Логика кнопок выбора источника семян
+
+    #region SeedSource : string - Результат выбора источника семян
+
+    /// <summary>Результат выбора источника семян</summary>
+    private string _SeedSource;
+
+    /// <summary>Результат выбора источника семян</summary>
+    private string SeedSource
+    {
+        get => _SeedSource;
+        set
+        {
+            Set(ref _SeedSource, value);
+            AddProducer = IsCollected ? "Свои семена" : "";
+        } 
+    }
+
+    #endregion
+
+    #region IsSold : bool - Выбор способа  получения семян - куплено
+
+    /// <summary>Выбор способа  получения семян - куплено</summary>
+    private bool _IsSold;
+
+    /// <summary>Выбор способа  получения семян - куплено</summary>
+    public bool IsSold
+    {
+        get => _IsSold;
+        set
+        {
+            if (Set(ref _IsSold, value))
+                SeedSource = "Куплено";
+            
+        } 
+    }
+
+    #endregion
+
+    #region IsDonated : bool - Выбор способа  получения семян - подарено
+
+    /// <summary>Выбор способа  получения семян - подарено</summary>
+    private bool _IsDonated;
+
+    /// <summary>Выбор способа  получения семян - подарено</summary>
+    public bool IsDonated
+    {
+        get => _IsDonated;
+        set
+        {
+            if (Set(ref _IsDonated, value))
+                SeedSource = "Подарено";
+
+        }
+    }
+
+    #endregion
+
+    #region IsCollected : bool - Выбор способа  получения семян - собрано
+
+    /// <summary>Выбор способа  получения семян - собрано</summary>
+    private bool _IsCollected;
+
+    /// <summary>Выбор способа  получения семян - собрано</summary>
+    public bool IsCollected
+    {
+        get => _IsCollected;
+        set
+        {
+            if (Set(ref _IsCollected, value))
+                SeedSource = "Собрано";
+
+        }
+    }
+
+    #endregion
+
+    #endregion
+
+    #region AddProducer : string - Выбор поставщика семян
+
+    /// <summary>Выбор поставщика семян</summary>
+    private string _AddProducer;
+
+    /// <summary>Выбор поставщика семян</summary>
+    public string AddProducer
+    {
+        get => _AddProducer;
+        set => Set(ref _AddProducer, value);
+    }
+
+    #endregion
+
+    #region AddNote : string - Примечание при добавлении семян
+
+    /// <summary>Примечание при добавлении семян</summary>
+    private string _AddNote;
+
+    /// <summary>Примечание при добавлении семян</summary>
+    public string AddNote
+    {
+        get => _AddNote;
+        set => Set(ref _AddNote, value);
+    }
+
+    #endregion
+
+    #region Выбор единиц измерения для добавления семян
+
+    #region AddSizeList : List<string> - Список единиц измерения
+
+    /// <summary>Список единиц измерения</summary>
+    private List<string> _AddSizeList = new() {"Граммы", "Штуки"};
+
+    /// <summary>Список единиц измерения</summary>
+    public List<string> AddSizeList
+    {
+        get => _AddSizeList;
+        set => Set(ref _AddSizeList, value);
+    }
+
+    #endregion
+
+    #region AddSize : string - Выбранная единица измерения для добавления семян
+
+    /// <summary>Выбранная единица измерения для добавления семян</summary>
+    private string _AddSize;
+
+    /// <summary>Выбранная единица измерения для добавления семян</summary>
+    public string AddSize
+    {
+        get => _AddSize;
+        set => Set(ref _AddSize, value);
+    }
+
+    #endregion
+
+
+    #endregion
+
+    #region Выбор культуры для добавления семян
+
+    public ICollectionView CultureListView => _CultureListView?.View;
+    private CollectionViewSource _CultureListView;
+
+    private void _CultureListView_Filter(object sender, FilterEventArgs e)
+    {
+        if (string.IsNullOrEmpty(AddCulture)) return;
+        if (!AddCultureList.Contains(AddCulture))
+            e.Accepted = false;
+    }
+
+    #region AddCultureList : List<string> - Список культур для добавления семян
+
+    /// <summary>Список культур для добавления семян</summary>
+    private List<string> _AddCultureList = new();
+
+    /// <summary>Список культур для добавления семян</summary>
+    public List<string> AddCultureList
+    {
+        get => _AddCultureList;
+        set => Set(ref _AddCultureList, value);
+    }
+
+    #endregion
+
+    #region AddCulture : string - Выбранная культура для добавления семян
+
+    /// <summary>Выбранная культура для добавления семян</summary>
+    private string _AddCulture = "test";
+
+    /// <summary>Выбранная культура для добавления семян</summary>
+    public string AddCulture
+    {
+        get => _AddCulture;
+        set
+        {
+            if (Set(ref _AddCulture, value))
+                CultureListView.Refresh();
+        } 
+    }
+
+    #endregion
+
+    #endregion
+
+
     #endregion
 
     #region Методы
 
-    #region Метод обновления представления
 
-    private void RefreshSeedsView()
-    {
-        _SeedsView.Source = SeedsFromViewModels;
-        OnPropertyChanged(nameof(SeedsView));
-    }
-
-    #endregion
 
     #region Метод загрузки семян
 
@@ -149,8 +334,9 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
             ;
-        SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
-        RefreshSeedsView();
+        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
+        _SeedsView.Source = await seedsQuery.ToArrayAsync();
+        OnPropertyChanged(nameof(SeedsView));
     }
 
     #endregion
@@ -163,12 +349,15 @@ public class SeedsViewModel : ViewModel
             .Select(seeds => seeds.Plant.PlantCulture.Name)
             .OrderBy(s => s);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
+        AddCultureList.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
+        _CultureListView.Source = AddCultureList;
     }
 
     #endregion
 
     #endregion
 
+    #region Команды
 
     #region Command LoadDataCommand - Команда для загрузки данных из репозитория
 
@@ -186,12 +375,8 @@ public class SeedsViewModel : ViewModel
     private async Task OnLoadDataCommandExecuted()
     {
         await LoadSeed();
-
         LoadListCulture();
     }
-
-    
-
     #endregion
 
     #region Command SeedsChoiceClassCommand - Команда для выбора растений по классам
@@ -209,10 +394,10 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для выбора растений по классам </summary>
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
     {
-        
-        var seedsQuery = p.ToString()!="Выбрать все"
+
+        var seedsQuery = p.ToString() != "Выбрать все"
                 ? _seedsService.Seeds
-                
+
                 .Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
                 .Select(seeds => new SeedsFromViewModel
                 {
@@ -242,9 +427,15 @@ public class SeedsViewModel : ViewModel
                 })
 
             ;
-        SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
-        RefreshSeedsView();
+        _SeedsView.Source = await seedsQuery.ToArrayAsync();
+        //SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+        OnPropertyChanged(nameof(SeedsView));
     }
 
     #endregion
+
+
+    #endregion
+
+
 }

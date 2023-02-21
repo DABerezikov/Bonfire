@@ -34,6 +34,7 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto" MinWidth="400"/>
         </Grid.ColumnDefinitions>
+
         <DataGrid ItemsSource="{Binding SeedsView}"
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
@@ -56,6 +57,7 @@
 
             </DataGrid.Columns>
         </DataGrid>
+         <!--Кнопки сортировки-->
         <Button Grid.Row="0" Grid.Column="0" Width="40"
                             HorizontalAlignment="Left"
                             Margin="20,0,0,0" ToolTip="Овощи"
@@ -106,6 +108,7 @@
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                               Width="300" HorizontalAlignment="Left" Height="30" SelectedItem="{Binding SeedFilter}"
                              ItemsSource="{Binding ListCulture}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>
+        
         <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True"></CheckBox>
         <TextBlock Grid.Column="2"  Margin="560,0,0,0" HorizontalAlignment="Left"
                                Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
@@ -133,9 +136,20 @@
                                Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Культура"></TextBlock>
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"  
-                              ItemsSource="{Binding AddCultureList}"
-                              Text="{Binding AddCulture }"></ComboBox>
+                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True" 
+                              DataContext="{Binding SeedsView}"
+                              ItemsSource="{Binding Culture}"
+                              Text="{Binding AddCulture,
+                                                                RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                 AncestorType={x:Type vm:SeedsViewModel}}}">
+            <!--<ComboBox.Text>
+                <Binding Path="AddCulture">
+                    <Binding.RelativeSource>
+                        <RelativeSource Mode="FindAncestor" AncestorType="{x:Type vm:SeedsViewModel}"></RelativeSource>
+                    </Binding.RelativeSource>
+                </Binding>
+            </ComboBox.Text>-->
+        </ComboBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
                                Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0"
