@@ -38,9 +38,15 @@ public class SeedsViewModel : ViewModel
         };
         _SeedsView.Filter += _SeedsViewSource_Filter;
 
-        _CultureListView = new CollectionViewSource();
+        _CultureListView = new CollectionViewSource
+        {
+            SortDescriptions =
+            {
+                new SortDescription(nameof(CultureFromViewModel.Name), ListSortDirection.Ascending)
+            }
+        };
         
-        //_CultureListView.Filter += _CultureListView_Filter;
+       _CultureListView.Filter += _CultureListView_Filter;
     }
 
    
@@ -270,18 +276,18 @@ public class SeedsViewModel : ViewModel
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
-        if (string.IsNullOrEmpty(AddCulture)) return;
-        if (!AddCultureList.Contains(AddCulture))
+        if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return;
+        if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
     #region AddCultureList : List<string> - Список культур для добавления семян
 
     /// <summary>Список культур для добавления семян</summary>
-    private List<string> _AddCultureList = new();
+    private List<CultureFromViewModel> _AddCultureList = new();
 
     /// <summary>Список культур для добавления семян</summary>
-    public List<string> AddCultureList
+    public List<CultureFromViewModel> AddCultureList
     {
         get => _AddCultureList;
         set => Set(ref _AddCultureList, value);
@@ -292,7 +298,7 @@ public class SeedsViewModel : ViewModel
     #region AddCulture : string - Выбранная культура для добавления семян
 
     /// <summary>Выбранная культура для добавления семян</summary>
-    private string _AddCulture = "test";
+    private string _AddCulture;
 
     /// <summary>Выбранная культура для добавления семян</summary>
     public string AddCulture
@@ -348,8 +354,15 @@ public class SeedsViewModel : ViewModel
         var listCultureQuery = _seedsService.Seeds
             .Select(seeds => seeds.Plant.PlantCulture.Name)
             .OrderBy(s => s);
+        var addListCulture = _seedsService.Seeds
+            .Select(seeds => new CultureFromViewModel
+            {
+                Id = seeds.Plant.PlantCulture.Id,
+                Name = seeds.Plant.PlantCulture.Name
+            })
+            .OrderBy(s=>s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
-        AddCultureList.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
+        AddCultureList.AddRange(addListCulture.ToListAsync().Result.ToHashSet());
         _CultureListView.Source = AddCultureList;
     }
 
