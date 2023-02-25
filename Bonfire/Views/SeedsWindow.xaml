@@ -5,22 +5,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Bonfire.Views"
               xmlns:vm="clr-namespace:Bonfire.ViewModels"
-        xmlns:fa5="http://schemas.fontawesome.com/icons/"
+             xmlns:fa5="http://schemas.fontawesome.com/icons/"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
-        d:DesignHeight="900" d:DesignWidth="1600">
+             d:DesignHeight="900" d:DesignWidth="1600">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadDataCommand}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid>
-        <Grid.Resources>
-            <CollectionViewSource x:Key="SeedsCollection" 
-                                  Source="{Binding SeedsFromViewModels}"
-                                 />
-        </Grid.Resources>
+
+
+
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition/>
@@ -35,13 +33,14 @@
             <ColumnDefinition Width="Auto" MinWidth="400"/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid ItemsSource="{Binding SeedsView}"
+        <!--<DataGrid DataContext="{Binding SeedsView}"
+                                ItemsSource="{Binding }"
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
                               Margin="5,5,0,0"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                              SelectedItem="{Binding SelectedItem}" Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                              SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type vm:SeedsViewModel}}}" Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True">
             
@@ -56,7 +55,7 @@
                 <DataGridTextColumn Header="Остаток, шт" Binding="{Binding AmountSeedsQuantity}" Width="80"/>
 
             </DataGrid.Columns>
-        </DataGrid>
+        </DataGrid>-->
          <!--Кнопки сортировки-->
         <Button Grid.Row="0" Grid.Column="0" Width="40"
                             HorizontalAlignment="Left"
@@ -110,8 +109,8 @@
                              ItemsSource="{Binding ListCulture}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>
         
         <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True"></CheckBox>
-        <TextBlock Grid.Column="2"  Margin="560,0,0,0" HorizontalAlignment="Left"
-                               Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
+        <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" HorizontalAlignment="Left"
+                   Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
 
         <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="0,0,10,10" Grid.ColumnSpan="3"/>
         <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="10" Grid.ColumnSpan="3" Margin="0,576,0,0" Grid.RowSpan="3"/>
@@ -120,43 +119,26 @@
         <TextBlock HorizontalAlignment="Left" Margin="318,10,0,0" Grid.Row="3" Grid.Column="2"
                                TextWrapping="Wrap" Text="Добавление семян" VerticalAlignment="Top" FontSize="14"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                 Content="Куплено" IsChecked="{Binding IsSold}" Grid.ColumnSpan="2"></RadioButton>
+                                 Content="Куплено" IsChecked="{Binding IsSold}" Grid.ColumnSpan="2"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                 Content="Собрано" IsChecked="{Binding IsCollected}" Grid.ColumnSpan="2"></RadioButton>
+                                 Content="Собрано" IsChecked="{Binding IsCollected}" Grid.ColumnSpan="2"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 115, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                 Content="Подарено" IsChecked="{Binding IsDonated}" Grid.ColumnSpan="2"></RadioButton>
+                                 Content="Подарено" IsChecked="{Binding IsDonated}" Grid.ColumnSpan="2"/>
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,40,0,0"
-                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Класс" Grid.ColumnSpan="2"></TextBlock>
+                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Класс" Grid.ColumnSpan="2"/>
         <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12"
                               ItemsSource="{Binding AddClassList}"
-                              SelectedItem="{Binding AddClass}" Grid.ColumnSpan="2"></ComboBox>
+                              SelectedItem="{Binding AddClass}" Grid.ColumnSpan="2"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="154,40,0,0"
                                Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Культура"></TextBlock>
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"
-                              ItemsSource="{Binding CultureListView}"
-                              Text="{Binding AddCulture}"
-                              >
-            <ComboBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <DataGrid >
-                            <DataGridComboBoxColumn ItemsSource="{Binding ElementName=NameProperty}"></DataGridComboBoxColumn>
-                        </DataGrid>
-                    </StackPanel>
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-            <!--<ComboBox.Text>
-                <Binding Path="AddCulture">
-                    <Binding.RelativeSource>
-                        <RelativeSource Mode="FindAncestor" AncestorType="{x:Type vm:SeedsViewModel}"></RelativeSource>
-                    </Binding.RelativeSource>
-                </Binding>
-            </ComboBox.Text>-->
-        </ComboBox>
+                              DataContext="{Binding CultureListView}"
+                              ItemsSource="{Binding }"
+                              Text="{Binding AddCulture, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type vm:SeedsViewModel}}}" IsSynchronizedWithCurrentItem="False"/>
          
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
                                Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>

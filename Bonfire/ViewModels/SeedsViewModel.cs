@@ -271,13 +271,14 @@ public class SeedsViewModel : ViewModel
 
     #region Выбор культуры для добавления семян
 
-    public ICollectionView CultureListView => _CultureListView?.View;
+    public ICollectionView CultureListView  => _CultureListView?.View;
     private CollectionViewSource _CultureListView;
+    
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
         if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return;
-        if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+        if (culture.Name != null && !culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
@@ -364,6 +365,8 @@ public class SeedsViewModel : ViewModel
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
         AddCultureList.AddRange(addListCulture.ToListAsync().Result.ToHashSet());
         _CultureListView.Source = AddCultureList;
+        
+        
     }
 
     #endregion
@@ -389,6 +392,7 @@ public class SeedsViewModel : ViewModel
     {
         await LoadSeed();
         LoadListCulture();
+       
     }
     #endregion
 
