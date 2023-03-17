@@ -5,10 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Bonfire.Views"
               xmlns:vm="clr-namespace:Bonfire.ViewModels"
+             xmlns:m="clr-namespace:Bonfire.Models"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
+             d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
              d:DesignHeight="900" d:DesignWidth="1600">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -33,7 +34,7 @@
             <ColumnDefinition Width="Auto" MinWidth="400"/>
         </Grid.ColumnDefinitions>
 
-        <!--<DataGrid DataContext="{Binding SeedsView}"
+        <DataGrid DataContext="{Binding SeedsView}"
                                 ItemsSource="{Binding }"
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
@@ -55,7 +56,7 @@
                 <DataGridTextColumn Header="Остаток, шт" Binding="{Binding AmountSeedsQuantity}" Width="80"/>
 
             </DataGrid.Columns>
-        </DataGrid>-->
+        </DataGrid>
          <!--Кнопки сортировки-->
         <Button Grid.Row="0" Grid.Column="0" Width="40"
                             HorizontalAlignment="Left"
@@ -102,8 +103,8 @@
             <Image Source="/Views/Image/All.jpg"></Image>
 
         </Button>
-        
-        <ComboBox Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
+
+        <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                               Width="300" HorizontalAlignment="Left" Height="30" SelectedItem="{Binding SeedFilter}"
                              ItemsSource="{Binding ListCulture}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>
@@ -116,7 +117,7 @@
         <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="10" Grid.ColumnSpan="3" Margin="0,576,0,0" Grid.RowSpan="3"/>
 
 
-        <TextBlock HorizontalAlignment="Left" Margin="318,10,0,0" Grid.Row="3" Grid.Column="2"
+        <TextBlock HorizontalAlignment="Left" Margin="318,5,0,0" Grid.Row="3" Grid.Column="2"
                                TextWrapping="Wrap" Text="Добавление семян" VerticalAlignment="Top" FontSize="14"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
                                  Content="Куплено" IsChecked="{Binding IsSold}" Grid.ColumnSpan="2"/>
@@ -136,12 +137,14 @@
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"
-                              DataContext="{Binding CultureListView}"
-                              ItemsSource="{Binding }"
-                              Text="{Binding AddCulture, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type vm:SeedsViewModel}}}" IsSynchronizedWithCurrentItem="False"/>
-         
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
-                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>
+                              
+                              ItemsSource="{Binding CultureListView}"
+                              Text="{Binding AddCulture}" IsSynchronizedWithCurrentItem="False">
+            
+        </ComboBox>
+
+         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
+                    Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"  

@@ -272,23 +272,23 @@ public class SeedsViewModel : ViewModel
     #region Выбор культуры для добавления семян
 
     public ICollectionView CultureListView  => _CultureListView?.View;
-    private CollectionViewSource _CultureListView;
+    private readonly CollectionViewSource _CultureListView;
     
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
         if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return;
-        if (culture.Name != null && !culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+        if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
     #region AddCultureList : List<string> - Список культур для добавления семян
 
     /// <summary>Список культур для добавления семян</summary>
-    private List<CultureFromViewModel> _AddCultureList = new();
+    private ObservableCollection<CultureFromViewModel> _AddCultureList = new();
 
     /// <summary>Список культур для добавления семян</summary>
-    public List<CultureFromViewModel> AddCultureList
+    public ObservableCollection<CultureFromViewModel> AddCultureList
     {
         get => _AddCultureList;
         set => Set(ref _AddCultureList, value);
@@ -365,8 +365,8 @@ public class SeedsViewModel : ViewModel
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
         AddCultureList.AddRange(addListCulture.ToListAsync().Result.ToHashSet());
         _CultureListView.Source = AddCultureList;
-        
-        
+        OnPropertyChanged(nameof(CultureListView));
+
     }
 
     #endregion
