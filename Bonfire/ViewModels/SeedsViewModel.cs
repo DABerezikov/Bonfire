@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
+using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Services.Interfaces;
@@ -269,6 +270,38 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
+    #region Выбор класса для добавления семян
+
+    #region AddClassList : ObservableCollection<string> - Список классов семян
+
+    /// <summary>Список классов семян</summary>
+    private ObservableCollection<string> _AddClassList = new(PlantClassList.GetClassList());
+
+    /// <summary>Список классов семян</summary>
+    public ObservableCollection<string> AddClassList
+    {
+        get => _AddClassList;
+        set => Set(ref _AddClassList, value);
+    }
+
+    #endregion
+
+    #region AddClass : string - Выбранный класс
+
+    /// <summary>Выбранный класс</summary>
+    private string _AddClass;
+
+    /// <summary>Выбранный класс</summary>
+    public string AddClass
+    {
+        get => _AddClass;
+        set => Set(ref _AddClass, value);
+    }
+
+    #endregion
+
+    #endregion
+
     #region Выбор культуры для добавления семян
 
     public ICollectionView CultureListView  => _CultureListView?.View;
@@ -370,6 +403,9 @@ public class SeedsViewModel : ViewModel
     }
 
     #endregion
+
+
+
 
     #endregion
 

@@ -137,11 +137,8 @@
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0"
                               Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"
-                              
                               ItemsSource="{Binding CultureListView}"
-                              Text="{Binding AddCulture}" IsSynchronizedWithCurrentItem="False">
-            
-        </ComboBox>
+                              Text="{Binding AddCulture}" IsSynchronizedWithCurrentItem="False"/>
 
          <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
                     Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>
