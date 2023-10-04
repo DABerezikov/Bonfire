@@ -48,6 +48,16 @@ public class SeedsViewModel : ViewModel
         };
         
        _CultureListView.Filter += _CultureListView_Filter;
+       
+       _SortListView = new CollectionViewSource
+        {
+            SortDescriptions =
+            {
+                new SortDescription(nameof(SortFromViewModel.Name), ListSortDirection.Ascending)
+            }
+        };
+        
+       _SortListView.Filter += _SortListView_Filter;
     }
 
    
@@ -126,6 +136,23 @@ public class SeedsViewModel : ViewModel
         get => _ListCulture;
         set => Set(ref _ListCulture, value);
     }
+
+
+    #endregion
+
+    #region ListSort : List<string> - Список сортов
+
+    
+    /// <summary>Список сортов</summary>
+    private List<string> _ListSort = new List<string> { "Выбрать все" };
+
+    /// <summary>Список сортов</summary>
+    public List<string> ListSort
+    {
+        get => _ListSort;
+        set => Set(ref _ListSort, value);
+    } 
+    #endregion
 
 
     #endregion
@@ -348,9 +375,58 @@ public class SeedsViewModel : ViewModel
     #endregion
 
     #endregion
+    
+    #region Выбор сорта для добавления семян
 
+    public ICollectionView SortListView  => _SortListView?.View;
+    private readonly CollectionViewSource _SortListView;
+    
+
+    private void _SortListView_Filter(object sender, FilterEventArgs e)
+    {
+        if (!(e.Item is SortFromViewModel culture) || string.IsNullOrEmpty(AddSort)) return;
+        if (!culture.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+            e.Accepted = false;
+    }
+
+    #region AddSortList : List<string> - Список культур для добавления семян
+
+    /// <summary>Список сортов для добавления семян</summary>
+    private ObservableCollection<SortFromViewModel> _AddSortList = new();
+
+    /// <summary>Список сортов для добавления семян</summary>
+    public ObservableCollection<SortFromViewModel> AddSortList
+    {
+        get => _AddSortList;
+        set => Set(ref _AddSortList, value);
+    }
 
     #endregion
+
+    #region AddSort : string - Выбранный сорт для добавления семян
+
+    /// <summary>Выбранный сорт для добавления семян</summary>
+    private string _AddSort;
+
+    /// <summary>Выбранный сорт для добавления семян</summary>
+    public string AddSort
+    {
+        get => _AddSort;
+        set
+        {
+            if (Set(ref _AddSort, value))
+                SortListView.Refresh();
+        } 
+    }
+
+    #endregion
+    #endregion
+
+
+    
+
+
+    
 
     #region Методы
 
@@ -403,11 +479,36 @@ public class SeedsViewModel : ViewModel
     }
 
     #endregion
+    
+    #region Метод загрузки списка сортов
 
+    private void LoadListSort()
+    {
+        var listSortQuery = _seedsService.Seeds
+            .Select(seeds => seeds.Plant.PlantSort.Name)
+            .OrderBy(s => s);
+        var addListSort = _seedsService.Seeds
+            .Select(seeds => new SortFromViewModel
+            {
+                Id = seeds.Plant.PlantSort.Id,
+                Name = seeds.Plant.PlantSort.Name
+            })
+            .OrderBy(s=>s.Name);
+        ListSort.AddRange(listSortQuery.ToListAsync().Result.ToHashSet());
+        AddSortList.AddRange(addListSort.ToListAsync().Result.ToHashSet());
+        _SortListView.Source = AddSortList;
+        OnPropertyChanged(nameof(SortListView));
 
-
+    }
 
     #endregion
+    
+    #endregion
+
+
+
+
+    
 
     #region Команды
 
@@ -428,7 +529,7 @@ public class SeedsViewModel : ViewModel
     {
         await LoadSeed();
         LoadListCulture();
-       
+        LoadListSort();
     }
     #endregion
 
