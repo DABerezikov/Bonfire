@@ -21,10 +21,10 @@ namespace Bonfire.Services
             _seeds = seeds;
         }
 
-        public async Task<Seed> MakeASeed(string plantName, SeedsInfo seedsInfo)
+        public async Task<Seed> MakeASeed(string plantCultureName, SeedsInfo seedsInfo)
         {
             
-            var plant = await _plants.Items.FirstOrDefaultAsync(p=>p.Name== plantName);
+            var plant = await _plants.Items.FirstOrDefaultAsync(p=>p.PlantCulture.Name == plantCultureName);
             if (plant is null) return null;
             var seed = new Seed
             {

@@ -128,7 +128,7 @@ namespace Bonfire.Data
             _Plants = Enumerable.Range(1, __PlantsCount)
                 .Select(i => new Plant()
                 {
-                    Name = $"Растение {i}",
+                    //Name = $"Растение {i}",
                     PlantCulture = rnd.NextItem((IList<PlantCulture>)_PlantCultures),
                     PlantSort = rnd.NextItem((IList<PlantSort>)_PlantSorts)
 

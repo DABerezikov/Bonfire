@@ -205,6 +205,7 @@ public class SeedsViewModel : ViewModel
         set => Set(ref _AddQuantityPac, value);
     }
     #endregion
+
     #region AddBestBy :DateTime - Срок годности семян
 
 
@@ -730,6 +731,26 @@ public class SeedsViewModel : ViewModel
         OnPropertyChanged(nameof(SeedsView));
     }
 
+    #endregion
+
+
+    #region Command AddOrCorrectSeedCommand - Команда для загрузки данных из репозитория
+
+    /// <summary> Команда для загрузки данных из репозитория </summary>
+    private ICommand _AddOrCorrectSeedCommand;
+
+    /// <summary> Команда для загрузки данных из репозитория </summary>
+    public ICommand AddOrCorrectSeedCommand => _AddOrCorrectSeedCommand
+        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, CanAddOrCorrectSeedCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для загрузки данных из репозитория </summary>
+    private bool CanAddOrCorrectSeedCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
+    private async Task OnAddOrCorrectSeedCommandExecuted()
+    {
+        //_seedsService.MakeASeed(Pl)
+    }
     #endregion
 
 

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BonfireDB.Migrations
 {
     [DbContext(typeof(DbBonfire))]
-    [Migration("20230218091958_Initial")]
+    [Migration("20231004153337_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -25,10 +25,6 @@ namespace BonfireDB.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("PlantCultureId")
                         .HasColumnType("INTEGER");

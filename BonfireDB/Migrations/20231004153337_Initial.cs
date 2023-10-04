@@ -95,8 +95,7 @@ namespace BonfireDB.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     PlantCultureId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlantSortId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false)
+                    PlantSortId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
