@@ -58,6 +58,16 @@ public class SeedsViewModel : ViewModel
         };
         
        _SortListView.Filter += _SortListView_Filter;
+       
+       _ProducerListView = new CollectionViewSource
+        {
+            SortDescriptions =
+            {
+                new SortDescription(nameof(ProducerFromViewModel.Name), ListSortDirection.Ascending)
+            }
+        };
+        
+       _ProducerListView.Filter += _ProducerListView_Filter;
     }
 
    
@@ -153,6 +163,20 @@ public class SeedsViewModel : ViewModel
         set => Set(ref _ListSort, value);
     } 
     #endregion
+    
+    #region ListProducer : List<string> - Список производителей
+
+    
+    /// <summary>Список производителей</summary>
+    private List<string> _ListProducer = new List<string> { "Выбрать все" };
+
+    /// <summary>Список производителей</summary>
+    public List<string> ListProducer
+    {
+        get => _ListProducer;
+        set => Set(ref _ListProducer, value);
+    } 
+    #endregion
 
 
     #endregion
@@ -233,20 +257,6 @@ public class SeedsViewModel : ViewModel
     }
 
     #endregion
-
-    #endregion
-
-    #region AddProducer : string - Выбор поставщика семян
-
-    /// <summary>Выбор поставщика семян</summary>
-    private string _AddProducer;
-
-    /// <summary>Выбор поставщика семян</summary>
-    public string AddProducer
-    {
-        get => _AddProducer;
-        set => Set(ref _AddProducer, value);
-    }
 
     #endregion
 
@@ -420,6 +430,54 @@ public class SeedsViewModel : ViewModel
     }
 
     #endregion
+    
+    #endregion
+    
+    #region Выбор производителя для добавления семян
+
+    public ICollectionView ProducerListView  => _ProducerListView?.View;
+    private readonly CollectionViewSource _ProducerListView;
+    
+
+    private void _ProducerListView_Filter(object sender, FilterEventArgs e)
+    {
+        if (!(e.Item is ProducerFromViewModel culture) || string.IsNullOrEmpty(AddProducer)) return;
+        if (!culture.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
+            e.Accepted = false;
+    }
+
+    #region AddProducerList : List<string> - Список культур для добавления семян
+
+    /// <summary>Список сортов для добавления семян</summary>
+    private ObservableCollection<ProducerFromViewModel> _AddProducerList = new();
+
+    /// <summary>Список сортов для добавления семян</summary>
+    public ObservableCollection<ProducerFromViewModel> AddProducerList
+    {
+        get => _AddProducerList;
+        set => Set(ref _AddProducerList, value);
+    }
+
+    #endregion
+
+    #region AddProducer : string - Выбранный сорт для добавления семян
+
+    /// <summary>Выбранный сорт для добавления семян</summary>
+    private string _AddProducer;
+
+    /// <summary>Выбранный сорт для добавления семян</summary>
+    public string AddProducer
+    {
+        get => _AddProducer;
+        set
+        {
+            if (Set(ref _AddProducer, value))
+                ProducerListView.Refresh();
+        } 
+    }
+
+    #endregion
+
     #endregion
 
 
@@ -463,6 +521,7 @@ public class SeedsViewModel : ViewModel
     {
         var listCultureQuery = _seedsService.Seeds
             .Select(seeds => seeds.Plant.PlantCulture.Name)
+            .Distinct()
             .OrderBy(s => s);
         var addListCulture = _seedsService.Seeds
             .Select(seeds => new CultureFromViewModel
@@ -470,6 +529,7 @@ public class SeedsViewModel : ViewModel
                 Id = seeds.Plant.PlantCulture.Id,
                 Name = seeds.Plant.PlantCulture.Name
             })
+            .Distinct()
             .OrderBy(s=>s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
         AddCultureList.AddRange(addListCulture.ToListAsync().Result.ToHashSet());
@@ -486,6 +546,7 @@ public class SeedsViewModel : ViewModel
     {
         var listSortQuery = _seedsService.Seeds
             .Select(seeds => seeds.Plant.PlantSort.Name)
+            .Distinct()
             .OrderBy(s => s);
         var addListSort = _seedsService.Seeds
             .Select(seeds => new SortFromViewModel
@@ -493,11 +554,37 @@ public class SeedsViewModel : ViewModel
                 Id = seeds.Plant.PlantSort.Id,
                 Name = seeds.Plant.PlantSort.Name
             })
+            .Distinct()
             .OrderBy(s=>s.Name);
         ListSort.AddRange(listSortQuery.ToListAsync().Result.ToHashSet());
         AddSortList.AddRange(addListSort.ToListAsync().Result.ToHashSet());
         _SortListView.Source = AddSortList;
         OnPropertyChanged(nameof(SortListView));
+
+    }
+
+    #endregion
+    
+    #region Метод загрузки списка производителей
+
+    private void LoadListProducer()
+    {
+        var listProducerQuery = _seedsService.Seeds
+            .Select(seeds => seeds.Plant.PlantSort.Producer.Name)
+            .Distinct()
+            .OrderBy(s => s);
+        var addListProducer = _seedsService.Seeds
+            .Select(seeds => new ProducerFromViewModel
+            {
+                Id = seeds.Plant.PlantSort.Producer.Id,
+                Name = seeds.Plant.PlantSort.Producer.Name
+            })
+            .Distinct()
+            .OrderBy(s=>s.Name);
+        ListProducer.AddRange(listProducerQuery.ToListAsync().Result.ToHashSet());
+        AddProducerList.AddRange(addListProducer.ToListAsync().Result.ToHashSet());
+        _ProducerListView.Source = AddProducerList;
+        OnPropertyChanged(nameof(ProducerListView));
 
     }
 
@@ -530,6 +617,7 @@ public class SeedsViewModel : ViewModel
         await LoadSeed();
         LoadListCulture();
         LoadListSort();
+        LoadListProducer();
     }
     #endregion
 
