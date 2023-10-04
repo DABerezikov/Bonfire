@@ -169,12 +169,12 @@
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="160,115,0,0"
                                Width="110" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Кол-во в упаковке"></TextBlock>
         <TextBox Grid.Row="3" Grid.Column="2" Margin="160,145,0,0"
-                             Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Left" 
+                             Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" 
                              Text="{Binding AddQuantityInPac}"></TextBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="300,115,0,0"
                                Width="110" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Кол-во упаковок"></TextBlock>
         <TextBox Grid.Row="3" Grid.Column="2" Margin="300,145,0,0"
-                             Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Left" 
+                             Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" 
                              Text="{Binding AddQuantityPac}"></TextBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="440,115,0,0"
                                Width="100" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Годен до:"></TextBlock>

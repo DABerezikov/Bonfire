@@ -175,8 +175,64 @@ public class SeedsViewModel : ViewModel
     {
         get => _ListProducer;
         set => Set(ref _ListProducer, value);
+    }
+    #endregion
+
+    #region AddQuantityInPac :string - Количество семян в упаковке
+
+
+    /// <summary>Количество семян в упаковке</summary>
+    private string _AddQuantityInPac = string.Empty;
+
+    /// <summary>Количество семян в упаковке</summary>
+    public string AddQuantityInPac
+    {
+        get => _AddQuantityInPac;
+        set => Set(ref _AddQuantityInPac, value);
     } 
     #endregion
+    
+    #region AddQuantityPac :string - Количество упаковок
+
+
+    /// <summary>Количество упаковок</summary>
+    private string _AddQuantityPac = string.Empty;
+
+    /// <summary>Количество упаковок</summary>
+    public string AddQuantityPac
+    {
+        get => _AddQuantityPac;
+        set => Set(ref _AddQuantityPac, value);
+    }
+    #endregion
+    #region AddBestBy :DateTime - Срок годности семян
+
+
+    /// <summary>Срок годности семян</summary>
+    private DateTime _AddBestBy = DateTime.Now + TimeSpan.FromDays(365);
+
+    /// <summary>Срок годности семян</summary>
+    public DateTime AddBestBy
+    {
+        get => _AddBestBy;
+        set => Set(ref _AddBestBy, value);
+    }
+    #endregion
+
+    #region AddOrCorrectSeed :string - Количество упаковок
+
+
+    /// <summary>Количество упаковок</summary>
+    private string _AddOrCorrectSeed = "Добавить";
+
+    /// <summary>Количество упаковок</summary>
+    public string AddOrCorrectSeed
+    {
+        get => _AddOrCorrectSeed;
+        set => Set(ref _AddOrCorrectSeed, value);
+    }
+    #endregion
+
 
 
     #endregion
