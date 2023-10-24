@@ -646,13 +646,50 @@ public class SeedsViewModel : ViewModel
     }
 
     #endregion
-    
+
+    #region Метод для поиска или создания растения
+
+    private Plant GetOrCreatePlant()
+    {
+       
+        if (ListSort.Contains(AddSort) && ListCulture.Contains(AddCulture) && ListProducer.Contains(AddProducer))
+        {
+            var seed = _seedsService.Seeds
+                .Find(s =>
+                    s.Plant.PlantCulture.Name == AddCulture
+                    && s.Plant.PlantSort.Name == AddSort
+                    && s.Plant.PlantSort.Producer.Name == AddProducer);
+                    
+            return seed.Plant;
+        }
+
+        var plant = new Plant
+        {
+            PlantCulture = new PlantCulture
+            {
+                Name = AddCulture
+            },
+            PlantSort = new PlantSort
+            {
+                Name = AddSort,
+                Producer = new Producer
+                {
+                    Name = AddProducer
+                }
+            }
+        };
+
+        return plant;
+    }
+
+    #endregion
+
     #endregion
 
 
 
 
-    
+
 
     #region Команды
 
@@ -734,22 +771,24 @@ public class SeedsViewModel : ViewModel
     #endregion
 
 
-    #region Command AddOrCorrectSeedCommand - Команда для загрузки данных из репозитория
+    #region Command AddOrCorrectSeedCommand - Команда для создания или редактирования семян
 
-    /// <summary> Команда для загрузки данных из репозитория </summary>
+    /// <summary> Команда для создания или редактирования семян </summary>
     private ICommand _AddOrCorrectSeedCommand;
 
-    /// <summary> Команда для загрузки данных из репозитория </summary>
+    /// <summary> Команда для создания или редактирования семян </summary>
     public ICommand AddOrCorrectSeedCommand => _AddOrCorrectSeedCommand
         ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, CanAddOrCorrectSeedCommandExecute);
 
-    /// <summary> Проверка возможности выполнения - Команда для загрузки данных из репозитория </summary>
+    /// <summary> Проверка возможности выполнения - Команда для создания или редактирования семян </summary>
     private bool CanAddOrCorrectSeedCommandExecute() => true;
 
-    /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
+    /// <summary> Логика выполнения - Команда для создания или редактирования семян </summary>
     private async Task OnAddOrCorrectSeedCommandExecuted()
     {
-        //_seedsService.MakeASeed(Pl)
+        var plant = GetOrCreatePlant();
+        var seedsInfo = new SeedsInfo();
+        _seedsService.MakeASeed(plant, seedsInfo);
     }
     #endregion
 
