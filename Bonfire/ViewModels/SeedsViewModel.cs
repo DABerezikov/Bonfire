@@ -565,7 +565,14 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
             ;
-        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
+        Seeds = new ObservableCollection<Seed>(
+            await _seedsService.Seeds
+                                .Include(s=>s.Plant.PlantCulture)
+                                .Include(s => s.Plant.PlantSort)
+                                .Include(s => s.Plant.PlantSort.Producer)
+                                .ToArrayAsync()
+                                
+        );
         _SeedsView.Source = await seedsQuery.ToArrayAsync();
         OnPropertyChanged(nameof(SeedsView));
     }
@@ -659,15 +666,17 @@ public class SeedsViewModel : ViewModel
                     s.Plant.PlantCulture.Name == AddCulture
                     && s.Plant.PlantSort.Name == AddSort
                     && s.Plant.PlantSort.Producer.Name == AddProducer);
-                    
-            return seed.Plant;
+            if (seed != null)         
+                return seed.Plant;
         }
 
         var plant = new Plant
         {
             PlantCulture = new PlantCulture
             {
-                Name = AddCulture
+                Name = AddCulture,
+                Class = AddClass
+                
             },
             PlantSort = new PlantSort
             {
@@ -698,21 +707,26 @@ public class SeedsViewModel : ViewModel
                 .Find(s =>
                     s.SeedsInfo.ExpirationDate == AddBestBy
                     && s.Plant.PlantSort.Producer.Name == AddProducer);
-            if (AddSize != "Граммы")
+            if (seed != null)
             {
-                seed.SeedsInfo.AmountSeeds += quantity*quantityPac;
+                if (AddSize != "Граммы")
+                {
+                    seed.SeedsInfo.AmountSeeds += quantity*quantityPac;
                
-            }
-            else
-            {
+                }
+                else
+                {
                 
-                seed.SeedsInfo.AmountSeedsWeight += quantity;
-            }
-            seed.SeedsInfo.PurchaseDate = DateTime.Now;
-            seed.SeedsInfo.Note = AddNote;
-            seed.SeedsInfo.CostPack = costPack;
+                    seed.SeedsInfo.AmountSeedsWeight += quantity;
+                }
+                seed.SeedsInfo.PurchaseDate = DateTime.Now;
+                seed.SeedsInfo.Note = AddNote;
+                seed.SeedsInfo.CostPack = costPack;
 
-            return (seed,null);
+                return (seed,null);
+
+            }
+            
         }
 
         var seedInfo = new SeedsInfo

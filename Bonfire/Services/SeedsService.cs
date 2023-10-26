@@ -1,4 +1,5 @@
-﻿using Bonfire.Services.Interfaces;
+﻿using System;
+using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using System.Collections.Generic;
@@ -23,6 +24,8 @@ namespace Bonfire.Services
 
         public async Task<Seed> MakeASeed(Plant plant, SeedsInfo seedsInfo)
         {
+            if (plant.Id==0)
+                plant = await _plants.AddAsync(plant).WaitAsync(TimeSpan.FromSeconds(1));
             var seed = new Seed
             {
                 Plant = plant,
