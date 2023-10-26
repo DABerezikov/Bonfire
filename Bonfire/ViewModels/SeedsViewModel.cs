@@ -654,7 +654,7 @@ public class SeedsViewModel : ViewModel
        
         if (ListSort.Contains(AddSort) && ListCulture.Contains(AddCulture) && ListProducer.Contains(AddProducer))
         {
-            var seed = _seedsService.Seeds
+            var seed = Seeds
                 .Find(s =>
                     s.Plant.PlantCulture.Name == AddCulture
                     && s.Plant.PlantSort.Name == AddSort
@@ -686,7 +686,7 @@ public class SeedsViewModel : ViewModel
 
     #region Метод для поиска или создания информации о семенах
 
-    private SeedsInfo GetOrCreateSeedInfo()
+    private (Seed?, SeedsInfo?) GetOrCreateSeedInfo()
     {
         int.TryParse(AddQuantityInPac, out var quantity);
         int.TryParse(AddQuantityInPac, out var quantityPac);
@@ -694,7 +694,7 @@ public class SeedsViewModel : ViewModel
 
         if (ListProducer.Contains(AddProducer))
         {
-            var seed = _seedsService.Seeds
+            var seed = Seeds
                 .Find(s =>
                     s.SeedsInfo.ExpirationDate == AddBestBy
                     && s.Plant.PlantSort.Producer.Name == AddProducer);
@@ -712,7 +712,7 @@ public class SeedsViewModel : ViewModel
             seed.SeedsInfo.Note = AddNote;
             seed.SeedsInfo.CostPack = costPack;
 
-            return seed.SeedsInfo;
+            return (seed,null);
         }
 
         var seedInfo = new SeedsInfo
@@ -735,7 +735,7 @@ public class SeedsViewModel : ViewModel
             seedInfo.AmountSeedsWeight = quantity;
         }
 
-        return seedInfo;
+        return (null,seedInfo);
     }
 
     #endregion
@@ -861,7 +861,9 @@ public class SeedsViewModel : ViewModel
     {
         var plant = GetOrCreatePlant();
         var seedsInfo = GetOrCreateSeedInfo();
-        await _seedsService.MakeASeed(plant, seedsInfo).ConfigureAwait(false);
+        if (seedsInfo.Item1 == null)
+            await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
+        else await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
         await LoadSeed().ConfigureAwait(false);
     }
     #endregion

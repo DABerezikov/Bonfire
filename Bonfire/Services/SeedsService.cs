@@ -32,5 +32,13 @@ namespace Bonfire.Services
 
         }
 
+        public async Task<Seed> UpdateSeed(Seed seed)
+        {
+            
+           await _seeds.UpdateAsync(seed);
+           return seed;
+
+        }
+
     }
 }

@@ -12,6 +12,7 @@ namespace Bonfire.Services.Interfaces
         IQueryable<Seed> Seeds { get; }
 
         Task<Seed> MakeASeed(Plant plant, SeedsInfo seedsInfo);
+        Task<Seed> UpdateSeed(Seed seed);
 
     }
 }
