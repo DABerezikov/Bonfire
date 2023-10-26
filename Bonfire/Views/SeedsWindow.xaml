@@ -176,13 +176,18 @@
         <TextBox Grid.Row="3" Grid.Column="2" Margin="300,145,0,0"
                              Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" 
                              Text="{Binding AddQuantityPac}"></TextBox>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="440,115,0,0"
+         <TextBlock Grid.Row="3" Grid.Column="2" Margin="440,115,0,0"
+                    Width="110" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Стоимость семян"></TextBlock>
+         <TextBox Grid.Row="3" Grid.Column="2" Margin="440,145,0,0"
+                  Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" 
+                  Text="{Binding AddCostPack}"></TextBox>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="570,115,0,0"
                                Width="100" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Годен до:"></TextBlock>
-        <DatePicker Grid.Row="3" Grid.Column="2" Margin="440,145,0,0"
+        <DatePicker Grid.Row="3" Grid.Column="2" Margin="570,145,0,0"
                              Width="100" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" SelectedDateFormat="Short" 
                              SelectedDate="{Binding AddBestBy}"></DatePicker>
-        <Button Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Width="100" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
-                            Content="{Binding AddOrCorrectSeed}" Command="{Binding AddOrCorrectSeedCommand}"></Button>
+        <Button Grid.Row="3" Grid.Column="2" Margin="794,165,0,0" Width="100" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
+                            Content="Добавить" Command="{Binding AddOrCorrectSeedCommand}" RenderTransformOrigin="0.505,0.5"></Button>
 
 
 

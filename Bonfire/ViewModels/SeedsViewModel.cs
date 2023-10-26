@@ -196,7 +196,7 @@ public class SeedsViewModel : ViewModel
 
 
     /// <summary>Количество упаковок</summary>
-    private string _AddQuantityPac = string.Empty;
+    private string _AddQuantityPac = "1";
 
     /// <summary>Количество упаковок</summary>
     public string AddQuantityPac
@@ -219,18 +219,18 @@ public class SeedsViewModel : ViewModel
         set => Set(ref _AddBestBy, value);
     }
     #endregion
+    
+    #region AddCostPack :string - Стоимость упаковки семян
 
-    #region AddOrCorrectSeed :string - Количество упаковок
 
+    /// <summary>Стоимость упаковки семян</summary>
+    private string _AddCostPack = string.Empty;
 
-    /// <summary>Количество упаковок</summary>
-    private string _AddOrCorrectSeed = "Добавить";
-
-    /// <summary>Количество упаковок</summary>
-    public string AddOrCorrectSeed
+    /// <summary>Стоимость упаковки семян</summary>
+    public string AddCostPack
     {
-        get => _AddOrCorrectSeed;
-        set => Set(ref _AddOrCorrectSeed, value);
+        get => _AddCostPack;
+        set => Set(ref _AddCostPack, value);
     }
     #endregion
 
@@ -647,7 +647,7 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Метод для поиска или создания растения
+    #region Метод для поиска или создания информации о семенах
 
     private Plant GetOrCreatePlant()
     {
@@ -680,6 +680,79 @@ public class SeedsViewModel : ViewModel
         };
 
         return plant;
+    }
+
+    #endregion
+
+    #region Метод для поиска или создания информации о семенах
+
+    private SeedsInfo GetOrCreateSeedInfo()
+    {
+        int.TryParse(AddQuantityInPac, out var quantity);
+        int.TryParse(AddQuantityInPac, out var quantityPac);
+        decimal.TryParse(AddQuantityInPac, out var costPack);
+
+        if (ListProducer.Contains(AddProducer))
+        {
+            var seed = _seedsService.Seeds
+                .Find(s =>
+                    s.SeedsInfo.ExpirationDate == AddBestBy
+                    && s.Plant.PlantSort.Producer.Name == AddProducer);
+            if (AddSize != "Граммы")
+            {
+                seed.SeedsInfo.AmountSeeds += quantity*quantityPac;
+               
+            }
+            else
+            {
+                
+                seed.SeedsInfo.AmountSeedsWeight += quantity;
+            }
+            seed.SeedsInfo.PurchaseDate = DateTime.Now;
+            seed.SeedsInfo.Note = AddNote;
+            seed.SeedsInfo.CostPack = costPack;
+
+            return seed.SeedsInfo;
+        }
+
+        var seedInfo = new SeedsInfo
+        {
+            ExpirationDate = AddBestBy,
+            Note = AddNote,
+            PurchaseDate = DateTime.Now,
+            SeedSource = SeedSource,
+            CostPack = costPack
+        };
+        
+        if (AddSize!="Граммы")
+        {
+            seedInfo.QuantityPack = quantity;
+            seedInfo.AmountSeeds = quantity;
+        }
+        else
+        {
+            seedInfo.WeightPack = quantity;
+            seedInfo.AmountSeedsWeight = quantity;
+        }
+
+        return seedInfo;
+    }
+
+    #endregion
+
+    #region Метод для поиска или создания информации о семенах
+
+    private bool Verification()
+    {
+        var result = AddBestBy!=default
+                     && AddClass!= string.Empty
+                     && AddCostPack!= string.Empty
+                     && AddCulture!= string.Empty
+                     && AddProducer!=string.Empty
+                     && AddQuantityInPac!=string.Empty
+                     && AddSort!=string.Empty;
+
+        return result;
     }
 
     #endregion
@@ -781,14 +854,15 @@ public class SeedsViewModel : ViewModel
         ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, CanAddOrCorrectSeedCommandExecute);
 
     /// <summary> Проверка возможности выполнения - Команда для создания или редактирования семян </summary>
-    private bool CanAddOrCorrectSeedCommandExecute() => true;
+    private bool CanAddOrCorrectSeedCommandExecute() => Verification();
 
     /// <summary> Логика выполнения - Команда для создания или редактирования семян </summary>
     private async Task OnAddOrCorrectSeedCommandExecuted()
     {
         var plant = GetOrCreatePlant();
-        var seedsInfo = new SeedsInfo();
-        _seedsService.MakeASeed(plant, seedsInfo);
+        var seedsInfo = GetOrCreateSeedInfo();
+        await _seedsService.MakeASeed(plant, seedsInfo).ConfigureAwait(false);
+        await LoadSeed().ConfigureAwait(false);
     }
     #endregion
 
