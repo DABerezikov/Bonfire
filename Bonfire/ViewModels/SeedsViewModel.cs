@@ -565,14 +565,7 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
             ;
-        Seeds = new ObservableCollection<Seed>(
-            await _seedsService.Seeds
-                                .Include(s=>s.Plant.PlantCulture)
-                                .Include(s => s.Plant.PlantSort)
-                                .Include(s => s.Plant.PlantSort.Producer)
-                                .ToArrayAsync()
-                                
-        );
+        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
         _SeedsView.Source = await seedsQuery.ToArrayAsync();
         OnPropertyChanged(nameof(SeedsView));
     }
