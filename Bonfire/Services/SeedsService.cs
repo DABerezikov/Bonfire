@@ -31,6 +31,7 @@ namespace Bonfire.Services
                 Plant = plant,
                 SeedsInfo = seedsInfo
             };
+            seed.SeedsInfo.Seed = seed;
             return await _seeds.AddAsync(seed);
 
         }
