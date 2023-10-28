@@ -881,9 +881,8 @@ public class SeedsViewModel : ViewModel
         else
         {
             await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
-            UpdateCollectionViewSource();
         }
-        OnPropertyChanged(nameof(SeedsView));
+        UpdateCollectionViewSource();
         //await LoadSeed().ConfigureAwait(false);
     }
 
@@ -904,6 +903,7 @@ public class SeedsViewModel : ViewModel
             ;
 
         _SeedsView.Source = newCollection.ToArray();
+        OnPropertyChanged(nameof(SeedsView));
     }
 
     private void UpdateCollectionSeedsViewModel(Seed newSeed)
