@@ -6,9 +6,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Xml.Linq;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
+using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
@@ -451,8 +453,8 @@ public class SeedsViewModel : ViewModel
 
     private void _SortListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SortFromViewModel culture) || string.IsNullOrEmpty(AddSort)) return;
-        if (!culture.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+        if (!(e.Item is SortFromViewModel sort) || string.IsNullOrEmpty(AddSort)) return;
+        if (!sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
@@ -498,8 +500,8 @@ public class SeedsViewModel : ViewModel
 
     private void _ProducerListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is ProducerFromViewModel culture) || string.IsNullOrEmpty(AddProducer)) return;
-        if (!culture.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
+        if (!(e.Item is ProducerFromViewModel producer) || string.IsNullOrEmpty(AddProducer)) return;
+        if (!producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
@@ -588,8 +590,8 @@ public class SeedsViewModel : ViewModel
             })
             .Distinct()
             .OrderBy(s=>s.Name);
-        ListCulture.AddRange(listCultureQuery.ToListAsync().Result.ToHashSet());
-        AddCultureList.AddRange(addListCulture.ToListAsync().Result.ToHashSet());
+        ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
+        AddCultureList.AddRange(addListCulture.ToListAsync().Result);
         _CultureListView.Source = AddCultureList;
         OnPropertyChanged(nameof(CultureListView));
 
@@ -698,8 +700,10 @@ public class SeedsViewModel : ViewModel
         {
             var seed = Seeds
                 .Find(s =>
-                    s.SeedsInfo.ExpirationDate == AddBestBy
-                    && s.Plant.PlantSort.Producer.Name == AddProducer);
+                    s.SeedsInfo.ExpirationDate.Year == AddBestBy.Year
+                    && s.Plant.PlantSort.Producer.Name == AddProducer
+                    && s.Plant.PlantCulture.Name== AddCulture
+                    && s.Plant.PlantSort.Name== AddSort);
             if (seed != null)
             {
                 if (AddSize != "Граммы")
@@ -869,10 +873,68 @@ public class SeedsViewModel : ViewModel
         var plant = GetOrCreatePlant();
         var seedsInfo = GetOrCreateSeedInfo();
         if (seedsInfo.Item1 == null)
-            await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
-        else await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
-        await LoadSeed().ConfigureAwait(false);
+        {
+            var newSeed = await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
+
+            UpdateCollectionSeedsViewModel(newSeed);
+        }
+        else
+        {
+            await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
+            UpdateCollectionViewSource();
+        }
+        OnPropertyChanged(nameof(SeedsView));
+        //await LoadSeed().ConfigureAwait(false);
     }
+
+    private void UpdateCollectionViewSource()
+    {
+        var newCollection = Seeds.Select(seeds => new SeedsFromViewModel
+            {
+                Id = seeds.Id,
+                Culture = seeds.Plant.PlantCulture.Name,
+                Sort = seeds.Plant.PlantSort.Name,
+                Producer = seeds.Plant.PlantSort.Producer.Name,
+                ExpirationDate = seeds.SeedsInfo.ExpirationDate,
+                QuantityPack = seeds.SeedsInfo.QuantityPack,
+                WeightPack = seeds.SeedsInfo.WeightPack,
+                AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
+                AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+            })
+            ;
+
+        _SeedsView.Source = newCollection.ToArray();
+    }
+
+    private void UpdateCollectionSeedsViewModel(Seed newSeed)
+    {
+        Seeds.Add(newSeed);
+
+        AddCultureList.Add(new CultureFromViewModel
+        {
+            Id = newSeed.Plant.PlantCulture.Id,
+            Name = newSeed.Plant.PlantCulture.Name
+        });
+
+        AddProducerList.Add(new ProducerFromViewModel
+        {
+            Id = newSeed.Plant.PlantSort.Producer.Id,
+            Name = newSeed.Plant.PlantSort.Producer.Name
+        });
+
+        AddSortList.Add(new SortFromViewModel
+        {
+            Id = newSeed.Plant.PlantSort.Id,
+            Name = newSeed.Plant.PlantSort.Name
+        });
+
+        ListCulture.Add(newSeed.Plant.PlantCulture.Name);
+
+        ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
+
+        ListSort.Add(newSeed.Plant.PlantSort.Name);
+    }
+
     #endregion
 
 
