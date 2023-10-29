@@ -39,12 +39,12 @@ namespace Bonfire.Data
                 return;
             }
 
-            await InitializePlantCulture();
-            await InitializeProducers();
-            await InitializePlantSort();
-            await InitializePlant();
-            await InitializeSeedsInfo();
-            await InitializeSeeds();
+            //await InitializePlantCulture();
+            //await InitializeProducers();
+            //await InitializePlantSort();
+            //await InitializePlant();
+            //await InitializeSeedsInfo();
+            //await InitializeSeeds();
             _Logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
         }
 

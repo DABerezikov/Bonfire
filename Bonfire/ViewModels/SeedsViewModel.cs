@@ -782,7 +782,7 @@ public class SeedsViewModel : ViewModel
 
     private void ClearFieldSeedView()
     {
-        AddBestBy = DateTime.Now;
+        AddBestBy = DateTime.Now + TimeSpan.FromDays(366);
         AddClass = string.Empty;
         AddCostPack = string.Empty;
         AddCulture = string.Empty;
@@ -790,11 +790,67 @@ public class SeedsViewModel : ViewModel
         AddQuantityInPac = string.Empty;
         AddQuantityPac = "1";
         AddSort = string.Empty;
-        SeedSource = "Куплено";
+        SeedSource = string.Empty;
+        IsSold = true;
 
 
     }
 
+    #endregion
+
+    #region Метод для обновления коллекции семян
+
+    private void UpdateCollectionViewSource()
+    {
+        var newCollection = Seeds.Select(seeds => new SeedsFromViewModel
+        {
+            Id = seeds.Id,
+            Culture = seeds.Plant.PlantCulture.Name,
+            Sort = seeds.Plant.PlantSort.Name,
+            Producer = seeds.Plant.PlantSort.Producer.Name,
+            ExpirationDate = seeds.SeedsInfo.ExpirationDate,
+            QuantityPack = seeds.SeedsInfo.QuantityPack,
+            WeightPack = seeds.SeedsInfo.WeightPack,
+            AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
+            AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+        });
+
+        _SeedsView.Source = newCollection.ToArray();
+
+        OnPropertyChanged(nameof(SeedsView));
+    }
+
+    #endregion
+
+    #region Метод для обновления коллекций SeedsViewModel
+    private void UpdateCollectionSeedsViewModel(Seed newSeed)
+    {
+        Seeds.Add(newSeed);
+
+        AddCultureList.Add(new CultureFromViewModel
+        {
+            Id = newSeed.Plant.PlantCulture.Id,
+            Name = newSeed.Plant.PlantCulture.Name
+        });
+
+        AddProducerList.Add(new ProducerFromViewModel
+        {
+            Id = newSeed.Plant.PlantSort.Producer.Id,
+            Name = newSeed.Plant.PlantSort.Producer.Name
+        });
+
+        AddSortList.Add(new SortFromViewModel
+        {
+            Id = newSeed.Plant.PlantSort.Id,
+            Name = newSeed.Plant.PlantSort.Name
+        });
+
+        ListCulture.Add(newSeed.Plant.PlantCulture.Name);
+
+        ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
+
+        ListSort.Add(newSeed.Plant.PlantSort.Name);
+    } 
     #endregion
 
     #endregion
@@ -919,54 +975,7 @@ public class SeedsViewModel : ViewModel
         //await LoadSeed().ConfigureAwait(false);
     }
 
-    private void UpdateCollectionViewSource()
-    {
-        var newCollection = Seeds.Select(seeds => new SeedsFromViewModel
-            {
-                Id = seeds.Id,
-                Culture = seeds.Plant.PlantCulture.Name,
-                Sort = seeds.Plant.PlantSort.Name,
-                Producer = seeds.Plant.PlantSort.Producer.Name,
-                ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                QuantityPack = seeds.SeedsInfo.QuantityPack,
-                WeightPack = seeds.SeedsInfo.WeightPack,
-                AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-            });
-
-        _SeedsView.Source = newCollection.ToArray();
-        
-        OnPropertyChanged(nameof(SeedsView));
-    }
-
-    private void UpdateCollectionSeedsViewModel(Seed newSeed)
-    {
-        Seeds.Add(newSeed);
-
-        AddCultureList.Add(new CultureFromViewModel
-        {
-            Id = newSeed.Plant.PlantCulture.Id,
-            Name = newSeed.Plant.PlantCulture.Name
-        });
-
-        AddProducerList.Add(new ProducerFromViewModel
-        {
-            Id = newSeed.Plant.PlantSort.Producer.Id,
-            Name = newSeed.Plant.PlantSort.Producer.Name
-        });
-
-        AddSortList.Add(new SortFromViewModel
-        {
-            Id = newSeed.Plant.PlantSort.Id,
-            Name = newSeed.Plant.PlantSort.Name
-        });
-
-        ListCulture.Add(newSeed.Plant.PlantCulture.Name);
-
-        ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
-
-        ListSort.Add(newSeed.Plant.PlantSort.Name);
-    }
+    
 
     #endregion
 
