@@ -413,7 +413,8 @@ public class SeedsViewModel : ViewModel
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return;
+        if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return ;
+        
         if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
@@ -759,7 +760,7 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Метод для поиска или создания информации о семенах
+    #region Метод для проверки заполнения полей
 
     private bool Verification()
     {
@@ -773,6 +774,25 @@ public class SeedsViewModel : ViewModel
                      && SeedSource != string.Empty;
 
         return result;
+    }
+
+    #endregion
+
+    #region Метод для очистки полей
+
+    private void ClearFieldSeedView()
+    {
+        AddBestBy = DateTime.Now;
+        AddClass = string.Empty;
+        AddCostPack = string.Empty;
+        AddCulture = string.Empty;
+        AddProducer = string.Empty;
+        AddQuantityInPac = string.Empty;
+        AddQuantityPac = "1";
+        AddSort = string.Empty;
+        SeedSource = "Куплено";
+
+
     }
 
     #endregion
@@ -894,6 +914,7 @@ public class SeedsViewModel : ViewModel
                 await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
                 break;
         }
+        ClearFieldSeedView();
         UpdateCollectionViewSource();
         //await LoadSeed().ConfigureAwait(false);
     }
@@ -911,10 +932,10 @@ public class SeedsViewModel : ViewModel
                 WeightPack = seeds.SeedsInfo.WeightPack,
                 AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                 AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-            })
-            ;
+            });
 
         _SeedsView.Source = newCollection.ToArray();
+        
         OnPropertyChanged(nameof(SeedsView));
     }
 
