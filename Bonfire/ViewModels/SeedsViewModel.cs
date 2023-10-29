@@ -40,6 +40,7 @@ public class SeedsViewModel : ViewModel
 
         };
         _SeedsView.Filter += _SeedsViewSource_Filter;
+         
 
         _CultureListView = new CollectionViewSource
         {
@@ -72,7 +73,12 @@ public class SeedsViewModel : ViewModel
        _ProducerListView.Filter += _ProducerListView_Filter;
     }
 
-   
+    private void View_CurrentChanged(object? sender, EventArgs e)
+    {
+        SelectedItem = Seeds[_SeedsView.View.CurrentPosition] ;
+    }
+
+
 
 
     #region Свойства
@@ -123,13 +129,14 @@ public class SeedsViewModel : ViewModel
     }
     #endregion
 
-    #region SelectedItem : SeedsFromViewModel - Выбранный объект
+    
+    #region SelectedItem : Seed - Выбранный объект
 
     /// <summary>Выбранный объект</summary>
-    private SeedsFromViewModel _SelectedItem;
+    private Seed _SelectedItem;
 
     /// <summary>Выбранный объект</summary>
-    public SeedsFromViewModel SelectedItem
+    public Seed SelectedItem
     {
         get => _SelectedItem;
         set => Set(ref _SelectedItem, value);
@@ -569,6 +576,7 @@ public class SeedsViewModel : ViewModel
             ;
         Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
         _SeedsView.Source = await seedsQuery.ToArrayAsync();
+        _SeedsView.View.CurrentChanged += View_CurrentChanged;
         OnPropertyChanged(nameof(SeedsView));
     }
 
