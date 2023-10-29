@@ -761,7 +761,8 @@ public class SeedsViewModel : ViewModel
                      && AddCulture!= string.Empty
                      && AddProducer!=string.Empty
                      && AddQuantityInPac!=string.Empty
-                     && AddSort!=string.Empty;
+                     && AddSort!=string.Empty
+                     && SeedSource != string.Empty;
 
         return result;
     }
@@ -872,15 +873,18 @@ public class SeedsViewModel : ViewModel
     {
         var plant = GetOrCreatePlant();
         var seedsInfo = GetOrCreateSeedInfo();
-        if (seedsInfo.Item1 == null)
+        switch (seedsInfo.Item1)
         {
-            var newSeed = await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
+            case null:
+            {
+                var newSeed = await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
 
-            UpdateCollectionSeedsViewModel(newSeed);
-        }
-        else
-        {
-            await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
+                UpdateCollectionSeedsViewModel(newSeed);
+                break;
+            }
+            default:
+                await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
+                break;
         }
         UpdateCollectionViewSource();
         //await LoadSeed().ConfigureAwait(false);
