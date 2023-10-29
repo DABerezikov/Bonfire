@@ -56,7 +56,7 @@ namespace Bonfire.Data
             var timer = Stopwatch.StartNew();
             var rnd = new Random();
             _Logger.LogInformation("Инициализация культур...");
-            var ClassList = new[] { "Овощи", "Фрукты", "Ягоды", "Зелень", "Цветы"};
+            var ClassList = PlantClassList.GetClassList().ToArray();
             _PlantCultures = Enumerable.Range(1, __PlantCulturesCount)
                 .Select(i => new PlantCulture()
                 {

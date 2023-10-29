@@ -13,6 +13,7 @@ public static class RepositoryRegister
         .AddTransient<IRepository<Producer>, DbRepository<Producer>>()
         .AddTransient<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
         .AddTransient<IRepository<Seed>, SeedsRepository>()
+        
         ;
 
 }

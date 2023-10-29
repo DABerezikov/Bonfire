@@ -16,6 +16,7 @@
         <Setter Property="VerticalGridLinesBrush" Value="DarkGray"/>
         <Setter Property="AlternatingRowBackground" Value="AliceBlue"/>
         <Setter Property="HeadersVisibility" Value="Column"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
     </Style>
     
     

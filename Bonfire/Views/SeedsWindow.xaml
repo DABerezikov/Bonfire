@@ -41,10 +41,11 @@
                               Grid.Row="1"
                               Margin="5,5,0,0"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                              SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type vm:SeedsViewModel}}}" Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                             
+                              Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True">
-            
+
             <DataGrid.Columns >
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
@@ -57,136 +58,119 @@
 
             </DataGrid.Columns>
         </DataGrid>
-         <!--Кнопки сортировки-->
-        <Button Grid.Row="0" Grid.Column="0" Width="40"
-                            HorizontalAlignment="Left"
+        <!--Кнопки сортировки-->
+        <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource SeedsChoiceButtonStyle}"
+                            
                             Margin="20,0,0,0" ToolTip="Овощи"
                             Grid.ColumnSpan="2"
                             Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Овощи" >
-           
-                <Image Source="/Views/Image/Vegetables 7.jpg"></Image>
+
+            <Image Source="/Views/Image/Vegetables 7.jpg" />
         </Button>
-        <Button Grid.Row="0" Grid.Column="1" Width="40"
-                            HorizontalAlignment="Left"
+        <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource SeedsChoiceButtonStyle}"
                             Margin="22,0,0,0"
                             ToolTip="Фрукты"
                             Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Фрукты">
-            <Image Source="/Views/Image/Fruit 1.jpg" ></Image>
+            <Image Source="/Views/Image/Fruit 1.jpg" />
         </Button>
-        <Button Grid.Row="0" Grid.Column="1" Width="40"
-                            HorizontalAlignment="Left"
+        <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource SeedsChoiceButtonStyle}"
                             Margin="82,0,0,0"
                             ToolTip="Ягоды"
                             Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Ягоды" Grid.ColumnSpan="2">
-            <Image Source="/Views/Image/Berry 2.jpg"></Image>
+            <Image Source="/Views/Image/Berry 2.jpg" />
         </Button>
-        <Button Grid.Row="0" Grid.Column="2" Width="40"
-                            HorizontalAlignment="Left"
+        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SeedsChoiceButtonStyle}"
                             Margin="30,0,0,0"
                             ToolTip="Зелень"
                             Command="{Binding SeedsChoiceClassCommand}"  CommandParameter="Зелень">
-            <Image  Source="/Views/Image/Herb 2.jpg"></Image>
+            <Image  Source="/Views/Image/Herb 2.jpg" />
         </Button>
-        <Button Grid.Row="0" Grid.Column="2" Width="40"
-                            HorizontalAlignment="Left"
+        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SeedsChoiceButtonStyle}"
                             Margin="90,0,0,0"
                             ToolTip="Цветы"
                             Command="{Binding SeedsChoiceClassCommand}" CommandParameter="Цветы">
-            <Image Source="/Views/Image/Flower 4.jpg" ></Image>
+            <Image Source="/Views/Image/Flower 4.jpg" />
         </Button>
-        <Button Grid.Row="0" Grid.Column="2" Width="40"
-                            HorizontalAlignment="Left"
+        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SeedsChoiceButtonStyle}"
                             Margin="150,0,0,0"
                             ToolTip="Выбрать все"
                             Command="{Binding SeedsChoiceClassCommand}"
                             CommandParameter="Выбрать все">
-            <Image Source="/Views/Image/All.jpg"></Image>
+            <Image Source="/Views/Image/All.jpg" />
 
         </Button>
 
-        <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                              Width="300" HorizontalAlignment="Left" Height="30" SelectedItem="{Binding SeedFilter}"
-                             ItemsSource="{Binding ListCulture}" IsEditable="True" StaysOpenOnEdit="True"></ComboBox>
-        
-        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True"></CheckBox>
-        <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" HorizontalAlignment="Left"
-                   Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
+        <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5" Style="{StaticResource SeedsChoiceComboBoxStyle}"
+                   SelectedItem="{Binding SeedFilter}" ItemsSource="{Binding ListCulture}"
+                   IsEditable="True" />
 
-        <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="0,0,10,10" Grid.ColumnSpan="3"/>
-        <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="1" CornerRadius="10" Grid.ColumnSpan="3" Margin="0,576,0,0" Grid.RowSpan="3"/>
+        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True" />
+        <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                    Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
+
+        <Border Grid.Row="1" Grid.Column="0" CornerRadius="0,0,10,10" Style="{StaticResource SeedsBorderStyle}"/>
+        <Border Grid.Row="1" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
+                Margin="0,576,0,0" Grid.RowSpan="3"/>
 
 
-        <TextBlock HorizontalAlignment="Left" Margin="318,5,0,0" Grid.Row="3" Grid.Column="2"
-                               TextWrapping="Wrap" Text="Добавление семян" VerticalAlignment="Top" FontSize="14"/>
-        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                 Content="Куплено" IsChecked="{Binding IsSold}" Grid.ColumnSpan="2"/>
-        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                 Content="Собрано" IsChecked="{Binding IsCollected}" Grid.ColumnSpan="2"/>
-        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 115, 0, 0" Width="80" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                 Content="Подарено" IsChecked="{Binding IsDonated}" Grid.ColumnSpan="2"/>
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,40,0,0"
-                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Класс" Grid.ColumnSpan="2"/>
-        <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,70,0,0"
-                              Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12"
-                              ItemsSource="{Binding AddClassList}"
+        <TextBlock Margin="318,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
+                   TextWrapping="Wrap" Text="Добавление семян" FontSize="14"/>
+        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
+                                 Content="Куплено" IsChecked="{Binding IsSold}" />
+        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
+                     Content="Собрано" IsChecked="{Binding IsCollected}" />
+        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 115, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
+                     Content="Подарено" IsChecked="{Binding IsDonated}" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Класс" Grid.ColumnSpan="2"/>
+        <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,70,0,105" Style="{StaticResource SeedsComboBoxStyle}"
+                  ItemsSource="{Binding AddClassList}"
                               SelectedItem="{Binding AddClass}" Grid.ColumnSpan="2"/>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="154,40,0,0"
-                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Культура"></TextBlock>
-        <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0"
-                              Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"
-                              ItemsSource="{Binding CultureListView}"
-                              Text="{Binding AddCulture}" IsSynchronizedWithCurrentItem="False"/>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="154,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Культура" />
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding CultureListView}"
+                   Text="{Binding AddCulture}" IsSynchronizedWithCurrentItem="False"/>
 
-         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0"
-                    Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Сорт"></TextBlock>
-        <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0"
-                              Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsEditable="True" StaysOpenOnEdit="True"  
-                              ItemsSource="{Binding AddSortList}"
-                              Text="{Binding AddSort }"></ComboBox>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="520,40,0,0"
-                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Производитель"></TextBlock>
-        <ComboBox Grid.Row="3" Grid.Column="2" Margin="520,70,0,0"
-                              Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" IsReadOnly="{Binding IsCollected}" IsEditable="True" StaysOpenOnEdit="True"  
-                              ItemsSource="{Binding AddProducerList}"
-                              Text="{Binding AddProducer }"></ComboBox>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="704,40,0,0"
-                               Width="190" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Примечание"></TextBlock>
-        <TextBox Grid.Row="3" Grid.Column="2" Margin="704,70,0,0"
-                                         Width="190" Height="72" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Left" TextWrapping="Wrap" MaxLength="112"
-                                         Text="{Binding AddNote}"></TextBox>
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,115,0,0"
-                               Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Ед. измерения" Grid.ColumnSpan="2"></TextBlock>
-        <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,145,0,0"
-                              Width="150" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top"
-                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="12" 
-                              ItemsSource="{Binding AddSizeList}"
-                              Text="{Binding AddSize }" Grid.ColumnSpan="2"></ComboBox>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="160,115,0,0"
-                               Width="110" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Кол-во в упаковке"></TextBlock>
-        <TextBox Grid.Row="3" Grid.Column="2" Margin="160,145,0,0"
-                             Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" 
-                             Text="{Binding AddQuantityInPac}"></TextBox>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="300,115,0,0"
-                               Width="110" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Кол-во упаковок"></TextBlock>
-        <TextBox Grid.Row="3" Grid.Column="2" Margin="300,145,0,0"
-                             Width="110" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" 
-                             Text="{Binding AddQuantityPac}"></TextBox>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="440,115,0,0"
-                               Width="100" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Text="Годен до:"></TextBlock>
-        <DatePicker Grid.Row="3" Grid.Column="2" Margin="440,145,0,0"
-                             Width="100" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" SelectedDateFormat="Short" 
-                             SelectedDate="{Binding AddBestBy}"></DatePicker>
-        <Button Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Width="100" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
-                            Content="{Binding AddOrCorrectSeed}" Command="{Binding AddOrCorrectSeedCommand}"></Button>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Сорт" />
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddSortList}"
+                   Text="{Binding AddSort }"/>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="520,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Производитель" />
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="520,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+                   VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True"
+                   ItemsSource="{Binding AddProducerList}" Text="{Binding AddProducer }"/>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="704,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                               Width="190" Text="Примечание" />
+        <TextBox Grid.Row="3" Grid.Column="2" Margin="704,70,0,0" Style="{StaticResource SeedsTextBoxStyle}"
+                  Width="190" Height="72" TextAlignment="Left" TextWrapping="Wrap" MaxLength="112"
+                  Text="{Binding AddNote}"/>
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Ед. измерения" Grid.ColumnSpan="2" />
+        <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,145,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+                   VerticalAlignment="Top" ItemsSource="{Binding AddSizeList}" Text="{Binding AddSize }" Grid.ColumnSpan="2"/>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="160,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                               Width="110" Text="Кол-во в упаковке" />
+        <TextBox Grid.Row="3" Grid.Column="2" Margin="160,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
+                  Text="{Binding AddQuantityInPac}" />
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="300,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                    Width="110" Text="Кол-во упаковок" />
+        <TextBox Grid.Row="3" Grid.Column="2" Margin="300,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
+                 Text="{Binding AddQuantityPac}" />
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="440,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                    Width="110" Text="Стоимость семян" />
+        <TextBox Grid.Row="3" Grid.Column="2" Margin="440,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
+                 Text="{Binding AddCostPack}" />
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="570,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                    Width="100" Text="Годен до:" />
+        <DatePicker Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
+                     SelectedDate="{Binding AddBestBy}" />
+        <Button Grid.Row="3" Grid.Column="2" Margin="794,165,0,0" Style="{StaticResource SeedsButtonStyle}"
+                 Content="Добавить" Command="{Binding AddOrCorrectSeedCommand}" />
 
-
-
-
+        
 
 
     </Grid>

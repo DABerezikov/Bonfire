@@ -11,5 +11,6 @@ class PlantRepository :DbRepository<Plant>
     public override IQueryable<Plant> Items => base.Items
         .Include(item=> item.PlantCulture)
         .Include(item=>item.PlantSort)
+        .Include(item => item.PlantSort.Producer)
     ;
 }
