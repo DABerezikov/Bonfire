@@ -24,5 +24,7 @@ namespace Bonfire.Views
         {
             InitializeComponent();
         }
+
+        
     }
 }
