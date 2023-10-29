@@ -219,7 +219,7 @@ public class SeedsViewModel : ViewModel
 
 
     /// <summary>Срок годности семян</summary>
-    private DateTime _AddBestBy = DateTime.Now + TimeSpan.FromDays(365);
+    private DateTime _AddBestBy = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
 
     /// <summary>Срок годности семян</summary>
     public DateTime AddBestBy
@@ -702,8 +702,8 @@ public class SeedsViewModel : ViewModel
     private (Seed?, SeedsInfo?) GetOrCreateSeedInfo()
     {
         int.TryParse(AddQuantityInPac, out var quantity);
-        int.TryParse(AddQuantityInPac, out var quantityPac);
-        decimal.TryParse(AddQuantityInPac, out var costPack);
+        int.TryParse(AddQuantityPac, out var quantityPac);
+        decimal.TryParse(AddCostPack, out var costPack);
 
         if (ListProducer.Contains(AddProducer))
         {
@@ -717,13 +717,13 @@ public class SeedsViewModel : ViewModel
             {
                 if (AddSize != "Граммы")
                 {
-                    seed.SeedsInfo.AmountSeeds += quantity*quantityPac;
+                    seed.SeedsInfo.AmountSeeds += quantity * quantityPac;
                
                 }
                 else
                 {
                 
-                    seed.SeedsInfo.AmountSeedsWeight += quantity;
+                    seed.SeedsInfo.AmountSeedsWeight += quantity * quantityPac;
                 }
                 seed.SeedsInfo.PurchaseDate = DateTime.Now;
                 seed.SeedsInfo.Note = AddNote;
@@ -782,17 +782,17 @@ public class SeedsViewModel : ViewModel
 
     private void ClearFieldSeedView()
     {
-        AddBestBy = DateTime.Now + TimeSpan.FromDays(366);
-        AddClass = string.Empty;
+        AddBestBy = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
+        AddClass = "Овощи";
         AddCostPack = string.Empty;
         AddCulture = string.Empty;
         AddProducer = string.Empty;
         AddQuantityInPac = string.Empty;
         AddQuantityPac = "1";
         AddSort = string.Empty;
-        SeedSource = string.Empty;
+        SeedSource = "Куплено";
         IsSold = true;
-
+        AddNote = string.Empty;
 
     }
 
@@ -827,29 +827,36 @@ public class SeedsViewModel : ViewModel
     {
         Seeds.Add(newSeed);
 
-        AddCultureList.Add(new CultureFromViewModel
+        if (!AddCultureList.Contains(c => c.Name == newSeed.Plant.PlantCulture.Name))
         {
-            Id = newSeed.Plant.PlantCulture.Id,
-            Name = newSeed.Plant.PlantCulture.Name
-        });
+            AddCultureList.Add(new CultureFromViewModel
+            {
+                Id = newSeed.Plant.PlantCulture.Id,
+                Name = newSeed.Plant.PlantCulture.Name
+            });
+            ListCulture.Add(newSeed.Plant.PlantCulture.Name);
+        }
 
-        AddProducerList.Add(new ProducerFromViewModel
+        if (!AddProducerList.Contains(p => p.Name == newSeed.Plant.PlantSort.Producer.Name))
         {
-            Id = newSeed.Plant.PlantSort.Producer.Id,
-            Name = newSeed.Plant.PlantSort.Producer.Name
-        });
+            AddProducerList.Add(new ProducerFromViewModel
+            {
+                Id = newSeed.Plant.PlantSort.Producer.Id,
+                Name = newSeed.Plant.PlantSort.Producer.Name
+            });
+            ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
+        }
 
+        if (AddSortList.Contains(s => s.Name == newSeed.Plant.PlantSort.Name)) return;
         AddSortList.Add(new SortFromViewModel
         {
             Id = newSeed.Plant.PlantSort.Id,
             Name = newSeed.Plant.PlantSort.Name
         });
-
-        ListCulture.Add(newSeed.Plant.PlantCulture.Name);
-
-        ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
-
         ListSort.Add(newSeed.Plant.PlantSort.Name);
+
+
+
     } 
     #endregion
 
