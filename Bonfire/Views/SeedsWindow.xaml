@@ -39,7 +39,7 @@
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
-                              Margin="5,5,0,0"
+                              Margin="10"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
                                 Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
@@ -108,7 +108,7 @@
         <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
 
-        <Border Grid.Row="1" Grid.Column="0" CornerRadius="0,0,10,10" Style="{StaticResource SeedsBorderStyle}" Grid.ColumnSpan="3"
+        <Border Grid.Row="1" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" Grid.ColumnSpan="3"
                 Margin="0,0,0,10"/>
         <Border Grid.Row="3" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
                 Margin="0,0,0,0" Grid.ColumnSpan="3"/>
