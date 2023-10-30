@@ -75,7 +75,7 @@ public class SeedsViewModel : ViewModel
 
     private void View_CurrentChanged(object? sender, EventArgs e)
     {
-        SelectedItem = Seeds[_SeedsView.View.CurrentPosition] ;
+        SelectedItem = Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id);
     }
 
 
@@ -816,7 +816,7 @@ public class SeedsViewModel : ViewModel
         });
 
         _SeedsView.Source = newCollection.ToArray();
-
+        _SeedsView.View.CurrentChanged += View_CurrentChanged;
         OnPropertyChanged(nameof(SeedsView));
     }
 
@@ -1001,8 +1001,10 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для удаления семян </summary>
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (!_userDialog.YesNoQuestion($"Вы уверены, что хотите удалить семена сорта{SelectedItem.Plant.PlantSort.Name}", "Удаление семян")) return;
-        await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
+        if (!_userDialog.YesNoQuestion($"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}", "Удаление семян")) return;
+       var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
+       Seeds.Remove(deleteSeed);
+       UpdateCollectionViewSource();
     }
     #endregion
 

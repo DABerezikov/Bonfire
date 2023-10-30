@@ -35,7 +35,7 @@
     <Style x:Key="SeedsBorderStyle" TargetType="Border">
         <Setter Property="BorderBrush" Value="Gray"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Grid.ColumnSpan" Value="3"></Setter>
+        
     </Style>
    
     <Style x:Key="SeedsRadioButtonStyle" TargetType="RadioButton">
