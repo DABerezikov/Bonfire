@@ -172,7 +172,7 @@
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="570,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="100" Text="Годен до:" />
         <DatePicker Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
-                     SelectedDate="{Binding AddBestBy, UpdateSourceTrigger=PropertyChanged}"/>
+                     SelectedDate="{Binding AddBestBy}"/>
         <Button Grid.Row="3" Grid.Column="2" Margin="794,165,0,0" Style="{StaticResource SeedsButtonStyle}"
                  Content="Добавить" Command="{Binding AddOrCorrectSeedCommand}" />
         <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
