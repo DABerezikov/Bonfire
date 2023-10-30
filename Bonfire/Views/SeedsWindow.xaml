@@ -10,13 +10,14 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
              d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
-             d:DesignHeight="900" d:DesignWidth="1600">
+             d:DesignHeight="1080" d:DesignWidth="1920">
+
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadDataCommand}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <Grid>
+    <Grid Margin="10">
 
 
 
@@ -27,11 +28,10 @@
             <RowDefinition Height="200"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="58.5"/>
-            <ColumnDefinition Width="111"/>
-            <ColumnDefinition Width="930.5"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto" MinWidth="400"/>
+            <ColumnDefinition Width="60"/>
+            <ColumnDefinition Width="110"/>
+            <ColumnDefinition Width="930"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
         <DataGrid DataContext="{Binding SeedsView}"
@@ -39,10 +39,9 @@
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
-                              Margin="5,5,0,0"
+                              Margin="10"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                              
-                              Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                                Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True">
 
@@ -109,9 +108,15 @@
         <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
 
-        <Border Grid.Row="1" Grid.Column="0" CornerRadius="0,0,10,10" Style="{StaticResource SeedsBorderStyle}"/>
-        <Border Grid.Row="1" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
-                Margin="0,576,0,0" Grid.RowSpan="3"/>
+        <Border Grid.Row="1" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" Grid.ColumnSpan="3"
+                Margin="0,0,0,10"/>
+        <Border Grid.Row="3" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
+                Margin="0,0,0,0" Grid.ColumnSpan="3"/>
+        <Border Grid.Row="1" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
+                Margin="10,0,10,10" />
+        <Border Grid.Row="3" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
+                Margin="10,0,10,0" />
+
 
 
         <TextBlock Margin="318,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
@@ -170,8 +175,10 @@
                      SelectedDate="{Binding AddBestBy, UpdateSourceTrigger=PropertyChanged}"/>
         <Button Grid.Row="3" Grid.Column="2" Margin="794,165,0,0" Style="{StaticResource SeedsButtonStyle}"
                  Content="Добавить" Command="{Binding AddOrCorrectSeedCommand}" />
+        <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
+                Content="Удалить" Command="{Binding DeleteSeedCommand}" HorizontalAlignment="Right" />
 
-        
+
 
 
     </Grid>

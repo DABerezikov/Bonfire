@@ -75,7 +75,7 @@ public class SeedsViewModel : ViewModel
 
     private void View_CurrentChanged(object? sender, EventArgs e)
     {
-        SelectedItem = Seeds[_SeedsView.View.CurrentPosition] ;
+        SelectedItem = Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id);
     }
 
 
@@ -233,7 +233,7 @@ public class SeedsViewModel : ViewModel
 
 
     /// <summary>Стоимость упаковки семян</summary>
-    private string _AddCostPack = string.Empty;
+    private string _AddCostPack = "0";
 
     /// <summary>Стоимость упаковки семян</summary>
     public string AddCostPack
@@ -784,7 +784,7 @@ public class SeedsViewModel : ViewModel
     {
         AddBestBy = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
         AddClass = "Овощи";
-        AddCostPack = string.Empty;
+        AddCostPack = "0";
         AddCulture = string.Empty;
         AddProducer = string.Empty;
         AddQuantityInPac = string.Empty;
@@ -816,7 +816,7 @@ public class SeedsViewModel : ViewModel
         });
 
         _SeedsView.Source = newCollection.ToArray();
-
+        _SeedsView.View.CurrentChanged += View_CurrentChanged;
         OnPropertyChanged(nameof(SeedsView));
     }
 
@@ -982,10 +982,31 @@ public class SeedsViewModel : ViewModel
         //await LoadSeed().ConfigureAwait(false);
     }
 
-    
+
 
     #endregion
 
+    #region Command DeleteSeedCommand - Команда для удаления семян
+
+    /// <summary> Команда для удаления семян </summary>
+    private ICommand _DeleteSeedCommand;
+
+    /// <summary> Команда для удаления семян </summary>
+    public ICommand DeleteSeedCommand => _DeleteSeedCommand
+        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, CanDeleteSeedCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для удаления семян </summary>
+    private bool CanDeleteSeedCommandExecute() => SelectedItem !=null;
+
+    /// <summary> Логика выполнения - Команда для удаления семян </summary>
+    private async Task OnDeleteSeedCommandExecuted()
+    {
+        if (!_userDialog.YesNoQuestion($"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}", "Удаление семян")) return;
+       var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
+       Seeds.Remove(deleteSeed);
+       UpdateCollectionViewSource();
+    }
+    #endregion
 
     #endregion
 

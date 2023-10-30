@@ -67,6 +67,14 @@ namespace Bonfire.Services
            return seed;
 
         }
+        
+        public async Task<Seed> DeleteSeed(Seed seed)
+        {
+            
+           await _seeds.RemoveAsync(seed.Id);
+           return seed;
+
+        }
 
     }
 }
