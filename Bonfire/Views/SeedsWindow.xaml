@@ -171,7 +171,7 @@
                  Text="{Binding AddCostPack, UpdateSourceTrigger=PropertyChanged}" />
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="570,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="100" Text="Годен до:" />
-        <DatePicker Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Style="{StaticResource SeedsDatePickerStyle}" DisplayDate="{Binding AddBestBy, StringFormat= MM.yyyy}"
+        <DatePicker Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Style="{StaticResource SeedsDatePickerStyle}" DisplayDate="{Binding AddBestBy, StringFormat = dd.MM.yyyy}"
                      SelectedDate="{Binding AddBestBy}"/>
         <Button Grid.Row="3" Grid.Column="2" Margin="794,165,0,0" Style="{StaticResource SeedsButtonStyle}"
                  Content="Добавить" Command="{Binding AddOrCorrectSeedCommand}" />
