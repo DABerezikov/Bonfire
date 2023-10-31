@@ -596,11 +596,11 @@ public class SeedsViewModel : ViewModel
             {
                 Id = seeds.Plant.PlantCulture.Id,
                 Name = seeds.Plant.PlantCulture.Name
-            })
-            .Distinct()
+            }).AsEnumerable()
+            .Distinct(s=>s.Name)
             .OrderBy(s=>s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
-        AddCultureList.AddRange(addListCulture.ToListAsync().Result);
+        AddCultureList.AddRange(addListCulture.ToList());
         _CultureListView.Source = AddCultureList;
         OnPropertyChanged(nameof(CultureListView));
 
@@ -621,11 +621,11 @@ public class SeedsViewModel : ViewModel
             {
                 Id = seeds.Plant.PlantSort.Id,
                 Name = seeds.Plant.PlantSort.Name
-            })
-            .Distinct()
+            }).AsEnumerable()
+            .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
         ListSort.AddRange(listSortQuery.ToListAsync().Result.ToHashSet());
-        AddSortList.AddRange(addListSort.ToListAsync().Result.ToHashSet());
+        AddSortList.AddRange(addListSort.ToList());
         _SortListView.Source = AddSortList;
         OnPropertyChanged(nameof(SortListView));
 
@@ -646,11 +646,11 @@ public class SeedsViewModel : ViewModel
             {
                 Id = seeds.Plant.PlantSort.Producer.Id,
                 Name = seeds.Plant.PlantSort.Producer.Name
-            })
-            .Distinct()
+            }).AsEnumerable()
+            .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
         ListProducer.AddRange(listProducerQuery.ToListAsync().Result.ToHashSet());
-        AddProducerList.AddRange(addListProducer.ToListAsync().Result.ToHashSet());
+        AddProducerList.AddRange(addListProducer.ToList());
         _ProducerListView.Source = AddProducerList;
         OnPropertyChanged(nameof(ProducerListView));
 
