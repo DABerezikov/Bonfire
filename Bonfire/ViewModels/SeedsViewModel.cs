@@ -159,22 +159,8 @@ public class SeedsViewModel : ViewModel
 
 
     #endregion
-
+    
    
-    
-    #region ListProducer : List<string> - Список производителей
-
-    
-    /// <summary>Список производителей</summary>
-    private List<string> _ListProducer = new List<string> { "Выбрать все" };
-
-    /// <summary>Список производителей</summary>
-    public List<string> ListProducer
-    {
-        get => _ListProducer;
-        set => Set(ref _ListProducer, value);
-    }
-    #endregion
 
     #region AddQuantityInPac :string - Количество семян в упаковке
 
@@ -722,7 +708,7 @@ public class SeedsViewModel : ViewModel
         int.TryParse(AddQuantityPac, out var quantityPac);
         decimal.TryParse(AddCostPack, out var costPack);
 
-        if (ListProducer.Contains(AddProducer))
+        if (AddProducerList.Contains(c => c.Name == AddProducer))
         {
             var seed = Seeds
                 .Find(s =>
