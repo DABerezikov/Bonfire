@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -663,33 +664,67 @@ public class SeedsViewModel : ViewModel
     private Plant GetOrCreatePlant()
     {
        
-        if (ListSort.Contains(AddSort) && ListCulture.Contains(AddCulture) && ListProducer.Contains(AddProducer))
+        if (AddSortList.Contains(c => c.Name == AddSort)
+            && AddCultureList.Contains(c => c.Name == AddCulture)
+            && AddProducerList.Contains(c => c.Name == AddProducer))
         {
             var seed = Seeds
                 .Find(s =>
                     s.Plant.PlantCulture.Name == AddCulture
                     && s.Plant.PlantSort.Name == AddSort
                     && s.Plant.PlantSort.Producer.Name == AddProducer);
-            if (seed != null)         
+            if (seed != null)
                 return seed.Plant;
+
         }
 
-        var plant = new Plant
-        {
-            PlantCulture = new PlantCulture
+        var plantCulture = AddCultureList.Contains(c => c.Name == AddCulture)
+            ? Seeds.First(pc => pc.Plant.PlantCulture.Name == AddCulture).Plant.PlantCulture
+            : new PlantCulture
             {
                 Name = AddCulture,
                 Class = AddClass
+            };
+
+        var producer = AddProducerList.Contains(c => c.Name == AddProducer)
+            ? Seeds.First(pc => pc.Plant.PlantSort.Producer.Name == AddProducer).Plant.PlantSort.Producer
+            : new Producer
+            {
+                Name = AddProducer
                 
-            },
-            PlantSort = new PlantSort
+            };
+
+        PlantSort? plantSort;
+
+        if (AddSortList.Contains(c => c.Name == AddSort && AddProducerList.Contains(c => c.Name == AddProducer)))
+        {
+           plantSort = Seeds
+                .Find(s =>
+                    s.Plant.PlantSort.Name == AddSort
+                    && s.Plant.PlantSort.Producer.Name == AddProducer)
+                ?.Plant.PlantSort;
+           
+           if (plantSort == null)
+           {
+               plantSort = Seeds.First(pc => pc.Plant.PlantSort.Name == AddSort).Plant.PlantSort;
+               plantSort.Producer = producer;
+           }
+        }
+        else
+        {
+           plantSort =  new PlantSort
             {
                 Name = AddSort,
-                Producer = new Producer
-                {
-                    Name = AddProducer
-                }
-            }
+                Producer = producer
+            };
+            
+        }
+
+
+        var plant = new Plant
+        {
+            PlantCulture = plantCulture,
+            PlantSort = plantSort
         };
 
         return plant;

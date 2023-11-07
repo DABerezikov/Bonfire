@@ -39,9 +39,12 @@ namespace Bonfire.Services
         {
             if (plant.Id == 0)
             {
-                plant.PlantCulture = await _culture.AddAsync(plant.PlantCulture);
-                plant.PlantSort.Producer = await _producer.AddAsync(plant.PlantSort.Producer);
-                plant.PlantSort = await _sort.AddAsync(plant.PlantSort);
+                if (plant.PlantCulture.Id==0)
+                    plant.PlantCulture = await _culture.AddAsync(plant.PlantCulture).ConfigureAwait(false);
+                if (plant.PlantSort.Producer.Id==0)
+                    plant.PlantSort.Producer = await _producer.AddAsync(plant.PlantSort.Producer).ConfigureAwait(false);
+                if (plant.PlantSort.Id == 0)
+                    plant.PlantSort = await _sort.AddAsync(plant.PlantSort).ConfigureAwait(false);
                 plant = await _plants.AddAsync(plant);
             }
 
