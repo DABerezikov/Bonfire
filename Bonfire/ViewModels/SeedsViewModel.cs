@@ -92,7 +92,7 @@ public class SeedsViewModel : ViewModel
     #region SeedFilter : string - Искомое слово
 
     /// <summary>Искомое слово</summary>
-    private string _SeedFilter = "Выбрать все";
+    private string _SeedFilter = "-Выбрать все-";
 
     /// <summary>Искомое слово</summary>
     public string SeedFilter
@@ -110,7 +110,7 @@ public class SeedsViewModel : ViewModel
     #endregion
     private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter) || SeedFilter == "Выбрать все") return;
+        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter) || SeedFilter == "-Выбрать все-") return;
         if (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
@@ -148,7 +148,7 @@ public class SeedsViewModel : ViewModel
     #region ListCulture : List<string> - Список культур
 
     /// <summary>Список культур</summary>
-    private List<string> _ListCulture = new List<string> { "Выбрать все" };
+    private List<string> _ListCulture = new List<string> { "-Выбрать все-" };
 
     /// <summary>Список культур</summary>
     public List<string> ListCulture
@@ -160,19 +160,7 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region ListSort : List<string> - Список сортов
-
-    
-    /// <summary>Список сортов</summary>
-    private List<string> _ListSort = new List<string> { "Выбрать все" };
-
-    /// <summary>Список сортов</summary>
-    public List<string> ListSort
-    {
-        get => _ListSort;
-        set => Set(ref _ListSort, value);
-    } 
-    #endregion
+   
     
     #region ListProducer : List<string> - Список производителей
 
@@ -575,6 +563,7 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
+                .OrderBy(s=>s.Culture)
             ;
         Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
         _SeedsView.Source = await seedsQuery.ToArrayAsync();
@@ -598,7 +587,7 @@ public class SeedsViewModel : ViewModel
                 Id = seeds.Plant.PlantCulture.Id,
                 Name = seeds.Plant.PlantCulture.Name
             }).AsEnumerable()
-            .Distinct(s=>s.Name)
+            .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
         AddCultureList.AddRange(addListCulture.ToList());
@@ -613,10 +602,7 @@ public class SeedsViewModel : ViewModel
 
     private void LoadListSort()
     {
-        var listSortQuery = _seedsService.Seeds
-            .Select(seeds => seeds.Plant.PlantSort.Name)
-            .Distinct()
-            .OrderBy(s => s);
+       
         var addListSort = _seedsService.Seeds
             .Select(seeds => new SortFromViewModel
             {
@@ -625,7 +611,7 @@ public class SeedsViewModel : ViewModel
             }).AsEnumerable()
             .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
-        ListSort.AddRange(listSortQuery.ToListAsync().Result.ToHashSet());
+       
         AddSortList.AddRange(addListSort.ToList());
         _SortListView.Source = AddSortList;
         OnPropertyChanged(nameof(SortListView));
@@ -636,12 +622,8 @@ public class SeedsViewModel : ViewModel
     
     #region Метод загрузки списка производителей
 
-    private void LoadListProducer()
-    {
-        var listProducerQuery = _seedsService.Seeds
-            .Select(seeds => seeds.Plant.PlantSort.Producer.Name)
-            .Distinct()
-            .OrderBy(s => s);
+    private void LoadListProducer() {
+       
         var addListProducer = _seedsService.Seeds
             .Select(seeds => new ProducerFromViewModel
             {
@@ -650,7 +632,7 @@ public class SeedsViewModel : ViewModel
             }).AsEnumerable()
             .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
-        ListProducer.AddRange(listProducerQuery.ToListAsync().Result.ToHashSet());
+       
         AddProducerList.AddRange(addListProducer.ToList());
         _ProducerListView.Source = AddProducerList;
         OnPropertyChanged(nameof(ProducerListView));
@@ -659,7 +641,7 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Метод для поиска или создания информации о семенах
+    #region Метод для поиска или создания растения
 
     private Plant GetOrCreatePlant()
     {
@@ -848,11 +830,12 @@ public class SeedsViewModel : ViewModel
             WeightPack = seeds.SeedsInfo.WeightPack,
             AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
             AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-        });
+        }).OrderBy(s=>s.Culture);
 
         _SeedsView.Source = newCollection.ToArray();
         _SeedsView.View.CurrentChanged += View_CurrentChanged;
         OnPropertyChanged(nameof(SeedsView));
+        OnPropertyChanged(nameof(ListCulture));
     }
 
     #endregion
@@ -870,6 +853,9 @@ public class SeedsViewModel : ViewModel
                 Name = newSeed.Plant.PlantCulture.Name
             });
             ListCulture.Add(newSeed.Plant.PlantCulture.Name);
+            ListCulture = new List<string>(ListCulture.OrderBy(c=>c));
+            AddCultureList = new ObservableCollection<CultureFromViewModel>(AddCultureList.OrderBy(c => c.Name));
+
         }
 
         if (!AddProducerList.Contains(p => p.Name == newSeed.Plant.PlantSort.Producer.Name))
@@ -879,7 +865,7 @@ public class SeedsViewModel : ViewModel
                 Id = newSeed.Plant.PlantSort.Producer.Id,
                 Name = newSeed.Plant.PlantSort.Producer.Name
             });
-            ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
+            AddProducerList = new ObservableCollection<ProducerFromViewModel>(AddProducerList.OrderBy(c => c.Name));
         }
 
         if (AddSortList.Contains(s => s.Name == newSeed.Plant.PlantSort.Name)) return;
@@ -888,7 +874,8 @@ public class SeedsViewModel : ViewModel
             Id = newSeed.Plant.PlantSort.Id,
             Name = newSeed.Plant.PlantSort.Name
         });
-        ListSort.Add(newSeed.Plant.PlantSort.Name);
+        AddSortList = new ObservableCollection<SortFromViewModel>(AddSortList.OrderBy(c => c.Name));
+
 
 
 

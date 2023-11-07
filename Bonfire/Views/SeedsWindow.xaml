@@ -101,7 +101,7 @@
         </Button>
 
         <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5" Style="{StaticResource SeedsChoiceComboBoxStyle}"
-                   SelectedItem="{Binding SeedFilter}" ItemsSource="{Binding ListCulture}"
+                   Text="{Binding SeedFilter, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding ListCulture}"
                    IsEditable="True" />
 
         <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True" />
