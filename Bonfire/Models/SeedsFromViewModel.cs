@@ -13,4 +13,7 @@ public class SeedsFromViewModel
     public int? QuantityPack { get; set; }
     public int? AmountSeedsWeight { get; set; }
     public int? AmountSeedsQuantity { get; set; }
+
+    public bool IsStillGood => ExpirationDate.Year > DateTime.Now.Year + 2;
+    public bool IsOld => ExpirationDate.Year > DateTime.Now.Year + 1;
 }

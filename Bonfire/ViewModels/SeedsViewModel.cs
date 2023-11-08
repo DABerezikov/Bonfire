@@ -548,6 +548,7 @@ public class SeedsViewModel : ViewModel
                     WeightPack = seeds.SeedsInfo.WeightPack,
                     AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
+                    
                 })
                 .OrderBy(s=>s.Culture)
             ;

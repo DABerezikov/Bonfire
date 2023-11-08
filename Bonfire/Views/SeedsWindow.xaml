@@ -9,7 +9,8 @@
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-             d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920">
 
     <i:Interaction.Triggers>
@@ -39,9 +40,10 @@
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
+                              IsReadOnly="True"
                               Margin="10"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                                Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                              Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True">
 
@@ -49,7 +51,31 @@
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
-                <DataGridTextColumn Header="Срок годности" Binding="{Binding ExpirationDate, StringFormat=12.yyyy}" Width="110"/>
+                <DataGridTemplateColumn Header="Срок годности"  Width="110" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate >
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding ExpirationDate, StringFormat=12.yyyy}"/>
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsStillGood}" Value="false">
+                                    <Setter Property="TextBlock.Foreground" Value="PaleVioletRed"/>
+                                    <Setter Property="TextBlock.FontStyle" Value="Italic"/>
+                                    <Setter Property="TextBlock.FontWeight" Value="Bold"/>
+                                </DataTrigger>
+                               
+                                <DataTrigger Binding="{Binding IsOld}" Value="false">
+                                    <Setter Property="TextBlock.Foreground" Value="Red"/>
+                                    <Setter Property="TextBlock.FontStyle" Value="Italic"/>
+                                    <Setter Property="TextBlock.FontWeight" Value="Bold"/>
+                                </DataTrigger>
+
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+
+                    </DataGridTemplateColumn.CellTemplate>
+                    
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Кол-во, г" Binding="{Binding WeightPack}" Width="80"/>
                 <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding QuantityPack}" Width="80"/>
                 <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight}" Width="80"/>
