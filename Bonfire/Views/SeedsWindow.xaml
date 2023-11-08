@@ -59,14 +59,12 @@
                             </StackPanel>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsStillGood}" Value="false">
-                                    <Setter Property="TextBlock.Foreground" Value="PaleVioletRed"/>
-                                    <Setter Property="TextBlock.FontStyle" Value="Italic"/>
+                                    <Setter Property="TextBlock.Foreground" Value="DarkGreen"/>
                                     <Setter Property="TextBlock.FontWeight" Value="Bold"/>
                                 </DataTrigger>
                                
                                 <DataTrigger Binding="{Binding IsOld}" Value="false">
-                                    <Setter Property="TextBlock.Foreground" Value="Red"/>
-                                    <Setter Property="TextBlock.FontStyle" Value="Italic"/>
+                                    <Setter Property="TextBlock.Foreground" Value="DarkRed"/>
                                     <Setter Property="TextBlock.FontWeight" Value="Bold"/>
                                 </DataTrigger>
 
