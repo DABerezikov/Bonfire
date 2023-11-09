@@ -1,6 +1,9 @@
-﻿using System;
+﻿
+using MathCore.WPF.pInvoke;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,6 +28,18 @@ namespace Bonfire.Views
             InitializeComponent();
         }
 
-        
+
+
+        private void ComboBox_OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if (sender is not ComboBox box || e.Key != Key.Enter) return;
+            box.Focus();
+            if (Keyboard.PrimaryDevice == null) return;
+            if (Keyboard.PrimaryDevice.ActiveSource == null) return;
+            var e1 = new KeyEventArgs(Keyboard.PrimaryDevice, Keyboard.PrimaryDevice.ActiveSource, 0,
+                Key.Tab) { RoutedEvent = Keyboard.KeyDownEvent };
+            InputManager.Current.ProcessInput(e1);
+        }
     }
 }
+
