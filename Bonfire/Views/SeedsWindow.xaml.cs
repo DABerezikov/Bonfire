@@ -38,8 +38,8 @@ namespace Bonfire.Views
             {
                 var dataGrid = (DataGrid)(control.Content as Grid).Children[0];
                     dataGrid.SelectedIndex = -1;
-                    
                     dataGrid.UnselectAllCells();
+                   
             }
             if (sender is not ComboBox box || e.Key != Key.Enter) return;
             box.Focus();
