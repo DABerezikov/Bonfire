@@ -18,7 +18,6 @@
         <Setter Property="HeadersVisibility" Value="Column"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="CellStyle">
-
             <Setter.Value>
                 <Style TargetType="DataGridCell">
                     <Setter Property="BorderThickness" Value="0"/>
@@ -30,6 +29,19 @@
        
 
     </Style>
-    
-        
+
+    <SolidColorBrush
+        x:Key="{x:Static SystemColors.HighlightBrushKey}"
+        Color="DarkKhaki"/>
+    <SolidColorBrush
+        x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+        Color="Black"/>
+    <SolidColorBrush
+        x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+        Color="Transparent"/>
+    <SolidColorBrush
+        x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+        Color="Black"/>
+
+
 </ResourceDictionary>

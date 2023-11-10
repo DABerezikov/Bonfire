@@ -44,6 +44,7 @@
                               VerticalAlignment="Top"
                               Grid.Row="1"
                               IsReadOnly="True"
+                              IsSelected="False"
                               Margin="10"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
                               Grid.ColumnSpan="3" HorizontalAlignment="Center"
