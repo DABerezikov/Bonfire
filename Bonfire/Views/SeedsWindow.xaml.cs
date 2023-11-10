@@ -32,6 +32,8 @@ namespace Bonfire.Views
 
         private void ComboBox_OnKeyUp(object sender, KeyEventArgs e)
         {
+            
+            if (sender is UserControl control && e.Key == Key.Escape) ((DataGrid)(control.Content as Grid).Children[0]).SelectedIndex = -1;
             if (sender is not ComboBox box || e.Key != Key.Enter) return;
             box.Focus();
             if (Keyboard.PrimaryDevice == null) return;

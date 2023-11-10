@@ -11,7 +11,7 @@
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
         d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
-             d:DesignHeight="1080" d:DesignWidth="1920">
+             d:DesignHeight="1080" d:DesignWidth="1920" KeyUp="ComboBox_OnKeyUp">
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">

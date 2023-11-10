@@ -76,6 +76,7 @@ public class SeedsViewModel : ViewModel
 
     private void View_CurrentChanged(object? sender, EventArgs e)
     {
+        if (_SeedsView.View == null && _SeedsView.View.CurrentPosition == -1) return;
         SelectedItem = Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id);
     }
 
