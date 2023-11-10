@@ -22,12 +22,12 @@
             <Setter.Value>
                 <Style TargetType="DataGridCell">
                     <Setter Property="BorderThickness" Value="0"/>
-                    
                 </Style>
             </Setter.Value>
         </Setter>
 
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+       
 
     </Style>
     
