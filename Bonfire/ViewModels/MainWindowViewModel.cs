@@ -10,6 +10,7 @@ namespace Bonfire.ViewModels
     {
         private readonly IUserDialog _UserDialog;
         private readonly ISeedsService _SeedsService;
+        private readonly SeedsViewModel _SeedsViewModel;
 
         #region Title : string - Заголовок окна
 
@@ -61,7 +62,7 @@ namespace Bonfire.ViewModels
         private void OnShowSeedViewModelCommandExecuted()
         {
             if (CurrentViewModel is not SeedsViewModel)
-                CurrentViewModel = new SeedsViewModel(_SeedsService, _UserDialog);
+                CurrentViewModel = _SeedsViewModel;
             
         }
 
@@ -82,23 +83,25 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
         private void OnShowLibraryEditorViewModelCommandExecuted()
         {
-            if (CurrentViewModel is SeedsViewModel seeds)
+            if (CurrentViewModel is not LibraryEditorViewModel)
             {
-                var sort = seeds.AddSortList;
-                var culture = seeds.AddCultureList;
-                var producer = seeds.AddProducerList;
+                var sort = _SeedsViewModel.AddSortList;
+                var culture = _SeedsViewModel.AddCultureList;
+                var producer = _SeedsViewModel.AddProducerList;
                 CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer);
             }
+            
 
         }
 
         #endregion
 
 
-        public MainWindowViewModel(IUserDialog UserDialog, ISeedsService SeedsService)
+        public MainWindowViewModel(IUserDialog UserDialog, ISeedsService SeedsService, SeedsViewModel SeedsViewModel)
         {
             _UserDialog = UserDialog;
             _SeedsService = SeedsService;
+            _SeedsViewModel = SeedsViewModel;
         }
     }
 }

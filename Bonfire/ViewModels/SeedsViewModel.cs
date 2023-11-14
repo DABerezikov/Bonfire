@@ -550,10 +550,12 @@ public class SeedsViewModel : ViewModel
                 })
                 .OrderBy(s=>s.Culture)
             ;
-        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
-        _SeedsView.Source = await seedsQuery.ToArrayAsync();
-        _SeedsView.View.CurrentChanged += View_CurrentChanged;
-        OnPropertyChanged(nameof(SeedsView));
+       
+            Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
+            _SeedsView.Source = await seedsQuery.ToArrayAsync();
+            _SeedsView.View.CurrentChanged += View_CurrentChanged;
+            OnPropertyChanged(nameof(SeedsView));
+        
     }
 
     #endregion
@@ -892,6 +894,7 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
     private async Task OnLoadDataCommandExecuted()
     {
+        if (Seeds!=null) return;
         await LoadSeed();
         LoadListCulture();
         LoadListSort();
