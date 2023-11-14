@@ -14,18 +14,7 @@
              d:DesignHeight="1080" d:DesignWidth="1920">
     <Grid Margin="10">
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="200"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="60"/>
-            <ColumnDefinition Width="110"/>
-            <ColumnDefinition Width="930"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
+        
 
         <TextBlock Text="Test" FontSize="200"></TextBlock>
             
