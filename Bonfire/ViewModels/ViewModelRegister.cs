@@ -6,6 +6,8 @@ namespace Bonfire.ViewModels
     {
         public static IServiceCollection AddViews(this IServiceCollection services) => services
            .AddSingleton<MainWindowViewModel>()
+           .AddSingleton<SeedsViewModel>()
+           .AddSingleton<LibraryEditorViewModel>()
         ;
     }
 }

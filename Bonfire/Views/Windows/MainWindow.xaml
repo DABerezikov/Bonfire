@@ -24,15 +24,22 @@
             <MenuItem Header="Файл">
                 <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}"/>
             </MenuItem>
-            <MenuItem>
+            <MenuItem Command="{Binding ShowSeedViewModelCommand}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <fa5:ImageAwesome Icon="Solid_Leaf" Height="13"  Margin="0, 0,5,0" Foreground="Green"/>
-                        <TextBlock Text="Семена" ></TextBlock>
+                        <TextBlock Text="Семена"></TextBlock>
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-            
+            <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Book" Height="13"  Margin="0, 0,5,0" Foreground="Chocolate"/>
+                        <TextBlock Text="Редактор библиотек"></TextBlock>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
         </Menu>
         
         <StatusBar DockPanel.Dock="Bottom">
