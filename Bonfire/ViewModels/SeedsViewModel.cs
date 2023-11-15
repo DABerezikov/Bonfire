@@ -751,12 +751,12 @@ public class SeedsViewModel : ViewModel
         if (AddSize!="Граммы")
         {
             seedInfo.QuantityPack = quantity;
-            seedInfo.AmountSeeds = quantity;
+            seedInfo.AmountSeeds = quantity * quantityPac;
         }
         else
         {
             seedInfo.WeightPack = quantity;
-            seedInfo.AmountSeedsWeight = quantity;
+            seedInfo.AmountSeedsWeight = quantity * quantityPac;
         }
 
         return (null,seedInfo);
