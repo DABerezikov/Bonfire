@@ -866,9 +866,28 @@ public class SeedsViewModel : ViewModel
 
 
 
-    } 
+    }
     #endregion
 
+    #region Метод для очистки списков от удаленных культур, сортов, производителей
+    private void RemoveOfAddLists(Seed deleteSeed)
+    {
+        if (!Seeds.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
+        {
+            AddCultureList.Remove(AddCultureList.Find(c => c.Name == deleteSeed.Plant.PlantCulture.Name)!);
+        }
+
+        if (!Seeds.Contains(s => s.Plant.PlantSort.Name == deleteSeed.Plant.PlantSort.Name))
+        {
+            AddSortList.Remove(AddSortList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Name)!);
+        }
+
+        if (!Seeds.Contains(s => s.Plant.PlantSort.Producer.Name == deleteSeed.Plant.PlantSort.Producer.Name))
+        {
+            AddProducerList.Remove(AddProducerList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Producer.Name)!);
+        }
+    } 
+    #endregion
 
     #endregion
 
@@ -1012,11 +1031,21 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для удаления семян </summary>
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (!_userDialog.YesNoQuestion($"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}", "Удаление семян")) return;
-       var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
-       Seeds.Remove(deleteSeed);
-       UpdateCollectionViewSource();
+        if (!_userDialog.YesNoQuestion(
+                $"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}",
+                "Удаление семян")) return;
+
+        var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
+
+        Seeds.Remove(deleteSeed);
+
+        RemoveOfAddLists(deleteSeed);
+
+        UpdateCollectionViewSource();
     }
+
+   
+
     #endregion
 
     #endregion
