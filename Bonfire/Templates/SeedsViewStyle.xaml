@@ -37,7 +37,17 @@
         <Setter Property="BorderThickness" Value="1"/>
         
     </Style>
-   
+
+    <Style x:Key="LibraryBorderStyle" TargetType="Border">
+        <Setter Property="BorderBrush" Value="Gray"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Margin" Value="5"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Grid.RowSpan" Value="2"/>
+
+    </Style>
+
     <Style x:Key="SeedsRadioButtonStyle" TargetType="RadioButton">
         <Setter Property="Width" Value="80"/>
         <Setter Property="Height" Value="20"/>
@@ -53,6 +63,17 @@
         <Setter Property="VerticalAlignment" Value="Top"/>
         <Setter Property="TextAlignment" Value="Center"/>
     </Style>
+
+    <Style x:Key="LibraryTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="Width" Value="200"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="DemiBold"/>
+    </Style>
+
 
     <Style x:Key="SeedsTextBoxStyle" TargetType="TextBox">
         <Setter Property="Width" Value="110"/>

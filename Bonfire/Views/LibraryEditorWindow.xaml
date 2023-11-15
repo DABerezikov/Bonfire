@@ -14,9 +14,61 @@
              d:DesignHeight="1080" d:DesignWidth="1920">
     <Grid Margin="10">
 
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+           
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
 
-        <TextBlock Text="Test" FontSize="200"></TextBlock>
+        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource LibraryBorderStyle}"/>
+        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource LibraryBorderStyle}" />
+        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource LibraryBorderStyle}" />
+
+
+        
+        <DataGrid Grid.Column="0" Grid.Row="0" AutoGenerateColumns="False" DataContext="{Binding Sort}" ItemsSource="{Binding}"
+                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Margin="15">
+            <DataGrid.Columns>
+                <DataGridTextColumn  Binding="{Binding Name}" Width="*">
+                    <DataGridTextColumn.Header>
+                        <TextBlock Text="Библиотека сортов" Style="{StaticResource LibraryTextBlockStyle}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        
+        <DataGrid Grid.Column="1" Grid.Row="0" AutoGenerateColumns="False" DataContext="{Binding Culture}" ItemsSource="{Binding}"
+                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Margin="15">
+            <DataGrid.Columns>
+               
+                <DataGridTextColumn Binding="{Binding Name}" Width="*">
+                    <DataGridTextColumn.Header>
+                        <TextBlock Text="Библиотека культур" Style="{StaticResource LibraryTextBlockStyle}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        
+        <DataGrid Grid.Column="2" Grid.Row="0" AutoGenerateColumns="False" DataContext="{Binding Producer}" ItemsSource="{Binding}"
+                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"  Margin="15">
+            <DataGrid.Columns>
+                
+                <DataGridTextColumn Binding="{Binding Name}" Width="*">
+                    <DataGridTextColumn.Header>
+                        <TextBlock Text="Библиотека производителей" Style="{StaticResource LibraryTextBlockStyle}"/>
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        
             
     </Grid>
 </UserControl>

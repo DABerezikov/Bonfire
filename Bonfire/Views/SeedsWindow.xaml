@@ -18,10 +18,9 @@
             <i:InvokeCommandAction Command="{Binding LoadDataCommand}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
+    
 
-   
-
-    <Grid Margin="10">
+    <Grid Margin="10" >
 
 
 
