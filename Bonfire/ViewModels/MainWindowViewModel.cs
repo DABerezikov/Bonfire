@@ -64,6 +64,8 @@ namespace Bonfire.ViewModels
             if (CurrentViewModel is not SeedsViewModel)
                 CurrentViewModel = _SeedsViewModel;
             
+
+
         }
 
         #endregion
@@ -88,7 +90,8 @@ namespace Bonfire.ViewModels
                 var sort = _SeedsViewModel.AddSortList;
                 var culture = _SeedsViewModel.AddCultureList;
                 var producer = _SeedsViewModel.AddProducerList;
-                CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer);
+                var seeds = _SeedsViewModel.Seeds;
+                CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer, seeds);
             }
             
 

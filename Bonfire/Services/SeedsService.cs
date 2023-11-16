@@ -79,5 +79,12 @@ namespace Bonfire.Services
 
         }
 
+        public async Task<PlantSort> UpdateSort(PlantSort sort)
+        {
+
+            await _sort.UpdateAsync(sort);
+            return sort;
+
+        }
     }
 }

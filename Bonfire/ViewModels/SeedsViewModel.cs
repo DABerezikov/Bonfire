@@ -827,6 +827,8 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
+   
+
     #region Метод для обновления коллекций SeedsViewModel
     private void UpdateCollectionSeedsViewModel(Seed newSeed)
     {
@@ -913,7 +915,9 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
     private async Task OnLoadDataCommandExecuted()
     {
-        if (Seeds!=null) return;
+       
+        if (Seeds != null) return;
+        
         await LoadSeed();
         LoadListCulture();
         LoadListSort();
