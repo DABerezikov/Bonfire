@@ -162,7 +162,7 @@
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="154,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Культура" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding CultureListView}" 
+                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddClassList}" 
                    Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
 
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
