@@ -122,6 +122,42 @@ public class LibraryEditorViewModel : ViewModel
 
     #endregion
 
+    #region SelectedCulture : CultureFromViewModel - Выбранная культура
+
+    /// <summary>Выбранная культура</summary>
+    private CultureFromViewModel _SelectedCulture;
+
+    /// <summary>Выбранная культура</summary>
+    public CultureFromViewModel SelectedCulture
+    {
+        get => _SelectedCulture;
+        set
+        {
+            Set(ref _SelectedCulture, value);
+            TempName = _SelectedCulture.Name;
+        }
+    }
+
+    #endregion
+    
+    #region SelectedProducer : ProducerFromViewModel - Выбранный производитель
+
+    /// <summary>Выбранный производитель</summary>
+    private ProducerFromViewModel _SelectedProducer;
+
+    /// <summary>Выбранный производитель</summary>
+    public ProducerFromViewModel SelectedProducer
+    {
+        get => _SelectedProducer;
+        set
+        {
+            Set(ref _SelectedProducer, value);
+            TempName = _SelectedProducer.Name;
+        }
+    }
+
+    #endregion
+
     #region Command UpdateSortNameCommand - Команда для обновления имени сорта
 
     /// <summary> Команда для обновления имени сорта </summary>
@@ -140,6 +176,50 @@ public class LibraryEditorViewModel : ViewModel
         var tempSort= Seeds.First(s => s.Plant.PlantSort.Id == SelectedSort.Id).Plant.PlantSort;
         tempSort.Name = SelectedSort.Name;
         await _SeedsService.UpdateSort(tempSort);
+        
+    }
+    #endregion
+    
+    #region Command UpdateCultureNameCommand - Команда для обновления имени сорта
+
+    /// <summary> Команда для обновления имени сорта </summary>
+    private ICommand _UpdateCultureNameCommand;
+
+    /// <summary> Команда для обновления имени сорта </summary>
+    public ICommand UpdateCultureNameCommand => _UpdateCultureNameCommand
+        ??= new LambdaCommandAsync(OnUpdateCultureNameCommandExecuted, CanUpdateCultureNameCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для обновления имени сорта </summary>
+    private bool CanUpdateCultureNameCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для обновления имени сорта </summary>
+    private async Task OnUpdateCultureNameCommandExecuted()
+    {
+        var tempCulture= Seeds.First(s => s.Plant.PlantCulture.Id == SelectedCulture.Id).Plant.PlantCulture;
+        tempCulture.Name = SelectedCulture.Name;
+        await _SeedsService.UpdateCulture(tempCulture);
+        
+    }
+    #endregion
+    
+    #region Command UpdateProducerNameCommand - Команда для обновления имени сорта
+
+    /// <summary> Команда для обновления имени сорта </summary>
+    private ICommand _UpdateProducerNameCommand;
+
+    /// <summary> Команда для обновления имени сорта </summary>
+    public ICommand UpdateProducerNameCommand => _UpdateProducerNameCommand
+        ??= new LambdaCommandAsync(OnUpdateProducerNameCommandExecuted, CanUpdateProducerNameCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для обновления имени сорта </summary>
+    private bool CanUpdateProducerNameCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для обновления имени сорта </summary>
+    private async Task OnUpdateProducerNameCommandExecuted()
+    {
+        var tempProducer= Seeds.First(s => s.Plant.PlantSort.Producer.Id == SelectedProducer.Id).Plant.PlantSort.Producer;
+        tempProducer.Name = SelectedProducer.Name;
+        await _SeedsService.UpdateProducer(tempProducer);
         
     }
     #endregion

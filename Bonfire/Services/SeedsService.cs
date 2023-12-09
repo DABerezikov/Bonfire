@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services
 {
+    
+
     internal class SeedsService : ISeedsService
     {
         private readonly IRepository<Plant> _plants;
@@ -84,6 +86,22 @@ namespace Bonfire.Services
 
             await _sort.UpdateAsync(sort);
             return sort;
+
+        }
+
+        public async Task<PlantCulture> UpdateCulture(PlantCulture culture)
+        {
+
+            await _culture.UpdateAsync(culture);
+            return culture;
+
+        }
+
+        public async Task<Producer> UpdateProducer(Producer producer)
+        {
+
+            await _producer.UpdateAsync(producer);
+            return producer;
 
         }
     }

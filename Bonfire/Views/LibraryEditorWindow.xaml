@@ -82,23 +82,58 @@
         </DataGrid>
 
         
-        <DataGrid Grid.Column="1" Grid.Row="0" AutoGenerateColumns="False" DataContext="{Binding Culture}" ItemsSource="{Binding}"
-                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Margin="15">
+        <DataGrid Grid.Column="1" Grid.Row="0" AutoGenerateColumns="False" ItemsSource="{Binding Culture}"
+                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Margin="15"  SelectedItem="{Binding SelectedCulture}">
             <DataGrid.Columns>
-               
-                <DataGridTextColumn Binding="{Binding Name}" Width="*" >
-                    <DataGridTextColumn.Header >
-                        <TextBlock Text="Библиотека культур" Style="{StaticResource LibraryTextBlockStyle}">
-                            
-                        </TextBlock>
-                    </DataGridTextColumn.Header>
-                </DataGridTextColumn>
+                <DataGridTemplateColumn Width="*">
+                    <DataGridTemplateColumn.Header>
+                        <TextBlock Text="Библиотека культур" Style="{StaticResource LibraryTextBlockStyle}"/>
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="{x:Type m:CultureFromViewModel}">
+                            <TextBlock Text="{Binding Name}"></TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <Grid Background="White">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition></ColumnDefinition>
+                                    <ColumnDefinition  Width="75"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                <Button Grid.Column="1" Width="24" Background="Transparent" BorderBrush="Transparent" HorizontalAlignment="Right" Margin="0,0,40,0"
+                                        VerticalAlignment="Stretch" ToolTip="Подтвердить" 
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.UpdateCultureNameCommand}">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <fa5:ImageAwesome Icon="Regular_CheckSquare" Height="20"  Margin="0, 0,5,0" Foreground="Green"/>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                                <Button Grid.Column="1"  Width="27" Background="Transparent" BorderBrush="Transparent" HorizontalAlignment="Right"
+                                        Margin="0,0,10,0" ToolTip="Отменить">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <fa5:ImageAwesome Icon="Regular_WindowClose" Height="20"  Margin="0, 0,0,0" Foreground="Red"/>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+
+                            </Grid>
+                        </DataTemplate>
+
+                    </DataGridTemplateColumn.CellEditingTemplate>
+
+
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 
         
-        <DataGrid Grid.Column="2" Grid.Row="0" AutoGenerateColumns="False" DataContext="{Binding Producer}" ItemsSource="{Binding}"
-                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"  Margin="15">
+        <DataGrid Grid.Column="2" Grid.Row="0" AutoGenerateColumns="False" ItemsSource="{Binding Producer}"
+                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"  Margin="15" SelectedItem="{Binding SelectedProducer}" >
             <DataGrid.Columns>
                 
                 <DataGridTextColumn Binding="{Binding Name}" Width="*">
