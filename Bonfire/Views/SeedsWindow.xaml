@@ -48,7 +48,8 @@
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
                               Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
-                              EnableRowVirtualization="True">
+                              EnableRowVirtualization="True"
+                              SelectedIndex="{Binding CurrentPosition, Mode=OneWay}">
 
             <DataGrid.Columns >
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -9,9 +10,11 @@ using System.Windows.Input;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
+using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
+using GSF.Collections;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -74,6 +77,7 @@ public class SeedsViewModel : ViewModel
     private void View_CurrentChanged(object? sender, EventArgs e)
     {
         if (_SeedsView.View == null && _SeedsView.View.CurrentPosition == -1) return;
+        
         SelectedItem = _SeedsView.View.CurrentPosition != -1 ? Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id) : null;
     }
 
@@ -705,9 +709,9 @@ public class SeedsViewModel : ViewModel
 
     private (Seed?, SeedsInfo?) GetOrCreateSeedInfo()
     {
-        int.TryParse(AddQuantityInPac, out var quantity);
-        int.TryParse(AddQuantityPac, out var quantityPac);
-        decimal.TryParse(AddCostPack, out var costPack);
+        var quantity = AddQuantityInPac.DoubleParseAdvanced();
+        var quantityPac = AddQuantityPac.DoubleParseAdvanced();
+        var costPack = AddCostPack.DecimalParseAdvanced();
 
         if (AddProducerList.Contains(c => c.Name == AddProducer))
         {
@@ -821,6 +825,7 @@ public class SeedsViewModel : ViewModel
 
         _SeedsView.Source = newCollection.ToArray();
         _SeedsView.View.CurrentChanged += View_CurrentChanged;
+        _SeedsView.View.MoveCurrentToFirst();
         OnPropertyChanged(nameof(SeedsView));
         OnPropertyChanged(nameof(ListCulture));
     }
@@ -998,21 +1003,25 @@ public class SeedsViewModel : ViewModel
     {
         var plant = GetOrCreatePlant();
         var seedsInfo = GetOrCreateSeedInfo();
+        Seed newSeed;
         switch (seedsInfo.Item1)
         {
             case null:
             {
-                var newSeed = await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
+                newSeed = await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
 
                 UpdateCollectionSeedsViewModel(newSeed);
                 break;
             }
             default:
-                await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
+              newSeed = await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
                 break;
         }
         ClearFieldSeedView();
         UpdateCollectionViewSource();
+
+        //_SeedsView.View.MoveCurrentToFirst();
+        
         //await LoadSeed().ConfigureAwait(false);
     }
 
