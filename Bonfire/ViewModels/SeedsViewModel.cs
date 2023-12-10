@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -14,7 +13,6 @@ using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
-using GSF.Collections;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -77,8 +75,8 @@ public class SeedsViewModel : ViewModel
     private void View_CurrentChanged(object? sender, EventArgs e)
     {
         if (_SeedsView.View == null && _SeedsView.View.CurrentPosition == -1) return;
-        
         SelectedItem = _SeedsView.View.CurrentPosition != -1 ? Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id) : null;
+        
     }
 
 
@@ -808,7 +806,7 @@ public class SeedsViewModel : ViewModel
 
     #region Метод для обновления коллекции семян
 
-    private void UpdateCollectionViewSource()
+    private void UpdateCollectionViewSource(int id = -1)
     {
         var newCollection = Seeds.Select(seeds => new SeedsFromViewModel
         {
@@ -823,9 +821,15 @@ public class SeedsViewModel : ViewModel
             AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
         }).OrderBy(s=>s.Culture);
 
-        _SeedsView.Source = newCollection.ToArray();
+        var collection = newCollection.ToArray();
+        _SeedsView.Source = collection;
         _SeedsView.View.CurrentChanged += View_CurrentChanged;
-        _SeedsView.View.MoveCurrentToFirst();
+        if (id != -1)
+        {
+            var current = collection.FirstOrDefault(s => s.Id == id);
+            _SeedsView.View.MoveCurrentTo(current);
+        }
+        
         OnPropertyChanged(nameof(SeedsView));
         OnPropertyChanged(nameof(ListCulture));
     }
@@ -1018,7 +1022,7 @@ public class SeedsViewModel : ViewModel
                 break;
         }
         ClearFieldSeedView();
-        UpdateCollectionViewSource();
+        UpdateCollectionViewSource(newSeed.Id);
 
         //_SeedsView.View.MoveCurrentToFirst();
         

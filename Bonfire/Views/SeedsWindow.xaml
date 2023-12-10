@@ -10,6 +10,7 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:templates="clr-namespace:Bonfire.Templates"
         d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920" KeyUp="ComboBox_OnKeyUp">
 
@@ -49,7 +50,12 @@
                               Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True"
-                              SelectedIndex="{Binding CurrentPosition, Mode=OneWay}">
+                              SelectedItem="{Binding CurrentItem, Mode=OneWay}">
+
+            <i:Interaction.Behaviors>
+                <templates:ScrollIntoViewBehavior/>
+            </i:Interaction.Behaviors>
+
 
             <DataGrid.Columns >
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>

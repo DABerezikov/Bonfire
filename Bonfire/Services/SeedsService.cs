@@ -1,11 +1,8 @@
-﻿using System;
-using Bonfire.Services.Interfaces;
+﻿using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services
 {

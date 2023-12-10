@@ -1,5 +1,4 @@
 ﻿using Bonfire.Infrastructure.Commands.Base;
-using System;
 using System.Windows;
 
 namespace Bonfire.Infrastructure.Commands
