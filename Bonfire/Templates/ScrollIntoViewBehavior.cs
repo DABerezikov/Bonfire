@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Xaml.Behaviors;
 
 namespace Bonfire.Templates
@@ -34,6 +35,8 @@ namespace Bonfire.Templates
                         {
                             grid.UpdateLayout();
                             grid.ScrollIntoView(item, null);
+                            DataGridRow row = (DataGridRow)grid.ItemContainerGenerator.ContainerFromIndex(grid.SelectedIndex);
+                            row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
                         }
                     };
 
