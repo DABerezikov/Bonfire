@@ -139,8 +139,8 @@ public class SeedsViewModel : ViewModel
         set
         {
             Set(ref _SelectedSeedsViewItem, value);
-            _SelectedItem = value!=null ? Seeds.First(s => s.Id == value.Id):null;
-            CopySeedToEditItem(SelectedItem, _EditedItem);
+            SelectedItem = value!=null ? Seeds.First(s => s.Id == value.Id):null;
+           
         }
     }
 
@@ -150,13 +150,42 @@ public class SeedsViewModel : ViewModel
 
     /// <summary>Выбранный объект</summary>
     private Seed _SelectedItem;
-    private Seed _EditedItem = new ();
+    
 
     /// <summary>Выбранный объект</summary>
     public Seed SelectedItem
     {
         get => _SelectedItem;
         set => Set(ref _SelectedItem, value);
+    }
+
+    #endregion
+
+    #region EditedItem : Seed - Редактируемый объект
+
+    /// <summary>Редактируемый объект</summary>
+    private Seed _EditedItem = new () 
+    {   Plant  = new Plant()
+        
+        { 
+            PlantCulture = new PlantCulture(),
+            PlantSort = new PlantSort()
+            {
+                Producer = new Producer()
+            }
+
+        },
+
+        SeedsInfo = new SeedsInfo()
+
+    };
+
+
+    /// <summary>Редактируемый объект</summary>
+    public Seed EditedItem
+    {
+        get => _EditedItem;
+        set => Set(ref _EditedItem, value);
     }
 
     #endregion
@@ -898,6 +927,8 @@ public class SeedsViewModel : ViewModel
         seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
         seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
         seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
+        OnPropertyChanged(nameof(EditedItem));
+        OnPropertyChanged(nameof(SelectedItem));
 
     }
 
