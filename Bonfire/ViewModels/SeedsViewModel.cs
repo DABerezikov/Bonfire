@@ -33,7 +33,9 @@ public class SeedsViewModel : ViewModel
         {
             SortDescriptions =
             {
-                new SortDescription(nameof(SeedsFromViewModel.Culture), ListSortDirection.Ascending)
+                new SortDescription(nameof(SeedsFromViewModel.Culture), ListSortDirection.Ascending),
+                new SortDescription(nameof(SeedsFromViewModel.Sort), ListSortDirection.Ascending),
+                new SortDescription(nameof(SeedsFromViewModel.Producer), ListSortDirection.Ascending)
 
             }
 
@@ -72,12 +74,7 @@ public class SeedsViewModel : ViewModel
        _ProducerListView.Filter += _ProducerListView_Filter;
     }
 
-    private void View_CurrentChanged(object? sender, EventArgs e)
-    {
-        if (_SeedsView.View == null && _SeedsView.View.CurrentPosition == -1) return;
-        SelectedItem = _SeedsView.View.CurrentPosition != -1 ? Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id) : null;
-        
-    }
+   
 
 
 
@@ -130,7 +127,24 @@ public class SeedsViewModel : ViewModel
     }
     #endregion
 
-    
+    #region SelectedSeedsViewItem : SeedsFromViewModel - Выбранный объект SeedsView
+
+    /// <summary>Выбранный объект SeedsView</summary>
+    private SeedsFromViewModel _SelectedSeedsViewItem;
+
+    /// <summary>Выбранный объект SeedsView</summary>
+    public SeedsFromViewModel SelectedSeedsViewItem
+    {
+        get => _SelectedSeedsViewItem;
+        set
+        {
+            Set(ref _SelectedSeedsViewItem, value);
+            _SelectedItem = value!=null ? Seeds.First(s => s.Id == value.Id):null;
+        }
+    }
+
+    #endregion
+
     #region SelectedItem : Seed - Выбранный объект
 
     /// <summary>Выбранный объект</summary>
@@ -550,12 +564,14 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                     
                 })
-                .OrderBy(s=>s.Culture)
+                .OrderBy(c => c.Culture)
+                .ThenBy(s => s.Sort)
+                .ThenBy(p => p.Producer)
             ;
        
             Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
             _SeedsView.Source = await seedsQuery.ToArrayAsync();
-            _SeedsView.View.CurrentChanged += View_CurrentChanged;
+           
             OnPropertyChanged(nameof(SeedsView));
         
     }
@@ -819,11 +835,14 @@ public class SeedsViewModel : ViewModel
             WeightPack = seeds.SeedsInfo.WeightPack,
             AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
             AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-        }).OrderBy(s=>s.Culture);
+        })
+            .OrderBy(c => c.Culture)
+            .ThenBy(s => s.Sort)
+            .ThenBy(p => p.Producer);
 
         var collection = newCollection.ToArray();
         _SeedsView.Source = collection;
-        _SeedsView.View.CurrentChanged += View_CurrentChanged;
+       
         if (id != -1)
         {
             var current = collection.FirstOrDefault(s => s.Id == id);
@@ -966,6 +985,9 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
+                .OrderBy(c=>c.Culture)
+                .ThenBy(s=>s.Sort)
+                .ThenBy(p=>p.Producer)
 
                 : _seedsService.Seeds
                 .Select(seeds => new SeedsFromViewModel
@@ -980,6 +1002,9 @@ public class SeedsViewModel : ViewModel
                     AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
                     AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
                 })
+                .OrderBy(c => c.Culture)
+                .ThenBy(s => s.Sort)
+                .ThenBy(p => p.Producer)
 
             ;
         _SeedsView.Source = await seedsQuery.ToArrayAsync();

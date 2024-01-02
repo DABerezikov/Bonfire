@@ -14,6 +14,6 @@ public class SeedsFromViewModel
     public double? AmountSeedsWeight { get; set; }
     public double? AmountSeedsQuantity { get; set; }
 
-    public bool IsStillGood => ExpirationDate.Year >= DateTime.Now.Year + 2;
-    public bool IsOld => ExpirationDate.Year >= DateTime.Now.Year + 1;
+    public bool IsStillGood => (DateTime.Now.Year - ExpirationDate.Year) <= 0 && (DateTime.Now.Year - ExpirationDate.Year) > -1;
+    public bool IsOld => (DateTime.Now.Year - ExpirationDate.Year) > 0;
 }

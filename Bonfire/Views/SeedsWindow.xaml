@@ -38,8 +38,8 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid DataContext="{Binding SeedsView}"
-                                ItemsSource="{Binding }"
+        <DataGrid 
+                                ItemsSource="{Binding SeedsView }"
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
@@ -50,7 +50,7 @@
                               Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True"
-                              SelectedItem="{Binding CurrentItem, Mode=OneWay}">
+                              SelectedItem="{Binding SelectedSeedsViewItem}">
 
             <i:Interaction.Behaviors>
                 <templates:ScrollIntoViewBehavior/>
@@ -68,12 +68,12 @@
                                 <TextBlock Text="{Binding ExpirationDate, StringFormat=12.yyyy}"/>
                             </StackPanel>
                             <DataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding IsStillGood}" Value="false">
+                                <DataTrigger Binding="{Binding IsStillGood}" Value="true">
                                     <Setter Property="TextBlock.Foreground" Value="DarkGreen"/>
                                     <Setter Property="TextBlock.FontWeight" Value="Bold"/>
                                 </DataTrigger>
                                
-                                <DataTrigger Binding="{Binding IsOld}" Value="false">
+                                <DataTrigger Binding="{Binding IsOld}" Value="true">
                                     <Setter Property="TextBlock.Foreground" Value="DarkRed"/>
                                     <Setter Property="TextBlock.FontWeight" Value="Bold"/>
                                 </DataTrigger>
