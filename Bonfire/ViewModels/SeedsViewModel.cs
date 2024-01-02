@@ -528,7 +528,11 @@ public class SeedsViewModel : ViewModel
         set
         {
             if (Set(ref _AddProducer, value))
+            {
                 ProducerListView.Refresh();
+                if(_AddProducer == "Свои семена")
+                    IsCollected = true;
+            }
         } 
     }
 
