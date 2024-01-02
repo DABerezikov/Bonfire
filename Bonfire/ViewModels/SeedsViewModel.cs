@@ -140,6 +140,7 @@ public class SeedsViewModel : ViewModel
         {
             Set(ref _SelectedSeedsViewItem, value);
             _SelectedItem = value!=null ? Seeds.First(s => s.Id == value.Id):null;
+            CopySeedToEditItem(SelectedItem, _EditedItem);
         }
     }
 
@@ -149,6 +150,7 @@ public class SeedsViewModel : ViewModel
 
     /// <summary>Выбранный объект</summary>
     private Seed _SelectedItem;
+    private Seed _EditedItem = new ();
 
     /// <summary>Выбранный объект</summary>
     public Seed SelectedItem
@@ -859,7 +861,47 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-   
+    #region Метод для копирования информации между семянами
+
+    private void CopySeedToEditItem(Seed seedFrom, Seed seedTo)
+    {
+        seedTo.Id = seedFrom.Id;
+
+        seedTo.Plant.Id = seedFrom.Plant.Id;
+
+        seedTo.Plant.PlantCulture.Id = seedFrom.Plant.PlantCulture.Id;
+        seedTo.Plant.PlantCulture.Name = seedFrom.Plant.PlantCulture.Name;
+        seedTo.Plant.PlantCulture.Class = seedFrom.Plant.PlantCulture.Class;
+
+        seedTo.Plant.PlantSort.Id = seedFrom.Plant.PlantSort.Id;
+        seedTo.Plant.PlantSort.Name = seedFrom.Plant.PlantSort.Name;
+        seedTo.Plant.PlantSort.AgeOfSeedlings = seedFrom.Plant.PlantSort.AgeOfSeedlings;
+        seedTo.Plant.PlantSort.Description = seedFrom.Plant.PlantSort.Description;
+        seedTo.Plant.PlantSort.GrowingSeason = seedFrom.Plant.PlantSort.GrowingSeason;
+        seedTo.Plant.PlantSort.LandingPattern = seedFrom.Plant.PlantSort.LandingPattern;
+        seedTo.Plant.PlantSort.MaxGerminationTime = seedFrom.Plant.PlantSort.MaxGerminationTime;
+        seedTo.Plant.PlantSort.MinGerminationTime = seedFrom.Plant.PlantSort.MinGerminationTime;
+        seedTo.Plant.PlantSort.PlantColor = seedFrom.Plant.PlantSort.PlantColor;
+        seedTo.Plant.PlantSort.PlantHeight = seedFrom.Plant.PlantSort.PlantHeight;
+
+        seedTo.Plant.PlantSort.Producer.Id = seedFrom.Plant.PlantSort.Producer.Id;
+        seedTo.Plant.PlantSort.Producer.Name = seedFrom.Plant.PlantSort.Producer.Name;
+
+        seedTo.SeedsInfo.Id = seedFrom.SeedsInfo.Id;
+        seedTo.SeedsInfo.AmountSeeds = seedFrom.SeedsInfo.AmountSeeds;
+        seedTo.SeedsInfo.AmountSeedsWeight = seedFrom.SeedsInfo.AmountSeedsWeight;
+        seedTo.SeedsInfo.CostPack = seedFrom.SeedsInfo.CostPack;
+        seedTo.SeedsInfo.DisposeComment = seedFrom.SeedsInfo.DisposeComment;
+        seedTo.SeedsInfo.ExpirationDate = seedFrom.SeedsInfo.ExpirationDate;
+        seedTo.SeedsInfo.Note = seedFrom.SeedsInfo.Note;
+        seedTo.SeedsInfo.PurchaseDate = seedFrom.SeedsInfo.PurchaseDate;
+        seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
+        seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
+        seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
+
+    }
+
+    #endregion
 
     #region Метод для обновления коллекций SeedsViewModel
     private void UpdateCollectionSeedsViewModel(Seed newSeed)
