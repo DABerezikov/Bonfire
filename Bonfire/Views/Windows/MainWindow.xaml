@@ -22,6 +22,7 @@
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
             <MenuItem Header="Файл">
+                <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
                 <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}"/>
             </MenuItem>
             <MenuItem Command="{Binding ShowSeedViewModelCommand}">

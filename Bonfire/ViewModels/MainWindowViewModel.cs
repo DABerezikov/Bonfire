@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Threading.Tasks;
+using System.Windows.Input;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
@@ -98,6 +99,29 @@ namespace Bonfire.ViewModels
         }
 
         #endregion
+
+        #region Command CreateSeedsReportCommand - Команда для формирования отчета по семенам
+
+        /// <summary> Команда для формирования отчета по семенам </summary>
+        private ICommand _CreateSeedsReportCommand;
+
+        /// <summary> Команда для формирования отчета по семенам </summary>
+        public ICommand CreateSeedsReportCommand => _CreateSeedsReportCommand
+            ??= new LambdaCommandAsync(OnCreateSeedsReportCommandExecuted, CanCreateSeedsReportCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для формирования отчета по семенам </summary>
+        private bool CanCreateSeedsReportCommandExecute() => CurrentViewModel == _SeedsViewModel;
+
+        /// <summary> Логика выполнения - Команда для формирования отчета по семенам </summary>
+        private async Task OnCreateSeedsReportCommandExecuted()
+        {
+           _SeedsViewModel.CreateSeedReport();
+        }
+
+
+
+        #endregion
+
 
 
         public MainWindowViewModel(IUserDialog UserDialog, ISeedsService SeedsService, SeedsViewModel SeedsViewModel)

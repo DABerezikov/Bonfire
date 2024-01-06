@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -14,6 +15,9 @@ using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using LicenseContext = OfficeOpenXml.LicenseContext;
 
 
 namespace Bonfire.ViewModels;
@@ -22,6 +26,7 @@ public class SeedsViewModel : ViewModel
 {
     private readonly ISeedsService _seedsService;
     private readonly IUserDialog _userDialog;
+    
 
     
     
@@ -993,7 +998,116 @@ public class SeedsViewModel : ViewModel
         {
             AddProducerList.Remove(AddProducerList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Producer.Name)!);
         }
-    } 
+    }
+    #endregion
+
+    #region Метод для создания отчета по семенам
+
+    public void CreateSeedReport()
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        using var package = new ExcelPackage();
+        var sheet = package.Workbook.Worksheets.Add("Семена");
+        sheet.PrinterSettings.BottomMargin = 0.3m;
+        sheet.PrinterSettings.FooterMargin = 0;
+        sheet.PrinterSettings.HeaderMargin = 0;
+        sheet.PrinterSettings.LeftMargin = 0.6m;
+        sheet.PrinterSettings.RightMargin = 0.3m;
+        sheet.PrinterSettings.TopMargin = 0.3m;
+        sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
+       
+        sheet.Cells.Style.Font.Name = "Calibri";
+        sheet.Cells.Style.Font.Size = 10;
+
+        sheet.Columns[1, 2].Style.WrapText = true;
+        sheet.Cells["A:XFD"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        sheet.Cells[1,1].Value = "Сорт";
+        sheet.Cells[1,2].Value = "Фирма";
+        sheet.Cells[1,3].Value = "Годен до";
+        sheet.Cells[1,4].Value = "Остаток г.";
+        sheet.Cells[1, 5].Value = "Остаток шт.";
+        sheet.Cells[1,1,1,7].Style.Font.Bold = true;
+
+
+        var listSeeds = Seeds.Select(s => new 
+        {
+            Culture = s.Plant.PlantCulture.Name,
+            Sort = s.Plant.PlantSort.Name,
+            Producer = s.Plant.PlantSort.Producer.Name,
+            ExpirationDate = s.SeedsInfo.ExpirationDate.ToShortDateString(),
+            WeightPack = s.SeedsInfo.WeightPack,
+            QuantityPack = s.SeedsInfo.QuantityPack
+
+        })
+            .OrderBy(c=>c.Culture)
+            .ToList();
+        
+
+        string tempCulture = listSeeds[0].Culture;
+
+        var cell = sheet.Cells[2, 1, 2, 7];
+        MergeAndStyleCell(cell);
+        cell.Value = tempCulture;
+
+
+        for (int i = 0, row = 3; i < listSeeds.Count; i++, row++)
+        {
+            if (listSeeds[i].Culture != tempCulture)
+            {
+                tempCulture = listSeeds[i].Culture;
+                cell = sheet.Cells[row, 1, row, 7];
+                MergeAndStyleCell(cell);
+                cell.Value = tempCulture;
+                row++;
+            }
+            sheet.Cells[row,1].Value = listSeeds[i].Sort;
+            sheet.Cells[row, 2].Value = listSeeds[i].Producer;
+            sheet.Cells[row, 3].Value = listSeeds[i].ExpirationDate;
+
+            if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > 0)
+            {
+                sheet.Cells[row, 3].Style.Font.Bold = true;
+            }
+
+            sheet.Cells[row, 4].Value = listSeeds[i].WeightPack;
+            sheet.Cells[row, 5].Value = listSeeds[i].QuantityPack;
+
+            if (i != listSeeds.Count-1) continue;
+            sheet.Cells[1, 1, row, 7].Style.Border.Top.Style = ExcelBorderStyle.Thin ;
+            sheet.Cells[1, 1, row, 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            sheet.Cells[1, 1, row, 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            sheet.Cells[1, 1, row, 7].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+
+        }
+        //sheet.Cells["A3"].LoadFromCollection(listSeeds);
+
+        sheet.Columns[1].AutoFit(20);
+        sheet.Columns[2].AutoFit(20);
+        sheet.Columns[3].AutoFit(10);
+        sheet.Columns[4].AutoFit( 10);
+        sheet.Columns[5].AutoFit(10);
+        sheet.Columns[6].AutoFit(10);
+        sheet.Columns[7].AutoFit(10);
+
+
+
+        var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
+
+        File.WriteAllBytes($"Семена_{DateTime.Now.ToShortDateString()}.xlsx", arrayBite);
+
+    }
+
+    private void MergeAndStyleCell(ExcelRange cell)
+    {
+        
+        cell.Merge = true;
+        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        cell.Style.Font.Bold = true;
+        
+    }
+
     #endregion
 
     #endregion
@@ -1163,9 +1277,12 @@ public class SeedsViewModel : ViewModel
         UpdateCollectionViewSource();
     }
 
-   
+
 
     #endregion
+
+
+    
 
     #endregion
 
