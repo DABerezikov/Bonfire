@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Shapes;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
@@ -1079,9 +1082,21 @@ public class SeedsViewModel : ViewModel
 
         ExcelAutoFitColumns(sheet);
 
-        var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
+        try
+        {
+            var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
 
-        File.WriteAllBytes($"Семена_{DateTime.Now.ToShortDateString()}.xlsx", arrayBite);
+            var path = $"Семена_{DateTime.Now.ToShortDateString()}.xlsx";
+
+            File.WriteAllBytes(path, arrayBite);
+
+            _userDialog.Information($"Отчет {path} сформирован", "Информация");
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e);
+            _userDialog.Warning($"Что-то пошло не так...", "Предупреждение");
+        }
 
     }
 
@@ -1123,7 +1138,10 @@ public class SeedsViewModel : ViewModel
         cell.Merge = true;
         cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
         cell.Style.Font.Bold = true;
-        
+        using var range = cell;
+        range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+        range.Style.Fill.BackgroundColor.SetColor(Color.DarkGray);
+        range.Style.Font.Color.SetColor(Color.Black);
     }
 
     #endregion
