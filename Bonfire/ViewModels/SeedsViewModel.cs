@@ -1004,7 +1004,7 @@ public class SeedsViewModel : ViewModel
     }
     #endregion
 
-    #region Метод для создания отчета по семенам
+    #region Методы для создания отчета по семенам
 
     public void CreateSeedReport()
     {
@@ -1015,35 +1015,30 @@ public class SeedsViewModel : ViewModel
 
         ExcelSettings(sheet);
 
-        sheet.Cells[1,1].Value = "Сорт";
-        sheet.Cells[1,2].Value = "Фирма";
-        sheet.Cells[1,3].Value = "Годен до";
-        sheet.Cells[1,4].Value = "Граммы";
-        sheet.Cells[1, 5].Value = "Штуки";
-        sheet.Cells[1,1,1,7].Style.Font.Bold = true;
-
-
-        var listSeeds = Seeds.Select(s => new 
-        {
-            Culture = s.Plant.PlantCulture.Name,
-            Sort = s.Plant.PlantSort.Name,
-            Producer = s.Plant.PlantSort.Producer.Name,
-            ExpirationDate = s.SeedsInfo.ExpirationDate.ToShortDateString(),
-            WeightPack = s.SeedsInfo.WeightPack,
-            QuantityPack = s.SeedsInfo.QuantityPack
-
-        })
-            .OrderBy(c=>c.Culture)
-            .ToList();
+        SetHeaderExcel(sheet);
         
+        var listSeeds = GetListSeeds();
 
+        GenerateExcelReport(listSeeds,  sheet);
+
+        ExcelAutoFitColumns(sheet);
+
+        SaveExcelReport(package);
+
+    }
+
+    private void GenerateExcelReport(IReadOnlyList<ListSeed> listSeeds,  ExcelWorksheet sheet)
+    {
+        
         var tempCulture = listSeeds[0].Culture;
 
         var cell = sheet.Cells[2, 1, 2, 7];
+
         MergeAndStyleCell(cell);
+
         cell.Value = tempCulture;
-
-
+        
+        
         for (int i = 0, row = 3; i < listSeeds.Count; i++, row++)
         {
             if (listSeeds[i].Culture != tempCulture)
@@ -1054,7 +1049,8 @@ public class SeedsViewModel : ViewModel
                 cell.Value = tempCulture;
                 row++;
             }
-            sheet.Cells[row,1].Value = listSeeds[i].Sort;
+
+            sheet.Cells[row, 1].Value = listSeeds[i].Sort;
             sheet.Cells[row, 2].Value = listSeeds[i].Producer;
             sheet.Cells[row, 3].Value = listSeeds[i].ExpirationDate.Split('.')[2];
 
@@ -1063,7 +1059,8 @@ public class SeedsViewModel : ViewModel
                 sheet.Cells[row, 3].Style.Font.Bold = true;
             }
 
-            if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) <= 0 && (DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > -1)
+            if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) <= 0 &&
+                (DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > -1)
             {
                 sheet.Cells[row, 3].Style.Font.Italic = true;
                 sheet.Cells[row, 3].Style.Font.UnderLine = true;
@@ -1072,16 +1069,34 @@ public class SeedsViewModel : ViewModel
             sheet.Cells[row, 4].Value = listSeeds[i].WeightPack;
             sheet.Cells[row, 5].Value = listSeeds[i].QuantityPack;
 
-            if (i != listSeeds.Count-1) continue;
-            sheet.Cells[1, 1, row, 7].Style.Border.Top.Style = ExcelBorderStyle.Thin ;
+            if (i != listSeeds.Count - 1) continue;
+            sheet.Cells[1, 1, row, 7].Style.Border.Top.Style = ExcelBorderStyle.Thin;
             sheet.Cells[1, 1, row, 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
             sheet.Cells[1, 1, row, 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
             sheet.Cells[1, 1, row, 7].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-
         }
+    }
 
-        ExcelAutoFitColumns(sheet);
+    private List<ListSeed> GetListSeeds()
+    {
+        var listSeeds = Seeds.Select(s => new ListSeed
+                (s.Plant.PlantCulture.Name,
+                    s.Plant.PlantSort.Name,
+                    s.Plant.PlantSort.Producer.Name,
+                    s.SeedsInfo.ExpirationDate.ToShortDateString(),
+                    s.SeedsInfo.WeightPack,
+                    s.SeedsInfo.QuantityPack)
+            )
+            .OrderBy(c => c.Culture)
+            .ToList();
+        return listSeeds;
+    }
 
+    private record ListSeed(string Culture, string Sort, string Producer, string ExpirationDate, double WeightPack,
+        double QuantityPack);
+
+    private void SaveExcelReport(ExcelPackage package)
+    {
         try
         {
             var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
@@ -1097,7 +1112,16 @@ public class SeedsViewModel : ViewModel
             Debug.WriteLine(e);
             _userDialog.Warning($"Что-то пошло не так...", "Предупреждение");
         }
+    }
 
+    private static void SetHeaderExcel(ExcelWorksheet sheet)
+    {
+        sheet.Cells[1, 1].Value = "Сорт";
+        sheet.Cells[1, 2].Value = "Фирма";
+        sheet.Cells[1, 3].Value = "Годен до";
+        sheet.Cells[1, 4].Value = "Граммы";
+        sheet.Cells[1, 5].Value = "Штуки";
+        sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;
     }
 
     private static void ExcelAutoFitColumns(ExcelWorksheet sheet)
