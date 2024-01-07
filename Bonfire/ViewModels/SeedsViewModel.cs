@@ -1102,8 +1102,11 @@ public class SeedsViewModel : ViewModel
             var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
 
             var path = $"Семена_{DateTime.Now.ToShortDateString()}.xlsx";
-
-            File.WriteAllBytes(path, arrayBite);
+            
+            if (!Directory.Exists("Reports"))
+                Directory.CreateDirectory("Reports");
+            
+            File.WriteAllBytes($"Reports\\{path}", arrayBite);
 
             _userDialog.Information($"Отчет {path} сформирован", "Информация");
         }
