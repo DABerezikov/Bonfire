@@ -1009,23 +1009,8 @@ public class SeedsViewModel : ViewModel
 
         using var package = new ExcelPackage();
         var sheet = package.Workbook.Worksheets.Add("Семена");
-        sheet.PrinterSettings.BottomMargin = 0.1m;
-        sheet.PrinterSettings.FooterMargin = 0;
-        sheet.PrinterSettings.HeaderMargin = 0;
-        sheet.PrinterSettings.LeftMargin = 0.2m;
-        sheet.PrinterSettings.RightMargin = 0.1m;
-        sheet.PrinterSettings.TopMargin = 0.1m;
-        sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
-       
-        sheet.Cells.Style.Font.Name = "Calibri";
-        sheet.Cells.Style.Font.Size = 12;
 
-        sheet.Columns[1, 2].Style.WrapText = true;
-        sheet.Cells["A:B"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
-        sheet.Cells["C:G"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-        sheet.Cells["A1:G1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-        sheet.Cells["A:G"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+        ExcelSettings(sheet);
 
         sheet.Cells[1,1].Value = "Сорт";
         sheet.Cells[1,2].Value = "Фирма";
@@ -1049,7 +1034,7 @@ public class SeedsViewModel : ViewModel
             .ToList();
         
 
-        string tempCulture = listSeeds[0].Culture;
+        var tempCulture = listSeeds[0].Culture;
 
         var cell = sheet.Cells[2, 1, 2, 7];
         MergeAndStyleCell(cell);
@@ -1091,18 +1076,8 @@ public class SeedsViewModel : ViewModel
             sheet.Cells[1, 1, row, 7].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
         }
-        //sheet.Cells["A3"].LoadFromCollection(listSeeds);
 
-        sheet.Columns[1].AutoFit(20);
-        sheet.Columns[2].AutoFit(15);
-        sheet.Columns[3].AutoFit(7);
-        sheet.Columns[4].AutoFit( 7);
-        sheet.Columns[5].AutoFit(7);
-        sheet.Columns[6].AutoFit(18);
-        sheet.Columns[7].AutoFit(18);
-       
-
-
+        ExcelAutoFitColumns(sheet);
 
         var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
 
@@ -1110,11 +1085,43 @@ public class SeedsViewModel : ViewModel
 
     }
 
+    private static void ExcelAutoFitColumns(ExcelWorksheet sheet)
+    {
+        sheet.Columns[1].AutoFit(20);
+        sheet.Columns[2].AutoFit(15);
+        sheet.Columns[3].AutoFit(7);
+        sheet.Columns[4].AutoFit(7);
+        sheet.Columns[5].AutoFit(7);
+        sheet.Columns[6].AutoFit(18);
+        sheet.Columns[7].AutoFit(18);
+    }
+
+    private void ExcelSettings(ExcelWorksheet sheet)
+    {
+        sheet.PrinterSettings.BottomMargin = 0.1m;
+        sheet.PrinterSettings.FooterMargin = 0;
+        sheet.PrinterSettings.HeaderMargin = 0;
+        sheet.PrinterSettings.LeftMargin = 0.2m;
+        sheet.PrinterSettings.RightMargin = 0.1m;
+        sheet.PrinterSettings.TopMargin = 0.1m;
+        sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
+
+        sheet.Cells.Style.Font.Name = "Calibri";
+        sheet.Cells.Style.Font.Size = 12;
+
+        sheet.Columns[1, 2].Style.WrapText = true;
+        sheet.Cells["A:B"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+        sheet.Cells["C:G"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        sheet.Cells["A1:G1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        sheet.Cells["A:G"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+    }
+
     private void MergeAndStyleCell(ExcelRange cell)
     {
         
         cell.Merge = true;
-        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
         cell.Style.Font.Bold = true;
         
     }
