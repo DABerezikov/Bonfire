@@ -8,7 +8,7 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         DataContext="{Binding MainWindowModel, Source={StaticResource Locator}}"
         Title="{Binding Title}"
-        Width="1920" Height="1080">
+        Width="1920" Height="1080" WindowState="Maximized">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding ShowSeedViewModelCommand}"></i:InvokeCommandAction>
@@ -22,8 +22,10 @@
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
             <MenuItem Header="Файл">
-                <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
                 <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Отчеты">
+                <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
             </MenuItem>
             <MenuItem Command="{Binding ShowSeedViewModelCommand}">
                 <MenuItem.Header>

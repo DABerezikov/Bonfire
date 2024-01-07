@@ -1009,25 +1009,29 @@ public class SeedsViewModel : ViewModel
 
         using var package = new ExcelPackage();
         var sheet = package.Workbook.Worksheets.Add("Семена");
-        sheet.PrinterSettings.BottomMargin = 0.3m;
+        sheet.PrinterSettings.BottomMargin = 0.1m;
         sheet.PrinterSettings.FooterMargin = 0;
         sheet.PrinterSettings.HeaderMargin = 0;
-        sheet.PrinterSettings.LeftMargin = 0.6m;
-        sheet.PrinterSettings.RightMargin = 0.3m;
-        sheet.PrinterSettings.TopMargin = 0.3m;
+        sheet.PrinterSettings.LeftMargin = 0.2m;
+        sheet.PrinterSettings.RightMargin = 0.1m;
+        sheet.PrinterSettings.TopMargin = 0.1m;
         sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
        
         sheet.Cells.Style.Font.Name = "Calibri";
-        sheet.Cells.Style.Font.Size = 10;
+        sheet.Cells.Style.Font.Size = 12;
 
         sheet.Columns[1, 2].Style.WrapText = true;
-        sheet.Cells["A:XFD"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        sheet.Cells["A:B"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+        sheet.Cells["C:G"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        sheet.Cells["A1:G1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        sheet.Cells["A:G"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
         sheet.Cells[1,1].Value = "Сорт";
         sheet.Cells[1,2].Value = "Фирма";
         sheet.Cells[1,3].Value = "Годен до";
-        sheet.Cells[1,4].Value = "Остаток г.";
-        sheet.Cells[1, 5].Value = "Остаток шт.";
+        sheet.Cells[1,4].Value = "Граммы";
+        sheet.Cells[1, 5].Value = "Штуки";
         sheet.Cells[1,1,1,7].Style.Font.Bold = true;
 
 
@@ -1064,11 +1068,17 @@ public class SeedsViewModel : ViewModel
             }
             sheet.Cells[row,1].Value = listSeeds[i].Sort;
             sheet.Cells[row, 2].Value = listSeeds[i].Producer;
-            sheet.Cells[row, 3].Value = listSeeds[i].ExpirationDate;
+            sheet.Cells[row, 3].Value = listSeeds[i].ExpirationDate.Split('.')[2];
 
             if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > 0)
             {
                 sheet.Cells[row, 3].Style.Font.Bold = true;
+            }
+
+            if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) <= 0 && (DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > -1)
+            {
+                sheet.Cells[row, 3].Style.Font.Italic = true;
+                sheet.Cells[row, 3].Style.Font.UnderLine = true;
             }
 
             sheet.Cells[row, 4].Value = listSeeds[i].WeightPack;
@@ -1084,12 +1094,13 @@ public class SeedsViewModel : ViewModel
         //sheet.Cells["A3"].LoadFromCollection(listSeeds);
 
         sheet.Columns[1].AutoFit(20);
-        sheet.Columns[2].AutoFit(20);
-        sheet.Columns[3].AutoFit(10);
-        sheet.Columns[4].AutoFit( 10);
-        sheet.Columns[5].AutoFit(10);
-        sheet.Columns[6].AutoFit(10);
-        sheet.Columns[7].AutoFit(10);
+        sheet.Columns[2].AutoFit(15);
+        sheet.Columns[3].AutoFit(7);
+        sheet.Columns[4].AutoFit( 7);
+        sheet.Columns[5].AutoFit(7);
+        sheet.Columns[6].AutoFit(18);
+        sheet.Columns[7].AutoFit(18);
+       
 
 
 
