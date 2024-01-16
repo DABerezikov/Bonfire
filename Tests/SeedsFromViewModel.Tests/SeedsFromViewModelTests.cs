@@ -1,6 +1,4 @@
-using Bonfire.Models;
-
-namespace SeedsFromViewModelTests
+namespace SeedsFromViewModel.Tests
 {
     public class SeedsFromViewModelTests
     {
@@ -9,13 +7,13 @@ namespace SeedsFromViewModelTests
         {
             //Arrange
 
-            var amount = 0;
+            const int expected = 0;
 
             //Act
 
-            var actual = new SeedsFromViewModel()
+            var actual = new Bonfire.Models.SeedsFromViewModel()
             {
-                AmountSeedsWeight = amount
+                AmountSeedsWeight = expected
 
             };
 
@@ -29,19 +27,19 @@ namespace SeedsFromViewModelTests
         {
             //Arrange
 
-            var amount = 1.0;
+            const double expected = 1.0;
 
             //Act
 
-            var actual = new SeedsFromViewModel()
+            var actual = new Bonfire.Models.SeedsFromViewModel()
             {
-                AmountSeedsWeight = amount
+                AmountSeedsWeight = expected
 
             };
 
             //Assert
 
-            Assert.Equal(amount, actual.AmountSeedsWeight);
+            Assert.Equal(expected, actual.AmountSeedsWeight);
         }
 
         [Fact]
@@ -49,13 +47,13 @@ namespace SeedsFromViewModelTests
         {
             //Arrange
 
-            var amount = 0;
+            const int expected = 0;
 
             //Act
 
-            var actual = new SeedsFromViewModel()
+            var actual = new Bonfire.Models.SeedsFromViewModel()
             {
-                AmountSeedsQuantity = amount
+                AmountSeedsQuantity = expected
 
             };
 
@@ -69,19 +67,19 @@ namespace SeedsFromViewModelTests
         {
             //Arrange
 
-            var amount = 1.0;
+            const double expected = 1.0;
 
             //Act
 
-            var actual = new SeedsFromViewModel()
+            var actual = new Bonfire.Models.SeedsFromViewModel()
             {
-                AmountSeedsQuantity = amount
+                AmountSeedsQuantity = expected
 
             };
 
             //Assert
 
-            Assert.Equal(amount, actual.AmountSeedsQuantity);
+            Assert.Equal(expected, actual.AmountSeedsQuantity);
         }
 
     }

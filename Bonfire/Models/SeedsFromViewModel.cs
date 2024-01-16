@@ -17,13 +17,13 @@ public class SeedsFromViewModel
 
     public double? AmountSeedsWeight
     {
-        get => _AmountSeedsWeight != 0 ? _AmountSeedsWeight : null;
+        get => _AmountSeedsWeight != 0.0 ? _AmountSeedsWeight : null;
         set => _AmountSeedsWeight = value;
     }
 
     public double? AmountSeedsQuantity
     {
-        get => _AmountSeedsQuantity != 0 ? _AmountSeedsQuantity : null;
+        get => _AmountSeedsQuantity != 0.0 ? _AmountSeedsQuantity : null;
         set => _AmountSeedsQuantity = value;
     }
 
