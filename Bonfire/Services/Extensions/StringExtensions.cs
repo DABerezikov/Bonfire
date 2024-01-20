@@ -11,10 +11,10 @@ public static class StringExtension
 
         if (tmp.Length > 0 && strToParse.Contains(tmp))
         {
-            var currDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
+            var curDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
 
-            tmp = tmp.Replace(".", currDecSeparator).Replace(decimalSymbol.ToString(), currDecSeparator);
-            tmp = tmp.Replace(",", currDecSeparator).Replace(decimalSymbol.ToString(), currDecSeparator);
+            tmp = tmp.Replace(".", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
+            tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
 
             return double.Parse(tmp);
         }
@@ -28,10 +28,10 @@ public static class StringExtension
 
         if (tmp.Length > 0 && strToParse.Contains(tmp))
         {
-            var currDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
+            var curDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
 
-            tmp = tmp.Replace(".", currDecSeparator).Replace(decimalSymbol.ToString(), currDecSeparator);
-            tmp = tmp.Replace(",", currDecSeparator).Replace(decimalSymbol.ToString(), currDecSeparator);
+            tmp = tmp.Replace(".", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
+            tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
 
             return decimal.Parse(tmp);
         }
