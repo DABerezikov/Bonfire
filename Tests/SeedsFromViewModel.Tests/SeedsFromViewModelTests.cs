@@ -81,9 +81,9 @@ public class SeedsFromViewModelTests
     [Fact]
     public void IsStillGood_WithExpirationDateIsCurrentYear_ReturnTrue()
     {
-        //Arrange
+        //Arrange (31.12 is a false)
 
-        var expected = DateTime.Now + TimeSpan.FromDays(10);
+        var expected = DateTime.Now + TimeSpan.FromDays(1);
 
         //Act
 
