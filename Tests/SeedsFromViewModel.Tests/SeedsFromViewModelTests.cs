@@ -1,86 +1,118 @@
-namespace SeedsFromViewModel.Tests
+namespace SeedsFromViewModel.Tests;
+
+public class SeedsFromViewModelTests
 {
-    public class SeedsFromViewModelTests
+    [Fact]
+    public void AmountSeedsWeight_WithZero_ReturnNull()
     {
-        [Fact]
-        public void AmountSeedsWeight_ReturnNull()
+        //Arrange
+
+        const int expected = 0;
+
+        //Act
+
+        var actual = new Bonfire.Models.SeedsFromViewModel
         {
-            //Arrange
+            AmountSeedsWeight = expected
+        };
 
-            const int expected = 0;
+        //Assert
 
-            //Act
+        Assert.Null(actual.AmountSeedsWeight);
+    }
 
-            var actual = new Bonfire.Models.SeedsFromViewModel()
-            {
-                AmountSeedsWeight = expected
+    [Fact]
+    public void AmountSeedsWeight_ReturnValue()
+    {
+        //Arrange
 
-            };
+        const double expected = 1.0;
 
-            //Assert
+        //Act
 
-            Assert.Null(actual.AmountSeedsWeight);
-        }
-
-        [Fact]
-        public void AmountSeedsWeight_ReturnValue()
+        var actual = new Bonfire.Models.SeedsFromViewModel
         {
-            //Arrange
+            AmountSeedsWeight = expected
+        };
 
-            const double expected = 1.0;
+        //Assert
 
-            //Act
+        Assert.Equal(expected, actual.AmountSeedsWeight);
+    }
 
-            var actual = new Bonfire.Models.SeedsFromViewModel()
-            {
-                AmountSeedsWeight = expected
+    [Fact]
+    public void AmountSeedsQuantity_WithZero_ReturnNull()
+    {
+        //Arrange
 
-            };
+        const int expected = 0;
 
-            //Assert
+        //Act
 
-            Assert.Equal(expected, actual.AmountSeedsWeight);
-        }
-
-        [Fact]
-        public void AmountSeedsQuantity_ReturnNull()
+        var actual = new Bonfire.Models.SeedsFromViewModel
         {
-            //Arrange
+            AmountSeedsQuantity = expected
+        };
 
-            const int expected = 0;
+        //Assert
 
-            //Act
+        Assert.Null(actual.AmountSeedsQuantity);
+    }
 
-            var actual = new Bonfire.Models.SeedsFromViewModel()
-            {
-                AmountSeedsQuantity = expected
+    [Fact]
+    public void AmountSeedsQuantity_ReturnValue()
+    {
+        //Arrange
 
-            };
+        const double expected = 1.0;
 
-            //Assert
+        //Act
 
-            Assert.Null(actual.AmountSeedsQuantity);
-        }
-
-        [Fact]
-        public void AmountSeedsQuantity_ReturnValue()
+        var actual = new Bonfire.Models.SeedsFromViewModel
         {
-            //Arrange
+            AmountSeedsQuantity = expected
+        };
 
-            const double expected = 1.0;
+        //Assert
 
-            //Act
+        Assert.Equal(expected, actual.AmountSeedsQuantity);
+    }
 
-            var actual = new Bonfire.Models.SeedsFromViewModel()
-            {
-                AmountSeedsQuantity = expected
+    [Fact]
+    public void IsStillGood_WithExpirationDateIsCurrentYear_ReturnTrue()
+    {
+        //Arrange
 
-            };
+        var expected = DateTime.Now + TimeSpan.FromDays(10);
 
-            //Assert
+        //Act
 
-            Assert.Equal(expected, actual.AmountSeedsQuantity);
-        }
+        var actual = new Bonfire.Models.SeedsFromViewModel
+        {
+            ExpirationDate = expected
+        };
 
+        //Assert
+
+        Assert.True(actual.IsStillGood);
+    }
+
+    [Fact]
+    public void IsStillGood_WithExpirationDateIsLastYear_ReturnTrue()
+    {
+        //Arrange
+
+        var expected = DateTime.Now - TimeSpan.FromDays(400);
+
+        //Act
+
+        var actual = new Bonfire.Models.SeedsFromViewModel
+        {
+            ExpirationDate = expected
+        };
+
+        //Assert
+
+        Assert.True(actual.IsOld);
     }
 }
