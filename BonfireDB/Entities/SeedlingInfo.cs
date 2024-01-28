@@ -5,25 +5,53 @@ using System.Text;
 using System.Threading.Tasks;
 using BonfireDB.Entities.Base;
 
+
 namespace BonfireDB.Entities
 {
     public class SeedlingInfo : Entity
     {
-        // Номер рассады
-        // Номер материнского растения (в случае черенкования)
-        // Дата посадки
-        // Фаза луны в момент посадки
-        // Куда посажено (горшок, теплица)
-        // Дата всхода
-        // Дата начала карантина
-        // Дата окончания карантина
-        // Поле комментариев - причина карантина
-        // Поле комментариев - результат карантина
-        // Источник рассады (куплено, посеяно, подарено, черенкование)
-        // Комментарий - где куплено/ кем подарено
-        // Дата начала закаливания
-        // Причина гибели (болезнь, физическая гибель, не развилось)
         
+        /// <summary> Номер рассады </summary>
+        public int SeedlingNumber { get; set; }
+
+        /// <summary>  Номер материнского растения (в случае черенкования) </summary>
+        public string MotherPlantId { get; set; }
+
+        /// <summary> Дата посадки </summary>
+        public DateTime LandingDate { get; set; }
+
+        /// <summary> Фаза Луны в момент посадки </summary>
+        public string LunarPhase { get; set; }
+
+        /// <summary> Куда посажено (горшок, теплица) </summary>
+        public string PlantPlace { get; set; }
+
+        /// <summary> Дата всхода рассады </summary>
+        public DateTime GerminationDate { get;set; }
+
+        /// <summary> Дата начала карантина </summary>
+        public DateTime QuarantineStartDate { get; set; }
+
+        /// <summary>  Дата окончания карантина </summary>
+        public DateTime QuarantineStopDate { get; set; }
+
+        /// <summary> Поле комментариев - причина карантина </summary>
+        public string QuarantineCause { get; set; }
+
+        /// <summary> Поле комментариев - результат карантина </summary>
+        public string QuarantineNote { get; set; }
+
+        /// <summary> Источник рассады (куплено, посеяно, подарено, черенкование) </summary>
+        public string SeedlingSource { get; set; }
+
+        /// <summary> Комментарий - где куплено/ кем подарено </summary>
+        public string Note { get; set; }
+
+        /// <summary> Дата начала закаливания </summary>
+        public DateTime QuenchingDate { get; set; }
+
+        // Причина гибели (болезнь, физическая гибель, не развилось)
+
         // Список пересадок (дата пересадки, объем горшка в который пересажено, поле комментариев)
         //
         //Список обработки (дата обработки, препарат, способ обработки)
@@ -48,7 +76,7 @@ namespace BonfireDB.Entities
         // Отчет:
         // Общее количество по культуре
         // Расшифровка по каждому сорту с количеством
-        
+
 
 
     }

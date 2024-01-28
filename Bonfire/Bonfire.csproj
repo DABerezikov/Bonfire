@@ -45,6 +45,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="MoonCalendar">
+      <HintPath>..\..\MoonCalendar\MoonCalendar\MoonCalendar\bin\Release\net8.0\publish\MoonCalendar.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="Views\Image\All.jpg" />
     <Resource Include="Views\Image\Berry 2.jpg" />
     <Resource Include="Views\Image\Flower 4.jpg" />
