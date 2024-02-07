@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BonfireDB.Entities.Base;
+﻿using BonfireDB.Entities.Base;
 
 
 namespace BonfireDB.Entities
@@ -50,11 +45,14 @@ namespace BonfireDB.Entities
         /// <summary> Дата начала закаливания </summary>
         public DateTime QuenchingDate { get; set; }
 
-        // Причина гибели (болезнь, физическая гибель, не развилось)
+        /// <summary> Причина гибели (болезнь, физическая гибель, не развилось) </summary>
+        public string DeathNote { get; set; }
 
-        // Список пересадок (дата пересадки, объем горшка в который пересажено, поле комментариев)
-        //
-        //Список обработки (дата обработки, препарат, способ обработки)
+        /// <summary> Список пересадок </summary>
+        public List<Replanting> Replants { get; set; }
+
+        /// <summary> Список обработки </summary>
+        public List<Treatment> Treatments { get; set; }
 
 
         //В окне посадки должно быть:
@@ -81,3 +79,5 @@ namespace BonfireDB.Entities
 
     }
 }
+
+
