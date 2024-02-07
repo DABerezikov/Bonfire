@@ -7,6 +7,7 @@ namespace Bonfire.Services
     {
         public static IServiceCollection AddServices(this IServiceCollection services) => services
            .AddSingleton<ISeedsService, SeedsService>()
+           .AddSingleton<ISeedlingsService, SeedlingsService>()
            .AddSingleton<IUserDialog, UserDialog>()
         ;
     }
