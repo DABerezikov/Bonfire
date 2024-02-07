@@ -11,6 +11,10 @@ namespace BonfireDB.Context
         public DbSet<SeedsInfo> SeedsInfo { get; set; }
         public DbSet<Seed> Seeds { get; set; }
         public DbSet<Producer> Producers { get; set; }
+        public DbSet<Seedling> Seedlings { get; set; }
+        public DbSet<SeedlingInfo> SeedlingInfos { get; set; }
+        public DbSet<Treatment> Treatments { get; set; }
+        public DbSet<Replanting> Replants { get; set; }
 
         public DbBonfire(DbContextOptions<DbBonfire> options): base(options)
         {
