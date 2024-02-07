@@ -12,5 +12,10 @@
         <view:LibraryEditorWindow DataContext="{Binding}"></view:LibraryEditorWindow>
 
     </DataTemplate>
-    
+
+    <DataTemplate DataType="{x:Type vm:SeedlingsViewModel}">
+        <view:SeedlingsWindow DataContext="{Binding}"></view:SeedlingsWindow>
+
+    </DataTemplate>
+
 </ResourceDictionary>

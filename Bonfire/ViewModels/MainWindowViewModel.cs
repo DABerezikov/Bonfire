@@ -11,7 +11,9 @@ namespace Bonfire.ViewModels
     {
         private readonly IUserDialog _UserDialog;
         private readonly ISeedsService _SeedsService;
+        private readonly ISeedlingsService _SeedlingsService;
         private readonly SeedsViewModel _SeedsViewModel;
+        private readonly SeedlingsViewModel _SeedlingsViewModel;
 
         #region Title : string - Заголовок окна
 
@@ -100,6 +102,32 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region Command ShowSeedlingsViewModelCommand - Отобразить представление редактора библиотек
+
+        /// <summary> Отобразить представление редактора библиотек </summary>
+        private ICommand _ShowSeedlingsViewModelCommand;
+
+        /// <summary> Отобразить представление редактора библиотек </summary>
+        public ICommand ShowSeedlingsViewModelCommand => _ShowSeedlingsViewModelCommand
+            ??= new LambdaCommand(OnShowSeedlingsViewModelCommandExecuted, CanShowSeedlingsViewModelCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Отобразить представление редактора библиотек </summary>
+        private bool CanShowSeedlingsViewModelCommandExecute() => true;
+
+        /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
+        private void OnShowSeedlingsViewModelCommandExecuted()
+        {
+            if (CurrentViewModel is not SeedlingsViewModel)
+            {
+               
+                CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _UserDialog);
+            }
+
+
+        }
+
+        #endregion
+
         #region Command CreateSeedsReportCommand - Команда для формирования отчета по семенам
 
         /// <summary> Команда для формирования отчета по семенам </summary>
@@ -124,11 +152,17 @@ namespace Bonfire.ViewModels
 
 
 
-        public MainWindowViewModel(IUserDialog UserDialog, ISeedsService SeedsService, SeedsViewModel SeedsViewModel)
+        public MainWindowViewModel( IUserDialog UserDialog,
+                                    ISeedsService SeedsService,
+                                    ISeedlingsService SeedlingsService,
+                                    SeedsViewModel SeedsViewModel,
+                                    SeedlingsViewModel SeedlingsViewModel)
         {
             _UserDialog = UserDialog;
             _SeedsService = SeedsService;
+            _SeedlingsService = SeedlingsService;
             _SeedsViewModel = SeedsViewModel;
+            _SeedlingsViewModel = SeedlingsViewModel;
         }
     }
 }

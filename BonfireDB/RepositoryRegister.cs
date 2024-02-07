@@ -14,7 +14,10 @@ public static class RepositoryRegister
         .AddSingleton<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
         .AddSingleton<IRepository<Seed>, SeedsRepository>()
         .AddSingleton<IRepository<Seedling>, SeedlingsRepository>()
-        
+        .AddSingleton<IRepository<SeedlingInfo>, DbRepository<SeedlingInfo>>()
+        .AddSingleton<IRepository<Replanting>, DbRepository<Replanting>>()
+        .AddSingleton<IRepository<Treatment>, DbRepository<Treatment>>()
+
         ;
 
 }
