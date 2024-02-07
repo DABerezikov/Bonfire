@@ -35,6 +35,14 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
+            <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Seedling" Height="13"  Margin="0, 0,5,0" Foreground="MediumSeaGreen"/>
+                        <TextBlock Text="Рассада"></TextBlock>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
             <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -43,14 +51,7 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-            <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}">
-                <MenuItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <fa5:ImageAwesome Icon="Solid_Seedling" Height="13"  Margin="0, 0,5,0" Foreground="DarkSeaGreen"/>
-                        <TextBlock Text="Рассада"></TextBlock>
-                    </StackPanel>
-                </MenuItem.Header>
-            </MenuItem>
+           
         </Menu>
         
         <StatusBar DockPanel.Dock="Bottom">
