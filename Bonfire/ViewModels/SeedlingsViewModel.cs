@@ -184,7 +184,11 @@ namespace Bonfire.ViewModels
                         Culture = seedlings.Plant.PlantCulture.Name,
                         Sort = seedlings.Plant.PlantSort.Name,
                         Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        
+                        Amount = seedlings.SeedlingInfo.SeedlingNumber,
+                        GerminationData = seedlings.SeedlingInfo.GerminationDate,
+                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate!=null&& seedlings.SeedlingInfo.QuarantineStopDate==null,
+                        LandingData = seedlings.SeedlingInfo.LandingDate,
+                        QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
 
                     })
                     .OrderBy(c => c.Culture)
@@ -269,7 +273,12 @@ namespace Bonfire.ViewModels
                         Culture = seedlings.Plant.PlantCulture.Name,
                         Sort = seedlings.Plant.PlantSort.Name,
                         Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        
+                        Amount = seedlings.SeedlingInfo.SeedlingNumber,
+                        GerminationData = seedlings.SeedlingInfo.GerminationDate,
+                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate != null && seedlings.SeedlingInfo.QuarantineStopDate == null,
+                        LandingData = seedlings.SeedlingInfo.LandingDate,
+                        QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
+
                     })
                     .OrderBy(c => c.Culture)
                     .ThenBy(s => s.Sort)
@@ -282,7 +291,12 @@ namespace Bonfire.ViewModels
                         Culture = seedlings.Plant.PlantCulture.Name,
                         Sort = seedlings.Plant.PlantSort.Name,
                         Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        
+                        Amount = seedlings.SeedlingInfo.SeedlingNumber,
+                        GerminationData = seedlings.SeedlingInfo.GerminationDate,
+                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate != null && seedlings.SeedlingInfo.QuarantineStopDate == null,
+                        LandingData = seedlings.SeedlingInfo.LandingDate,
+                        QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
+
                     })
                     .OrderBy(c => c.Culture)
                     .ThenBy(s => s.Sort)

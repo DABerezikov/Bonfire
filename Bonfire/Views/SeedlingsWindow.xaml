@@ -54,7 +54,7 @@
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
-                <DataGridTextColumn Header="Количество" Binding="{Binding SeedlingNumber}" Width="80"/>
+                <DataGridTextColumn Header="Количество" Binding="{Binding Amount}" Width="80"/>
                 <DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData}" Width="150"/>
                 <DataGridTextColumn Header="Взошли" Binding="{Binding GerminationData}" Width="100"/>
                 <DataGridTextColumn Header="Закалка" Binding="{Binding QuenchingDate}" Width="100"/>
