@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:Bonfire.Views"
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:templates="clr-namespace:Bonfire.Templates"
              d:DataContext="{d:DesignInstance {x:Type vm:SeedlingsViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920">
 
@@ -29,6 +30,103 @@
             <ColumnDefinition Width="930"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
+
+        <DataGrid 
+                        ItemsSource="{Binding SeedlingsView }"
+                      AutoGenerateColumns="False"
+                      VerticalAlignment="Top"
+                      Grid.Row="1"
+                      IsReadOnly="True"
+                      IsSelected="False"
+                      Margin="10"
+                      ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
+                      Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                      EnableColumnVirtualization="True"
+                      EnableRowVirtualization="True"
+                      SelectedItem="{Binding SelectedSeedlingsViewItem}">
+
+            <i:Interaction.Behaviors>
+                <templates:ScrollIntoViewBehavior/>
+            </i:Interaction.Behaviors>
+
+
+            <DataGrid.Columns >
+                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
+                <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
+                <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
+                <DataGridTextColumn Header="Количество" Binding="{Binding SeedlingNumber}" Width="80"/>
+                <DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData}" Width="150"/>
+                <DataGridTextColumn Header="Взошли" Binding="{Binding GerminationData}" Width="100"/>
+                <DataGridTextColumn Header="Закалка" Binding="{Binding QuenchingDate}" Width="100"/>
+                <DataGridCheckBoxColumn Header="Карантин" Binding="{Binding IsQuarantine}" IsReadOnly="True" Width="100"/>
+
+
+
+
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!--Кнопки сортировки-->
+        <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource SeedsChoiceButtonStyle}"
+                     
+                     Margin="20,0,0,0" ToolTip="Овощи"
+                     Grid.ColumnSpan="2"
+                     Command="{Binding SeedlingsChoiceClassCommand}" CommandParameter="Овощи" >
+
+            <Image Source="/Views/Image/Vegetables 7.jpg" />
+        </Button>
+        <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource SeedsChoiceButtonStyle}"
+                     Margin="22,0,0,0"
+                     ToolTip="Зелень"
+                     Command="{Binding SeedlingsChoiceClassCommand}"  CommandParameter="Зелень">
+            <Image  Source="/Views/Image/Herb 2.jpg" />
+        </Button>
+        <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource SeedsChoiceButtonStyle}"
+                     Margin="82,0,0,0"
+                     ToolTip="Цветы"
+                     Command="{Binding SeedlingsChoiceClassCommand}" CommandParameter="Цветы"
+                      Grid.ColumnSpan="2">
+            <Image Source="/Views/Image/Flower 4.jpg" />
+        </Button>
+        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SeedsChoiceButtonStyle}"
+                     Margin="30,0,0,0"
+                     ToolTip="Ягоды"
+                     Command="{Binding SeedlingsChoiceClassCommand}" CommandParameter="Ягоды">
+            <Image Source="/Views/Image/Berry 2.jpg" />
+        </Button>
+        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SeedsChoiceButtonStyle}"
+                     Margin="90,0,0,0"
+                     ToolTip="Фрукты"
+                     Command="{Binding SeedlingsChoiceClassCommand}" CommandParameter="Фрукты">
+            <Image Source="/Views/Image/Fruit 1.jpg" />
+        </Button>
+        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SeedsChoiceButtonStyle}"
+                     Margin="150,0,0,0"
+                     ToolTip="Выбрать все"
+                     Command="{Binding SeedlingsChoiceClassCommand}"
+                     CommandParameter="Выбрать все">
+            <Image Source="/Views/Image/All.jpg" />
+
+        </Button>
+
+        <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5" Style="{StaticResource SeedsChoiceComboBoxStyle}"
+            Text="{Binding SeedlingFilter, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding ListCulture}"
+            IsEditable="True" />
+
+        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True" />
+        <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+             Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
+
+        <Border Grid.Row="1" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" Grid.ColumnSpan="3"
+         Margin="0,0,0,10"/>
+        <Border Grid.Row="3" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
+         Margin="0,0,0,0" Grid.ColumnSpan="3"/>
+        <Border Grid.Row="1" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
+         Margin="10,0,10,10" />
+        <Border Grid.Row="3" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
+         Margin="10,0,10,0" />
+
 
     </Grid>
 </UserControl>
