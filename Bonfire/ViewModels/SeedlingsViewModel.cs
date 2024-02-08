@@ -32,7 +32,13 @@ namespace Bonfire.ViewModels
                     new SortDescription(nameof(SeedlingsFromViewModel.Sort), ListSortDirection.Ascending),
                     new SortDescription(nameof(SeedlingsFromViewModel.Producer), ListSortDirection.Ascending)
 
+                },
+                GroupDescriptions =
+                {
+                    new PropertyGroupDescription(nameof(SeedlingsFromViewModel.Sort))
                 }
+
+                
 
             };
             _SeedlingsView.Filter += _SeedsViewSource_Filter;
@@ -186,7 +192,7 @@ namespace Bonfire.ViewModels
                         Producer = seedlings.Plant.PlantSort.Producer.Name,
                         Amount = seedlings.SeedlingInfo.SeedlingNumber,
                         GerminationData = seedlings.SeedlingInfo.GerminationDate,
-                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate!=null&& seedlings.SeedlingInfo.QuarantineStopDate==null,
+                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate != null && seedlings.SeedlingInfo.QuarantineStopDate == null,
                         LandingData = seedlings.SeedlingInfo.LandingDate,
                         QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
 
