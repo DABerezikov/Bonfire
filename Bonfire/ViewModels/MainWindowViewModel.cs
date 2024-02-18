@@ -120,7 +120,7 @@ namespace Bonfire.ViewModels
             if (CurrentViewModel is not SeedlingsViewModel)
             {
                
-                CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _UserDialog);
+                CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _SeedsService, _UserDialog);
             }
 
 

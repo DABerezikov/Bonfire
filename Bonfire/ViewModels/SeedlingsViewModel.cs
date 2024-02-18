@@ -12,17 +12,20 @@ using System.Windows.Data;
 using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Bonfire.Services;
 
 namespace Bonfire.ViewModels
 {
     public class SeedlingsViewModel : ViewModel
     {
         private readonly ISeedlingsService _seedlingsService;
+        private readonly ISeedsService _seedsService;
         private readonly IUserDialog _dialog;
 
-        public SeedlingsViewModel(ISeedlingsService seedlings, IUserDialog dialog)
+        public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog)
         {
             _seedlingsService = seedlings;
+            _seedsService = seedsService;
             _dialog = dialog;
             _SeedlingsView = new CollectionViewSource
             {
@@ -43,7 +46,20 @@ namespace Bonfire.ViewModels
             };
             _SeedlingsView.Filter += _SeedsViewSource_Filter;
 
-            
+            _PlantListView = new CollectionViewSource
+            {
+                SortDescriptions =
+                {
+                    new SortDescription(nameof(PlantFromViewModel.Culture), ListSortDirection.Ascending),
+                    new SortDescription(nameof(PlantFromViewModel.Sort), ListSortDirection.Ascending),
+                    new SortDescription(nameof(PlantFromViewModel.Producer), ListSortDirection.Ascending)
+
+                }
+            };
+
+            _PlantListView.Filter += _PlantListView_Filter;
+
+
         }
 
         #region Свойства
@@ -173,6 +189,217 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region Логика кнопок выбора источника рассады
+
+        #region SeedlingSource : string - Результат выбора источника рассады
+
+        /// <summary>Результат выбора источника рассады</summary>
+        private string _SeedlingSource;
+
+        /// <summary>Результат выбора источника рассады</summary>
+        private string SeedlingSource
+        {
+            get => _SeedlingSource;
+            set => Set(ref _SeedlingSource, value);
+        }
+
+        #endregion
+
+        #region IsSold : bool - Выбор способа  получения рассады - куплено
+
+        /// <summary>Выбор способа  получения рассады - куплено</summary>
+        private bool _IsSold;
+
+        /// <summary>Выбор способа  получения рассады - куплено</summary>
+        public bool IsSold
+        {
+            get => _IsSold;
+            set
+            {
+                if (Set(ref _IsSold, value))
+                    SeedlingSource = "Куплено";
+
+            }
+        }
+
+        #endregion
+
+        #region IsDonated : bool - Выбор способа  получения рассады - подарено
+
+        /// <summary>Выбор способа  получения рассады - подарено</summary>
+        private bool _IsDonated;
+
+        /// <summary>Выбор способа  получения рассады - подарено</summary>
+        public bool IsDonated
+        {
+            get => _IsDonated;
+            set
+            {
+                if (Set(ref _IsDonated, value))
+                    SeedlingSource = "Подарено";
+
+            }
+        }
+
+        #endregion
+
+        #region IsSeeds : bool - Выбор способа  получения рассады - из семян
+
+        /// <summary>Выбор способа  получения рассады - из семян</summary>
+        private bool _IsSeeds;
+
+        /// <summary>Выбор способа  получения рассады - из семян</summary>
+        public bool IsSeeds
+        {
+            get => _IsSeeds;
+            set
+            {
+                if (Set(ref _IsSeeds, value))
+                    SeedlingSource = "Из семян";
+
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Выбор единиц измерения для добавления рассады
+
+        #region AddSizeList : List<string> - Список единиц измерения
+
+        /// <summary>Список единиц измерения</summary>
+        private List<string> _AddSizeList = new() { "Граммы", "Штуки" };
+
+        /// <summary>Список единиц измерения</summary>
+        public List<string> AddSizeList
+        {
+            get => _AddSizeList;
+            set => Set(ref _AddSizeList, value);
+        }
+
+        #endregion
+
+        #region AddSize : string - Выбранная единица измерения для добавления рассады
+
+        /// <summary>Выбранная единица измерения для добавления рассады</summary>
+        private string _AddSize;
+
+        /// <summary>Выбранная единица измерения для добавления рассады</summary>
+        public string AddSize
+        {
+            get => _AddSize;
+            set => Set(ref _AddSize, value);
+        }
+
+        #endregion
+
+
+        #endregion
+
+        #region Выбор культуры для добавления семян
+
+        public ICollectionView PlantListView => _PlantListView?.View;
+        private readonly CollectionViewSource _PlantListView;
+
+
+        private void _PlantListView_Filter(object sender, FilterEventArgs e)
+        {
+            if (!(e.Item is PlantFromViewModel plant) || (string.IsNullOrEmpty(AddCulture) && string.IsNullOrEmpty(AddSort))) return;
+            if (!string.IsNullOrEmpty(AddSort))
+            {
+                if (string.IsNullOrEmpty(AddCulture))
+                {
+                    if (!plant.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+                        e.Accepted = false;
+                }
+                else
+                {
+                  
+                    if (!(plant.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase) &&
+                          plant.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase)))
+                        e.Accepted = false;
+                }
+            }
+            else 
+            {
+                if (!plant.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+                    e.Accepted = false;
+
+            }
+        }
+
+        #region AddPlantList : List<string> - Список культур для добавления семян
+
+        /// <summary>Список культур для добавления семян</summary>
+        private ObservableCollection<PlantFromViewModel> _AddPlantList = new();
+
+        /// <summary>Список культур для добавления семян</summary>
+        public ObservableCollection<PlantFromViewModel> AddPlantList
+        {
+            get => _AddPlantList;
+            set => Set(ref _AddPlantList, value);
+        }
+
+        #endregion
+
+        #region AddCulture : string - Выбранная культура для добавления семян
+
+        /// <summary>Выбранная культура для добавления семян</summary>
+        private string _AddCulture;
+
+        /// <summary>Выбранная культура для добавления семян</summary>
+        public string AddCulture
+        {
+            get => _AddCulture;
+            set
+            {
+                if (Set(ref _AddCulture, value))
+                    PlantListView.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region AddSort : string - Выбранный сорт для добавления семян
+
+        /// <summary>Выбранный сорт для добавления семян</summary>
+        private string _AddSort;
+
+        /// <summary>Выбранный сорт для добавления семян</summary>
+        public string AddSort
+        {
+            get => _AddSort;
+            set
+            {
+                if (Set(ref _AddSort, value))
+                    PlantListView.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region AddProducer : string - Выбранный сорт для добавления семян
+
+        /// <summary>Выбранный сорт для добавления семян</summary>
+        private string _AddProducer;
+
+        /// <summary>Выбранный сорт для добавления семян</summary>
+        public string AddProducer
+        {
+            get => _AddProducer;
+            set
+            {
+                if (Set(ref _AddProducer, value))
+                    PlantListView.Refresh();
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+
 
 
         #endregion
@@ -226,6 +453,30 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region Метод загрузки списка растений
+
+        private void LoadListPlant()
+        {
+
+            var addListPlant = _seedsService.Seeds
+                .Select(seeds => new PlantFromViewModel
+                {
+                    Id = seeds.Plant.Id,
+                    Culture = seeds.Plant.PlantCulture.Name,
+                    Sort = seeds.Plant.PlantSort.Name,
+                    Producer = seeds.Plant.PlantSort.Producer.Name,
+                    ExpirationDate = seeds.SeedsInfo.ExpirationDate
+                }).AsEnumerable()
+                .OrderBy(s=>s.Culture);
+
+            AddPlantList.AddRange(addListPlant.ToList());
+            _PlantListView.Source = AddPlantList;
+            OnPropertyChanged(nameof(PlantListView));
+            AddSort = null;
+        }
+
+        #endregion
+
         #endregion
 
 
@@ -249,6 +500,8 @@ namespace Bonfire.ViewModels
             if (Seedlings != null) return;
             await LoadSeedling();
             LoadListCulture();
+            LoadListPlant();
+          
 
         }
         #endregion

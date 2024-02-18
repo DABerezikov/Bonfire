@@ -143,23 +143,36 @@
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
            Text="Культура" Grid.ColumnSpan="2"/>
         <ComboBox Grid.Row="3" Grid.Column="1"  Margin="72,70,0,105"  Style="{StaticResource SeedsComboBoxStyle}"
-                  VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddCultureList}" Grid.ColumnSpan="2" 
+                  VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding PlantListView}" Grid.ColumnSpan="2" DisplayMemberPath="Culture"
                   Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
-
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="155,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-           Text="Сорт" />
+                   Text="Сорт" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="155,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-           VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddSortList}"
+           VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding PlantListView}" DisplayMemberPath="Sort"
            Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" KeyUp="ComboBox_OnKeyUp"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="350,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
            Text="Производитель" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="350,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-           VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True" KeyUp="ComboBox_OnKeyUp"
-           ItemsSource="{Binding AddProducerList}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
+           VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp"
+           ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }" >
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition Width="5"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Producer}" Grid.Column="0"/>
+                        <TextBlock Text="{Binding ExpirationDate, StringFormat=yyyy}" Grid.Column="2"></TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
 
 
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-           Text="Ед. измерения" Grid.ColumnSpan="2" />
+                   Text="Ед. измерения" Grid.ColumnSpan="2" />
         <ComboBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Style="{StaticResource SeedsComboBoxStyle}"
            VerticalAlignment="Top" ItemsSource="{Binding AddSizeList}" Text="{Binding AddSize }" Grid.ColumnSpan="2"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="130,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
