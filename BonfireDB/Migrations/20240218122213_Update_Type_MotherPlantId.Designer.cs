@@ -3,6 +3,7 @@ using System;
 using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BonfireDB.Migrations
 {
     [DbContext(typeof(DbBonfire))]
-    partial class DbBonfireModelSnapshot : ModelSnapshot
+    [Migration("20240218122213_Update_Type_MotherPlantId")]
+    partial class Update_Type_MotherPlantId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.1");

@@ -10,7 +10,7 @@ namespace BonfireDB.Entities
         public int SeedlingNumber { get; set; }
 
         /// <summary>  Номер материнского растения (в случае черенкования) </summary>
-        public string MotherPlantId { get; set; }
+        public int MotherPlantId { get; set; }
 
         /// <summary> Дата посадки </summary>
         public DateTime LandingDate { get; set; }

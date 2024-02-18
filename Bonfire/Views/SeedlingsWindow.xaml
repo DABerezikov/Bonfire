@@ -16,6 +16,8 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
+    
+
     <Grid Margin="10">
 
         <Grid.RowDefinitions>
@@ -121,11 +123,59 @@
         <Border Grid.Row="1" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" Grid.ColumnSpan="3"
          Margin="0,0,0,10"/>
         <Border Grid.Row="3" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
-         Margin="0,0,0,0" Grid.ColumnSpan="3"/>
+         Margin="0,0,400,0" Grid.ColumnSpan="3"/>
+        <Border Grid.Row="3" Grid.Column="0" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" 
+                Margin="710,0,0,0" Grid.ColumnSpan="3"/>
         <Border Grid.Row="1" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
          Margin="10,0,10,10" />
         <Border Grid.Row="3" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
          Margin="10,0,10,0" />
+
+        
+        <TextBlock Margin="100,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
+                   TextWrapping="Wrap" Text="Добавление рассады" FontSize="14"/>
+        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
+                         Content="Куплено" IsChecked="{Binding IsSold}" />
+        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
+             Content="Из семян" IsChecked="{Binding IsSeeds}" />
+        <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 115, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
+                     Content="Подарено" IsChecked="{Binding IsDonated}" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+           Text="Культура" Grid.ColumnSpan="2"/>
+        <ComboBox Grid.Row="3" Grid.Column="1"  Margin="72,70,0,105"  Style="{StaticResource SeedsComboBoxStyle}"
+                  VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddCultureList}" Grid.ColumnSpan="2" 
+                  Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
+
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="155,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+           Text="Сорт" />
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="155,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+           VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddSortList}"
+           Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" KeyUp="ComboBox_OnKeyUp"/>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="350,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+           Text="Производитель" />
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="350,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+           VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True" KeyUp="ComboBox_OnKeyUp"
+           ItemsSource="{Binding AddProducerList}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
+
+
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+           Text="Ед. измерения" Grid.ColumnSpan="2" />
+        <ComboBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+           VerticalAlignment="Top" ItemsSource="{Binding AddSizeList}" Text="{Binding AddSize }" Grid.ColumnSpan="2"/>
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="130,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                       Width="110" Text="Посеяно" />
+        <TextBox Grid.Row="3" Grid.Column="2" Margin="130,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
+          Text="{Binding AddQuantity, UpdateSourceTrigger=PropertyChanged}" />
+       
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="270,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+            Width="100" Text="Дата посадки" />
+        <DatePicker Grid.Row="3" Grid.Column="2" Margin="270,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
+             SelectedDate="{Binding PlantingDate, UpdateSourceTrigger=PropertyChanged}"/>
+        
+        <Button Grid.Row="3" Grid.Column="2" Margin="400,145,0,0" Style="{StaticResource SeedsButtonStyle}"
+         Content="Добавить" Command="{Binding AddOrCorrectSeedlingCommand}" />
+        <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
+        Content="Удалить" Command="{Binding DeleteSeedlingCommand}" HorizontalAlignment="Right" />
 
 
     </Grid>
