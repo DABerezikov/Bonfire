@@ -64,7 +64,7 @@ public class SeedsViewModel : ViewModel
         {
             SortDescriptions =
             {
-                new SortDescription(nameof(SortFromViewModel.Name), ListSortDirection.Ascending)
+                new SortDescription(nameof(SortFromSeedsViewModel.Name), ListSortDirection.Ascending)
             }
         };
         
@@ -488,7 +488,7 @@ public class SeedsViewModel : ViewModel
 
     private void _SortListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SortFromViewModel sort) || string.IsNullOrEmpty(AddSort)) return;
+        if (!(e.Item is SortFromSeedsViewModel sort) || string.IsNullOrEmpty(AddSort)) return;
         if (!sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
@@ -496,10 +496,10 @@ public class SeedsViewModel : ViewModel
     #region AddSortList : List<string> - Список культур для добавления семян
 
     /// <summary>Список сортов для добавления семян</summary>
-    private ObservableCollection<SortFromViewModel> _AddSortList = new();
+    private ObservableCollection<SortFromSeedsViewModel> _AddSortList = new();
 
     /// <summary>Список сортов для добавления семян</summary>
-    public ObservableCollection<SortFromViewModel> AddSortList
+    public ObservableCollection<SortFromSeedsViewModel> AddSortList
     {
         get => _AddSortList;
         set => Set(ref _AddSortList, value);
@@ -651,7 +651,7 @@ public class SeedsViewModel : ViewModel
     {
        
         var addListSort = _seedsService.Seeds
-            .Select(seeds => new SortFromViewModel
+            .Select(seeds => new SortFromSeedsViewModel
             {
                 Id = seeds.Plant.PlantSort.Id,
                 Name = seeds.Plant.PlantSort.Name
@@ -970,12 +970,12 @@ public class SeedsViewModel : ViewModel
         }
 
         if (AddSortList.Contains(s => s.Name == newSeed.Plant.PlantSort.Name)) return;
-        AddSortList.Add(new SortFromViewModel
+        AddSortList.Add(new SortFromSeedsViewModel
         {
             Id = newSeed.Plant.PlantSort.Id,
             Name = newSeed.Plant.PlantSort.Name
         });
-        AddSortList = new ObservableCollection<SortFromViewModel>(AddSortList.OrderBy(c => c.Name));
+        AddSortList = new ObservableCollection<SortFromSeedsViewModel>(AddSortList.OrderBy(c => c.Name));
 
 
 

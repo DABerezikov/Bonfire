@@ -40,7 +40,7 @@
                         <TextBlock Text="Библиотека сортов" Style="{StaticResource LibraryTextBlockStyle}"/>
                     </DataGridTemplateColumn.Header>
                     <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate DataType="{x:Type m:SortFromViewModel}">
+                        <DataTemplate DataType="{x:Type m:SortFromSeedsViewModel}">
                             <TextBlock Text="{Binding Name}"></TextBlock>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

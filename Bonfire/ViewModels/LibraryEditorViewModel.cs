@@ -20,7 +20,7 @@ public class LibraryEditorViewModel : ViewModel
 
     public LibraryEditorViewModel ( ISeedsService seedsService,
                                     IUserDialog userDialog,
-                                    ObservableCollection<SortFromViewModel> sort,
+                                    ObservableCollection<SortFromSeedsViewModel> sort,
                                     ObservableCollection<CultureFromViewModel> culture,
                                     ObservableCollection<ProducerFromViewModel> producer,
                                     ObservableCollection<Seed> seeds)
@@ -34,13 +34,13 @@ public class LibraryEditorViewModel : ViewModel
         _Producer = producer;
     }
 
-    #region Sort : ObservableCollection<SortFromViewModel> - Коллекция сортов
+    #region Sort : ObservableCollection<SortFromSeedsViewModel> - Коллекция сортов
 
     /// <summary>Коллекция сортов</summary>
-    private ObservableCollection<SortFromViewModel> _Sort;
+    private ObservableCollection<SortFromSeedsViewModel> _Sort;
 
     /// <summary>Коллекция сортов</summary>
-    public ObservableCollection<SortFromViewModel> Sort
+    public ObservableCollection<SortFromSeedsViewModel> Sort
     {
         get => _Sort;
         set => Set(ref _Sort, value);
@@ -104,13 +104,13 @@ public class LibraryEditorViewModel : ViewModel
 
     #endregion
 
-    #region SelectedSort : SortFromViewModel - Выбранный сорт
+    #region SelectedSort : SortFromSeedsViewModel - Выбранный сорт
 
     /// <summary>Выбранный сорт</summary>
-    private SortFromViewModel _SelectedSort;
+    private SortFromSeedsViewModel _SelectedSort;
 
     /// <summary>Выбранный сорт</summary>
-    public SortFromViewModel SelectedSort
+    public SortFromSeedsViewModel SelectedSort
     {
         get => _SelectedSort;
         set

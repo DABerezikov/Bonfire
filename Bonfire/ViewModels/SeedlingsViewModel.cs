@@ -59,6 +59,26 @@ namespace Bonfire.ViewModels
 
             _PlantListView.Filter += _PlantListView_Filter;
 
+            _CultureListView = new CollectionViewSource
+            {
+                SortDescriptions =
+                {
+                    new SortDescription(nameof(CultureFromViewModel.Name), ListSortDirection.Ascending)
+                }
+            };
+
+            _CultureListView.Filter += _CultureListView_Filter;
+
+            _SortListView = new CollectionViewSource
+            {
+                SortDescriptions =
+                {
+                    new SortDescription(nameof(SortFromSeedlingsViewModel.Sort), ListSortDirection.Ascending)
+                }
+            
+            };
+
+            _SortListView.Filter += _SortListView_Filter;
 
         }
 
@@ -305,25 +325,25 @@ namespace Bonfire.ViewModels
 
         private void _PlantListView_Filter(object sender, FilterEventArgs e)
         {
-            if (!(e.Item is PlantFromViewModel plant) || (string.IsNullOrEmpty(AddCulture) && string.IsNullOrEmpty(AddSort))) return;
+            if (!(e.Item is PlantFromViewModel plant ) || (string.IsNullOrEmpty(AddCulture) && string.IsNullOrEmpty(AddSort))) return;
             if (!string.IsNullOrEmpty(AddSort))
             {
                 if (string.IsNullOrEmpty(AddCulture))
                 {
-                    if (!plant.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+                    if (!plant.Sort.Equals(AddSort, StringComparison.OrdinalIgnoreCase))
                         e.Accepted = false;
                 }
                 else
                 {
                   
-                    if (!(plant.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase) &&
-                          plant.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase)))
+                    if (!(plant.Culture.Equals(AddCulture, StringComparison.OrdinalIgnoreCase) &&
+                          plant.Sort.Equals(AddSort, StringComparison.OrdinalIgnoreCase)))
                         e.Accepted = false;
                 }
             }
             else 
             {
-                if (!plant.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+                if (!plant.Culture.Equals(AddCulture, StringComparison.OrdinalIgnoreCase))
                     e.Accepted = false;
 
             }
@@ -343,6 +363,34 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region Выбор культуры для добавления семян
+
+        public ICollectionView CultureListView => _CultureListView?.View;
+        private readonly CollectionViewSource _CultureListView;
+
+
+        private void _CultureListView_Filter(object sender, FilterEventArgs e)
+        {
+            if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return;
+
+            if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+                e.Accepted = false;
+        }
+
+        #region AddCultureList : List<string> - Список культур для добавления семян
+
+        /// <summary>Список культур для добавления семян</summary>
+        private ObservableCollection<CultureFromViewModel> _AddCultureList = new();
+
+        /// <summary>Список культур для добавления семян</summary>
+        public ObservableCollection<CultureFromViewModel> AddCultureList
+        {
+            get => _AddCultureList;
+            set => Set(ref _AddCultureList, value);
+        }
+
+        #endregion
+
         #region AddCulture : string - Выбранная культура для добавления семян
 
         /// <summary>Выбранная культура для добавления семян</summary>
@@ -354,9 +402,59 @@ namespace Bonfire.ViewModels
             get => _AddCulture;
             set
             {
-                if (Set(ref _AddCulture, value))
-                    PlantListView.Refresh();
+                if (!Set(ref _AddCulture, value)) return;
+                CultureListView.Refresh();
+                SortListView.Refresh();
+                PlantListView.Refresh();
             }
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Выбор сорта для добавления семян
+
+        public ICollectionView SortListView => _SortListView?.View;
+        private readonly CollectionViewSource _SortListView;
+
+
+        private void _SortListView_Filter(object sender, FilterEventArgs e)
+        {
+            if (!(e.Item is SortFromSeedlingsViewModel sort) ||
+                (string.IsNullOrEmpty(AddSort) && string.IsNullOrEmpty(AddCulture))) return;
+            if (string.IsNullOrEmpty(AddCulture)) return;
+            if (!string.IsNullOrEmpty(AddSort))
+            {
+                if (!(sort.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase) && sort.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase)))
+                    e.Accepted = false;
+            }
+            else
+            {
+                if (!sort.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+                    e.Accepted = false;
+
+            }
+           
+            
+
+            //if (!sort.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+            //    e.Accepted = false;
+
+            
+
+        }
+
+        #region AddSortList : List<string> - Список культур для добавления семян
+
+        /// <summary>Список сортов для добавления семян</summary>
+        private ObservableCollection<SortFromSeedlingsViewModel> _AddSortList = new();
+
+        /// <summary>Список сортов для добавления семян</summary>
+        public ObservableCollection<SortFromSeedlingsViewModel> AddSortList
+        {
+            get => _AddSortList;
+            set => Set(ref _AddSortList, value);
         }
 
         #endregion
@@ -372,8 +470,9 @@ namespace Bonfire.ViewModels
             get => _AddSort;
             set
             {
-                if (Set(ref _AddSort, value))
-                    PlantListView.Refresh();
+                if (!Set(ref _AddSort, value)) return;
+                SortListView.Refresh();
+                PlantListView.Refresh();
             }
         }
 
@@ -399,7 +498,7 @@ namespace Bonfire.ViewModels
 
         #endregion
 
-
+        #endregion
 
 
         #endregion
@@ -447,7 +546,17 @@ namespace Bonfire.ViewModels
                 .Distinct()
                 .OrderBy(s => s);
             ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
-           
+            var addListCulture = _seedsService.Seeds
+                .Select(seeds => new CultureFromViewModel
+                {
+                    Id = seeds.Plant.PlantCulture.Id,
+                    Name = seeds.Plant.PlantCulture.Name
+                }).AsEnumerable()
+                .Distinct(s => s.Name)
+                .OrderBy(s => s.Name);
+            AddCultureList.AddRange(addListCulture.ToList());
+            _CultureListView.Source = AddCultureList;
+            OnPropertyChanged(nameof(CultureListView));
 
         }
 
@@ -472,7 +581,30 @@ namespace Bonfire.ViewModels
             AddPlantList.AddRange(addListPlant.ToList());
             _PlantListView.Source = AddPlantList;
             OnPropertyChanged(nameof(PlantListView));
-            AddSort = null;
+           
+        }
+
+        #endregion
+        
+        #region Метод загрузки списка сортов
+
+        private void LoadListSort()
+        {
+
+            var addListSort = _seedsService.Seeds
+                .Select(seeds => new SortFromSeedlingsViewModel
+                {
+                    Id = seeds.Plant.PlantSort.Id,
+                    Sort = seeds.Plant.PlantSort.Name,
+                    Culture = seeds.Plant.PlantCulture.Name
+                }).AsEnumerable()
+                .Distinct(s=>s.Sort)
+                .OrderBy(s => s.Sort);
+
+            AddSortList.AddRange(addListSort.ToList());
+            _SortListView.Source = AddSortList;
+            OnPropertyChanged(nameof(SortListView));
+
         }
 
         #endregion
@@ -499,9 +631,15 @@ namespace Bonfire.ViewModels
         {
             if (Seedlings != null) return;
             await LoadSeedling();
+           
             LoadListCulture();
+           
             LoadListPlant();
-          
+           
+            LoadListSort();
+            AddProducer = null;
+            AddSort = null;
+
 
         }
         #endregion
