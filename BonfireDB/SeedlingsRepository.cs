@@ -13,9 +13,8 @@ namespace BonfireDB
             .Include(item => item.Plant.PlantSort)
             .Include(item => item.Plant.PlantCulture)
             .Include(item => item.Plant.PlantSort.Producer)
-            .Include(item => item.SeedlingInfo)
-            .Include(item=>item.SeedlingInfo.Treatments)
-            .Include(item=>item.SeedlingInfo.Replants)
+            .Include(item => item.SeedlingInfos)
+            
         ;
     }
 }

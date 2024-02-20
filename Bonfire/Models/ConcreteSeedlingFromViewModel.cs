@@ -2,7 +2,7 @@
 
 namespace Bonfire.Models
 {
-    public class SeedlingsFromViewModel
+    public class ConcreteSeedlingFromViewModel
     {
         internal int Id { get; set; }
         public string? Culture { get; set; }

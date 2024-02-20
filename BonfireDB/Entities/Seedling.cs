@@ -4,8 +4,10 @@ namespace BonfireDB.Entities;
 
 public class Seedling: Entity
 {
-    public virtual Plant Plant { get; set; }
-    public virtual SeedlingInfo SeedlingInfo { get; set; }
-    public int SeedlingInfoId { get; set; }
+    public  Plant Plant { get; set; }
+    public double Wight { get; set; }
+    public double Quantity { get; set; }
+    public List<SeedlingInfo> SeedlingInfos { get; set; }
+   
 
 }

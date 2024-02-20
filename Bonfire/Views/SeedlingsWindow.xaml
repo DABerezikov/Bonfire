@@ -45,7 +45,7 @@
                       Grid.ColumnSpan="3" HorizontalAlignment="Center"
                       EnableColumnVirtualization="True"
                       EnableRowVirtualization="True"
-                      SelectedItem="{Binding SelectedSeedlingsViewItem}">
+                      SelectedItem="{Binding SelectedConcreteSeedlingViewItem}">
 
             <i:Interaction.Behaviors>
                 <templates:ScrollIntoViewBehavior/>

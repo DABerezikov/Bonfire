@@ -31,14 +31,14 @@ namespace Bonfire.ViewModels
             {
                 SortDescriptions =
                 {
-                    new SortDescription(nameof(SeedlingsFromViewModel.Culture), ListSortDirection.Ascending),
-                    new SortDescription(nameof(SeedlingsFromViewModel.Sort), ListSortDirection.Ascending),
-                    new SortDescription(nameof(SeedlingsFromViewModel.Producer), ListSortDirection.Ascending)
+                    new SortDescription(nameof(ConcreteSeedlingFromViewModel.Culture), ListSortDirection.Ascending),
+                    new SortDescription(nameof(ConcreteSeedlingFromViewModel.Sort), ListSortDirection.Ascending),
+                    new SortDescription(nameof(ConcreteSeedlingFromViewModel.Producer), ListSortDirection.Ascending)
 
                 },
                 GroupDescriptions =
                 {
-                    new PropertyGroupDescription(nameof(SeedlingsFromViewModel.Sort))
+                    new PropertyGroupDescription(nameof(ConcreteSeedlingFromViewModel.Sort))
                 }
                 
                 
@@ -110,7 +110,7 @@ namespace Bonfire.ViewModels
         #endregion
         private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
         {
-            if (!(e.Item is SeedlingsFromViewModel seedling) || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
+            if (!(e.Item is ConcreteSeedlingFromViewModel seedling) || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
             if (!seedling.Culture.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase))
                 e.Accepted = false;
         }
@@ -130,18 +130,18 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
-        #region SelectedSeedlingsViewItem : SeedlingsFromViewModel - Выбранный объект SeedlingsView
+        #region SelectedConcreteSeedlingViewItem : ConcreteSeedlingFromViewModel - Выбранный объект SeedlingsView
 
         /// <summary>Выбранный объект SeedlingsView</summary>
-        private SeedlingsFromViewModel _SelectedSeedlingsViewItem;
+        private ConcreteSeedlingFromViewModel _SelectedConcreteSeedlingViewItem;
 
         /// <summary>Выбранный объект SeedlingsView</summary>
-        public SeedlingsFromViewModel SelectedSeedlingsViewItem
+        public ConcreteSeedlingFromViewModel SelectedConcreteSeedlingViewItem
         {
-            get => _SelectedSeedlingsViewItem;
+            get => _SelectedConcreteSeedlingViewItem;
             set
             {
-                Set(ref _SelectedSeedlingsViewItem, value);
+                Set(ref _SelectedConcreteSeedlingViewItem, value);
                 SelectedItem = value != null ? Seedlings.First(s => s.Id == value.Id) : null;
 
             }
@@ -180,7 +180,7 @@ namespace Bonfire.ViewModels
 
             },
 
-            SeedlingInfo = new SeedlingInfo()
+            SeedlingInfos = new List<SeedlingInfo>()
 
         };
 
@@ -317,7 +317,7 @@ namespace Bonfire.ViewModels
 
         #endregion
 
-        #region Выбор культуры для добавления семян
+        #region Выбор растения для добавления семян
 
         public ICollectionView PlantListView => _PlantListView?.View;
         private readonly CollectionViewSource _PlantListView;
@@ -349,7 +349,7 @@ namespace Bonfire.ViewModels
             }
         }
 
-        #region AddPlantList : List<string> - Список культур для добавления семян
+        #region AddPlantList : List<string> - Список растений для добавления семян
 
         /// <summary>Список культур для добавления семян</summary>
         private ObservableCollection<PlantFromViewModel> _AddPlantList = new();
@@ -360,6 +360,26 @@ namespace Bonfire.ViewModels
             get => _AddPlantList;
             set => Set(ref _AddPlantList, value);
         }
+
+        #endregion
+
+        #region AddProducer : string - Выбранный сорт для добавления семян
+
+        /// <summary>Выбранный сорт для добавления семян</summary>
+        private string _AddProducer;
+
+        /// <summary>Выбранный сорт для добавления семян</summary>
+        public string AddProducer
+        {
+            get => _AddProducer;
+            set
+            {
+                if (Set(ref _AddProducer, value))
+                    PlantListView.Refresh();
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -478,27 +498,11 @@ namespace Bonfire.ViewModels
 
         #endregion
 
-        #region AddProducer : string - Выбранный сорт для добавления семян
-
-        /// <summary>Выбранный сорт для добавления семян</summary>
-        private string _AddProducer;
-
-        /// <summary>Выбранный сорт для добавления семян</summary>
-        public string AddProducer
-        {
-            get => _AddProducer;
-            set
-            {
-                if (Set(ref _AddProducer, value))
-                    PlantListView.Refresh();
-            }
-        }
+       
 
         #endregion
 
-        #endregion
-
-        #endregion
+       
 
 
         #endregion
@@ -510,22 +514,19 @@ namespace Bonfire.ViewModels
         private async Task LoadSeedling()
         {
             var seedlingsQuery = _seedlingsService.Seedlings
-                    .Select(seedlings => new SeedlingsFromViewModel
+                    .Select(seedlings => new Seedling()
                     {
                         Id = seedlings.Id,
-                        Culture = seedlings.Plant.PlantCulture.Name,
-                        Sort = seedlings.Plant.PlantSort.Name,
-                        Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        Amount = seedlings.SeedlingInfo.SeedlingNumber,
-                        GerminationData = seedlings.SeedlingInfo.GerminationDate,
-                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate != null && seedlings.SeedlingInfo.QuarantineStopDate == null,
-                        LandingData = seedlings.SeedlingInfo.LandingDate,
-                        QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
+                        Plant = seedlings.Plant,
+                        Wight = seedlings.Wight,
+                        Quantity = seedlings.Quantity,
+                        SeedlingInfos = seedlings.SeedlingInfos
+                        
 
                     })
-                    .OrderBy(c => c.Culture)
-                    .ThenBy(s => s.Sort)
-                    .ThenBy(p => p.Producer)
+                    .OrderBy(c => c.Plant.PlantCulture.Name)
+                    .ThenBy(s => s.Plant.PlantSort.Name)
+                    .ThenBy(p => p.Plant.PlantSort.Producer.Name)
                 ;
 
             Seedlings = new ObservableCollection<Seedling>(await _seedlingsService.Seedlings.ToArrayAsync());
@@ -633,9 +634,7 @@ namespace Bonfire.ViewModels
             await LoadSeedling();
            
             LoadListCulture();
-           
             LoadListPlant();
-           
             LoadListSort();
             AddProducer = null;
             AddSort = null;
@@ -664,40 +663,34 @@ namespace Bonfire.ViewModels
                     ? _seedlingsService.Seedlings
 
                     .Where(seedlings => seedlings.Plant.PlantCulture.Class == p.ToString())
-                    .Select(seedlings => new SeedlingsFromViewModel
+                    .Select(seedlings => new Seedling()
                     {
                         Id = seedlings.Id,
-                        Culture = seedlings.Plant.PlantCulture.Name,
-                        Sort = seedlings.Plant.PlantSort.Name,
-                        Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        Amount = seedlings.SeedlingInfo.SeedlingNumber,
-                        GerminationData = seedlings.SeedlingInfo.GerminationDate,
-                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate != null && seedlings.SeedlingInfo.QuarantineStopDate == null,
-                        LandingData = seedlings.SeedlingInfo.LandingDate,
-                        QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
+                        Plant = seedlings.Plant,
+                        Wight = seedlings.Wight,
+                        Quantity = seedlings.Quantity,
+                        SeedlingInfos = seedlings.SeedlingInfos
+
 
                     })
-                    .OrderBy(c => c.Culture)
-                    .ThenBy(s => s.Sort)
-                    .ThenBy(p => p.Producer)
+                    .OrderBy(c => c.Plant.PlantCulture.Name)
+                    .ThenBy(s => s.Plant.PlantSort.Name)
+                    .ThenBy(p => p.Plant.PlantSort.Producer.Name)
 
                     : _seedlingsService.Seedlings
-                    .Select(seedlings => new SeedlingsFromViewModel
-                    {
-                        Id = seedlings.Id,
-                        Culture = seedlings.Plant.PlantCulture.Name,
-                        Sort = seedlings.Plant.PlantSort.Name,
-                        Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        Amount = seedlings.SeedlingInfo.SeedlingNumber,
-                        GerminationData = seedlings.SeedlingInfo.GerminationDate,
-                        IsQuarantine = seedlings.SeedlingInfo.QuarantineStartDate != null && seedlings.SeedlingInfo.QuarantineStopDate == null,
-                        LandingData = seedlings.SeedlingInfo.LandingDate,
-                        QuenchingDate = seedlings.SeedlingInfo.QuenchingDate
+                        .Select(seedlings => new Seedling()
+                        {
+                            Id = seedlings.Id,
+                            Plant = seedlings.Plant,
+                            Wight = seedlings.Wight,
+                            Quantity = seedlings.Quantity,
+                            SeedlingInfos = seedlings.SeedlingInfos
 
-                    })
-                    .OrderBy(c => c.Culture)
-                    .ThenBy(s => s.Sort)
-                    .ThenBy(p => p.Producer)
+
+                        })
+                        .OrderBy(c => c.Plant.PlantCulture.Name)
+                        .ThenBy(s => s.Plant.PlantSort.Name)
+                        .ThenBy(p => p.Plant.PlantSort.Producer.Name)
 
                 ;
             _SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
