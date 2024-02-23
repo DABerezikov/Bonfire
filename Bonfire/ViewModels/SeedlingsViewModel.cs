@@ -586,13 +586,32 @@ namespace Bonfire.ViewModels
         #region PlantingDate : DateTime - Дата высадки
 
         /// <summary>Дата высадки</summary>
-        private DateTime _PlantingDate = DateTime.Now;
+        private DateTime _PlantingDate;
 
         /// <summary>Дата высадки</summary>
         public DateTime PlantingDate  
         {
             get => _PlantingDate;
-            set => Set(ref _PlantingDate, value);
+            set
+            {
+                if (!Set(ref _PlantingDate, value)) return;
+                MoonPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate);
+            } 
+        }
+        #endregion
+        
+        #region MoonPhase : string - Фаза Луны
+
+        /// <summary>Фаза Луны</summary>
+        private string _MoonPhase;
+
+        /// <summary>Фаза Луны</summary>
+        public string MoonPhase
+        {
+            get => GetPathImageMoonPhase(_MoonPhase);
+
+
+            set => Set(ref _MoonPhase, value);
         }
         #endregion
 
@@ -836,6 +855,26 @@ namespace Bonfire.ViewModels
         }
 
         #endregion
+        
+        #region Метод получения ссылки на изображение фазы Луны
+
+        private string GetPathImageMoonPhase(string moonPhase)
+        {
+            return moonPhase switch
+            {
+                "Растущий серп" => "Image/MoonPhase_2.jpg",
+                "Первая четверть" => "Image/MoonPhase_3.jpg",
+                "Растущая луна" => "Image/MoonPhase_4.jpg",
+                "Полнолуние" => "Image/MoonPhase_5.jpg",
+                "Убывающая луна" => "Image/MoonPhase_6.jpg",
+                "Третья четверть" => "Image/MoonPhase_7.jpg",
+                "Убывающий месяц" => "Image/MoonPhase_8.jpg",
+                _ => "Image/MoonPhase_1.jpg"
+            };
+
+        }
+
+        #endregion
 
 
         #endregion
@@ -866,6 +905,7 @@ namespace Bonfire.ViewModels
             LoadListSort();
             AddProducer = null;
             AddSort = null;
+            PlantingDate = DateTime.Now;
 
 
         }

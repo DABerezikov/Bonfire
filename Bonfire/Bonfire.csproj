@@ -15,6 +15,14 @@
     <None Remove="Views\Image\Flower 4.jpg" />
     <None Remove="Views\Image\Fruit 1.jpg" />
     <None Remove="Views\Image\Herb 2.jpg" />
+    <None Remove="Views\Image\MoonPhase_1.jpg" />
+    <None Remove="Views\Image\MoonPhase_2.jpg" />
+    <None Remove="Views\Image\MoonPhase_3.jpg" />
+    <None Remove="Views\Image\MoonPhase_4.jpg" />
+    <None Remove="Views\Image\MoonPhase_5.jpg" />
+    <None Remove="Views\Image\MoonPhase_6.jpg" />
+    <None Remove="Views\Image\MoonPhase_7.jpg" />
+    <None Remove="Views\Image\MoonPhase_8.jpg" />
     <None Remove="Views\Image\VegetableGardenIcon_.ico" />
     <None Remove="Views\Image\Vegetables 7.jpg" />
   </ItemGroup>
@@ -56,6 +64,14 @@
     <Resource Include="Views\Image\Flower 4.jpg" />
     <Resource Include="Views\Image\Fruit 1.jpg" />
     <Resource Include="Views\Image\Herb 2.jpg" />
+    <Resource Include="Views\Image\MoonPhase_1.jpg" />
+    <Resource Include="Views\Image\MoonPhase_2.jpg" />
+    <Resource Include="Views\Image\MoonPhase_3.jpg" />
+    <Resource Include="Views\Image\MoonPhase_4.jpg" />
+    <Resource Include="Views\Image\MoonPhase_5.jpg" />
+    <Resource Include="Views\Image\MoonPhase_6.jpg" />
+    <Resource Include="Views\Image\MoonPhase_7.jpg" />
+    <Resource Include="Views\Image\MoonPhase_8.jpg" />
     <Resource Include="Views\Image\Vegetables 7.jpg" />
   </ItemGroup>
 

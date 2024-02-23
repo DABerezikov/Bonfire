@@ -155,8 +155,7 @@
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
            VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp" Width="170"
            ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
-
-
+       
         
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                        Width="60" Text="Посеяно"  Grid.ColumnSpan="2"/>
@@ -173,7 +172,10 @@
             Width="100" Text="Дата посадки" />
         <DatePicker Grid.Row="3" Grid.Column="2" Margin="135,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
              SelectedDate="{Binding PlantingDate, UpdateSourceTrigger=PropertyChanged}"/>
-        
+        <Image Grid.Column="2" Grid.Row="3" Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Margin="245,145,0,0"  Source="{Binding MoonPhase}"></Image>
+
+
         <Button Grid.Row="3" Grid.Column="2" Margin="410,145,0,0" Style="{StaticResource SeedsButtonStyle}"
          Content="Добавить" Command="{Binding AddOrCorrectSeedlingCommand}" />
         <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
