@@ -288,19 +288,7 @@ namespace Bonfire.ViewModels
 
         #region Выбор единиц измерения для добавления рассады
 
-        #region AddSizeList : List<string> - Список единиц измерения
-
-        /// <summary>Список единиц измерения</summary>
-        private List<string> _AddSizeList = new() { "Граммы", "Штуки" };
-
-        /// <summary>Список единиц измерения</summary>
-        public List<string> AddSizeList
-        {
-            get => _AddSizeList;
-            set => Set(ref _AddSizeList, value);
-        }
-
-        #endregion
+        
 
         #region AddSize : string - Выбранная единица измерения для добавления рассады
 
@@ -404,8 +392,9 @@ namespace Bonfire.ViewModels
             get => _CurrentPlant;
             set
             {
-                if (Set(ref _CurrentPlant, value))
-                    CurrentSeed = _seedsService.Seeds.First(s => s.Id == CurrentPlant.Id);
+                if (!Set(ref _CurrentPlant, value)) return;
+                if (CurrentPlant == null) return;
+                CurrentSeed = _seedsService.Seeds.First(s => s.Id == CurrentPlant.Id);
 
             }
         }
@@ -415,13 +404,33 @@ namespace Bonfire.ViewModels
         #region CurrentSeed : Seed - Выбранные семена
 
         /// <summary>Выбранные семена</summary>
-        private Seed _CurrentSeed = new();
+        private Seed _CurrentSeed;
 
         /// <summary>Выбранные семена</summary>
         public Seed CurrentSeed
         {
             get => _CurrentSeed;
-            set => Set(ref _CurrentSeed, value);
+            set
+            {
+                if (!Set(ref _CurrentSeed, value)) return;
+                if (CurrentSeed == null) return;
+                Plantable = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? CurrentSeed.SeedsInfo.AmountSeedsWeight : CurrentSeed.SeedsInfo.AmountSeeds;
+                AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? "гр." : "шт.";
+            }
+        }
+
+        #endregion
+
+        #region Plantable : double - Доступно для посадки
+
+        /// <summary>Доступно для посадки</summary>
+        private double? _Plantable;
+
+        /// <summary>Доступно для посадки</summary>
+        public double? Plantable
+        {
+            get => _Plantable;
+            set => Set(ref _Plantable, value);
         }
 
         #endregion
@@ -469,9 +478,17 @@ namespace Bonfire.ViewModels
             set
             {
                 if (!Set(ref _AddCulture, value)) return;
+                AddSort = string.Empty;
+                AddProducer = string.Empty;
+                CurrentSeed = null;
+                CurrentPlant = null;
+                Plantable = null;
+                AddSize = string.Empty;
+                AddQuantity = 0.0;
                 CultureListView.Refresh();
                 SortListView.Refresh();
                 PlantListView.Refresh();
+
             }
         }
 
@@ -557,14 +574,19 @@ namespace Bonfire.ViewModels
         public double AddQuantity  
         {
             get => _AddQuantity;
-            set => Set(ref _AddQuantity, value);
+            set
+            {
+                if (value > Plantable) value = (double)Plantable;
+                Set(ref _AddQuantity, value);
+            }
+
         }
         #endregion
 
         #region PlantingDate : DateTime - Дата высадки
 
         /// <summary>Дата высадки</summary>
-        private DateTime _PlantingDate;
+        private DateTime _PlantingDate = DateTime.Now;
 
         /// <summary>Дата высадки</summary>
         public DateTime PlantingDate  
@@ -775,17 +797,21 @@ namespace Bonfire.ViewModels
 
         #region Метод для очистки полей
 
-        private void ClearFieldSeedView()
+        private void ClearFieldSeedlingView()
         {
             PlantingDate = DateTime.Now;
             AddSize = string.Empty;
             AddCulture = string.Empty;
-            AddProducer = string.Empty;
-            AddQuantity = default;
-            AddSort = string.Empty;
             SeedlingSource = string.Empty;
             IsSeeds = true;
-            
+            AddSort = string.Empty;
+            AddProducer = string.Empty;
+            CurrentSeed = null;
+            CurrentPlant = null;
+            Plantable = null;
+            AddSize = string.Empty;
+            AddQuantity = 0.0;
+
 
         }
 
@@ -931,11 +957,25 @@ namespace Bonfire.ViewModels
                 SeedlingInfos = new List<SeedlingInfo> { seedlingInfo }
                 
             };
-            if (AddSize == "Граммы") seedling.Weight = AddQuantity;
-            if (AddSize == "Штуки") seedling.Quantity = AddQuantity;
+
+            switch (AddSize)
+            {
+                case "гр.":
+                    seedling.Weight = AddQuantity;
+                    CurrentSeed.SeedsInfo.AmountSeedsWeight -= AddQuantity;
+                    break;
+
+                case "шт.":
+                    seedling.Quantity = AddQuantity;
+                    CurrentSeed.SeedsInfo.AmountSeeds -= AddQuantity;
+                    break;
+            }
+
 
             seedling = await _seedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
-            ClearFieldSeedView();
+            var seed = await _seedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
+
+            ClearFieldSeedlingView();
             UpdateCollectionViewSource(seedling.Id);
 
         }

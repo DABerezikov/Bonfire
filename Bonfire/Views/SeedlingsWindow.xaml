@@ -145,34 +145,36 @@
         <ComboBox Grid.Row="3" Grid.Column="1"  Margin="72,70,0,105"  Style="{StaticResource SeedsComboBoxStyle}"
                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddCultureList}" Grid.ColumnSpan="2" 
                   Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="155,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="150,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Сорт" />
-        <ComboBox Grid.Row="3" Grid.Column="2" Margin="155,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="150,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
            VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding SortListView}" 
            Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }"  KeyUp="ComboBox_OnKeyUp"/>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="350,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="340,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
            Text="Производитель" />
-        <ComboBox Grid.Row="3" Grid.Column="2" Margin="350,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-           VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp"
-           ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"
-           SelectedIndex="{Binding CurrentIndex}"/>
+        <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
+           VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp" Width="170"
+           ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
 
 
+        
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-                   Text="Ед. измерения" Grid.ColumnSpan="2" />
-        <ComboBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-           VerticalAlignment="Top" ItemsSource="{Binding AddSizeList}" Text="{Binding AddSize }" Grid.ColumnSpan="2"/>
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="130,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-                       Width="110" Text="Посеяно" />
-        <TextBox Grid.Row="3" Grid.Column="2" Margin="130,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
-          Text="{Binding AddQuantity, UpdateSourceTrigger=PropertyChanged}" />
-       
-        <TextBlock Grid.Row="3" Grid.Column="2" Margin="270,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                       Width="60" Text="Посеяно"  Grid.ColumnSpan="2"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
+                 TextAlignment="Center" Text="{Binding AddQuantity, UpdateSourceTrigger=PropertyChanged}" Grid.ColumnSpan="2" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="145,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
+                 TextAlignment="Center" Text="{Binding Plantable}" Grid.ColumnSpan="2" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="140,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Доступно" Width="100" Grid.ColumnSpan="2"/>
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="142,145,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Width="120"  Text="{Binding AddSize }" Grid.ColumnSpan="2" />
+
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="135,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
             Width="100" Text="Дата посадки" />
-        <DatePicker Grid.Row="3" Grid.Column="2" Margin="270,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
+        <DatePicker Grid.Row="3" Grid.Column="2" Margin="135,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
              SelectedDate="{Binding PlantingDate, UpdateSourceTrigger=PropertyChanged}"/>
         
-        <Button Grid.Row="3" Grid.Column="2" Margin="400,145,0,0" Style="{StaticResource SeedsButtonStyle}"
+        <Button Grid.Row="3" Grid.Column="2" Margin="410,145,0,0" Style="{StaticResource SeedsButtonStyle}"
          Content="Добавить" Command="{Binding AddOrCorrectSeedlingCommand}" />
         <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
         Content="Удалить" Command="{Binding DeleteSeedlingCommand}" HorizontalAlignment="Right" />
