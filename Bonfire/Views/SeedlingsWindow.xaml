@@ -154,7 +154,8 @@
            Text="Производитель" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="350,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
            VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp"
-           ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }" />
+           ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"
+           SelectedIndex="{Binding CurrentIndex}"/>
 
 
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"

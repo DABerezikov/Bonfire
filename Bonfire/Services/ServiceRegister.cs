@@ -1,5 +1,6 @@
 ﻿using Bonfire.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using MoonCalendar;
 
 namespace Bonfire.Services
 {
@@ -9,6 +10,7 @@ namespace Bonfire.Services
            .AddSingleton<ISeedsService, SeedsService>()
            .AddSingleton<ISeedlingsService, SeedlingsService>()
            .AddSingleton<IUserDialog, UserDialog>()
+           .AddSingleton(typeof(MoonPhase))
         ;
     }
 }

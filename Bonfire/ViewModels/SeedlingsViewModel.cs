@@ -13,6 +13,8 @@ using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services;
+using Microsoft.VisualBasic;
+using MathCore.WPF;
 
 namespace Bonfire.ViewModels
 {
@@ -20,25 +22,25 @@ namespace Bonfire.ViewModels
     {
         private readonly ISeedlingsService _seedlingsService;
         private readonly ISeedsService _seedsService;
-        private readonly IUserDialog _dialog;
+        private readonly IUserDialog _userDialog;
 
         public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog)
         {
             _seedlingsService = seedlings;
             _seedsService = seedsService;
-            _dialog = dialog;
+            _userDialog = dialog;
             _SeedlingsView = new CollectionViewSource
             {
                 SortDescriptions =
                 {
-                    new SortDescription(nameof(ConcreteSeedlingFromViewModel.Culture), ListSortDirection.Ascending),
-                    new SortDescription(nameof(ConcreteSeedlingFromViewModel.Sort), ListSortDirection.Ascending),
-                    new SortDescription(nameof(ConcreteSeedlingFromViewModel.Producer), ListSortDirection.Ascending)
+                    new SortDescription(nameof(Seedling.Plant.PlantCulture.Name), ListSortDirection.Ascending),
+                    new SortDescription(nameof(Seedling.Plant.PlantSort.Name), ListSortDirection.Ascending),
+                    new SortDescription(nameof(Seedling.Plant.PlantSort.Producer.Name), ListSortDirection.Ascending)
 
                 },
                 GroupDescriptions =
                 {
-                    new PropertyGroupDescription(nameof(ConcreteSeedlingFromViewModel.Sort))
+                    new PropertyGroupDescription(nameof(Seedling.Plant.PlantSort.Name))
                 }
                 
                 
@@ -368,6 +370,7 @@ namespace Bonfire.ViewModels
         /// <summary>Выбранный сорт для добавления семян</summary>
         private string _AddProducer;
 
+
         /// <summary>Выбранный сорт для добавления семян</summary>
         public string AddProducer
         {
@@ -375,11 +378,54 @@ namespace Bonfire.ViewModels
             set
             {
                 if (Set(ref _AddProducer, value))
+                {
+                    if (!string.IsNullOrWhiteSpace(AddCulture) && !string.IsNullOrWhiteSpace(AddSort))
+                        CurrentPlant = AddPlantList.First(p => p.Producer + " " + p.ExpirationDate.Year == value
+                                                               &&  p.Culture == AddCulture
+                                                               && p.Sort == AddSort);
                     PlantListView.Refresh();
+                }
+                    
             }
         }
 
         #endregion
+        
+
+        #region CurrentPlant : PlantFromViewModel - Выбранное растение
+
+        /// <summary>Выбранное растение</summary>
+        private PlantFromViewModel _CurrentPlant;
+
+
+        /// <summary>Выбранное растение</summary>
+        public PlantFromViewModel CurrentPlant
+        {
+            get => _CurrentPlant;
+            set
+            {
+                if (Set(ref _CurrentPlant, value))
+                    CurrentSeed = _seedsService.Seeds.First(s => s.Id == CurrentPlant.Id);
+
+            }
+        }
+
+        #endregion
+
+        #region CurrentSeed : Seed - Выбранные семена
+
+        /// <summary>Выбранные семена</summary>
+        private Seed _CurrentSeed = new();
+
+        /// <summary>Выбранные семена</summary>
+        public Seed CurrentSeed
+        {
+            get => _CurrentSeed;
+            set => Set(ref _CurrentSeed, value);
+        }
+
+        #endregion
+
 
         #endregion
 
@@ -498,11 +544,35 @@ namespace Bonfire.ViewModels
 
         #endregion
 
-       
+
 
         #endregion
 
-       
+        #region AddQuantity : double - Количество посевов
+
+        /// <summary>Количество посевов</summary>
+        private double _AddQuantity;
+
+        /// <summary>Количество посевов</summary>
+        public double AddQuantity  
+        {
+            get => _AddQuantity;
+            set => Set(ref _AddQuantity, value);
+        }
+        #endregion
+
+        #region PlantingDate : DateTime - Дата высадки
+
+        /// <summary>Дата высадки</summary>
+        private DateTime _PlantingDate;
+
+        /// <summary>Дата высадки</summary>
+        public DateTime PlantingDate  
+        {
+            get => _PlantingDate;
+            set => Set(ref _PlantingDate, value);
+        }
+        #endregion
 
 
         #endregion
@@ -513,24 +583,25 @@ namespace Bonfire.ViewModels
         #region Метод загрузки рассады
         private async Task LoadSeedling()
         {
-            var seedlingsQuery = _seedlingsService.Seedlings
-                    .Select(seedlings => new Seedling()
-                    {
-                        Id = seedlings.Id,
-                        Plant = seedlings.Plant,
-                        Wight = seedlings.Wight,
-                        Quantity = seedlings.Quantity,
-                        SeedlingInfos = seedlings.SeedlingInfos
+            //var seedlingsQuery = _seedlingsService.Seedlings
+            //        .Select(seedlings => new Seedling()
+            //        {
+            //            Id = seedlings.Id,
+            //            Plant = seedlings.Plant,
+            //            Wight = seedlings.Wight,
+            //            Quantity = seedlings.Quantity,
+            //            SeedlingInfos = seedlings.SeedlingInfos
                         
 
-                    })
-                    .OrderBy(c => c.Plant.PlantCulture.Name)
-                    .ThenBy(s => s.Plant.PlantSort.Name)
-                    .ThenBy(p => p.Plant.PlantSort.Producer.Name)
-                ;
+            //        })
+            //        .OrderBy(c => c.Plant.PlantCulture.Name)
+            //        .ThenBy(s => s.Plant.PlantSort.Name)
+            //        .ThenBy(p => p.Plant.PlantSort.Producer.Name)
+            //    ;
 
-            Seedlings = new ObservableCollection<Seedling>(await _seedlingsService.Seedlings.ToArrayAsync());
-            _SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
+            Seedlings = new ObservableCollection<Seedling>(await _seedlingsService.Seedlings.ToArrayAsync().ConfigureAwait(false));
+            //_SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
+            _SeedlingsView.Source = Seedlings;
 
             OnPropertyChanged(nameof(SeedlingsView));
 
@@ -571,7 +642,7 @@ namespace Bonfire.ViewModels
             var addListPlant = _seedsService.Seeds
                 .Select(seeds => new PlantFromViewModel
                 {
-                    Id = seeds.Plant.Id,
+                    Id = seeds.Id,
                     Culture = seeds.Plant.PlantCulture.Name,
                     Sort = seeds.Plant.PlantSort.Name,
                     Producer = seeds.Plant.PlantSort.Producer.Name,
@@ -609,6 +680,137 @@ namespace Bonfire.ViewModels
         }
 
         #endregion
+
+        #region Метод для проверки заполнения полей
+
+        private bool Verification()
+        {
+            var result = PlantingDate != default
+                         && AddSize != string.Empty
+                         && AddCulture != string.Empty
+                         && AddProducer != string.Empty
+                         && AddQuantity > 0.0
+                         && AddSort != string.Empty
+                         && SeedlingSource != string.Empty;
+
+            return result;
+        }
+
+        #endregion
+
+        #region Метод для поиска или создания растения
+
+        private Plant GetPlant()
+        {
+
+           return _seedsService.Seeds.First(s=>s.Id == CurrentPlant.Id).Plant;
+
+           
+        }
+
+        #endregion
+
+        #region Метод для поиска или создания информации о семенах
+
+        //private (Seed?, SeedsInfo?) GetOrCreateSeedInfo()
+        //{
+        //var quantity = AddQuantityInPac.DoubleParseAdvanced();
+        //var quantityPac = AddQuantityPac.DoubleParseAdvanced();
+        //var costPack = AddCostPack.DecimalParseAdvanced();
+
+        //if (AddProducerList.Contains(c => c.Name == AddProducer))
+        //{
+        //    var seed = Seeds
+        //        .Find(s =>
+        //            s.SeedsInfo.ExpirationDate.Year == AddBestBy.Year
+        //            && s.Plant.PlantSort.Producer.Name == AddProducer
+        //            && s.Plant.PlantCulture.Name == AddCulture
+        //            && s.Plant.PlantSort.Name == AddSort);
+        //    if (seed != null)
+        //    {
+        //        if (AddSize != "Граммы")
+        //        {
+        //            seed.SeedsInfo.AmountSeeds += quantity * quantityPac;
+
+        //        }
+        //        else
+        //        {
+
+        //            seed.SeedsInfo.AmountSeedsWeight += quantity * quantityPac;
+        //        }
+        //        seed.SeedsInfo.PurchaseDate = DateTime.Now;
+        //        seed.SeedsInfo.Note = AddNote;
+        //        seed.SeedsInfo.CostPack = costPack;
+
+        //        return (seed, null);
+
+        //    }
+
+        //}
+
+        //var seedInfo = new SeedsInfo
+        //{
+        //    ExpirationDate = AddBestBy,
+        //    Note = AddNote,
+        //    PurchaseDate = DateTime.Now,
+        //    SeedSource = SeedSource,
+        //    CostPack = costPack
+        //};
+
+        //if (AddSize != "Граммы")
+        //{
+        //    seedInfo.QuantityPack = quantity;
+        //    seedInfo.AmountSeeds = quantity * quantityPac;
+        //}
+        //else
+        //{
+        //    seedInfo.WeightPack = quantity;
+        //    seedInfo.AmountSeedsWeight = quantity * quantityPac;
+        //}
+
+        //return (null, seedInfo);
+        //}
+
+        #endregion
+
+        #region Метод для очистки полей
+
+        private void ClearFieldSeedView()
+        {
+            PlantingDate = DateTime.Now;
+            AddSize = string.Empty;
+            AddCulture = string.Empty;
+            AddProducer = string.Empty;
+            AddQuantity = default;
+            AddSort = string.Empty;
+            SeedlingSource = string.Empty;
+            IsSeeds = true;
+            
+
+        }
+
+        #endregion
+
+        #region Метод для обновления коллекции семян
+
+        private void UpdateCollectionViewSource(int id = -1)
+        {
+            var collection = new ObservableCollection<Seedling>(_seedlingsService.Seedlings.ToArray());
+           
+            _SeedlingsView.Source = collection;
+
+            if (id != -1)
+            {
+                var current = collection.FirstOrDefault(s => s.Id == id);
+                _SeedlingsView.View.MoveCurrentTo(current);
+            }
+
+            OnPropertyChanged(nameof(SeedlingsView));
+           
+        }
+
+        #endregion
+
 
         #endregion
 
@@ -667,7 +869,7 @@ namespace Bonfire.ViewModels
                     {
                         Id = seedlings.Id,
                         Plant = seedlings.Plant,
-                        Wight = seedlings.Wight,
+                        Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
                         SeedlingInfos = seedlings.SeedlingInfos
 
@@ -682,7 +884,7 @@ namespace Bonfire.ViewModels
                         {
                             Id = seedlings.Id,
                             Plant = seedlings.Plant,
-                            Wight = seedlings.Wight,
+                            Weight = seedlings.Weight,
                             Quantity = seedlings.Quantity,
                             SeedlingInfos = seedlings.SeedlingInfos
 
@@ -696,6 +898,76 @@ namespace Bonfire.ViewModels
             _SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
             OnPropertyChanged(nameof(SeedlingsView));
         }
+
+        #endregion
+
+        #region Command AddOrCorrectSeedlingCommand - Команда для добавления или корректирования посадки
+
+        /// <summary> Команда для добавления или корректирования посадки </summary>
+        private ICommand _AddOrCorrectSeedlingCommand;
+
+        /// <summary> Команда для добавления или корректирования посадки </summary>
+        public ICommand AddOrCorrectSeedlingCommand => _AddOrCorrectSeedlingCommand
+            ??= new LambdaCommandAsync(OnAddOrCorrectSeedlingCommandExecuted, CanAddOrCorrectSeedlingCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для добавления или корректирования посадки </summary>
+        private bool CanAddOrCorrectSeedlingCommandExecute() => Verification();
+
+        /// <summary> Логика выполнения - Команда для добавления или корректирования посадки </summary>
+        private async Task OnAddOrCorrectSeedlingCommandExecuted()
+        {
+            var plant = GetPlant();
+            var seedlingInfo = new SeedlingInfo
+            {
+                LandingDate = PlantingDate,
+                LunarPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate),
+                SeedlingNumber = 0
+
+            };
+
+            var seedling = new Seedling
+            {
+                Plant = plant,
+                SeedlingInfos = new List<SeedlingInfo> { seedlingInfo }
+                
+            };
+            if (AddSize == "Граммы") seedling.Weight = AddQuantity;
+            if (AddSize == "Штуки") seedling.Quantity = AddQuantity;
+
+            seedling = await _seedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
+            ClearFieldSeedView();
+            UpdateCollectionViewSource(seedling.Id);
+
+        }
+        #endregion
+
+        #region Command DeleteSeedlingCommand - Команда для удаления семян
+
+        /// <summary> Команда для удаления семян </summary>
+        private ICommand _DeleteSeedlingCommand;
+
+        /// <summary> Команда для удаления семян </summary>
+        public ICommand DeleteSeedlingCommand => _DeleteSeedlingCommand
+            ??= new LambdaCommandAsync(OnDeleteSeedlingCommandExecuted, CanDeleteSeedlingCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для удаления семян </summary>
+        private bool CanDeleteSeedlingCommandExecute() => SelectedItem != null;
+
+        /// <summary> Логика выполнения - Команда для удаления семян </summary>
+        private async Task OnDeleteSeedlingCommandExecuted()
+        {
+            if (!_userDialog.YesNoQuestion(
+                    $"Вы уверены, что хотите удалить рассаду сорта - {SelectedItem.Plant.PlantSort.Name}",
+                    "Удаление рассады")) return;
+
+            var deleteSeedling = await _seedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
+
+            Seedlings.Remove(deleteSeedling);
+
+            UpdateCollectionViewSource();
+        }
+
+
 
         #endregion
 
