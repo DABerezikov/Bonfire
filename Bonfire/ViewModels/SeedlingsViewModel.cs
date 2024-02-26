@@ -13,6 +13,7 @@ using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services;
+using Bonfire.Services.Extensions;
 using Microsoft.VisualBasic;
 using MathCore.WPF;
 
@@ -576,6 +577,7 @@ namespace Bonfire.ViewModels
             get => _AddQuantity;
             set
             {
+                value = value.ToString().DoubleParseAdvanced();
                 if (value > Plantable) value = (double)Plantable;
                 Set(ref _AddQuantity, value);
             }

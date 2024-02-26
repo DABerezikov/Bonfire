@@ -1196,8 +1196,12 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
     private async Task OnLoadDataCommandExecuted()
     {
-       
-        if (Seeds != null) return;
+
+        if (Seeds != null)
+        {
+            UpdateCollectionViewSource();
+            return;
+        }
         
         await LoadSeed();
         LoadListCulture();

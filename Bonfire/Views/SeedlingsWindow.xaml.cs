@@ -36,7 +36,7 @@ namespace Bonfire.Views
                 dataGrid.UnselectAllCells();
 
             }
-            if (sender is not ComboBox box || e.Key != Key.Enter) return;
+            if (sender is not ComboBox box ||  e.Key != Key.Enter) return;
             box.Focus();
             if (Keyboard.PrimaryDevice == null) return;
             if (Keyboard.PrimaryDevice.ActiveSource == null) return;
@@ -45,5 +45,20 @@ namespace Bonfire.Views
                 { RoutedEvent = Keyboard.KeyDownEvent };
             InputManager.Current.ProcessInput(e1);
         }
+
+        private void TextBlock_OnKeyUp(object sender, KeyEventArgs e)
+            {
+
+           
+            if (sender is not TextBox box || e.Key != Key.Enter) return;
+            box.Focus();
+            if (Keyboard.PrimaryDevice == null) return;
+            if (Keyboard.PrimaryDevice.ActiveSource == null) return;
+            var e1 = new KeyEventArgs(Keyboard.PrimaryDevice, Keyboard.PrimaryDevice.ActiveSource, 0,
+                    Key.Tab)
+                { RoutedEvent = Keyboard.KeyDownEvent };
+            InputManager.Current.ProcessInput(e1);
+        }
+
     }
 }
