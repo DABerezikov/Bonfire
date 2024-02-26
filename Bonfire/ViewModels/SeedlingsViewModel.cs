@@ -39,10 +39,10 @@ namespace Bonfire.ViewModels
                     new SortDescription(nameof(Seedling.Plant.PlantSort.Producer.Name), ListSortDirection.Ascending)
 
                 },
-                GroupDescriptions =
-                {
-                    new PropertyGroupDescription(nameof(Seedling.Plant.PlantSort.Name))
-                }
+                //GroupDescriptions =
+                //{
+                //    new PropertyGroupDescription(nameof(Seedling.Plant.PlantSort.Name))
+                //}
                 
                 
 
@@ -136,10 +136,10 @@ namespace Bonfire.ViewModels
         #region SelectedConcreteSeedlingViewItem : ConcreteSeedlingFromViewModel - Выбранный объект SeedlingsView
 
         /// <summary>Выбранный объект SeedlingsView</summary>
-        private ConcreteSeedlingFromViewModel _SelectedConcreteSeedlingViewItem;
+        private Seedling _SelectedConcreteSeedlingViewItem;
 
         /// <summary>Выбранный объект SeedlingsView</summary>
-        public ConcreteSeedlingFromViewModel SelectedConcreteSeedlingViewItem
+        public Seedling SelectedConcreteSeedlingViewItem
         {
             get => _SelectedConcreteSeedlingViewItem;
             set
