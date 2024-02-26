@@ -10,7 +10,7 @@ namespace BonfireDB.Entities
         public int SeedlingNumber { get; set; }
 
         /// <summary>  Номер материнского растения (в случае черенкования) </summary>
-        public int MotherPlantId { get; set; }
+        public int? MotherPlantId { get; set; }
 
         /// <summary> Дата посадки </summary>
         public DateTime LandingDate { get; set; }
@@ -19,40 +19,40 @@ namespace BonfireDB.Entities
         public string LunarPhase { get; set; }
 
         /// <summary> Куда посажено (горшок, теплица) </summary>
-        public string PlantPlace { get; set; }
+        public string? PlantPlace { get; set; }
 
         /// <summary> Дата всхода рассады </summary>
-        public DateTime GerminationDate { get;set; }
+        public DateTime? GerminationDate { get;set; }
 
         /// <summary> Дата начала карантина </summary>
-        public DateTime QuarantineStartDate { get; set; }
+        public DateTime? QuarantineStartDate { get; set; }
 
         /// <summary>  Дата окончания карантина </summary>
-        public DateTime QuarantineStopDate { get; set; }
+        public DateTime? QuarantineStopDate { get; set; }
 
         /// <summary> Поле комментариев - причина карантина </summary>
-        public string QuarantineCause { get; set; }
+        public string? QuarantineCause { get; set; }
 
         /// <summary> Поле комментариев - результат карантина </summary>
-        public string QuarantineNote { get; set; }
+        public string? QuarantineNote { get; set; }
 
         /// <summary> Источник рассады (куплено, посеяно, подарено, черенкование) </summary>
         public string SeedlingSource { get; set; }
 
         /// <summary> Комментарий - где куплено/ кем подарено </summary>
-        public string Note { get; set; }
+        public string? Note { get; set; }
 
         /// <summary> Дата начала закаливания </summary>
-        public DateTime QuenchingDate { get; set; }
+        public DateTime? QuenchingDate { get; set; }
 
         /// <summary> Причина гибели (болезнь, физическая гибель, не развилось) </summary>
-        public string DeathNote { get; set; }
+        public string? DeathNote { get; set; }
 
         /// <summary> Список пересадок </summary>
-        public List<Replanting> Replants { get; set; }
+        public List<Replanting>? Replants { get; set; }
 
         /// <summary> Список обработки </summary>
-        public List<Treatment> Treatments { get; set; }
+        public List<Treatment>? Treatments { get; set; }
 
 
         //В окне посадки должно быть:

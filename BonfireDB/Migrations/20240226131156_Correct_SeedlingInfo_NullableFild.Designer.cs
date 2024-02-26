@@ -3,6 +3,7 @@ using System;
 using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BonfireDB.Migrations
 {
     [DbContext(typeof(DbBonfire))]
-    partial class DbBonfireModelSnapshot : ModelSnapshot
+    [Migration("20240226131156_Correct_SeedlingInfo_NullableFild")]
+    partial class Correct_SeedlingInfo_NullableFild
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.1");
@@ -195,7 +198,7 @@ namespace BonfireDB.Migrations
                     b.Property<string>("DeathNote")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("GerminationDate")
+                    b.Property<DateTime>("GerminationDate")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("LandingDate")
@@ -205,7 +208,7 @@ namespace BonfireDB.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("MotherPlantId")
+                    b.Property<int>("MotherPlantId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Note")
@@ -220,13 +223,13 @@ namespace BonfireDB.Migrations
                     b.Property<string>("QuarantineNote")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("QuarantineStartDate")
+                    b.Property<DateTime>("QuarantineStartDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("QuarantineStopDate")
+                    b.Property<DateTime>("QuarantineStopDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("QuenchingDate")
+                    b.Property<DateTime>("QuenchingDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("SeedlingId")

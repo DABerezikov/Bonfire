@@ -987,7 +987,8 @@ namespace Bonfire.ViewModels
             {
                 LandingDate = PlantingDate,
                 LunarPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate),
-                SeedlingNumber = 0
+                SeedlingNumber = 0,
+                SeedlingSource = SeedlingSource
 
             };
 

@@ -35,7 +35,7 @@
 
         <DataGrid 
                         ItemsSource="{Binding SeedlingsView }"
-                      AutoGenerateColumns="False"
+                      AutoGenerateColumns="True"
                       VerticalAlignment="Top"
                       Grid.Row="1"
                       IsReadOnly="True"
@@ -52,7 +52,7 @@
             </i:Interaction.Behaviors>
 
 
-            <DataGrid.Columns >
+            <!--<DataGrid.Columns >
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
@@ -66,7 +66,7 @@
 
 
 
-            </DataGrid.Columns>
+            </DataGrid.Columns>-->
         </DataGrid>
 
         <!--Кнопки сортировки-->
@@ -160,7 +160,7 @@
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                        Width="60" Text="Посеяно"  Grid.ColumnSpan="2"/>
         <TextBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
-                 TextAlignment="Center" Text="{Binding AddQuantity, UpdateSourceTrigger=PropertyChanged}" Grid.ColumnSpan="2" />
+                 TextAlignment="Center" Text="{Binding AddQuantity}" Grid.ColumnSpan="2" />
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="145,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
                  TextAlignment="Center" Text="{Binding Plantable}" Grid.ColumnSpan="2" />
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="140,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
