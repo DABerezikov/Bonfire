@@ -114,9 +114,33 @@ public class SeedsViewModel : ViewModel
     #endregion
     private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter) || SeedFilter == "-Выбрать все-") return;
-        if (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
-            e.Accepted = false;
+        if (!(e.Item is SeedsFromViewModel seed) ) return;
+        if (!(SeedFilter == "-Выбрать все-") )
+        {
+            if (IsHaving)
+            {
+                if (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase) || (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null))
+                    e.Accepted = false;
+
+            }
+            else
+            {
+                if (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
+                    e.Accepted = false;
+            }
+           
+        }
+        else
+        {
+            if (!IsHaving) return;
+            if (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)
+                e.Accepted = false;
+
+
+        }
+       
+
+       
     }
 
     #endregion
@@ -209,6 +233,24 @@ public class SeedsViewModel : ViewModel
         set => Set(ref _ListCulture, value);
     }
 
+
+    #endregion
+
+    #region IsHaving : bool - В наличии
+
+    /// <summary>В наличии</summary>
+    private bool _IsHaving;
+
+    /// <summary>В наличии</summary>
+    public bool IsHaving
+    {
+        get => _IsHaving;
+        set
+        {
+            Set(ref _IsHaving, value); 
+            SeedsView.Refresh();
+        }
+    }
 
     #endregion
     
@@ -441,7 +483,7 @@ public class SeedsViewModel : ViewModel
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
         if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return ;
-        
+       
         if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
@@ -1207,6 +1249,7 @@ public class SeedsViewModel : ViewModel
         LoadListCulture();
         LoadListSort();
         LoadListProducer();
+        IsHaving = true;
     }
     #endregion
 

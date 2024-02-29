@@ -7,8 +7,9 @@
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:templates="clr-namespace:Bonfire.Templates"
+             xmlns:glob="clr-namespace:System.Globalization;assembly=System.Runtime"
              d:DataContext="{d:DesignInstance {x:Type vm:SeedlingsViewModel}}"
-             d:DesignHeight="1080" d:DesignWidth="1920">
+             d:DesignHeight="1080" d:DesignWidth="1920" KeyUp="ComboBox_OnKeyUp">
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -58,6 +59,7 @@
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Plant.PlantSort.Producer.Name}" Width="180"/>
                 <DataGridTextColumn Header="Количество, г" Binding="{Binding Weight}" Width="100"/>
                 <DataGridTextColumn Header="Количество, шт" Binding="{Binding Quantity}" Width="100"/>
+                <DataGridTextColumn Header="Дата посадки" Binding="{Binding SeedlingInfos[0].LandingDate, StringFormat=dd.MM.yyyy}"/>
                 
 
 
@@ -139,7 +141,7 @@
 
         
         <TextBlock Margin="100,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
-                   TextWrapping="Wrap" Text="Добавление рассады" FontSize="14"/>
+                   TextWrapping="Wrap" Text="Добавление рассады" Width="200" FontSize="18" FontWeight="Bold"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
                          Content="Куплено" IsChecked="{Binding IsSold}" />
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
@@ -159,14 +161,14 @@
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="340,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
            Text="Производитель" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-           VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp" Width="170"
+           VerticalAlignment="Top"  IsEditable="True" KeyUp="ComboBox_OnKeyUp" Width="170" 
            ItemsSource="{Binding PlantListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
        
         
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                        Width="60" Text="Посеяно"  Grid.ColumnSpan="2"/>
         <TextBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
-                 TextAlignment="Center" Text="{Binding AddQuantity}" Grid.ColumnSpan="2" KeyUp="TextBlock_OnKeyUp" />
+                 TextAlignment="Center" Text="{Binding AddQuantityString}" Grid.ColumnSpan="2" KeyUp="TextBlock_OnKeyUp" />
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="145,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
                  TextAlignment="Center" Text="{Binding Plantable}" Grid.ColumnSpan="2" />
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="140,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"

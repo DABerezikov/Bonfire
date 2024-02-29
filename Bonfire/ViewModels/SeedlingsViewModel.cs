@@ -369,9 +369,13 @@ namespace Bonfire.ViewModels
                 if (Set(ref _AddProducer, value))
                 {
                     if (!string.IsNullOrWhiteSpace(AddCulture) && !string.IsNullOrWhiteSpace(AddSort))
+                    {
+                        if(string.IsNullOrWhiteSpace(AddProducer)) return;
                         CurrentPlant = AddPlantList.First(p => p.Producer + " " + p.ExpirationDate.Year == value
-                                                               &&  p.Culture == AddCulture
-                                                               && p.Sort == AddSort);
+                                                            &&  p.Culture == AddCulture
+                                                            && p.Sort == AddSort);
+
+                    }
                     PlantListView.Refresh();
                 }
                     
@@ -486,6 +490,14 @@ namespace Bonfire.ViewModels
                 Plantable = null;
                 AddSize = string.Empty;
                 AddQuantity = 0.0;
+
+                if (string.IsNullOrWhiteSpace(AddCulture)) return;
+                var list = AddSortList.Select(p => p).Where(p => p.Culture == AddCulture).ToList();
+                if (list.Count == 1)
+                {
+                    AddSort = AddSortList.First(p => p.Culture == AddCulture).Sort;
+                }
+
                 CultureListView.Refresh();
                 SortListView.Refresh();
                 PlantListView.Refresh();
@@ -555,6 +567,12 @@ namespace Bonfire.ViewModels
             set
             {
                 if (!Set(ref _AddSort, value)) return;
+                if (string.IsNullOrWhiteSpace(AddCulture) && string.IsNullOrWhiteSpace(AddSort)) return;
+                var list = AddPlantList.Select(p => p).Where(p=> p.Culture == AddCulture && p.Sort == AddSort).ToList();
+                if (list.Count == 1)
+                {
+                    AddProducer = AddPlantList.First(p => p.Culture == AddCulture && p.Sort == AddSort).ToString();
+                }
                 SortListView.Refresh();
                 PlantListView.Refresh();
             }
@@ -565,6 +583,26 @@ namespace Bonfire.ViewModels
 
 
         #endregion
+
+        #region AddQuantityString : string - Количество посевов
+
+        /// <summary>Количество посевов</summary>
+        private string _AddQuantityString;
+
+        /// <summary>Количество посевов</summary>
+        public string AddQuantityString
+        {
+            get => _AddQuantityString;
+            set
+            {
+               
+                Set(ref _AddQuantityString, value);
+                AddQuantity = AddQuantityString.DoubleParseAdvanced();
+            }
+
+        }
+        #endregion
+
 
         #region AddQuantity : double - Количество посевов
 
@@ -577,7 +615,7 @@ namespace Bonfire.ViewModels
             get => _AddQuantity;
             set
             {
-                value = value.ToString().DoubleParseAdvanced();
+                
                 if (value > Plantable) value = (double)Plantable;
                 Set(ref _AddQuantity, value);
             }
@@ -666,7 +704,8 @@ namespace Bonfire.ViewModels
                 {
                     Id = seeds.Plant.PlantCulture.Id,
                     Name = seeds.Plant.PlantCulture.Name
-                }).AsEnumerable()
+                })
+                .AsEnumerable()
                 .Distinct(s => s.Name)
                 .OrderBy(s => s.Name);
             AddCultureList.AddRange(addListCulture.ToList());
@@ -822,8 +861,6 @@ namespace Bonfire.ViewModels
         {
             PlantingDate = DateTime.Now;
             AddSize = string.Empty;
-            AddCulture = string.Empty;
-            SeedlingSource = string.Empty;
             IsSeeds = true;
             AddSort = string.Empty;
             AddProducer = string.Empty;
@@ -1017,11 +1054,28 @@ namespace Bonfire.ViewModels
 
             seedling = await _seedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
             var seed = await _seedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
-
+            
+            RemoveItemFromCollection(seed);
             ClearFieldSeedlingView();
             UpdateCollectionViewSource(seedling.Id);
 
         }
+
+        private void RemoveItemFromCollection(Seed seed)
+        {
+            if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight != 0) return;
+            AddPlantList.Remove(AddPlantList.First(s => s.Producer == seed.Plant.PlantSort.Producer.Name
+                                                        && s.Culture == seed.Plant.PlantCulture.Name
+                                                        && s.Sort == seed.Plant.PlantSort.Name
+                                                        && s.ExpirationDate == seed.SeedsInfo.ExpirationDate));
+            _PlantListView.Source = AddPlantList;
+            var list = AddPlantList.Select(s => s).Where(s => s.Producer == seed.Plant.PlantSort.Producer.Name
+                                                              && s.Culture == seed.Plant.PlantCulture.Name
+                                                              && s.Sort == seed.Plant.PlantSort.Name).ToList();
+            if (list.Count == 0)
+                AddSortList.Remove(AddSortList.First(s => s.Sort == seed.Plant.PlantSort.Name));
+        }
+
         #endregion
 
         #region Command DeleteSeedlingCommand - Команда для удаления семян

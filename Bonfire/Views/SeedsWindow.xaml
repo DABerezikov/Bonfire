@@ -138,7 +138,7 @@
                    Text="{Binding SeedFilter, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding ListCulture}"
                    IsEditable="True" />
 
-        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True" />
+        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="{Binding IsHaving}"  />
         <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
 
@@ -154,7 +154,7 @@
 
 
         <TextBlock Margin="318,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
-                   TextWrapping="Wrap" Text="Добавление семян" FontSize="14"/>
+                   TextWrapping="Wrap" Text="Добавление семян" Width="200" FontSize="18" FontWeight="Bold"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
                                  Content="Куплено" IsChecked="{Binding IsSold}" />
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
