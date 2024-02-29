@@ -239,7 +239,7 @@ public class SeedsViewModel : ViewModel
     #region IsHaving : bool - В наличии
 
     /// <summary>В наличии</summary>
-    private bool _IsHaving;
+    private bool _IsHaving = true; 
 
     /// <summary>В наличии</summary>
     public bool IsHaving
@@ -1249,7 +1249,7 @@ public class SeedsViewModel : ViewModel
         LoadListCulture();
         LoadListSort();
         LoadListProducer();
-        IsHaving = true;
+        
     }
     #endregion
 
