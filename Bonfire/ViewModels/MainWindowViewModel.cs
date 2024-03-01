@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Services.Interfaces;
@@ -49,6 +50,34 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+
+
+        #region SeedsBold : FontWeight - Жирный шрифт выбранного окна
+
+        /// <summary>Окно семян</summary>
+        private FontWeight _SeedsBold;
+
+        /// <summary>Окно семян</summary>
+        public FontWeight SeedsBold { get => _SeedsBold; set => Set(ref _SeedsBold, value); }
+
+        /// <summary>Окно рассады</summary>
+        private FontWeight _SeedlingsBold;
+
+        /// <summary>Окно рассады</summary>
+        public FontWeight SeedlingsBold { get => _SeedlingsBold; set => Set(ref _SeedlingsBold, value); }
+
+        /// <summary>Окно редактора</summary>
+        private FontWeight _LibraryBold;
+
+        /// <summary>Окно редактора</summary>
+        public FontWeight LibraryBold { get => _LibraryBold; set => Set(ref _LibraryBold, value); }
+
+
+
+
+
+        #endregion
+
         #region Command ShowSeedViewModelCommand - Отобразить представление семян
 
         /// <summary> Отобразить представление семян </summary>
@@ -66,9 +95,19 @@ namespace Bonfire.ViewModels
         {
             if (CurrentViewModel is not SeedsViewModel)
                 CurrentViewModel = _SeedsViewModel;
-            
+            ClearBold();
+            SeedsBold = FontWeights.Bold;
 
 
+
+
+        }
+
+        private void ClearBold()
+        {
+            SeedsBold = default;
+            SeedlingsBold = default;
+            LibraryBold = default;
         }
 
         #endregion
@@ -95,6 +134,8 @@ namespace Bonfire.ViewModels
                 var producer = _SeedsViewModel.AddProducerList;
                 var seeds = _SeedsViewModel.Seeds;
                 CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer, seeds);
+                ClearBold();
+                LibraryBold = FontWeights.Bold;
             }
             
 
@@ -121,6 +162,8 @@ namespace Bonfire.ViewModels
             {
                
                 CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _SeedsService, _UserDialog);
+                ClearBold();
+                SeedlingsBold = FontWeights.Bold;
             }
 
 
@@ -136,6 +179,8 @@ namespace Bonfire.ViewModels
         /// <summary> Команда для формирования отчета по семенам </summary>
         public ICommand CreateSeedsReportCommand => _CreateSeedsReportCommand
             ??= new LambdaCommandAsync(OnCreateSeedsReportCommandExecuted, CanCreateSeedsReportCommandExecute);
+
+       
 
         /// <summary> Проверка возможности выполнения - Команда для формирования отчета по семенам </summary>
         private bool CanCreateSeedsReportCommandExecute() => CurrentViewModel == _SeedsViewModel;

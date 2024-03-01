@@ -31,7 +31,7 @@
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <fa5:ImageAwesome Icon="Solid_Leaf" Height="13"  Margin="0, 0,5,0" Foreground="Green"/>
-                        <TextBlock Text="Семена"></TextBlock>
+                        <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}"></TextBlock>
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
@@ -39,7 +39,7 @@
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <fa5:ImageAwesome Icon="Solid_Seedling" Height="13"  Margin="0, 0,5,0" Foreground="MediumSeaGreen"/>
-                        <TextBlock Text="Рассада"></TextBlock>
+                        <TextBlock Text="Рассада" FontWeight="{Binding SeedlingsBold}"></TextBlock>
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
@@ -47,7 +47,7 @@
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <fa5:ImageAwesome Icon="Solid_Book" Height="13"  Margin="0, 0,5,0" Foreground="Chocolate"/>
-                        <TextBlock Text="Редактор библиотек"></TextBlock>
+                        <TextBlock Text="Редактор библиотек" FontWeight="{Binding LibraryBold}"></TextBlock>
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
