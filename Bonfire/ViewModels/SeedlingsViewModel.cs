@@ -1098,8 +1098,11 @@ namespace Bonfire.ViewModels
                     "Удаление рассады")) return;
 
             var deleteSeedling = await _seedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
-
+            CurrentSeed.SeedsInfo.AmountSeeds = deleteSeedling.Quantity;
+            CurrentSeed.SeedsInfo.AmountSeedsWeight = deleteSeedling.Weight;
+            CurrentSeed = await _seedsService.UpdateSeed(CurrentSeed);
             Seedlings.Remove(deleteSeedling);
+
 
             UpdateCollectionViewSource();
         }
