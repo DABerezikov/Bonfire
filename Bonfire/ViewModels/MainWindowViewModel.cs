@@ -101,12 +101,11 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Отобразить представление семян </summary>
         private void OnShowSeedViewModelCommandExecuted()
         {
-            if (CurrentViewModel is not SeedsViewModel)
-                CurrentViewModel = _SeedsViewModel;
+            if (CurrentViewModel is SeedsViewModel) return;
+            CurrentViewModel = _SeedsViewModel;
             ClearBold();
             SeedsBold = _BoldFontWeight;
             SeedBackground = _BackgroundBrash;
-
 
 
 
@@ -139,18 +138,16 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
         private void OnShowLibraryEditorViewModelCommandExecuted()
         {
-            if (CurrentViewModel is not LibraryEditorViewModel)
-            {
-                var sort = _SeedsViewModel.AddSortList;
-                var culture = _SeedsViewModel.AddCultureList;
-                var producer = _SeedsViewModel.AddProducerList;
-                var seeds = _SeedsViewModel.Seeds;
-                CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer, seeds);
-                ClearBold();
-                LibraryBold = _BoldFontWeight;
-                LibraryBackground = _BackgroundBrash;
-            }
-            
+            if (CurrentViewModel is LibraryEditorViewModel) return;
+            var sort = _SeedsViewModel.AddSortList;
+            var culture = _SeedsViewModel.AddCultureList;
+            var producer = _SeedsViewModel.AddProducerList;
+            var seeds = _SeedsViewModel.Seeds;
+            CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer, seeds);
+            ClearBold();
+            LibraryBold = _BoldFontWeight;
+            LibraryBackground = _BackgroundBrash;
+
 
         }
 
@@ -171,14 +168,11 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
         private void OnShowSeedlingsViewModelCommandExecuted()
         {
-            if (CurrentViewModel is not SeedlingsViewModel)
-            {
-               
-                CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _SeedsService, _UserDialog);
-                ClearBold();
-                SeedlingsBold = _BoldFontWeight;
-                SeedlingBackground = _BackgroundBrash;
-            }
+            if (CurrentViewModel is SeedlingsViewModel) return;
+            CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _SeedsService, _UserDialog);
+            ClearBold();
+            SeedlingsBold = _BoldFontWeight;
+            SeedlingBackground = _BackgroundBrash;
 
 
         }

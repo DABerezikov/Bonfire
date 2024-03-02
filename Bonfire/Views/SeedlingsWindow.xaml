@@ -35,7 +35,7 @@
         </Grid.ColumnDefinitions>
 
         <DataGrid 
-                        ItemsSource="{Binding SeedlingsView }"
+                        ItemsSource="{Binding SeedlingsView}"
                       AutoGenerateColumns="False"
                       VerticalAlignment="Top"
                       Grid.Row="1"
@@ -61,11 +61,6 @@
                 <DataGridTextColumn Header="Количество, шт" Binding="{Binding Quantity}" Width="100"/>
                 <DataGridTextColumn Header="Дата посадки" Binding="{Binding SeedlingInfos[0].LandingDate, StringFormat=dd.MM.yyyy}"/>
                 
-
-
-
-
-
             </DataGrid.Columns>
 
             <!--<DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData}" Width="150"/>

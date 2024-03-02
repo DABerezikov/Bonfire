@@ -11,7 +11,7 @@ public interface ISeedlingsService
     MoonPhase Lunar { get; }
     Task<Seedling> MakeASeedling(Seedling seedling);
     Task<Seedling> UpdateSeedling(Seedling seedling);
-    Task<Seedling> DeleteSeedling(Seedling seedling);
+    Task<Seedling?> DeleteSeedling(Seedling? seedling);
 
 
 

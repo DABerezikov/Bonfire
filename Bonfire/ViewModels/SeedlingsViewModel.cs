@@ -12,24 +12,21 @@ using System.Windows.Data;
 using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Bonfire.Services;
 using Bonfire.Services.Extensions;
-using Microsoft.VisualBasic;
-using MathCore.WPF;
 
 namespace Bonfire.ViewModels
 {
     public class SeedlingsViewModel : ViewModel
     {
-        private readonly ISeedlingsService _seedlingsService;
-        private readonly ISeedsService _seedsService;
-        private readonly IUserDialog _userDialog;
+        private readonly ISeedlingsService _SeedlingsService;
+        private readonly ISeedsService _SeedsService;
+        private readonly IUserDialog _UserDialog;
 
         public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog)
         {
-            _seedlingsService = seedlings;
-            _seedsService = seedsService;
-            _userDialog = dialog;
+            _SeedlingsService = seedlings;
+            _SeedsService = seedsService;
+            _UserDialog = dialog;
             _SeedlingsView = new CollectionViewSource
             {
                 SortDescriptions =
@@ -47,7 +44,7 @@ namespace Bonfire.ViewModels
                 
 
             };
-            _SeedlingsView.Filter += _SeedsViewSource_Filter;
+            _SeedlingsView.Filter += SeedsViewSource_Filter;
 
             _PlantListView = new CollectionViewSource
             {
@@ -60,7 +57,7 @@ namespace Bonfire.ViewModels
                 }
             };
 
-            _PlantListView.Filter += _PlantListView_Filter;
+            _PlantListView.Filter += PlantListView_Filter;
 
             _CultureListView = new CollectionViewSource
             {
@@ -70,7 +67,7 @@ namespace Bonfire.ViewModels
                 }
             };
 
-            _CultureListView.Filter += _CultureListView_Filter;
+            _CultureListView.Filter += CultureListView_Filter;
 
             _SortListView = new CollectionViewSource
             {
@@ -81,7 +78,7 @@ namespace Bonfire.ViewModels
             
             };
 
-            _SortListView.Filter += _SortListView_Filter;
+            _SortListView.Filter += SortListView_Filter;
 
         }
 
@@ -89,7 +86,7 @@ namespace Bonfire.ViewModels
 
         #region FilterSeeds - Фильтрация по культуре
 
-        public ICollectionView SeedlingsView => _SeedlingsView?.View;
+        public ICollectionView? SeedlingsView => _SeedlingsView.View;
         private readonly CollectionViewSource _SeedlingsView;
 
         #region SeedlingFilter : string - Искомое слово
@@ -105,16 +102,16 @@ namespace Bonfire.ViewModels
             {
                 if (Set(ref _SeedlingFilter, value))
                 {
-                    SeedlingsView.Refresh();
+                    SeedlingsView?.Refresh();
                 }
             }
         }
 
         #endregion
-        private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
+        private void SeedsViewSource_Filter(object sender, FilterEventArgs e)
         {
-            if (!(e.Item is ConcreteSeedlingFromViewModel seedling) || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
-            if (!seedling.Culture.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase))
+            if (e.Item is not ConcreteSeedlingFromViewModel seedling || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
+            if (!seedling.Culture!.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase))
                 e.Accepted = false;
         }
 
@@ -145,7 +142,7 @@ namespace Bonfire.ViewModels
             set
             {
                 Set(ref _SelectedConcreteSeedlingViewItem, value);
-                SelectedItem = value != null ? Seedlings.First(s => s.Id == value.Id) : null;
+                SelectedItem = value is null ? value : Seedlings.First(s => s.Id == value.Id);
 
             }
         }
@@ -200,7 +197,7 @@ namespace Bonfire.ViewModels
         #region ListCulture : List<string> - Список культур
 
         /// <summary>Список культур</summary>
-        private List<string> _ListCulture = new List<string> { "-Выбрать все-" };
+        private List<string> _ListCulture = new() { "-Выбрать все-" };
 
         /// <summary>Список культур</summary>
         public List<string> ListCulture
@@ -310,31 +307,31 @@ namespace Bonfire.ViewModels
 
         #region Выбор растения для добавления семян
 
-        public ICollectionView PlantListView => _PlantListView?.View;
+        public ICollectionView? PlantListView => _PlantListView.View;
         private readonly CollectionViewSource _PlantListView;
 
 
-        private void _PlantListView_Filter(object sender, FilterEventArgs e)
+        private void PlantListView_Filter(object sender, FilterEventArgs e)
         {
             if (!(e.Item is PlantFromViewModel plant ) || (string.IsNullOrEmpty(AddCulture) && string.IsNullOrEmpty(AddSort))) return;
             if (!string.IsNullOrEmpty(AddSort))
             {
                 if (string.IsNullOrEmpty(AddCulture))
                 {
-                    if (!plant.Sort.Equals(AddSort, StringComparison.OrdinalIgnoreCase))
+                    if (!plant.Sort!.Equals(AddSort, StringComparison.OrdinalIgnoreCase))
                         e.Accepted = false;
                 }
                 else
                 {
                   
-                    if (!(plant.Culture.Equals(AddCulture, StringComparison.OrdinalIgnoreCase) &&
-                          plant.Sort.Equals(AddSort, StringComparison.OrdinalIgnoreCase)))
+                    if (!(plant.Culture!.Equals(AddCulture, StringComparison.OrdinalIgnoreCase) &&
+                          plant.Sort!.Equals(AddSort, StringComparison.OrdinalIgnoreCase)))
                         e.Accepted = false;
                 }
             }
             else 
             {
-                if (!plant.Culture.Equals(AddCulture, StringComparison.OrdinalIgnoreCase))
+                if (!plant.Culture!.Equals(AddCulture, StringComparison.OrdinalIgnoreCase))
                     e.Accepted = false;
 
             }
@@ -366,19 +363,17 @@ namespace Bonfire.ViewModels
             get => _AddProducer;
             set
             {
-                if (Set(ref _AddProducer, value))
+                if (!Set(ref _AddProducer, value)) return;
+                if (!string.IsNullOrWhiteSpace(AddCulture) && !string.IsNullOrWhiteSpace(AddSort))
                 {
-                    if (!string.IsNullOrWhiteSpace(AddCulture) && !string.IsNullOrWhiteSpace(AddSort))
-                    {
-                        if(string.IsNullOrWhiteSpace(AddProducer)) return;
-                        CurrentPlant = AddPlantList.First(p => p.Producer + " " + p.ExpirationDate.Year == value
-                                                            &&  p.Culture == AddCulture
-                                                            && p.Sort == AddSort);
+                    if(string.IsNullOrWhiteSpace(AddProducer)) return;
+                    CurrentPlant = AddPlantList.First(p => p.Producer + " " + p.ExpirationDate.Year == value
+                                                           &&  p.Culture == AddCulture
+                                                           && p.Sort == AddSort);
 
-                    }
-                    PlantListView.Refresh();
                 }
-                    
+                PlantListView?.Refresh();
+
             }
         }
 
@@ -398,8 +393,8 @@ namespace Bonfire.ViewModels
             set
             {
                 if (!Set(ref _CurrentPlant, value)) return;
-                if (CurrentPlant == null) return;
-                CurrentSeed = _seedsService.Seeds.First(s => s.Id == CurrentPlant.Id);
+                if (value is null) return;
+                CurrentSeed = _SeedsService.Seeds.First(s => s.Id == CurrentPlant.Id);
 
             }
         }
@@ -418,7 +413,7 @@ namespace Bonfire.ViewModels
             set
             {
                 if (!Set(ref _CurrentSeed, value)) return;
-                if (CurrentSeed == null) return;
+                if (value is null) return;
                 Plantable = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? CurrentSeed.SeedsInfo.AmountSeedsWeight : CurrentSeed.SeedsInfo.AmountSeeds;
                 AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? "гр." : "шт.";
             }
@@ -445,15 +440,15 @@ namespace Bonfire.ViewModels
 
         #region Выбор культуры для добавления семян
 
-        public ICollectionView CultureListView => _CultureListView?.View;
+        public ICollectionView? CultureListView => _CultureListView.View;
         private readonly CollectionViewSource _CultureListView;
 
 
-        private void _CultureListView_Filter(object sender, FilterEventArgs e)
+        private void CultureListView_Filter(object sender, FilterEventArgs e)
         {
-            if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return;
+            if (e.Item is not CultureFromViewModel culture || string.IsNullOrEmpty(AddCulture)) return;
 
-            if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+            if (!culture.Name!.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
                 e.Accepted = false;
         }
 
@@ -495,12 +490,12 @@ namespace Bonfire.ViewModels
                 var list = AddSortList.Select(p => p).Where(p => p.Culture == AddCulture).ToList();
                 if (list.Count == 1)
                 {
-                    AddSort = AddSortList.First(p => p.Culture == AddCulture).Sort;
+                    AddSort = AddSortList.First(p => p.Culture == AddCulture).Sort!;
                 }
 
-                CultureListView.Refresh();
-                SortListView.Refresh();
-                PlantListView.Refresh();
+                CultureListView?.Refresh();
+                SortListView?.Refresh();
+                PlantListView?.Refresh();
 
             }
         }
@@ -511,23 +506,23 @@ namespace Bonfire.ViewModels
 
         #region Выбор сорта для добавления семян
 
-        public ICollectionView SortListView => _SortListView?.View;
+        public ICollectionView? SortListView => _SortListView.View;
         private readonly CollectionViewSource _SortListView;
 
 
-        private void _SortListView_Filter(object sender, FilterEventArgs e)
+        private void SortListView_Filter(object sender, FilterEventArgs e)
         {
-            if (!(e.Item is SortFromSeedlingsViewModel sort) ||
+            if (e.Item is not SortFromSeedlingsViewModel sort ||
                 (string.IsNullOrEmpty(AddSort) && string.IsNullOrEmpty(AddCulture))) return;
             if (string.IsNullOrEmpty(AddCulture)) return;
             if (!string.IsNullOrEmpty(AddSort))
             {
-                if (!(sort.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase) && sort.Sort.Contains(AddSort, StringComparison.OrdinalIgnoreCase)))
+                if (!(sort.Culture!.Contains(AddCulture, StringComparison.OrdinalIgnoreCase) && sort.Sort!.Contains(AddSort, StringComparison.OrdinalIgnoreCase)))
                     e.Accepted = false;
             }
             else
             {
-                if (!sort.Culture.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+                if (!sort.Culture!.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
                     e.Accepted = false;
 
             }
@@ -573,8 +568,8 @@ namespace Bonfire.ViewModels
                 {
                     AddProducer = AddPlantList.First(p => p.Culture == AddCulture && p.Sort == AddSort).ToString();
                 }
-                SortListView.Refresh();
-                PlantListView.Refresh();
+                SortListView?.Refresh();
+                PlantListView?.Refresh();
             }
         }
 
@@ -635,7 +630,7 @@ namespace Bonfire.ViewModels
             set
             {
                 if (!Set(ref _PlantingDate, value)) return;
-                MoonPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate);
+                MoonPhase = _SeedlingsService.Lunar.GetMoonPhase(PlantingDate);
             } 
         }
         #endregion
@@ -680,7 +675,7 @@ namespace Bonfire.ViewModels
             //        .ThenBy(p => p.Plant.PlantSort.Producer.Name)
             //    ;
 
-            Seedlings = new ObservableCollection<Seedling>(await _seedlingsService.Seedlings.ToArrayAsync().ConfigureAwait(false));
+            Seedlings = new ObservableCollection<Seedling>(await _SeedlingsService.Seedlings.ToArrayAsync().ConfigureAwait(false));
             //_SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
             _SeedlingsView.Source = Seedlings;
 
@@ -694,12 +689,12 @@ namespace Bonfire.ViewModels
 
         private void LoadListCulture()
         {
-            var listCultureQuery = _seedlingsService.Seedlings
+            var listCultureQuery = _SeedlingsService.Seedlings
                 .Select(seedlings => seedlings.Plant.PlantCulture.Name)
                 .Distinct()
                 .OrderBy(s => s);
             ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
-            var addListCulture = _seedsService.Seeds
+            var addListCulture = _SeedsService.Seeds
                 .Select(seeds => new CultureFromViewModel
                 {
                     Id = seeds.Plant.PlantCulture.Id,
@@ -721,7 +716,7 @@ namespace Bonfire.ViewModels
         private void LoadListPlant()
         {
 
-            var addListPlant = _seedsService.Seeds
+            var addListPlant = _SeedsService.Seeds
                 .Select(seeds => new PlantFromViewModel
                 {
                     Id = seeds.Id,
@@ -745,7 +740,7 @@ namespace Bonfire.ViewModels
         private void LoadListSort()
         {
 
-            var addListSort = _seedsService.Seeds
+            var addListSort = _SeedsService.Seeds
                 .Select(seeds => new SortFromSeedlingsViewModel
                 {
                     Id = seeds.Plant.PlantSort.Id,
@@ -785,7 +780,7 @@ namespace Bonfire.ViewModels
         private Plant GetPlant()
         {
 
-           return _seedsService.Seeds.First(s=>s.Id == CurrentPlant.Id).Plant;
+           return _SeedsService.Seeds.First(s=>s.Id == CurrentPlant.Id).Plant;
 
            
         }
@@ -879,7 +874,7 @@ namespace Bonfire.ViewModels
 
         private void UpdateCollectionViewSource(int id = -1)
         {
-            var collection = new ObservableCollection<Seedling>(_seedlingsService.Seedlings.ToArray());
+            var collection = new ObservableCollection<Seedling>(_SeedlingsService.Seedlings.ToArray());
            
             _SeedlingsView.Source = collection;
 
@@ -897,7 +892,7 @@ namespace Bonfire.ViewModels
         
         #region Метод получения ссылки на изображение фазы Луны
 
-        private string GetPathImageMoonPhase(string moonPhase)
+        private static string GetPathImageMoonPhase(string moonPhase)
         {
             return moonPhase switch
             {
@@ -967,7 +962,7 @@ namespace Bonfire.ViewModels
         {
 
             var seedlingsQuery = p.ToString() != "Выбрать все"
-                    ? _seedlingsService.Seedlings
+                    ? _SeedlingsService.Seedlings
 
                     .Where(seedlings => seedlings.Plant.PlantCulture.Class == p.ToString())
                     .Select(seedlings => new Seedling()
@@ -984,7 +979,7 @@ namespace Bonfire.ViewModels
                     .ThenBy(s => s.Plant.PlantSort.Name)
                     .ThenBy(p => p.Plant.PlantSort.Producer.Name)
 
-                    : _seedlingsService.Seedlings
+                    : _SeedlingsService.Seedlings
                         .Select(seedlings => new Seedling()
                         {
                             Id = seedlings.Id,
@@ -1006,26 +1001,26 @@ namespace Bonfire.ViewModels
 
         #endregion
 
-        #region Command AddOrCorrectSeedlingCommand - Команда для добавления или корректирования посадки
+        #region Command AddOrCorrectSeedlingCommand - Команда для добавления или корректировки посадки
 
-        /// <summary> Команда для добавления или корректирования посадки </summary>
+        /// <summary> Команда для добавления или корректировки посадки </summary>
         private ICommand _AddOrCorrectSeedlingCommand;
 
-        /// <summary> Команда для добавления или корректирования посадки </summary>
+        /// <summary> Команда для добавления или корректировки посадки </summary>
         public ICommand AddOrCorrectSeedlingCommand => _AddOrCorrectSeedlingCommand
             ??= new LambdaCommandAsync(OnAddOrCorrectSeedlingCommandExecuted, CanAddOrCorrectSeedlingCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для добавления или корректирования посадки </summary>
+        /// <summary> Проверка возможности выполнения - Команда для добавления или корректировки посадки </summary>
         private bool CanAddOrCorrectSeedlingCommandExecute() => Verification();
 
-        /// <summary> Логика выполнения - Команда для добавления или корректирования посадки </summary>
+        /// <summary> Логика выполнения - Команда для добавления или корректировки посадки </summary>
         private async Task OnAddOrCorrectSeedlingCommandExecuted()
         {
             var plant = GetPlant();
             var seedlingInfo = new SeedlingInfo
             {
                 LandingDate = PlantingDate,
-                LunarPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate),
+                LunarPhase = _SeedlingsService.Lunar.GetMoonPhase(PlantingDate),
                 SeedlingNumber = 0,
                 SeedlingSource = SeedlingSource
 
@@ -1053,8 +1048,8 @@ namespace Bonfire.ViewModels
             }
 
 
-            seedling = await _seedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
-            var seed = await _seedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
+            seedling = await _SeedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
+            var seed = await _SeedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
             
             RemoveItemFromCollection(seed);
             ClearFieldSeedlingView();
@@ -1094,23 +1089,23 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Команда для удаления семян </summary>
         private async Task OnDeleteSeedlingCommandExecuted()
         {
-            if (!_userDialog.YesNoQuestion(
+            if (!_UserDialog.YesNoQuestion(
                     $"Вы уверены, что хотите удалить рассаду сорта - {SelectedItem.Plant.PlantSort.Name}",
                     "Удаление рассады")) return;
 
-            var deleteSeedling = await _seedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
-            await UpdateSeed(deleteSeedling);
-            Seedlings.Remove(deleteSeedling);
+            var deleteSeedling = await _SeedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
+            await UpdateSeed(deleteSeedling!);
+            Seedlings.Remove(deleteSeedling!);
             
             UpdateCollectionViewSource();
         }
 
         private async Task UpdateSeed(Seedling deleteSeedling)
         {
-            var updateSeed = _seedsService.Seeds.First(s => s.Id == SelectedItem.SeedId);
+            var updateSeed = _SeedsService.Seeds.First(s => s.Id == SelectedItem.SeedId);
             updateSeed.SeedsInfo.AmountSeeds = deleteSeedling.Quantity;
             updateSeed.SeedsInfo.AmountSeedsWeight = deleteSeedling.Weight;
-            await _seedsService.UpdateSeed(updateSeed);
+            await _SeedsService.UpdateSeed(updateSeed);
         }
 
         #endregion
