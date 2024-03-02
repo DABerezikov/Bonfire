@@ -27,15 +27,19 @@
             <MenuItem Header="Отчеты">
                 <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
             </MenuItem>
-            <MenuItem Command="{Binding ShowSeedViewModelCommand}">
+            <MenuItem Command="{Binding ShowSeedViewModelCommand}" Background="{Binding SeedBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
+                        
                         <fa5:ImageAwesome Icon="Solid_Leaf" Height="13"  Margin="0, 0,5,0" Foreground="Green"/>
-                        <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}"></TextBlock>
+                        <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}"/>
                     </StackPanel>
+
+
                 </MenuItem.Header>
+                
             </MenuItem>
-            <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}">
+            <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}" Background="{Binding SeedlingBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <fa5:ImageAwesome Icon="Solid_Seedling" Height="13"  Margin="0, 0,5,0" Foreground="MediumSeaGreen"/>
@@ -43,7 +47,7 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-            <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}">
+            <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}" Background="{Binding LibraryBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <fa5:ImageAwesome Icon="Solid_Book" Height="13"  Margin="0, 0,5,0" Foreground="Chocolate"/>

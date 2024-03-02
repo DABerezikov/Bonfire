@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
@@ -52,25 +53,32 @@ namespace Bonfire.ViewModels
 
 
 
-        #region SeedsBold : FontWeight - Жирный шрифт выбранного окна
+        #region SeedsBold : FontWeight - Выделение выбранного окна
+
+        private readonly FontWeight _BoldFontWeight = FontWeights.Bold;
+        private readonly Brush _BackgroundBrash = Brushes.LightGray;
 
         /// <summary>Окно семян</summary>
         private FontWeight _SeedsBold;
+        private Brush _SeedBackground;
 
         /// <summary>Окно семян</summary>
         public FontWeight SeedsBold { get => _SeedsBold; set => Set(ref _SeedsBold, value); }
+        public Brush SeedBackground { get => _SeedBackground; set => Set(ref _SeedBackground, value); }
 
         /// <summary>Окно рассады</summary>
         private FontWeight _SeedlingsBold;
-
+        private Brush _SeedlingBackground;
         /// <summary>Окно рассады</summary>
         public FontWeight SeedlingsBold { get => _SeedlingsBold; set => Set(ref _SeedlingsBold, value); }
+        public Brush SeedlingBackground { get => _SeedlingBackground; set => Set(ref _SeedlingBackground, value); }
 
         /// <summary>Окно редактора</summary>
         private FontWeight _LibraryBold;
-
+        private Brush _LibraryBackground;
         /// <summary>Окно редактора</summary>
         public FontWeight LibraryBold { get => _LibraryBold; set => Set(ref _LibraryBold, value); }
+        public Brush LibraryBackground { get => _LibraryBackground; set => Set(ref _LibraryBackground, value); }
 
 
 
@@ -96,7 +104,8 @@ namespace Bonfire.ViewModels
             if (CurrentViewModel is not SeedsViewModel)
                 CurrentViewModel = _SeedsViewModel;
             ClearBold();
-            SeedsBold = FontWeights.Bold;
+            SeedsBold = _BoldFontWeight;
+            SeedBackground = _BackgroundBrash;
 
 
 
@@ -106,8 +115,11 @@ namespace Bonfire.ViewModels
         private void ClearBold()
         {
             SeedsBold = default;
+            SeedBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
             SeedlingsBold = default;
+            SeedlingBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
             LibraryBold = default;
+            LibraryBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
         }
 
         #endregion
@@ -135,7 +147,8 @@ namespace Bonfire.ViewModels
                 var seeds = _SeedsViewModel.Seeds;
                 CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer, seeds);
                 ClearBold();
-                LibraryBold = FontWeights.Bold;
+                LibraryBold = _BoldFontWeight;
+                LibraryBackground = _BackgroundBrash;
             }
             
 
@@ -163,7 +176,8 @@ namespace Bonfire.ViewModels
                
                 CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _SeedsService, _UserDialog);
                 ClearBold();
-                SeedlingsBold = FontWeights.Bold;
+                SeedlingsBold = _BoldFontWeight;
+                SeedlingBackground = _BackgroundBrash;
             }
 
 
