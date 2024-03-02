@@ -1034,6 +1034,7 @@ namespace Bonfire.ViewModels
             var seedling = new Seedling
             {
                 Plant = plant,
+                SeedId = CurrentSeed.Id,
                 SeedlingInfos = new List<SeedlingInfo> { seedlingInfo }
                 
             };
@@ -1098,16 +1099,19 @@ namespace Bonfire.ViewModels
                     "Удаление рассады")) return;
 
             var deleteSeedling = await _seedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
-            CurrentSeed.SeedsInfo.AmountSeeds = deleteSeedling.Quantity;
-            CurrentSeed.SeedsInfo.AmountSeedsWeight = deleteSeedling.Weight;
-            CurrentSeed = await _seedsService.UpdateSeed(CurrentSeed);
+            await UpdateSeed(deleteSeedling);
             Seedlings.Remove(deleteSeedling);
-
-
+            
             UpdateCollectionViewSource();
         }
 
-
+        private async Task UpdateSeed(Seedling deleteSeedling)
+        {
+            var updateSeed = _seedsService.Seeds.First(s => s.Id == SelectedItem.SeedId);
+            updateSeed.SeedsInfo.AmountSeeds = deleteSeedling.Quantity;
+            updateSeed.SeedsInfo.AmountSeedsWeight = deleteSeedling.Weight;
+            await _seedsService.UpdateSeed(updateSeed);
+        }
 
         #endregion
 

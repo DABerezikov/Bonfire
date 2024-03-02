@@ -7,6 +7,7 @@ public class Seedling: Entity
     public  Plant Plant { get; set; }
     public double Weight { get; set; }
     public double Quantity { get; set; }
+    public int SeedId { get; set; }
     public List<SeedlingInfo> SeedlingInfos { get; set; }
    
 
