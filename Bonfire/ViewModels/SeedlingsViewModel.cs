@@ -31,9 +31,9 @@ namespace Bonfire.ViewModels
             {
                 SortDescriptions =
                 {
-                    new SortDescription(nameof(Seedling.Plant.PlantCulture.Name), ListSortDirection.Ascending),
-                    new SortDescription(nameof(Seedling.Plant.PlantSort.Name), ListSortDirection.Ascending),
-                    new SortDescription(nameof(Seedling.Plant.PlantSort.Producer.Name), ListSortDirection.Ascending)
+                    new SortDescription(nameof(SeedlingFromViewModel.Culture), ListSortDirection.Ascending),
+                    new SortDescription(nameof(SeedlingFromViewModel.Sort), ListSortDirection.Ascending),
+                    new SortDescription(nameof(SeedlingFromViewModel.Producer), ListSortDirection.Ascending)
 
                 },
                 //GroupDescriptions =
@@ -110,7 +110,7 @@ namespace Bonfire.ViewModels
         #endregion
         private void SeedsViewSource_Filter(object sender, FilterEventArgs e)
         {
-            if (e.Item is not ConcreteSeedlingFromViewModel seedling || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
+            if (e.Item is not SeedlingFromViewModel seedling || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
             if (!seedling.Culture!.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase))
                 e.Accepted = false;
         }
@@ -130,19 +130,19 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
-        #region SelectedConcreteSeedlingViewItem : ConcreteSeedlingFromViewModel - Выбранный объект SeedlingsView
+        #region SelectedSeedlingViewItem : SeedlingFromViewModel - Выбранный объект SeedlingsView
 
         /// <summary>Выбранный объект SeedlingsView</summary>
-        private Seedling _SelectedConcreteSeedlingViewItem;
+        private SeedlingFromViewModel _SelectedSeedlingViewItem;
 
         /// <summary>Выбранный объект SeedlingsView</summary>
-        public Seedling SelectedConcreteSeedlingViewItem
+        public SeedlingFromViewModel SelectedSeedlingViewItem
         {
-            get => _SelectedConcreteSeedlingViewItem;
+            get => _SelectedSeedlingViewItem;
             set
             {
-                Set(ref _SelectedConcreteSeedlingViewItem, value);
-                SelectedItem = value is null ? value : Seedlings.First(s => s.Id == value.Id);
+                Set(ref _SelectedSeedlingViewItem, value);
+                SelectedItem = value is null ? null : Seedlings.First(s => s.Id == value.Id);
 
             }
         }
@@ -659,25 +659,35 @@ namespace Bonfire.ViewModels
         #region Метод загрузки рассады
         private async Task LoadSeedling()
         {
-            //var seedlingsQuery = _seedlingsService.Seedlings
-            //        .Select(seedlings => new Seedling()
-            //        {
-            //            Id = seedlings.Id,
-            //            Plant = seedlings.Plant,
-            //            Wight = seedlings.Wight,
-            //            Quantity = seedlings.Quantity,
-            //            SeedlingInfos = seedlings.SeedlingInfos
-                        
+            var seedlingsQuery = _SeedlingsService.Seedlings
+                    .Select(seedlings => new SeedlingFromViewModel()
+                    {
+                        Id = seedlings.Id,
+                        Culture = seedlings.Plant.PlantCulture.Name,
+                        Sort = seedlings.Plant.PlantSort.Name,
+                        Producer = seedlings.Plant.PlantSort.Producer.Name,
+                        Weight = seedlings.Weight,
+                        Quantity = seedlings.Quantity,
+                        LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                        SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
+                        {
+                            Id = info.Id,
+                            Number = info.SeedlingNumber,
+                            GerminationData = info.GerminationDate,
+                            QuenchingDate = info.QuenchingDate,
+                            IsQuarantine = info.QuarantineStartDate!=null && info.QuarantineStopDate==null
+                        }))
 
-            //        })
-            //        .OrderBy(c => c.Plant.PlantCulture.Name)
-            //        .ThenBy(s => s.Plant.PlantSort.Name)
-            //        .ThenBy(p => p.Plant.PlantSort.Producer.Name)
-            //    ;
+
+                    })
+                    .OrderBy(c => c.Culture)
+                    .ThenBy(s => s.Sort)
+                    .ThenBy(p => p.Producer)
+                ;
 
             Seedlings = new ObservableCollection<Seedling>(await _SeedlingsService.Seedlings.ToArrayAsync().ConfigureAwait(false));
-            //_SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
-            _SeedlingsView.Source = Seedlings;
+            _SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
+            //_SeedlingsView.Source = Seedlings;
 
             OnPropertyChanged(nameof(SeedlingsView));
 
