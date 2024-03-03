@@ -13,6 +13,7 @@ using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services.Extensions;
+using MoonCalendar;
 
 namespace Bonfire.ViewModels
 {
@@ -669,6 +670,7 @@ namespace Bonfire.ViewModels
                         Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
                         LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                        SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
                         SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
                         {
                             Id = info.Id,
@@ -676,7 +678,7 @@ namespace Bonfire.ViewModels
                             GerminationData = info.GerminationDate,
                             QuenchingDate = info.QuenchingDate,
                             IsQuarantine = info.QuarantineStartDate!=null && info.QuarantineStopDate==null
-                        }))
+                        }).Skip(1))
 
 
                     })

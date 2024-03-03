@@ -26,6 +26,7 @@ namespace Bonfire.Models
 
         }
         public DateTime? LandingData { get; set; }
+        public string? SeedlingMoonPhase { get; set; }
         public ObservableCollection<SeedlingInfoFromViewModel>? SeedlingInfos { get; set; }
 
 

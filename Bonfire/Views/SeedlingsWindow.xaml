@@ -2,12 +2,10 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d" 
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Bonfire.Views"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:templates="clr-namespace:Bonfire.Templates"
-             xmlns:glob="clr-namespace:System.Globalization;assembly=System.Runtime"
              d:DataContext="{d:DesignInstance {x:Type vm:SeedlingsViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920" KeyUp="ComboBox_OnKeyUp">
 
@@ -59,9 +57,39 @@
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
                 <DataGridTextColumn Header="Количество, г" Binding="{Binding Weight}" Width="100"/>
                 <DataGridTextColumn Header="Количество, шт" Binding="{Binding Quantity}" Width="100"/>
-                <DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData, StringFormat=dd.MM.yyyy}"/>
+                <DataGridTemplateColumn Header="Дата посадки">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Left" Margin="20,0,0,0" Text="{Binding LandingData, StringFormat=dd.MM.yyyy}" Width="100"/>
+                                <Image DockPanel.Dock="Left" Margin="-50,0,0,0" Width="18" Height="20" Source="{Binding SeedlingMoonPhase}"/>
+
+                            </DockPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+               
                 
             </DataGrid.Columns>
+            <DataGrid.RowDetailsTemplate>
+                <DataTemplate>
+                    <DataGrid ItemsSource="{Binding SeedlingInfos}" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
+                              AutoGenerateColumns="False"
+                              VerticalAlignment="Top"
+                              HorizontalAlignment="Stretch"
+                              EnableColumnVirtualization="True"
+                              EnableRowVirtualization="True"
+                              Margin="150,5,0,5">
+                        <DataGrid.Columns>
+                           
+                            <DataGridTextColumn Header="Номер рассады" Binding="{Binding Number}" Width="100"/>
+                            <DataGridTextColumn Header="Дата всхода" Binding="{Binding GerminationData}" Width="150"/>
+                            <DataGridTextColumn Header="Дата закалки" Binding="{Binding QuenchingDate}" Width="150"/>
+                            <DataGridCheckBoxColumn Header="Карантин" Binding="{Binding IsQuarantine}" Width="100" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DataTemplate>
+            </DataGrid.RowDetailsTemplate>
 
             <!--<DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData}" Width="150"/>
             <DataGridTextColumn Header="Взошли" Binding="{Binding GerminationData}" Width="100"/>
