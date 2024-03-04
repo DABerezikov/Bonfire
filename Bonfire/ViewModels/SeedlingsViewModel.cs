@@ -678,7 +678,7 @@ namespace Bonfire.ViewModels
                             GerminationData = info.GerminationDate,
                             QuenchingDate = info.QuenchingDate,
                             IsQuarantine = info.QuarantineStartDate!=null && info.QuarantineStopDate==null
-                        }).Skip(1))
+                        }))
 
 
                     })

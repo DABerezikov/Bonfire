@@ -30,6 +30,10 @@
 
     </Style>
 
+    <Style x:Key="DataGridCenterText" TargetType="DataGridCell">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
     <SolidColorBrush
         x:Key="{x:Static SystemColors.HighlightBrushKey}"
         Color="DarkKhaki"/>

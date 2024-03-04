@@ -55,9 +55,21 @@
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
-                <DataGridTextColumn Header="Количество, г" Binding="{Binding Weight}" Width="100"/>
-                <DataGridTextColumn Header="Количество, шт" Binding="{Binding Quantity}" Width="100"/>
-                <DataGridTemplateColumn Header="Дата посадки">
+                <DataGridTextColumn Header="Количество, г" Binding="{Binding Weight}" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Количество, шт" Binding="{Binding Quantity}" Width="100">
+                    <DataGridTextColumn.ElementStyle >
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTemplateColumn Header="Дата посева">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <DockPanel>
@@ -82,8 +94,20 @@
                               Margin="150,5,0,5">
                         <DataGrid.Columns>
                            
-                            <DataGridTextColumn Header="Номер рассады" Binding="{Binding Number}" Width="100"/>
-                            <DataGridTextColumn Header="Дата всхода" Binding="{Binding GerminationData}" Width="150"/>
+                            <DataGridTextColumn Header="Номер рассады" Binding="{Binding Number}" Width="100">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Дата всхода" Binding="{Binding GerminationData}" Width="150">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="Дата закалки" Binding="{Binding QuenchingDate}" Width="150"/>
                             <DataGridCheckBoxColumn Header="Карантин" Binding="{Binding IsQuarantine}" Width="100" />
                         </DataGrid.Columns>
@@ -200,7 +224,7 @@
                    Width="120"  Text="{Binding AddSize }" Grid.ColumnSpan="2" />
 
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="135,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-            Width="100" Text="Дата посадки" />
+            Width="100" Text="Дата посева" />
         <DatePicker Grid.Row="3" Grid.Column="2" Margin="135,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
              SelectedDate="{Binding PlantingDate, UpdateSourceTrigger=PropertyChanged}"/>
         <Image Grid.Column="2" Grid.Row="3" Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"

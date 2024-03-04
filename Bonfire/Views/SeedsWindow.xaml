@@ -64,8 +64,8 @@
                 <DataGridTemplateColumn Header="Срок годности"  Width="110" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate >
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding ExpirationDate, StringFormat=12.yyyy}"/>
+                            <StackPanel Orientation="Horizontal" Margin="35,0,0,0"> 
+                                <TextBlock Text="{Binding ExpirationDate, StringFormat=12.yyyy}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
                             </StackPanel>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsStillGood}" Value="true">
@@ -84,10 +84,34 @@
                     </DataGridTemplateColumn.CellTemplate>
                     
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Кол-во, г" Binding="{Binding WeightPack}" Width="80"/>
-                <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding QuantityPack}" Width="80"/>
-                <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight}" Width="80"/>
-                <DataGridTextColumn Header="Остаток, шт" Binding="{Binding AmountSeedsQuantity}" Width="80"/>
+                <DataGridTextColumn Header="Кол-во, г" Binding="{Binding WeightPack}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding QuantityPack}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Остаток, шт" Binding="{Binding AmountSeedsQuantity}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
 
             </DataGrid.Columns>
         </DataGrid>
