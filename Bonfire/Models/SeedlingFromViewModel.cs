@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Bonfire.Models
 {
@@ -29,6 +30,33 @@ namespace Bonfire.Models
         public string? SeedlingMoonPhase { get; set; }
         public ObservableCollection<SeedlingInfoFromViewModel>? SeedlingInfos { get; set; }
 
+        public int? MinGerminate
+        {
+            get
+            {
+                if (SeedlingInfos!.Count <= 1) return null;
+                var minDate = SeedlingInfos.Min(d => d.GerminationData);
+                return (minDate -  LandingData)!.Value.Days;
+            }
+        }
 
+        public int? MaxGerminate
+        {
+            get
+            {
+                if (SeedlingInfos!.Count <= 1) return null;
+                var maxDate = SeedlingInfos.Max(d => d.GerminationData);
+                return (maxDate - LandingData)!.Value.Days;
+            }
+        }
+
+        public int CountGerminate
+        {
+            get
+            {
+                if (SeedlingInfos.Count != 0) return SeedlingInfos.Count;
+                return 0;
+            }
+        }
     }
 }

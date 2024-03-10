@@ -178,7 +178,7 @@
 
 
         <TextBlock Margin="318,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
-                   TextWrapping="Wrap" Text="Добавление семян" Width="200" FontSize="18" FontWeight="Bold"/>
+                   TextWrapping="Wrap" Text="Добавление семян" Width="200" FontSize="18" FontWeight="Bold" Height="30"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
                                  Content="Куплено" IsChecked="{Binding IsSold}" />
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"

@@ -80,10 +80,30 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-               
-                
+                <DataGridTextColumn Header="Взошло, шт" Binding="{Binding CountGerminate}" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Всходы от, дн" Binding="{Binding MinGerminate}" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Всходы до, дн" Binding="{Binding MaxGerminate}" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
             </DataGrid.Columns>
-            <DataGrid.RowDetailsTemplate>
+            <!--<DataGrid.RowDetailsTemplate>
                 <DataTemplate>
                     <DataGrid ItemsSource="{Binding SeedlingInfos}" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
                               AutoGenerateColumns="False"
@@ -113,7 +133,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </DataTemplate>
-            </DataGrid.RowDetailsTemplate>
+            </DataGrid.RowDetailsTemplate>-->
 
             <!--<DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData}" Width="150"/>
             <DataGridTextColumn Header="Взошли" Binding="{Binding GerminationData}" Width="100"/>
@@ -190,7 +210,7 @@
 
         
         <TextBlock Margin="100,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
-                   TextWrapping="Wrap" Text="Добавление рассады" Width="200" FontSize="18" FontWeight="Bold"/>
+                   TextWrapping="Wrap" Text="Добавление рассады" Width="200" FontSize="18" FontWeight="Bold" Height="30"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
                          Content="Куплено" IsChecked="{Binding IsSold}" />
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
@@ -239,7 +259,7 @@
         Content="Удалить" Command="{Binding DeleteSeedlingCommand}" HorizontalAlignment="Right" />
 
         <TextBlock Grid.Column="1" Grid.Row="3" Margin="650,10,0,0 " Style="{StaticResource SeedsTextBlockStyle}"
-                   Text="Добавление всходов" HorizontalAlignment="Center" Width="200" FontSize="18" FontWeight="Bold" Grid.ColumnSpan="2"/>
+                   Text="Добавление всходов" HorizontalAlignment="Center" Width="200" FontSize="18" FontWeight="Bold" Grid.ColumnSpan="2" Height="30"/>
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="680,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Width="100" Text="Дата всхода"  Grid.ColumnSpan="2"/>
         <DatePicker Grid.Row="3" Grid.Column="1" Margin="680,70,0,0" Style="{StaticResource SeedsDatePickerStyle}"
