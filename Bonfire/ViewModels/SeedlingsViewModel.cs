@@ -650,6 +650,36 @@ namespace Bonfire.ViewModels
             set => Set(ref _MoonPhase, value);
         }
         #endregion
+        
+        #region Germinate : int - количество всходов
+
+        /// <summary>количество всходов</summary>
+        private int _Germinate;
+
+        /// <summary>количество всходов</summary>
+        public int Germinate
+        {
+            get => _Germinate;
+
+
+            set => Set(ref _Germinate, value);
+        }
+        #endregion
+
+        #region GerminationDate : DateTime - Дата всходов
+
+        /// <summary>Дата всходов</summary>
+        private DateTime _GerminationDate = DateTime.Now;
+
+        /// <summary>Дата всходов</summary>
+        public DateTime GerminationDate
+        {
+            get => _GerminationDate;
+
+
+            set => Set(ref _GerminationDate, value);
+        }
+        #endregion
 
 
         #endregion
@@ -678,7 +708,7 @@ namespace Bonfire.ViewModels
                             GerminationData = info.GerminationDate,
                             QuenchingDate = info.QuenchingDate,
                             IsQuarantine = info.QuarantineStartDate!=null && info.QuarantineStopDate==null
-                        }))
+                        }).Skip(1))
 
 
                     })
@@ -886,7 +916,34 @@ namespace Bonfire.ViewModels
 
         private void UpdateCollectionViewSource(int id = -1)
         {
-            var collection = new ObservableCollection<Seedling>(_SeedlingsService.Seedlings.ToArray());
+            var newCollection = Seedlings
+                    .Select(seedlings => new SeedlingFromViewModel()
+                    {
+                        Id = seedlings.Id,
+                        Culture = seedlings.Plant.PlantCulture.Name,
+                        Sort = seedlings.Plant.PlantSort.Name,
+                        Producer = seedlings.Plant.PlantSort.Producer.Name,
+                        Weight = seedlings.Weight,
+                        Quantity = seedlings.Quantity,
+                        LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                        SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
+                        SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
+                        {
+                            Id = info.Id,
+                            Number = info.SeedlingNumber,
+                            GerminationData = info.GerminationDate,
+                            QuenchingDate = info.QuenchingDate,
+                            IsQuarantine = info is { QuarantineStartDate: not null, QuarantineStopDate: null }
+                        }).SkipWhile(n=> n.Number == 0))
+
+
+                    })
+                    .OrderBy(c => c.Culture)
+                    .ThenBy(s => s.Sort)
+                    .ThenBy(p => p.Producer)
+                ;
+
+            var collection = newCollection.ToArray();
            
             _SeedlingsView.Source = collection;
 
@@ -1119,6 +1176,51 @@ namespace Bonfire.ViewModels
             updateSeed.SeedsInfo.AmountSeedsWeight = deleteSeedling.Weight;
             await _SeedsService.UpdateSeed(updateSeed);
         }
+
+        #endregion
+        
+        #region Command GerminateSeedlingCommand - Команда для всходов рассады
+
+        /// <summary> Команда для всходов рассады </summary>
+        private ICommand _GerminateSeedlingCommand;
+
+        /// <summary> Команда для всходов рассады </summary>
+        public ICommand GerminateSeedlingCommand => _GerminateSeedlingCommand
+            ??= new LambdaCommandAsync(OnGerminateSeedlingCommandExecuted, CanGerminateSeedlingCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для всходов рассады </summary>
+        private bool CanGerminateSeedlingCommandExecute() => SelectedItem != null;
+
+        /// <summary> Логика выполнения - Команда для всходов рассады </summary>
+        private async Task OnGerminateSeedlingCommandExecuted()
+        {
+            if (Germinate<0) return;
+            if (SelectedItem.Quantity > 0)
+                Germinate =  Germinate + SelectedItem.SeedlingInfos.Count - 1 > (int)SelectedItem.Quantity ? (int)SelectedItem.Quantity - (SelectedItem.SeedlingInfos.Count - 1) : Germinate;
+            for (var i = 0; i < Germinate; i++)
+            {
+                var info = new SeedlingInfo
+                {
+                    GerminationDate = GerminationDate,
+                    LandingDate = SelectedItem.SeedlingInfos[0].LandingDate,
+                    LunarPhase = SelectedItem.SeedlingInfos[0].LunarPhase,
+                    SeedlingNumber = SelectedItem.SeedlingInfos.Count - 1 + 1,
+                    SeedlingSource = SelectedItem.SeedlingInfos[0].SeedlingSource
+
+
+                };
+
+                SelectedItem.SeedlingInfos.Add(info);
+                await _SeedlingsService.AddSeedlingInfo(info);
+            }
+
+            await _SeedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
+            
+            UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
+            Germinate = 0;
+        }
+
+        
 
         #endregion
 

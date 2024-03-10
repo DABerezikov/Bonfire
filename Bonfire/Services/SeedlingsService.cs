@@ -72,4 +72,11 @@ internal class SeedlingsService : ISeedlingsService
         return seedling;
 
     }
+    public async Task<SeedlingInfo> AddSeedlingInfo(SeedlingInfo info)
+    {
+
+        return await _seedlingsInfo.AddAsync(info);
+       
+
+    }
 }
