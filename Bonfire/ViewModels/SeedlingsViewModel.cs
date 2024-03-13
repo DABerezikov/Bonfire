@@ -13,7 +13,6 @@ using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services.Extensions;
-using MoonCalendar;
 
 namespace Bonfire.ViewModels
 {
@@ -1099,8 +1098,8 @@ namespace Bonfire.ViewModels
             {
                 Plant = plant,
                 SeedId = CurrentSeed.Id,
-                SeedlingInfos = new List<SeedlingInfo> { seedlingInfo }
-                
+                SeedlingInfos = [seedlingInfo]
+
             };
 
             switch (AddSize)
@@ -1218,6 +1217,7 @@ namespace Bonfire.ViewModels
             
             UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
             Germinate = 0;
+            GerminationDate = DateTime.Now;
         }
 
         

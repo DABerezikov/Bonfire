@@ -9,58 +9,45 @@ namespace Bonfire.Services;
 
 
 
-internal class SeedlingsService : ISeedlingsService
+internal class SeedlingsService(
+    IRepository<Plant> plants,
+    IRepository<Seedling> seedlings,
+    IRepository<PlantSort> sort,
+    IRepository<PlantCulture> culture,
+    IRepository<Producer> producer,
+    IRepository<SeedlingInfo> seedlingsInfo,
+    IRepository<Replanting> replantings,
+    IRepository<Treatment> treatments,
+    MoonPhase lunar)
+    : ISeedlingsService
 {
-    private readonly IRepository<Plant> _plants;
-    private readonly IRepository<Seedling> _seedlings;
-    private readonly IRepository<PlantSort> _sort;
-    private readonly IRepository<PlantCulture> _culture;
-    private readonly IRepository<Producer> _producer;
-    private readonly IRepository<SeedlingInfo> _seedlingsInfo;
-    private readonly IRepository<Replanting> _replantings;
-    private readonly IRepository<Treatment> _treatments;
+    private readonly IRepository<Plant> _Plants = plants;
+    private readonly IRepository<PlantSort> _Sort = sort;
+    private readonly IRepository<PlantCulture> _Culture = culture;
+    private readonly IRepository<Producer> _Producer = producer;
+    private readonly IRepository<Replanting> _Replantings = replantings;
+    private readonly IRepository<Treatment> _Treatments = treatments;
 
-    public IQueryable<Seedling> Seedlings => _seedlings.Items;
+    public IQueryable<Seedling> Seedlings => seedlings.Items;
 
-    public MoonPhase Lunar { get; }
-
-    public SeedlingsService(IRepository<Plant> plants,
-        IRepository<Seedling> seedlings,
-        IRepository<PlantSort> sort,
-        IRepository<PlantCulture> culture,
-        IRepository<Producer> producer,
-        IRepository<SeedlingInfo> seedlingsInfo,
-        IRepository<Replanting> replantings,
-        IRepository<Treatment> treatments,
-        MoonPhase lunar)
-    {
-        _plants = plants;
-        _seedlings = seedlings;
-        _sort = sort;
-        _culture = culture;
-        _producer = producer;
-        _seedlingsInfo = seedlingsInfo;
-        _replantings = replantings;
-        _treatments = treatments;
-        Lunar = lunar;
-    }
+    public MoonPhase Lunar { get; } = lunar;
 
     public async Task<Seedling> MakeASeedling(Seedling seedling)
     {
-        var seedlingsInfo = seedling.SeedlingInfos;
-        foreach (var seedlingInfo in seedlingsInfo)
+        var info = seedling.SeedlingInfos;
+        foreach (var seedlingInfo in info)
         {
-            await _seedlingsInfo.AddAsync(seedlingInfo);
+            await seedlingsInfo.AddAsync(seedlingInfo);
 
         }
-        return await _seedlings.AddAsync(seedling);
+        return await seedlings.AddAsync(seedling);
 
     }
 
     public async Task<Seedling> UpdateSeedling(Seedling seedling)
     {
 
-        await _seedlings.UpdateAsync(seedling);
+        await seedlings.UpdateAsync(seedling);
         return seedling;
 
     }
@@ -68,14 +55,14 @@ internal class SeedlingsService : ISeedlingsService
     public async Task<Seedling> DeleteSeedling(Seedling seedling)
     {
 
-        await _seedlings.RemoveAsync(seedling.Id);
+        await seedlings.RemoveAsync(seedling.Id);
         return seedling;
 
     }
     public async Task<SeedlingInfo> AddSeedlingInfo(SeedlingInfo info)
     {
 
-        return await _seedlingsInfo.AddAsync(info);
+        return await seedlingsInfo.AddAsync(info);
        
 
     }

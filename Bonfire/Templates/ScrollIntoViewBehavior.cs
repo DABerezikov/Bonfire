@@ -22,33 +22,29 @@ namespace Bonfire.Templates
 
         private async void AssociatedObjectSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is DataGrid)
+            if (sender is not DataGrid grid) return;
+            var item = grid?.SelectedItem;
+
+            if (item == null) return;
+
+            if (grid.Dispatcher.CheckAccess())
             {
-                DataGrid grid = sender as DataGrid;
-                object item = grid?.SelectedItem;
+                Action();
+            }
+            else
+            {
+                await grid.Dispatcher.BeginInvoke((Action?)Action);
+            }
 
-                if (item != null)
-                {
-                    Action action = () =>
-                    {
-                        if (grid != null && item != null)
-                        {
-                            grid.UpdateLayout();
-                            grid.ScrollIntoView(item, null);
-                            DataGridRow row = (DataGridRow)grid.ItemContainerGenerator.ContainerFromIndex(grid.SelectedIndex);
-                            row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-                        }
-                    };
+            return;
 
-                    if (grid.Dispatcher.CheckAccess())
-                    {
-                        action();
-                    }
-                    else
-                    {
-                        await grid.Dispatcher.BeginInvoke(action);
-                    }
-                }
+            void Action()
+            {
+                if (grid == null || item == null) return;
+                grid.UpdateLayout();
+                grid.ScrollIntoView(item, null);
+                var row = (DataGridRow)grid.ItemContainerGenerator.ContainerFromIndex(grid.SelectedIndex);
+                row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
             }
         }
     }

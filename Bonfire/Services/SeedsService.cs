@@ -8,48 +8,33 @@ namespace Bonfire.Services
 {
     
 
-    internal class SeedsService : ISeedsService
+    internal class SeedsService(
+        IRepository<Plant> plants,
+        IRepository<Seed> seeds,
+        IRepository<PlantSort> sort,
+        IRepository<PlantCulture> culture,
+        IRepository<Producer> producer,
+        IRepository<SeedsInfo> info)
+        : ISeedsService
     {
-        private readonly IRepository<Plant> _plants;
-        private readonly IRepository<Seed> _seeds;
-        private readonly IRepository<PlantSort> _sort;
-        private readonly IRepository<PlantCulture> _culture;
-        private readonly IRepository<Producer> _producer;
-        private readonly IRepository<SeedsInfo> _seedsInfo;
-
-        public IQueryable<Seed> Seeds => _seeds.Items;
-
-        public SeedsService(IRepository<Plant> plants,
-            IRepository<Seed> seeds,
-            IRepository<PlantSort> sort,
-            IRepository<PlantCulture> culture,
-            IRepository<Producer> producer,
-            IRepository<SeedsInfo> seedsInfo)
-        {
-            _plants = plants;
-            _seeds = seeds;
-            _sort = sort;
-            _culture = culture;
-            _producer = producer;
-            _seedsInfo = seedsInfo;
-        }
+        public IQueryable<Seed> Seeds => seeds.Items;
 
         public async Task<Seed> MakeASeed(Plant plant, SeedsInfo seedsInfo)
         {
             if (plant.Id == 0)
             {
                 if (plant.PlantCulture.Id==0)
-                    plant.PlantCulture = await _culture.AddAsync(plant.PlantCulture).ConfigureAwait(false);
+                    plant.PlantCulture = await culture.AddAsync(plant.PlantCulture).ConfigureAwait(false);
                 if (plant.PlantSort.Producer.Id==0)
-                    plant.PlantSort.Producer = await _producer.AddAsync(plant.PlantSort.Producer).ConfigureAwait(false);
+                    plant.PlantSort.Producer = await producer.AddAsync(plant.PlantSort.Producer).ConfigureAwait(false);
                 if (plant.PlantSort.Id == 0)
-                    plant.PlantSort = await _sort.AddAsync(plant.PlantSort).ConfigureAwait(false);
-                plant = await _plants.AddAsync(plant);
+                    plant.PlantSort = await sort.AddAsync(plant.PlantSort).ConfigureAwait(false);
+                plant = await plants.AddAsync(plant);
             }
 
             if (seedsInfo.Id == 0)
             {
-                seedsInfo = await _seedsInfo.AddAsync(seedsInfo);
+                seedsInfo = await info.AddAsync(seedsInfo);
             }
 
             var seed = new Seed
@@ -58,14 +43,14 @@ namespace Bonfire.Services
                 SeedsInfo = seedsInfo
             };
             seed.SeedsInfo.Seed = seed;
-            return await _seeds.AddAsync(seed);
+            return await seeds.AddAsync(seed);
 
         }
 
         public async Task<Seed> UpdateSeed(Seed seed)
         {
             
-           await _seeds.UpdateAsync(seed);
+           await seeds.UpdateAsync(seed);
            return seed;
 
         }
@@ -73,32 +58,32 @@ namespace Bonfire.Services
         public async Task<Seed> DeleteSeed(Seed seed)
         {
             
-           await _seeds.RemoveAsync(seed.Id);
+           await seeds.RemoveAsync(seed.Id);
            return seed;
 
         }
 
-        public async Task<PlantSort> UpdateSort(PlantSort sort)
+        public async Task<PlantSort> UpdateSort(PlantSort sort1)
         {
 
-            await _sort.UpdateAsync(sort);
-            return sort;
+            await sort.UpdateAsync(sort1);
+            return sort1;
 
         }
 
-        public async Task<PlantCulture> UpdateCulture(PlantCulture culture)
+        public async Task<PlantCulture> UpdateCulture(PlantCulture culture1)
         {
 
-            await _culture.UpdateAsync(culture);
-            return culture;
+            await culture.UpdateAsync(culture1);
+            return culture1;
 
         }
 
-        public async Task<Producer> UpdateProducer(Producer producer)
+        public async Task<Producer> UpdateProducer(Producer producer1)
         {
 
-            await _producer.UpdateAsync(producer);
-            return producer;
+            await producer.UpdateAsync(producer1);
+            return producer1;
 
         }
     }

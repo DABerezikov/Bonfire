@@ -10,20 +10,20 @@ namespace Bonfire.Models
         public string? Culture { get; set; }
         public string? Sort { get; set; }
         public string? Producer { get; set; }
-        private double? weight;
+        private double? _Weight;
 
         public double? Weight
         {
-            get => weight != 0 ? weight : null;
-            set => weight = value;
+            get => _Weight != 0 ? _Weight : null;
+            set => _Weight = value;
             
         }
 
-        private double? quantity;
+        private double? _Quantity;
         public double? Quantity
         {
-            get => quantity != 0 ? quantity : null;
-            set => quantity = value;
+            get => _Quantity != 0 ? _Quantity : null;
+            set => _Quantity = value;
 
         }
         public DateTime? LandingData { get; set; }
@@ -50,13 +50,6 @@ namespace Bonfire.Models
             }
         }
 
-        public int CountGerminate
-        {
-            get
-            {
-                if (SeedlingInfos.Count != 0) return SeedlingInfos.Count;
-                return 0;
-            }
-        }
+        public int CountGerminate => SeedlingInfos != null && SeedlingInfos.Count != 0 ? SeedlingInfos.Count : 0;
     }
 }
