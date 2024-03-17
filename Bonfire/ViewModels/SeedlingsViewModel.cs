@@ -905,6 +905,7 @@ namespace Bonfire.ViewModels
             Plantable = null;
             AddSize = string.Empty;
             AddQuantity = 0.0;
+            AddQuantityString = string.Empty;
 
 
         }

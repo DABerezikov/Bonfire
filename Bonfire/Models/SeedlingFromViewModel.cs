@@ -34,7 +34,7 @@ namespace Bonfire.Models
         {
             get
             {
-                if (SeedlingInfos!.Count <= 1) return null;
+                if (SeedlingInfos!.Count < 1) return null;
                 var minDate = SeedlingInfos.Min(d => d.GerminationData);
                 return (minDate -  LandingData)!.Value.Days;
             }
@@ -44,7 +44,7 @@ namespace Bonfire.Models
         {
             get
             {
-                if (SeedlingInfos!.Count <= 1) return null;
+                if (SeedlingInfos!.Count < 1) return null;
                 var maxDate = SeedlingInfos.Max(d => d.GerminationData);
                 return (maxDate - LandingData)!.Value.Days;
             }

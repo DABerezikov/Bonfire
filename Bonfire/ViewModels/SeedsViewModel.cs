@@ -768,8 +768,7 @@ public class SeedsViewModel : ViewModel
 
         PlantSort? plantSort;
 
-        if (AddSortList.Contains(c => c.Name == AddSort &&
-                                      AddProducerList.Contains(model => model.Name == AddProducer)))
+        if (Seeds.Contains(s => s.Plant.PlantSort.Name == AddSort && s.Plant.PlantSort.Producer.Name == AddProducer))
         {
            plantSort = Seeds
                 .Find(s =>
