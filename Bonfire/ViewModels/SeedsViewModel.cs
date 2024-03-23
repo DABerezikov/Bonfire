@@ -28,10 +28,10 @@ public class SeedsViewModel : ViewModel
 {
     private readonly ISeedsService _SeedsService;
     private readonly IUserDialog _UserDialog;
-    
 
-    
-    
+   
+
+
     public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog)
     {
         _SeedsService = seedsService;
@@ -216,7 +216,11 @@ public class SeedsViewModel : ViewModel
     /// <summary>Редактируемый объект</summary>
     public Seed EditedItem
     {
-        get => _EditedItem;
+        get
+        {
+            CopySeedToEditItem(SelectedItem, _EditedItem);
+            return _EditedItem;
+        }
         set => Set(ref _EditedItem, value);
     }
 
@@ -977,8 +981,8 @@ public class SeedsViewModel : ViewModel
         seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
         seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
         seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
-        OnPropertyChanged(nameof(EditedItem));
-        OnPropertyChanged(nameof(SelectedItem));
+        //OnPropertyChanged(nameof(EditedItem));
+        //OnPropertyChanged(nameof(SelectedItem));
 
     }
 
