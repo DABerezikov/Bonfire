@@ -225,7 +225,7 @@ public class SeedsViewModel : ViewModel
     #region ListCulture : List<string> - Список культур
 
     /// <summary>Список культур</summary>
-    private List<string> _ListCulture = new List<string> { "-Выбрать все-" };
+    private List<string> _ListCulture = ["-Выбрать все-"];
 
     /// <summary>Список культур</summary>
     public List<string> ListCulture
