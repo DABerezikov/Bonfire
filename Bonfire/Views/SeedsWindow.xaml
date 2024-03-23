@@ -50,10 +50,12 @@
                               Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
                               EnableRowVirtualization="True"
-                              SelectedItem="{Binding SelectedSeedsViewItem}">
+                              SelectedItem="{Binding SelectedSeedsViewItem}"
+                              RowDetailsVisibilityMode="Collapsed">
 
             <i:Interaction.Behaviors>
                 <templates:ScrollIntoViewBehavior/>
+                <templates:DoubleClickBehavior/>
             </i:Interaction.Behaviors>
 
 
@@ -64,7 +66,7 @@
                 <DataGridTemplateColumn Header="Срок годности"  Width="110" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate >
-                            <StackPanel Orientation="Horizontal" Margin="35,0,0,0"> 
+                            <StackPanel Orientation="Horizontal" Margin="35,0,0,0">
                                 <TextBlock Text="{Binding ExpirationDate, StringFormat=12.yyyy}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
                             </StackPanel>
                             <DataTemplate.Triggers>
@@ -72,7 +74,7 @@
                                     <Setter Property="TextBlock.Foreground" Value="DarkGreen"/>
                                     <Setter Property="TextBlock.FontWeight" Value="Bold"/>
                                 </DataTrigger>
-                               
+
                                 <DataTrigger Binding="{Binding IsOld}" Value="true">
                                     <Setter Property="TextBlock.Foreground" Value="DarkRed"/>
                                     <Setter Property="TextBlock.FontWeight" Value="Bold"/>
@@ -82,7 +84,7 @@
                         </DataTemplate>
 
                     </DataGridTemplateColumn.CellTemplate>
-                    
+
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Кол-во, г" Binding="{Binding WeightPack}" Width="80">
                     <DataGridTextColumn.ElementStyle>
@@ -114,6 +116,22 @@
                 </DataGridTextColumn>
 
             </DataGrid.Columns>
+            <DataGrid.RowDetailsTemplate >
+                <DataTemplate>
+
+                    <TextBlock Text="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.EditedItem.SeedsInfo.PurchaseDate}"/>
+
+                   
+
+
+
+
+                  
+
+                   
+                </DataTemplate>
+            </DataGrid.RowDetailsTemplate>
+
         </DataGrid>
         <!--Кнопки сортировки-->
         <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource SeedsChoiceButtonStyle}"
