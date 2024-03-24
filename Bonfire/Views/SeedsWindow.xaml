@@ -59,6 +59,7 @@
             <i:Interaction.Behaviors>
                 <templates:ScrollIntoViewBehavior/>
                 <templates:DoubleClickBehavior/>
+                <templates:SingleRowDetailsBehavior/>
             </i:Interaction.Behaviors>
 
 
@@ -121,8 +122,21 @@
             </DataGrid.Columns>
             <DataGrid.RowDetailsTemplate >
                 <DataTemplate>
+                    <Grid Margin="5" >
+                        <Border  Style="{StaticResource SeedsBorderStyle}" CornerRadius="10">
+                            <DockPanel Margin="5">
+                                <TextBlock DockPanel.Dock="Top" Text="Дата покупки" Style="{StaticResource SeedsTextBlockStyle}"/>
+                                <DatePicker DockPanel.Dock="Left" Text="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+                                        Path=DataContext.EditedItem.SeedsInfo.PurchaseDate, StringFormat=dd.MM.yyyy}"
+                                            Style="{StaticResource SeedsDatePickerStyle}" Margin="25,0,0,0"/>
 
-                    <TextBlock Text="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.EditedItem.SeedsInfo.PurchaseDate}"/>
+                            </DockPanel>
+
+                        </Border>
+
+
+                    </Grid>
+
 
                    
 
