@@ -23,6 +23,7 @@
 
     <Grid Margin="10" >
 
+        
 
 
         <Grid.RowDefinitions>
@@ -37,6 +38,8 @@
             <ColumnDefinition Width="930"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
+
+
 
         <DataGrid 
                                 ItemsSource="{Binding SeedsView }"
@@ -228,23 +231,39 @@
                                Width="190" Text="Примечание" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="704,70,0,0" Style="{StaticResource SeedsTextBoxStyle}"
                   Width="190" Height="72" TextAlignment="Left" TextWrapping="Wrap" MaxLength="112"
-                  Text="{Binding AddNote, UpdateSourceTrigger=PropertyChanged}"/>
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                  Text="{Binding AddNote, UpdateSourceTrigger=PropertyChanged}">
+                <i:Interaction.Behaviors>
+                    <templates:SelectAllTextOnFocusBehavior />
+                </i:Interaction.Behaviors>
+        </TextBox>
+            <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Ед. измерения" Grid.ColumnSpan="2" />
         <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,145,0,0" Style="{StaticResource SeedsComboBoxStyle}"
                    VerticalAlignment="Top" ItemsSource="{Binding AddSizeList}" Text="{Binding AddSize }" Grid.ColumnSpan="2"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="160,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                                Width="110" Text="Кол-во в упаковке" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="160,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
-                  Text="{Binding AddQuantityInPac, UpdateSourceTrigger=PropertyChanged}" />
+                  Text="{Binding AddQuantityInPac, UpdateSourceTrigger=PropertyChanged}" >
+            <i:Interaction.Behaviors>
+                <templates:SelectAllTextOnFocusBehavior />
+            </i:Interaction.Behaviors>
+        </TextBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="300,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="110" Text="Кол-во упаковок" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="300,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
-                 Text="{Binding AddQuantityPac, UpdateSourceTrigger=PropertyChanged}" />
+                 Text="{Binding AddQuantityPac, UpdateSourceTrigger=PropertyChanged}" >
+            <i:Interaction.Behaviors>
+                <templates:SelectAllTextOnFocusBehavior />
+            </i:Interaction.Behaviors>
+        </TextBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="440,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="110" Text="Стоимость семян" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="440,145,0,0" Style="{StaticResource SeedsTextBoxStyle}"
-                 Text="{Binding AddCostPack, UpdateSourceTrigger=PropertyChanged}" />
+                 Text="{Binding AddCostPack, UpdateSourceTrigger=PropertyChanged}" >
+            <i:Interaction.Behaviors>
+                <templates:SelectAllTextOnFocusBehavior />
+            </i:Interaction.Behaviors>
+        </TextBox>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="570,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="100" Text="Годен до:" />
         <DatePicker Grid.Row="3" Grid.Column="2" Margin="570,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
