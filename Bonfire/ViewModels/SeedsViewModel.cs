@@ -188,7 +188,11 @@ public class SeedsViewModel : ViewModel
     public Seed SelectedItem
     {
         get => _SelectedItem;
-        set => Set(ref _SelectedItem, value);
+        set
+        {
+            if(Set(ref _SelectedItem, value))
+                CopySeedToEditItem(SelectedItem, EditedItem);
+        }
     }
 
     #endregion
@@ -216,11 +220,7 @@ public class SeedsViewModel : ViewModel
     /// <summary>Редактируемый объект</summary>
     public Seed EditedItem
     {
-        get
-        {
-            CopySeedToEditItem(SelectedItem, _EditedItem);
-            return _EditedItem;
-        }
+        get => _EditedItem;
         set => Set(ref _EditedItem, value);
     }
 
@@ -981,8 +981,8 @@ public class SeedsViewModel : ViewModel
         seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
         seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
         seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
-        //OnPropertyChanged(nameof(EditedItem));
-        //OnPropertyChanged(nameof(SelectedItem));
+        OnPropertyChanged(nameof(EditedItem));
+        OnPropertyChanged(nameof(SelectedItem));
 
     }
 
