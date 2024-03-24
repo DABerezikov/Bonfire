@@ -237,11 +237,7 @@
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="72,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                        Width="60" Text="Посеяно"  Grid.ColumnSpan="2"/>
         <TextBox Grid.Row="3" Grid.Column="1" Margin="72,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
-                 TextAlignment="Center" Text="{Binding AddQuantityString}" Grid.ColumnSpan="2" KeyUp="TextBlock_OnKeyUp" >
-            <i:Interaction.Behaviors>
-                <templates:SelectAllTextOnFocusBehavior />
-            </i:Interaction.Behaviors>
-        </TextBox>
+                 TextAlignment="Center" Text="{Binding AddQuantityString}" Grid.ColumnSpan="2" KeyUp="TextBlock_OnKeyUp" />
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="145,145,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
                  TextAlignment="Center" Text="{Binding Plantable}" Grid.ColumnSpan="2" />
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="140,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
@@ -271,11 +267,7 @@
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="810,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Width="60" Text="Кол-во"  Grid.ColumnSpan="2"/>
         <TextBox Grid.Row="3" Grid.Column="1" Margin="810,70,0,0" Width="60" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
-                 TextAlignment="Center" Text="{Binding Germinate}" Grid.ColumnSpan="2">
-            <i:Interaction.Behaviors>
-                <templates:SelectAllTextOnFocusBehavior />
-            </i:Interaction.Behaviors>
-        </TextBox>
+                 TextAlignment="Center" Text="{Binding Germinate}" Grid.ColumnSpan="2"/>
         <Button Grid.Row="3" Grid.Column="1" Margin="900,70,0,0" Style="{StaticResource SeedsButtonStyle}"
                 Content="Взошло" Command="{Binding GerminateSeedlingCommand}"  Grid.ColumnSpan="2" />
 
