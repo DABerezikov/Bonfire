@@ -52,17 +52,17 @@
 
 
             <DataGrid.Columns >
-                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
-                <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
-                <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
-                <DataGridTextColumn Header="Количество, г" Binding="{Binding Weight}" Width="100">
+                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="130"/>
+                <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="250"/>
+                <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="*"/>
+                <DataGridTextColumn Header="Кол-во, г" Binding="{Binding Weight}" Width="80">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Количество, шт" Binding="{Binding Quantity}" Width="100">
+                <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding Quantity}" Width="80">
                     <DataGridTextColumn.ElementStyle >
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -80,21 +80,21 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Взошло, шт" Binding="{Binding CountGerminate}" Width="100">
+                <DataGridTextColumn Header="Взошло, шт" Binding="{Binding CountGerminate}" Width="80">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Всходы от, дн" Binding="{Binding MinGerminate}" Width="100">
+                <DataGridTextColumn Header="Всходы от, дн" Binding="{Binding MinGerminate}" Width="90">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Всходы до, дн" Binding="{Binding MaxGerminate}" Width="100">
+                <DataGridTextColumn Header="Всходы до, дн" Binding="{Binding MaxGerminate}" Width="90">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
