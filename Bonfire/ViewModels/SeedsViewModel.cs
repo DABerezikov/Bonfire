@@ -1395,8 +1395,56 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
+    #region Command UpdateSeedsInfoCommand - Команда для редактирования семян
 
-    
+    /// <summary> Команда для редактирования семян </summary>
+    private ICommand _UpdateSeedsInfoCommand;
+
+    /// <summary> Команда для редактирования семян </summary>
+    public ICommand UpdateSeedsInfoCommand => _UpdateSeedsInfoCommand
+        ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted, CanUpdateSeedsInfoCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для редактирования семян </summary>
+    private bool CanUpdateSeedsInfoCommandExecute() => EditedItem != null;
+
+    /// <summary> Логика выполнения - Команда для редактирования семян </summary>
+    private async Task OnUpdateSeedsInfoCommandExecuted()
+    {
+        if (!_UserDialog.YesNoQuestion(
+                $"Вы уверены, что хотите изменить информацию о семенах сорта - {EditedItem.Plant.PlantSort.Name}",
+                "Редактирование семян")) return;
+
+        CopySeedToEditItem(EditedItem, SelectedItem);
+        await _SeedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
+        UpdateCollectionViewSource();
+    }
+
+
+
+    #endregion
+
+    #region Command CancelUpdateSeedsInfoCommand - Команда для редактирования семян
+
+    /// <summary> Команда для редактирования семян </summary>
+    private ICommand _CancelUpdateSeedsInfoCommand;
+
+    /// <summary> Команда для редактирования семян </summary>
+    public ICommand CancelUpdateSeedsInfoCommand => _CancelUpdateSeedsInfoCommand
+        ??= new LambdaCommandAsync(OnCancelUpdateSeedsInfoCommandExecuted, CanCancelUpdateSeedsInfoCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для редактирования семян </summary>
+    private bool CanCancelUpdateSeedsInfoCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для редактирования семян </summary>
+    private async Task OnCancelUpdateSeedsInfoCommandExecuted()
+    {
+        
+        UpdateCollectionViewSource();
+    }
+
+
+
+    #endregion
 
     #endregion
 

@@ -120,19 +120,87 @@
                 </DataGridTextColumn>
 
             </DataGrid.Columns>
-            <DataGrid.RowDetailsTemplate >
+            <DataGrid.RowDetailsTemplate>
                 <DataTemplate>
-                    <Grid Margin="5" >
-                        <Border  Style="{StaticResource SeedsBorderStyle}" CornerRadius="10">
-                            <DockPanel Margin="5">
-                                <TextBlock DockPanel.Dock="Top" Text="Дата покупки" Style="{StaticResource SeedsTextBlockStyle}"/>
-                                <DatePicker DockPanel.Dock="Left" Text="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
-                                        Path=DataContext.EditedItem.SeedsInfo.PurchaseDate, StringFormat=dd.MM.yyyy}"
-                                            Style="{StaticResource SeedsDatePickerStyle}" Margin="25,0,0,0"/>
+                    <Grid Margin="5,10,5,10" >
+                        <Grid.ColumnDefinitions>
+                            
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
 
-                            </DockPanel>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="75"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
 
-                        </Border>
+                        <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="9" Grid.ColumnSpan="8" Style="{StaticResource SeedsBorderStyle}" CornerRadius="10" Margin="0,0,-10,0"/>
+
+                        <TextBlock  Grid.Row="1"  Grid.Column="0"  Text="Источник семян"  Style="{StaticResource SeedsTextBlockStyle}" />
+                        <ComboBox Grid.Row="2" Grid.Column="0" Margin="20,0,0,0" SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.EditedItem.SeedsInfo.SeedSource}" Style="{StaticResource SeedsComboBoxStyle}" Width="110" SelectedValuePath="Content" HorizontalContentAlignment="Center">
+                            <ComboBoxItem Content="Куплено" />
+                            <ComboBoxItem Content="Собрано" />
+                            <ComboBoxItem Content="Подарено" />
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Дата покупки" Style="{StaticResource SeedsTextBlockStyle}" Margin="0,0,0,0"/>
+                        <DatePicker Grid.Row="2"  Grid.Column="1" Margin="28,0,0,0" Text="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+                 Path=DataContext.EditedItem.SeedsInfo.PurchaseDate, StringFormat=dd.MM.yyyy}" Style="{StaticResource SeedsDatePickerStyle}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Вес в уп., грамм" Style="{StaticResource SeedsTextBlockStyle}" Margin="-3,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="2"  Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+             Path=DataContext.EditedItem.SeedsInfo.WeightPack}"  Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="3" Text="Кол-во в уп., штук" Style="{StaticResource SeedsTextBlockStyle}" Margin="-3,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="3" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.QuantityPack}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="4" Text="Срок годности" Style="{StaticResource SeedsTextBlockStyle}" Margin="-5,0,0,0"/>
+                        <DatePicker Grid.Row="2" Grid.Column="4" Margin="20,0,0,0" SelectedDate="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.ExpirationDate}" Style="{StaticResource SeedsDatePickerStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="5" Text="Стоимость уп., руб." Style="{StaticResource SeedsTextBlockStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="5" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.CostPack}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="6" Text="Остаток, штук" Style="{StaticResource SeedsTextBlockStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="6" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.AmountSeeds}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="7" Text="Остаток, грамм" Style="{StaticResource SeedsTextBlockStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="7" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.AmountSeedsWeight}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4" Text="Примечание" Style="{StaticResource SeedsTextBlockStyle}" Width="500"/>
+                        <TextBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.Note}" Style="{StaticResource SeedsTextBoxStyle}" Width="500" Height="75" TextAlignment="Left"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="4" Grid.ColumnSpan="4" Text="Комментарий при удалении" Style="{StaticResource SeedsTextBlockStyle}" Width="500"/>
+                        <TextBox Grid.Row="5" Grid.Column="4" Grid.ColumnSpan="4" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.DisposeComment}" Style="{StaticResource SeedsTextBoxStyle}" Width="500" Height="75" TextAlignment="Left"/>
+
+                        <Button Grid.Column="6" Grid.Row="7" Content="Сохранить" Style="{StaticResource SeedsButtonStyle}" 
+                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.UpdateSeedsInfoCommand}"/>
+                        <Button Grid.Column="7" Grid.Row="7" Content="Отмена" Style="{StaticResource SeedsButtonStyle}"
+                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.CancelUpdateSeedsInfoCommand}"/>
+
+
+
+
+
 
 
                     </Grid>
