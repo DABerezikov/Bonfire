@@ -31,6 +31,7 @@ namespace Bonfire.ViewModels
             {
                 SortDescriptions =
                 {
+                    new SortDescription(nameof(SeedlingFromViewModel.LandingData), ListSortDirection.Ascending),
                     new SortDescription(nameof(SeedlingFromViewModel.Culture), ListSortDirection.Ascending),
                     new SortDescription(nameof(SeedlingFromViewModel.Sort), ListSortDirection.Ascending),
                     new SortDescription(nameof(SeedlingFromViewModel.Producer), ListSortDirection.Ascending)
@@ -711,7 +712,8 @@ namespace Bonfire.ViewModels
 
 
                     })
-                    .OrderBy(c => c.Culture)
+                    .OrderBy(c => c.LandingData)
+                    .ThenBy(c => c.Culture)
                     .ThenBy(s => s.Sort)
                     .ThenBy(p => p.Producer)
                 ;
@@ -933,17 +935,18 @@ namespace Bonfire.ViewModels
                             Number = info.SeedlingNumber,
                             GerminationData = info.GerminationDate,
                             QuenchingDate = info.QuenchingDate,
-                            IsQuarantine = info is { QuarantineStartDate: not null, QuarantineStopDate: null }
+                            IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
                         }).SkipWhile(n=> n.Number == 0))
 
 
                     })
-                    .OrderBy(c => c.Culture)
+                    .OrderBy(c => c.LandingData)
+                    .ThenBy(c => c.Culture)
                     .ThenBy(s => s.Sort)
                     .ThenBy(p => p.Producer)
                 ;
 
-            var collection = newCollection.ToArray();
+            var collection =  newCollection.ToArray();
            
             _SeedlingsView.Source = collection;
 
@@ -1118,6 +1121,7 @@ namespace Bonfire.ViewModels
 
 
             seedling = await _SeedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
+            Seedlings.Add(seedling);
             var seed = await _SeedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
             
             RemoveItemFromCollection(seed);
