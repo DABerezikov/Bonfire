@@ -7,13 +7,26 @@ public class SeedsFromViewModel
     private double? _AmountSeedsQuantity;
 
     private double? _AmountSeedsWeight;
+    private double? _WeightPack;
+    private double? _QuantityPack;
     internal int Id { get; set; }
     public string? Culture { get; set; }
     public string? Sort { get; set; }
     public string? Producer { get; set; }
     public DateTime ExpirationDate { get; set; }
-    public double? WeightPack { get; set; }
-    public double? QuantityPack { get; set; }
+    
+
+    public double? WeightPack
+    {
+        get => _WeightPack != 0.0 ? _WeightPack : null;
+        set => _WeightPack = value;
+    }
+
+    public double? QuantityPack
+    {
+        get => _QuantityPack != 0.0 ? _QuantityPack : null;
+        set => _QuantityPack = value;
+    }
 
     public double? AmountSeedsWeight
     {
