@@ -948,6 +948,8 @@ public class SeedsViewModel : ViewModel
 
     private void CopySeedToEditItem(Seed seedFrom, Seed seedTo)
     {
+        if(seedFrom == null) return;
+
         seedTo.Id = seedFrom.Id;
 
         seedTo.Plant.Id = seedFrom.Plant.Id;
@@ -1275,7 +1277,7 @@ public class SeedsViewModel : ViewModel
     {
 
         var seedsQuery = p.ToString() != "Выбрать все"
-                ? _SeedsService.Seeds
+                ? Seeds
 
                 .Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
                 .Select(seeds => new SeedsFromViewModel
@@ -1294,7 +1296,7 @@ public class SeedsViewModel : ViewModel
                 .ThenBy(s=>s.Sort)
                 .ThenBy(model=>model.Producer)
 
-                : _SeedsService.Seeds
+                : Seeds
                 .Select(seeds => new SeedsFromViewModel
                 {
                     Id = seeds.Id,
@@ -1312,7 +1314,7 @@ public class SeedsViewModel : ViewModel
                 .ThenBy(model => model.Producer)
 
             ;
-        _SeedsView.Source = await seedsQuery.ToArrayAsync();
+        _SeedsView.Source = seedsQuery.ToArray();
         //SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
         OnPropertyChanged(nameof(SeedsView));
     }
