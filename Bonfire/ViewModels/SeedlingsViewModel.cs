@@ -1034,40 +1034,64 @@ namespace Bonfire.ViewModels
         {
 
             var seedlingsQuery = p.ToString() != "Выбрать все"
-                    ? _SeedlingsService.Seedlings
+                    ? Seedlings
 
                     .Where(seedlings => seedlings.Plant.PlantCulture.Class == p.ToString())
-                    .Select(seedlings => new Seedling()
+                    .Select(seedlings => new SeedlingFromViewModel()
                     {
                         Id = seedlings.Id,
-                        Plant = seedlings.Plant,
+                        Culture = seedlings.Plant.PlantCulture.Name,
+                        Sort = seedlings.Plant.PlantSort.Name,
+                        Producer = seedlings.Plant.PlantSort.Producer.Name,
                         Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
-                        SeedlingInfos = seedlings.SeedlingInfos
+                        LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                        SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
+                        SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
+                        {
+                            Id = info.Id,
+                            Number = info.SeedlingNumber,
+                            GerminationData = info.GerminationDate,
+                            QuenchingDate = info.QuenchingDate,
+                            IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
+                        }).SkipWhile(n => n.Number == 0))
 
 
                     })
-                    .OrderBy(c => c.Plant.PlantCulture.Name)
-                    .ThenBy(s => s.Plant.PlantSort.Name)
-                    .ThenBy(p => p.Plant.PlantSort.Producer.Name)
+                    .OrderBy(c => c.LandingData)
+                    .ThenBy(c => c.Culture)
+                    .ThenBy(s => s.Sort)
+                    .ThenBy(p => p.Producer)
 
-                    : _SeedlingsService.Seedlings
-                        .Select(seedlings => new Seedling()
+                    : Seedlings
+                        .Select(seedlings => new SeedlingFromViewModel()
                         {
                             Id = seedlings.Id,
-                            Plant = seedlings.Plant,
+                            Culture = seedlings.Plant.PlantCulture.Name,
+                            Sort = seedlings.Plant.PlantSort.Name,
+                            Producer = seedlings.Plant.PlantSort.Producer.Name,
                             Weight = seedlings.Weight,
                             Quantity = seedlings.Quantity,
-                            SeedlingInfos = seedlings.SeedlingInfos
+                            LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                            SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
+                            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
+                            {
+                                Id = info.Id,
+                                Number = info.SeedlingNumber,
+                                GerminationData = info.GerminationDate,
+                                QuenchingDate = info.QuenchingDate,
+                                IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
+                            }).SkipWhile(n => n.Number == 0))
 
 
                         })
-                        .OrderBy(c => c.Plant.PlantCulture.Name)
-                        .ThenBy(s => s.Plant.PlantSort.Name)
-                        .ThenBy(p => p.Plant.PlantSort.Producer.Name)
+                        .OrderBy(c => c.LandingData)
+                        .ThenBy(c => c.Culture)
+                        .ThenBy(s => s.Sort)
+                        .ThenBy(p => p.Producer)
 
                 ;
-            _SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
+            _SeedlingsView.Source = seedlingsQuery.ToArray();
             OnPropertyChanged(nameof(SeedlingsView));
         }
 
