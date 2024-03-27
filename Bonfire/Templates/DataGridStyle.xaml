@@ -45,7 +45,7 @@
         Color="Black"/>
     <SolidColorBrush
         x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-        Color="Transparent"/>
+        Color="DarkKhaki"/>
     <SolidColorBrush
         x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
         Color="Black"/>
