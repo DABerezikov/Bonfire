@@ -104,7 +104,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight}" Width="80">
+                <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight, StringFormat=0.00}" Width="80">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />

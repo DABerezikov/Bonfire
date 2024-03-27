@@ -1415,8 +1415,10 @@ public class SeedsViewModel : ViewModel
                 "Редактирование семян")) return;
 
         CopySeedToEditItem(EditedItem, SelectedItem);
+        if (SelectedItem.SeedsInfo.AmountSeeds > 0)
+            SelectedItem.SeedsInfo.AmountSeedsWeight = 0;
         await _SeedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
-        UpdateCollectionViewSource();
+        UpdateCollectionViewSource(SelectedItem.Id);
     }
 
 
