@@ -1441,7 +1441,7 @@ public class SeedsViewModel : ViewModel
     private async Task OnCancelUpdateSeedsInfoCommandExecuted()
     {
         
-        UpdateCollectionViewSource();
+        UpdateCollectionViewSource(SelectedItem.Id);
     }
 
 
