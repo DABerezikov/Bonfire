@@ -760,6 +760,7 @@ namespace Bonfire.ViewModels
         {
 
             var addListPlant = _SeedsService.Seeds
+                .Where(seed=>seed.SeedsInfo.AmountSeeds!=0 && seed.SeedsInfo.AmountSeedsWeight!=0)
                 .Select(seeds => new PlantFromViewModel
                 {
                     Id = seeds.Id,
@@ -770,7 +771,7 @@ namespace Bonfire.ViewModels
                 }).AsEnumerable()
                 .OrderBy(s=>s.Culture);
 
-            AddPlantList.AddRange(addListPlant.ToList());
+            AddPlantList.Add(addListPlant.ToList());
             _PlantListView.Source = AddPlantList;
             OnPropertyChanged(nameof(PlantListView));
            
@@ -784,6 +785,7 @@ namespace Bonfire.ViewModels
         {
 
             var addListSort = _SeedsService.Seeds
+                .Where(seed => seed.SeedsInfo.AmountSeeds != 0 && seed.SeedsInfo.AmountSeedsWeight != 0)
                 .Select(seeds => new SortFromSeedlingsViewModel
                 {
                     Id = seeds.Plant.PlantSort.Id,
@@ -793,7 +795,7 @@ namespace Bonfire.ViewModels
                 .Distinct(s=>s.Sort)
                 .OrderBy(s => s.Sort);
 
-            AddSortList.AddRange(addListSort.ToList());
+            AddSortList.Add(addListSort.ToList());
             _SortListView.Source = AddSortList;
             OnPropertyChanged(nameof(SortListView));
 
@@ -1156,7 +1158,9 @@ namespace Bonfire.ViewModels
 
         private void RemoveItemFromCollection(Seed seed)
         {
-            if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight != 0) return;
+            if (seed.SeedsInfo.AmountSeeds != 0) return;
+            if (seed.SeedsInfo.AmountSeedsWeight!= null)
+                if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight != 0) return;
             AddPlantList.Remove(AddPlantList.First(s => s.Producer == seed.Plant.PlantSort.Producer.Name
                                                         && s.Culture == seed.Plant.PlantCulture.Name
                                                         && s.Sort == seed.Plant.PlantSort.Name
@@ -1167,6 +1171,8 @@ namespace Bonfire.ViewModels
                                                               && s.Sort == seed.Plant.PlantSort.Name).ToList();
             if (list.Count == 0)
                 AddSortList.Remove(AddSortList.First(s => s.Sort == seed.Plant.PlantSort.Name));
+            OnPropertyChanged(nameof(PlantListView));
+            OnPropertyChanged(nameof(SortListView));
         }
 
         #endregion
