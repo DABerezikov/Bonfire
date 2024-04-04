@@ -992,7 +992,7 @@ namespace Bonfire.ViewModels
 
         private void UpdateCollectionViewSource(int id = -1)
         {
-            var newCollection = Seedlings
+            var newCollection = _SeedlingsService.Seedlings
                     .Select(seedlings => new SeedlingFromViewModel()
                     {
                         Id = seedlings.Id,
@@ -1002,7 +1002,8 @@ namespace Bonfire.ViewModels
                         Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
                         LandingData = seedlings.SeedlingInfos[0].LandingDate,
-                        ReplantingData = seedlings.SeedlingInfos[0].Replants?[0].ReplantingDate,
+                        IsDead = seedlings.SeedlingInfos[0].IsDead,
+                        ReplantingData = seedlings.SeedlingInfos[0].Replants[0].ReplantingDate,
                         SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
                         SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
                         {
@@ -1012,7 +1013,7 @@ namespace Bonfire.ViewModels
                             QuenchingDate = info.QuenchingDate,
                             IsDead = info.IsDead,
                             IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
-                        }).SkipWhile(n=> n.Number == 0))
+                        }).Skip(1))
 
 
                     })
@@ -1348,8 +1349,9 @@ namespace Bonfire.ViewModels
                 case 0:
                     if(SelectedItem.SeedlingInfos.Count>1) return;
                     SelectedItem.SeedlingInfos[0].IsDead = true;
-                    await _SeedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]);
-                    UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
+                    await _SeedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]).ConfigureAwait(false);
+                    
+                    UpdateCollectionViewSource();
                     return;
             }
 
