@@ -7,16 +7,16 @@ namespace BonfireDB;
 public static class RepositoryRegister
 {
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
-        .AddSingleton<IRepository<Plant>, PlantRepository>()
-        .AddSingleton<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
-        .AddSingleton<IRepository<PlantSort>, PlantSortRepository>()
-        .AddSingleton<IRepository<Producer>, DbRepository<Producer>>()
-        .AddSingleton<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
-        .AddSingleton<IRepository<Seed>, SeedsRepository>()
-        .AddSingleton<IRepository<Seedling>, SeedlingsRepository>()
-        .AddSingleton<IRepository<SeedlingInfo>, DbRepository<SeedlingInfo>>()
-        .AddSingleton<IRepository<Replanting>, DbRepository<Replanting>>()
-        .AddSingleton<IRepository<Treatment>, DbRepository<Treatment>>()
+        .AddScoped<IRepository<Plant>, PlantRepository>()
+        .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
+        .AddScoped<IRepository<PlantSort>, PlantSortRepository>()
+        .AddScoped<IRepository<Producer>, DbRepository<Producer>>()
+        .AddScoped<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
+        .AddScoped<IRepository<Seed>, SeedsRepository>()
+        .AddScoped<IRepository<Seedling>, SeedlingsRepository>()
+        .AddScoped<IRepository<SeedlingInfo>, SeedlingInfoRepository>()
+        .AddScoped<IRepository<Replanting>, DbRepository<Replanting>>()
+        .AddScoped<IRepository<Treatment>, DbRepository<Treatment>>()
 
         ;
 

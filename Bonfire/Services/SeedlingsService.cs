@@ -27,6 +27,7 @@ internal class SeedlingsService(
     private readonly IRepository<Producer> _Producer = producer;
     private readonly IRepository<Replanting> _Replantings = replantings;
     private readonly IRepository<Treatment> _Treatments = treatments;
+    private readonly IRepository<SeedlingInfo>_SeedlingsInfo = seedlingsInfo;
 
     public IQueryable<Seedling> Seedlings => seedlings.Items;
 
@@ -61,9 +62,21 @@ internal class SeedlingsService(
     }
     public async Task<SeedlingInfo> AddSeedlingInfo(SeedlingInfo info)
     {
-
+        
         return await seedlingsInfo.AddAsync(info);
        
+
+    }
+
+    public async Task UpdateSeedlingInfo(SeedlingInfo info)
+    {
+        if (!(info.Replants?.Count > 0))  await seedlingsInfo.UpdateAsync(info);
+        foreach (var replant in info.Replants.Where(replant => replant.Id == 0))
+        {
+            await replantings.AddAsync(replant);
+        }
+        await seedlingsInfo.UpdateAsync(info);
+
 
     }
 }

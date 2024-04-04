@@ -13,6 +13,7 @@ public interface ISeedlingsService
     Task<Seedling> UpdateSeedling(Seedling seedling);
     Task<Seedling?> DeleteSeedling(Seedling? seedling);
     Task<SeedlingInfo> AddSeedlingInfo(SeedlingInfo info);
+    Task UpdateSeedlingInfo(SeedlingInfo info);
 
 
 

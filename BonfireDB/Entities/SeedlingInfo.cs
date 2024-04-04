@@ -48,6 +48,9 @@ namespace BonfireDB.Entities
         /// <summary> Причина гибели (болезнь, физическая гибель, не развилось) </summary>
         public string? DeathNote { get; set; }
 
+        /// <summary> Флаг погибшей рассады </summary>
+        public bool? IsDead { get; set; }
+
         /// <summary> Список пересадок </summary>
         public List<Replanting>? Replants { get; set; }
 

@@ -44,10 +44,13 @@
                       Grid.ColumnSpan="3" HorizontalAlignment="Center"
                       EnableColumnVirtualization="True"
                       EnableRowVirtualization="True"
-                      SelectedItem="{Binding SelectedSeedlingViewItem}">
+                      SelectedItem="{Binding SelectedSeedlingViewItem}"
+                      RowDetailsVisibilityMode="Collapsed">
 
             <i:Interaction.Behaviors>
                 <templates:ScrollIntoViewBehavior/>
+                <templates:DoubleClickBehavior/>
+                <templates:SingleRowDetailsBehavior/>
             </i:Interaction.Behaviors>
 
 
@@ -103,44 +106,139 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Дата пикировки" Binding="{Binding ReplantingData, StringFormat=dd.MM.yyyy}">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
 
             </DataGrid.Columns>
-            <!--<DataGrid.RowDetailsTemplate>
+            <DataGrid.RowDetailsTemplate>
                 <DataTemplate>
-                    <DataGrid ItemsSource="{Binding SeedlingInfos}" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                              AutoGenerateColumns="False"
-                              VerticalAlignment="Top"
-                              HorizontalAlignment="Stretch"
-                              EnableColumnVirtualization="True"
-                              EnableRowVirtualization="True"
-                              Margin="150,5,0,5">
-                        <DataGrid.Columns>
-                           
-                            <DataGridTextColumn Header="Номер рассады" Binding="{Binding Number}" Width="100">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Дата всхода" Binding="{Binding GerminationData, StringFormat=dd.MM.yyyy}" Width="150">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Дата закалки" Binding="{Binding QuenchingDate}" Width="150"/>
-                            <DataGridCheckBoxColumn Header="Карантин" Binding="{Binding IsQuarantine}" Width="100" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DataTemplate>
-            </DataGrid.RowDetailsTemplate>-->
+                    <Grid Margin="5,10,5,10" >
+                        <Grid.ColumnDefinitions>
 
-            <!--<DataGridTextColumn Header="Дата посадки" Binding="{Binding LandingData}" Width="150"/>
-            <DataGridTextColumn Header="Взошли" Binding="{Binding GerminationData}" Width="100"/>
-            <DataGridTextColumn Header="Закалка" Binding="{Binding QuenchingDate}" Width="100"/>
-            <DataGridCheckBoxColumn Header="Карантин" Binding="{Binding IsQuarantine}" IsReadOnly="True" Width="100"/>-->
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="75"/>
+                            <ColumnDefinition Width="75"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="240"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="9" Grid.ColumnSpan="8" Style="{StaticResource SeedsBorderStyle}" CornerRadius="10" Margin="0,0,-10,0"/>
+
+                        <TextBlock  Grid.Row="1"  Grid.Column="0"  Text="Источник рассады"  Style="{StaticResource SeedsTextBlockStyle}" />
+                        <ComboBox Grid.Row="2" Grid.Column="0" Margin="20,0,0,0" 
+                                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+                                  Path=DataContext.EditedItem.SeedlingInfos[0].SeedlingSource}"
+                                  Style="{StaticResource SeedsComboBoxStyle}" Width="110" SelectedValuePath="Content" HorizontalContentAlignment="Center">
+                            <ComboBoxItem Content="Куплено" />
+                            <ComboBoxItem Content="Из семян" />
+                            <ComboBoxItem Content="Подарено" />
+                            <ComboBoxItem Content="Черенкование" />
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Дата посева" Style="{StaticResource SeedsTextBlockStyle}" Margin="0,0,0,0"/>
+                        <DatePicker Grid.Row="2"  Grid.Column="1" Margin="28,0,0,0" SelectedDate="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+            Path=DataContext.EditedItem.SeedlingInfos[0].LandingDate, StringFormat=dd.MM.yyyy}" Style="{StaticResource SeedsDatePickerStyle}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Посеяно, грамм/ штук" Grid.ColumnSpan="2" Style="{StaticResource SeedsTextBlockStyle}" Margin="0,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="2"  Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+        Path=DataContext.EditedItem.Weight}"  Style="{StaticResource SeedsTextBoxStyle}" Width="50"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="3"  Style="{StaticResource SeedsTextBlockStyle}" Margin="-3,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="3" Margin="10,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+Path=DataContext.EditedItem.Quantity}" Style="{StaticResource SeedsTextBoxStyle}" Width="50"/>
+
+                       
+
+                        <TextBlock Grid.Row="1" Grid.Column="6" Grid.ColumnSpan="2" Text="Комментарий" Style="{StaticResource SeedsTextBlockStyle}" Width="240"/>
+                        <TextBox Grid.Row="2" Grid.Column="6" Grid.ColumnSpan="2" Grid.RowSpan="4" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+Path=DataContext.EditedItem.SeedlingInfos[0].Note}" Style="{StaticResource SeedsTextBoxStyle}" Width="210" Height="100" TextAlignment="Left"/>
+
+                        <TextBlock  Grid.Row="1"  Grid.Column="4"  Text="Посеяно в"  Style="{StaticResource SeedsTextBlockStyle}" />
+                        <ComboBox Grid.Row="2" Grid.Column="4" Margin="20,0,0,0" 
+                                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+           Path=DataContext.EditedItem.SeedlingInfos[0].PlantPlace}"
+                                  Style="{StaticResource SeedsComboBoxStyle}" Width="110" SelectedValuePath="Content" HorizontalContentAlignment="Center">
+                           
+                            <ComboBoxItem Content="Теплица" />
+                        </ComboBox>
+
+                        <DataGrid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Grid.RowSpan="5" Margin="20, 10, 0,0" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+                                  Path=DataContext.EditedItem.SeedlingInfos}" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" >
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="№" Binding="{Binding SeedlingNumber}" Width="40" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Дата всхода/приобретения" Binding="{Binding GerminationDate, StringFormat=dd.MM.yyyy}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Причина гибели" Binding="{Binding DeathNote}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+
+
+                            </DataGrid.Columns>
+
+                        </DataGrid>
+
+                        <Button Grid.Column="6" Grid.Row="7" Content="Сохранить" Style="{StaticResource SeedsButtonStyle}" HorizontalAlignment="Center"
+                           Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.UpdateSeedsInfoCommand}"/>
+                        <Button Grid.Column="7" Grid.Row="7" Content="Отмена" Style="{StaticResource SeedsButtonStyle}" HorizontalAlignment="Center"
+                           Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.CancelUpdateSeedsInfoCommand}"/>
+
+
+
+
+
+
+
+                    </Grid>
+
+
+
+
+
+
+
+
+
+
+                </DataTemplate>
+            </DataGrid.RowDetailsTemplate>
 
 
 
@@ -193,7 +291,7 @@
             Text="{Binding SeedlingFilter, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding ListCulture}"
             IsEditable="True" />
 
-        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True" />
+        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="{Binding IsHaving}" />
         <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
              Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
 
@@ -272,6 +370,15 @@
                  Text="{Binding Germinate}" Grid.ColumnSpan="2"/>
         <Button Grid.Row="3" Grid.Column="1" Margin="900,70,0,0" Style="{StaticResource SeedsButtonStyle}"
                 Content="Взошло" Command="{Binding GerminateSeedlingCommand}"  Grid.ColumnSpan="2" />
+
+       <TextBlock Grid.Row="3" Grid.Column="1" Margin="680,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Width="100" Text="Дата пикировки"  Grid.ColumnSpan="2"/>
+        <DatePicker Grid.Row="3" Grid.Column="1" Margin="680,145,0,0" Style="{StaticResource SeedsDatePickerStyle}"
+                    SelectedDate="{Binding ReplantsDate, UpdateSourceTrigger=PropertyChanged}"  Grid.ColumnSpan="2"/>
+       
+        <Button Grid.Row="3" Grid.Column="1" Margin="900,145,0,0" Style="{StaticResource SeedsButtonStyle}"
+                Content="Пикировано" Command="{Binding ReplantsSeedlingCommand}"  Grid.ColumnSpan="2" />
+
 
 
 

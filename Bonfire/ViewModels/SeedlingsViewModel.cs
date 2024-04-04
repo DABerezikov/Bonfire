@@ -111,9 +111,33 @@ namespace Bonfire.ViewModels
         #endregion
         private void SeedsViewSource_Filter(object sender, FilterEventArgs e)
         {
-            if (e.Item is not SeedlingFromViewModel seedling || string.IsNullOrEmpty(SeedlingFilter) || SeedlingFilter == "-Выбрать все-") return;
-            if (!seedling.Culture!.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase))
-                e.Accepted = false;
+           
+
+            if (e.Item is not SeedlingFromViewModel seedling) return;
+            if (SeedlingFilter != "-Выбрать все-")
+            {
+                if (IsHaving)
+                {
+                    if (seedling.Culture != null && (!seedling.Culture.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase) ||
+                                                     seedling.IsDead == true))
+                        e.Accepted = false;
+
+                }
+                else
+                {
+                    if (seedling.Culture != null && !seedling.Culture.Contains(SeedlingFilter, StringComparison.OrdinalIgnoreCase))
+                        e.Accepted = false;
+                }
+
+            }
+            else
+            {
+                if (!IsHaving) return;
+                if (seedling.IsDead == true)
+                    e.Accepted = false;
+
+
+            }
         }
 
         #endregion
@@ -160,7 +184,12 @@ namespace Bonfire.ViewModels
         public Seedling SelectedItem
         {
             get => _SelectedItem;
-            set => Set(ref _SelectedItem, value);
+            set
+            {
+                if (Set(ref _SelectedItem, value))
+                    CopySeedlingToEditItem(SelectedItem, EditedItem);
+
+            }
         }
 
         #endregion
@@ -181,7 +210,15 @@ namespace Bonfire.ViewModels
 
             },
 
-            SeedlingInfos = new List<SeedlingInfo>()
+            SeedlingInfos =
+            [
+                new SeedlingInfo
+                {
+                    Replants = [],
+                    Treatments = []
+
+                }
+            ]
 
         };
 
@@ -681,6 +718,38 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
+        #region ReplantsDate : DateTime - Дата пикировки
+
+        /// <summary>Дата пикировки</summary>
+        private DateTime _ReplantsDate = DateTime.Now;
+
+        /// <summary>Дата пикировки</summary>
+        public DateTime ReplantsDate
+        {
+            get => _ReplantsDate;
+
+
+            set => Set(ref _ReplantsDate, value);
+        }
+        #endregion
+
+        #region IsHaving : bool - В наличии
+
+        /// <summary>В наличии</summary>
+        private bool _IsHaving = true;
+
+        /// <summary>В наличии</summary>
+        public bool IsHaving
+        {
+            get => _IsHaving;
+            set
+            {
+                Set(ref _IsHaving, value);
+                SeedlingsView?.Refresh();
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -700,6 +769,8 @@ namespace Bonfire.ViewModels
                         Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
                         LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                        IsDead = seedlings.SeedlingInfos[0].IsDead,
+                        ReplantingData = seedlings.SeedlingInfos[0].Replants[0].ReplantingDate,
                         SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
                         SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
                         {
@@ -707,6 +778,7 @@ namespace Bonfire.ViewModels
                             Number = info.SeedlingNumber,
                             GerminationData = info.GerminationDate,
                             QuenchingDate = info.QuenchingDate,
+                            IsDead = info.IsDead,
                             IsQuarantine = info.QuarantineStartDate!=null && info.QuarantineStopDate==null
                         }).Skip(1))
 
@@ -760,7 +832,7 @@ namespace Bonfire.ViewModels
         {
 
             var addListPlant = _SeedsService.Seeds
-                .Where(seed=>seed.SeedsInfo.AmountSeeds!=0 && seed.SeedsInfo.AmountSeedsWeight!=0)
+                .Where(seed=>seed.SeedsInfo.AmountSeeds!=0 || seed.SeedsInfo.AmountSeedsWeight!=0)
                 .Select(seeds => new PlantFromViewModel
                 {
                     Id = seeds.Id,
@@ -785,7 +857,7 @@ namespace Bonfire.ViewModels
         {
 
             var addListSort = _SeedsService.Seeds
-                .Where(seed => seed.SeedsInfo.AmountSeeds != 0 && seed.SeedsInfo.AmountSeedsWeight != 0)
+                .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
                 .Select(seeds => new SortFromSeedlingsViewModel
                 {
                     Id = seeds.Plant.PlantSort.Id,
@@ -930,6 +1002,7 @@ namespace Bonfire.ViewModels
                         Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
                         LandingData = seedlings.SeedlingInfos[0].LandingDate,
+                        ReplantingData = seedlings.SeedlingInfos[0].Replants?[0].ReplantingDate,
                         SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
                         SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
                         {
@@ -937,6 +1010,7 @@ namespace Bonfire.ViewModels
                             Number = info.SeedlingNumber,
                             GerminationData = info.GerminationDate,
                             QuenchingDate = info.QuenchingDate,
+                            IsDead = info.IsDead,
                             IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
                         }).SkipWhile(n=> n.Number == 0))
 
@@ -984,6 +1058,45 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region Метод для копирования информации между семянами
+
+        private void CopySeedlingToEditItem(Seedling seedlingFrom, Seedling seedlingTo)
+        {
+            if (seedlingFrom == null) return;
+
+            seedlingTo.Id = seedlingFrom.Id;
+            seedlingTo.Quantity = seedlingFrom.Quantity;
+            seedlingTo.Weight = seedlingFrom.Weight;
+            seedlingTo.SeedId = seedlingFrom.SeedId;
+
+            seedlingTo.Plant.Id = seedlingFrom.Plant.Id;
+
+            seedlingTo.Plant.PlantCulture.Id = seedlingFrom.Plant.PlantCulture.Id;
+            seedlingTo.Plant.PlantCulture.Name = seedlingFrom.Plant.PlantCulture.Name;
+            seedlingTo.Plant.PlantCulture.Class = seedlingFrom.Plant.PlantCulture.Class;
+
+            seedlingTo.Plant.PlantSort.Id = seedlingFrom.Plant.PlantSort.Id;
+            seedlingTo.Plant.PlantSort.Name = seedlingFrom.Plant.PlantSort.Name;
+            seedlingTo.Plant.PlantSort.AgeOfSeedlings = seedlingFrom.Plant.PlantSort.AgeOfSeedlings;
+            seedlingTo.Plant.PlantSort.Description = seedlingFrom.Plant.PlantSort.Description;
+            seedlingTo.Plant.PlantSort.GrowingSeason = seedlingFrom.Plant.PlantSort.GrowingSeason;
+            seedlingTo.Plant.PlantSort.LandingPattern = seedlingFrom.Plant.PlantSort.LandingPattern;
+            seedlingTo.Plant.PlantSort.MaxGerminationTime = seedlingFrom.Plant.PlantSort.MaxGerminationTime;
+            seedlingTo.Plant.PlantSort.MinGerminationTime = seedlingFrom.Plant.PlantSort.MinGerminationTime;
+            seedlingTo.Plant.PlantSort.PlantColor = seedlingFrom.Plant.PlantSort.PlantColor;
+            seedlingTo.Plant.PlantSort.PlantHeight = seedlingFrom.Plant.PlantSort.PlantHeight;
+
+            seedlingTo.Plant.PlantSort.Producer.Id = seedlingFrom.Plant.PlantSort.Producer.Id;
+            seedlingTo.Plant.PlantSort.Producer.Name = seedlingFrom.Plant.PlantSort.Producer.Name;
+
+            seedlingTo.SeedlingInfos.Clear();
+            seedlingTo.SeedlingInfos.AddRange(seedlingFrom.SeedlingInfos);
+            OnPropertyChanged(nameof(EditedItem));
+            OnPropertyChanged(nameof(SelectedItem));
+
+        }
+
+        #endregion
 
         #endregion
 
@@ -1206,8 +1319,8 @@ namespace Bonfire.ViewModels
         private async Task UpdateSeed(Seedling deleteSeedling)
         {
             var updateSeed = _SeedsService.Seeds.First(s => s.Id == SelectedItem.SeedId);
-            updateSeed.SeedsInfo.AmountSeeds = deleteSeedling.Quantity;
-            updateSeed.SeedsInfo.AmountSeedsWeight = deleteSeedling.Weight;
+            updateSeed.SeedsInfo.AmountSeeds += deleteSeedling.Quantity;
+            updateSeed.SeedsInfo.AmountSeedsWeight += deleteSeedling.Weight;
             await _SeedsService.UpdateSeed(updateSeed);
         }
 
@@ -1228,7 +1341,18 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Команда для всходов рассады </summary>
         private async Task OnGerminateSeedlingCommandExecuted()
         {
-            if (Germinate<0) return;
+            switch (Germinate)
+            {
+                case < 0:
+                    return;
+                case 0:
+                    if(SelectedItem.SeedlingInfos.Count>1) return;
+                    SelectedItem.SeedlingInfos[0].IsDead = true;
+                    await _SeedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]);
+                    UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
+                    return;
+            }
+
             if (SelectedItem.Quantity > 0)
                 Germinate =  Germinate + SelectedItem.SeedlingInfos.Count - 1 > (int)SelectedItem.Quantity ? (int)SelectedItem.Quantity - (SelectedItem.SeedlingInfos.Count - 1) : Germinate;
             for (var i = 0; i < Germinate; i++)
@@ -1255,7 +1379,45 @@ namespace Bonfire.ViewModels
             GerminationDate = DateTime.Now;
         }
 
-        
+
+
+        #endregion
+
+        #region Command ReplantsSeedlingCommand - Команда для пикировки рассады
+
+        /// <summary> Команда для пикировки рассады </summary>
+        private ICommand _ReplantsSeedlingCommand;
+
+        /// <summary> Команда для пикировки рассады </summary>
+        public ICommand ReplantsSeedlingCommand => _ReplantsSeedlingCommand
+            ??= new LambdaCommandAsync(OnReplantsSeedlingCommandExecuted, CanReplantsSeedlingCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для пикировки рассады </summary>
+        private bool CanReplantsSeedlingCommandExecute() => SelectedItem != null &&  (SelectedItem.SeedlingInfos[0].Replants?.Count==0 || SelectedItem.SeedlingInfos[0].Replants == null);
+
+        /// <summary> Логика выполнения - Команда для пикировки рассады </summary>
+        private async Task OnReplantsSeedlingCommandExecuted()
+        {
+
+
+            SelectedItem.SeedlingInfos[0].Replants = [ new Replanting
+            {
+                ReplantingDate = ReplantsDate
+               
+
+            }];
+            
+            await _SeedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]);
+            
+
+            await _SeedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
+
+            UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
+           
+            ReplantsDate = DateTime.Now;
+        }
+
+
 
         #endregion
 

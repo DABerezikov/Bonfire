@@ -11,6 +11,7 @@ namespace Bonfire.Services
            .AddSingleton<ISeedlingsService, SeedlingsService>()
            .AddSingleton<IUserDialog, UserDialog>()
            .AddSingleton(typeof(MoonPhase))
+           
         ;
     }
 }

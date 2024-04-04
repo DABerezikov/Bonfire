@@ -8,10 +8,10 @@ public class Treatment : Entity
     public DateTime TreatmentDate { get; set; }
 
     /// <summary> Препарат для обработки </summary>
-    public string Product { get; set; }
+    public string? Product { get; set; }
 
     /// <summary> Способ обработки </summary>
-    public string TreatmentMethod { get; set; }
+    public string? TreatmentMethod { get; set; }
 
     public SeedlingInfo SeedlingInfo { get; set; }
 }
