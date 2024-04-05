@@ -992,7 +992,7 @@ namespace Bonfire.ViewModels
 
         private void UpdateCollectionViewSource(int id = -1)
         {
-            var newCollection = _SeedlingsService.Seedlings
+            var newCollection = Seedlings
                     .Select(seedlings => new SeedlingFromViewModel()
                     {
                         Id = seedlings.Id,
@@ -1002,8 +1002,8 @@ namespace Bonfire.ViewModels
                         Weight = seedlings.Weight,
                         Quantity = seedlings.Quantity,
                         LandingData = seedlings.SeedlingInfos[0].LandingDate,
-                        IsDead = seedlings.SeedlingInfos[0].IsDead,
-                        ReplantingData = seedlings.SeedlingInfos[0].Replants[0].ReplantingDate,
+                        IsDead =  seedlings.SeedlingInfos[0].IsDead,
+                        ReplantingData = seedlings.SeedlingInfos[0].Replants?.ElementAtOrDefault(0)?.ReplantingDate,
                         SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
                         SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
                         {
