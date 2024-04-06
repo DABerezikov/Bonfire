@@ -55,42 +55,43 @@
 
 
             <DataGrid.Columns >
-                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="130"/>
-                <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="250"/>
+                <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="100"/>
+                <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="235"/>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="*"/>
-                <DataGridTextColumn Header="Кол-во, г" Binding="{Binding Weight}" Width="80">
+                <DataGridTextColumn Header="Кол-во, г" Binding="{Binding Weight}" Width="70">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                                 <Setter Property="HorizontalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding Quantity}" Width="80">
+                <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding Quantity}" Width="70">
                     <DataGridTextColumn.ElementStyle >
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTemplateColumn Header="Дата посева">
+                <DataGridTemplateColumn Header="Дата посева" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <DockPanel>
-                                <TextBlock DockPanel.Dock="Left" Margin="20,0,0,0" Text="{Binding LandingData, StringFormat=dd.MM.yyyy}" Width="100"/>
-                                <Image DockPanel.Dock="Left" Margin="-50,0,0,0" Width="18" Height="20" Source="{Binding SeedlingMoonPhase}"/>
+                                <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="{Binding LandingData, StringFormat=dd.MM.yyyy}" Width="90"/>
+                                <Image DockPanel.Dock="Left" Margin="-35,0,0,0" Width="18" Height="20" Source="{Binding SeedlingMoonPhase}"/>
 
                             </DockPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Взошло, шт" Binding="{Binding CountGerminate}" Width="80">
+                <DataGridTextColumn Header="Взошло, шт" Binding="{Binding CountGerminate}" Width="75">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTemplateColumn Header="Всходы (от - до), дн." Width="120">
+                
+                <DataGridTemplateColumn Header="Всходы (от-до), дн." Width="115">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -106,7 +107,14 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Дата пикировки" Binding="{Binding ReplantingData, StringFormat=dd.MM.yyyy}">
+                <DataGridTextColumn Header="Пикировка" Binding="{Binding ReplantingData, StringFormat=dd.MM.yyyy}" Width="75">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Осталось, шт" Binding="{Binding Balance}" Width="85">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center" />
@@ -355,8 +363,6 @@ Path=DataContext.EditedItem.SeedlingInfos[0].Note}" Style="{StaticResource Seeds
 
         <Button Grid.Row="3" Grid.Column="2" Margin="410,145,0,0" Style="{StaticResource SeedsButtonStyle}"
          Content="Добавить" Command="{Binding AddOrCorrectSeedlingCommand}" />
-        <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
-        Content="Удалить" Command="{Binding DeleteSeedlingCommand}" HorizontalAlignment="Right" />
 
         <TextBlock Grid.Column="1" Grid.Row="3" Margin="650,10,0,0 " Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Добавление всходов" HorizontalAlignment="Center" Width="200" FontSize="18" FontWeight="Bold" Grid.ColumnSpan="2" Height="30"/>
@@ -379,7 +385,22 @@ Path=DataContext.EditedItem.SeedlingInfos[0].Note}" Style="{StaticResource Seeds
         <Button Grid.Row="3" Grid.Column="1" Margin="900,145,0,0" Style="{StaticResource SeedsButtonStyle}"
                 Content="Пикировано" Command="{Binding ReplantsSeedlingCommand}"  Grid.ColumnSpan="2" />
 
+        <TextBlock Grid.Column="3" Grid.Row="3" Margin="0,10,0,0 " Style="{StaticResource SeedsTextBlockStyle}"
+                   Text="Удаление всходов" HorizontalAlignment="Center" Width="200" FontSize="18" FontWeight="Bold" Grid.ColumnSpan="2" Height="30"/>
+        <TextBlock Grid.Row="3" Grid.Column="3" Margin="30,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Width="60" Text="Кол-во"  />
+        <TextBox Grid.Row="3" Grid.Column="3" Margin="30,70,0,0" Width="60" Style="{StaticResource SeedsTextBoxStyle}"
+                 Text="{Binding DeadNumbers}"/>
+        <TextBlock Grid.Row="3" Grid.Column="3" Margin="105,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                  Text="Комментарий"  Width="230"/>
+        <TextBox Grid.Row="3" Grid.Column="3" Margin="105,70,0,0" Style="{StaticResource SeedsTextBoxStyle}"
+                   Text="{Binding DeathNote}" Width="230" Height="48" TextAlignment="Left"/>
+        <Button Grid.Row="3" Grid.Column="3" Margin="0,70,30,0" Style="{StaticResource SeedsButtonStyle}"
+                Content="Погибло" Command="{Binding DeathSeedlingCommand}"  HorizontalAlignment="Right" />
 
+
+        <Button Grid.Row="3" Grid.Column="3" Margin="0,145,50,0" Style="{StaticResource SeedsButtonStyle}"
+        Content="Удалить" Command="{Binding DeleteSeedlingCommand}" HorizontalAlignment="Right" />
 
 
 

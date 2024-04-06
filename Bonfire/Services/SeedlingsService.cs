@@ -79,4 +79,16 @@ internal class SeedlingsService(
 
 
     }
+
+    public void InvertAutoSave()
+    {
+        plants.AutoSaveChanges= !plants.AutoSaveChanges;
+        sort.AutoSaveChanges = !sort.AutoSaveChanges;
+        seedlings.AutoSaveChanges = !seedlings.AutoSaveChanges;
+        culture.AutoSaveChanges = !culture.AutoSaveChanges;
+        producer.AutoSaveChanges = !producer.AutoSaveChanges;
+        seedlingsInfo.AutoSaveChanges = !seedlingsInfo.AutoSaveChanges;
+        replantings.AutoSaveChanges = !replantings.AutoSaveChanges;
+        treatments.AutoSaveChanges = !treatments.AutoSaveChanges;
+    }
 }

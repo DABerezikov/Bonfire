@@ -751,6 +751,36 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region DeadNumbers : int - Количество погибшей рассады
+
+        /// <summary>Количество погибшей рассады</summary>
+        private int _DeadNumbers;
+
+        /// <summary>Количество погибшей рассады</summary>
+        public int DeadNumbers
+        {
+            get => _DeadNumbers;
+            set => Set(ref _DeadNumbers, value <= SelectedItem.SeedlingInfos.Count - SelectedItem.SeedlingInfos.Count(d => d.IsDead == true) - 1
+                                            ? value
+                                            : SelectedItem.SeedlingInfos.Count - SelectedItem.SeedlingInfos.Count(d => d.IsDead == true) - 1);
+        }
+
+        #endregion
+
+        #region DeadNote : string - Комментарий при удалении
+
+        /// <summary>Комментарий при удалении</summary>
+        private string _DeathNote;
+
+        /// <summary>Комментарий при удалении</summary>
+        public string DeathNote
+        {
+            get => _DeathNote;
+            set => Set(ref _DeathNote, value);
+        }
+
+        #endregion
+
         #endregion
 
 
@@ -1417,6 +1447,45 @@ namespace Bonfire.ViewModels
             UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
            
             ReplantsDate = DateTime.Now;
+        }
+
+
+
+        #endregion
+
+        #region Command DeathSeedlingCommand - Команда для гибели рассады
+
+        /// <summary> Команда для гибели рассады </summary>
+        private ICommand _DeathSeedlingCommand;
+
+        /// <summary> Команда для гибели рассады </summary>
+        public ICommand DeathSeedlingCommand => _DeathSeedlingCommand
+            ??= new LambdaCommandAsync(OnDeathSeedlingCommandExecuted, CanDeathSeedlingCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для гибели рассады </summary>
+        private bool CanDeathSeedlingCommandExecute() => SelectedItem != null &&  (SelectedItem.SeedlingInfos.Count>1);
+
+        /// <summary> Логика выполнения - Команда для гибели рассады </summary>
+        private async Task OnDeathSeedlingCommandExecuted()
+        {
+            _SeedlingsService.InvertAutoSave();
+            var dead = SelectedItem.SeedlingInfos.Count(d => d.IsDead == true);
+            for (var i = SelectedItem.SeedlingInfos.Count - dead; i > SelectedItem.SeedlingInfos.Count - dead - DeadNumbers; i--)
+            {
+                SelectedItem.SeedlingInfos[i-1].IsDead=true;
+                SelectedItem.SeedlingInfos[i-1].DeathNote = DeathNote;
+                if (i == SelectedItem.SeedlingInfos.Count - dead - DeadNumbers + 1)
+                    _SeedlingsService.InvertAutoSave();
+                await _SeedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[i-1]);
+
+            }
+
+            await _SeedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
+
+            UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
+           
+            DeathNote = string.Empty;
+            DeadNumbers = 0;
         }
 
 
