@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using AutoMapper;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
@@ -9,13 +10,16 @@ using Bonfire.ViewModels.Base;
 
 namespace Bonfire.ViewModels
 {
-    internal class MainWindowViewModel : ViewModel
+    internal class MainWindowViewModel(
+        IUserDialog UserDialog,
+        ISeedsService SeedsService,
+        ISeedlingsService SeedlingsService,
+        SeedsViewModel SeedsViewModel,
+        SeedlingsViewModel SeedlingsViewModel,
+        IMapper Mapper)
+        : ViewModel
     {
-        private readonly IUserDialog _UserDialog;
-        private readonly ISeedsService _SeedsService;
-        private readonly ISeedlingsService _SeedlingsService;
-        private readonly SeedsViewModel _SeedsViewModel;
-        private readonly SeedlingsViewModel _SeedlingsViewModel;
+        private readonly SeedlingsViewModel _SeedlingsViewModel = SeedlingsViewModel;
 
         #region Title : string - Заголовок окна
 
@@ -102,7 +106,7 @@ namespace Bonfire.ViewModels
         private void OnShowSeedViewModelCommandExecuted()
         {
             if (CurrentViewModel is SeedsViewModel) return;
-            CurrentViewModel = _SeedsViewModel;
+            CurrentViewModel = SeedsViewModel;
             ClearBold();
             SeedsBold = _BoldFontWeight;
             SeedBackground = _BackgroundBrash;
@@ -139,11 +143,11 @@ namespace Bonfire.ViewModels
         private void OnShowLibraryEditorViewModelCommandExecuted()
         {
             if (CurrentViewModel is LibraryEditorViewModel) return;
-            var sort = _SeedsViewModel.AddSortList;
-            var culture = _SeedsViewModel.AddCultureList;
-            var producer = _SeedsViewModel.AddProducerList;
-            var seeds = _SeedsViewModel.Seeds;
-            CurrentViewModel = new LibraryEditorViewModel(_SeedsService, _UserDialog, sort, culture, producer, seeds);
+            var sort = SeedsViewModel.AddSortList;
+            var culture = SeedsViewModel.AddCultureList;
+            var producer = SeedsViewModel.AddProducerList;
+            var seeds = SeedsViewModel.Seeds;
+            CurrentViewModel = new LibraryEditorViewModel(SeedsService, UserDialog, sort, culture, producer, seeds);
             ClearBold();
             LibraryBold = _BoldFontWeight;
             LibraryBackground = _BackgroundBrash;
@@ -169,7 +173,7 @@ namespace Bonfire.ViewModels
         private void OnShowSeedlingsViewModelCommandExecuted()
         {
             if (CurrentViewModel is SeedlingsViewModel) return;
-            CurrentViewModel = new SeedlingsViewModel(_SeedlingsService, _SeedsService, _UserDialog);
+            CurrentViewModel = new SeedlingsViewModel(SeedlingsService, SeedsService, UserDialog, Mapper);
             ClearBold();
             SeedlingsBold = _BoldFontWeight;
             SeedlingBackground = _BackgroundBrash;
@@ -191,31 +195,16 @@ namespace Bonfire.ViewModels
        
 
         /// <summary> Проверка возможности выполнения - Команда для формирования отчета по семенам </summary>
-        private bool CanCreateSeedsReportCommandExecute() => CurrentViewModel == _SeedsViewModel;
+        private bool CanCreateSeedsReportCommandExecute() => CurrentViewModel == SeedsViewModel;
 
         /// <summary> Логика выполнения - Команда для формирования отчета по семенам </summary>
         private async Task OnCreateSeedsReportCommandExecuted()
         {
-           _SeedsViewModel.CreateSeedReport();
+           SeedsViewModel.CreateSeedReport();
         }
 
 
 
         #endregion
-
-
-
-        public MainWindowViewModel( IUserDialog UserDialog,
-                                    ISeedsService SeedsService,
-                                    ISeedlingsService SeedlingsService,
-                                    SeedsViewModel SeedsViewModel,
-                                    SeedlingsViewModel SeedlingsViewModel)
-        {
-            _UserDialog = UserDialog;
-            _SeedsService = SeedsService;
-            _SeedlingsService = SeedlingsService;
-            _SeedsViewModel = SeedsViewModel;
-            _SeedlingsViewModel = SeedlingsViewModel;
-        }
     }
 }

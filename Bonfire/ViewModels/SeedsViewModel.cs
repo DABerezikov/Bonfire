@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
+using AutoMapper;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
@@ -16,6 +17,7 @@ using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
+using BonfireDB.Migrations;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -28,14 +30,14 @@ public class SeedsViewModel : ViewModel
 {
     private readonly ISeedsService _SeedsService;
     private readonly IUserDialog _UserDialog;
+    private readonly IMapper _Mapper;
 
-   
 
-
-    public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog)
+    public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog, IMapper mapper)
     {
         _SeedsService = seedsService;
         _UserDialog = userDialog;
+        _Mapper = mapper;
         _SeedsView = new CollectionViewSource
         {
             SortDescriptions =
@@ -914,6 +916,12 @@ public class SeedsViewModel : ViewModel
         OnPropertyChanged(nameof(ListCulture));
     }
 
+
+
+
+    #endregion
+
+    #region Метод создания  SeedsFromViewModel
     private SeedsFromViewModel CreateSeedsFromViewModel(Seed seed)
     {
         return new SeedsFromViewModel
@@ -928,9 +936,7 @@ public class SeedsViewModel : ViewModel
             AmountSeedsQuantity = seed.SeedsInfo.AmountSeeds,
             AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight
         };
-    }
-
-
+    } 
     #endregion
 
     #region Метод для копирования информации между семянами
@@ -939,39 +945,8 @@ public class SeedsViewModel : ViewModel
     {
         if(seedFrom == null) return;
 
-        seedTo.Id = seedFrom.Id;
+        _Mapper.Map(seedFrom, seedTo);
 
-        seedTo.Plant.Id = seedFrom.Plant.Id;
-
-        seedTo.Plant.PlantCulture.Id = seedFrom.Plant.PlantCulture.Id;
-        seedTo.Plant.PlantCulture.Name = seedFrom.Plant.PlantCulture.Name;
-        seedTo.Plant.PlantCulture.Class = seedFrom.Plant.PlantCulture.Class;
-
-        seedTo.Plant.PlantSort.Id = seedFrom.Plant.PlantSort.Id;
-        seedTo.Plant.PlantSort.Name = seedFrom.Plant.PlantSort.Name;
-        seedTo.Plant.PlantSort.AgeOfSeedlings = seedFrom.Plant.PlantSort.AgeOfSeedlings;
-        seedTo.Plant.PlantSort.Description = seedFrom.Plant.PlantSort.Description;
-        seedTo.Plant.PlantSort.GrowingSeason = seedFrom.Plant.PlantSort.GrowingSeason;
-        seedTo.Plant.PlantSort.LandingPattern = seedFrom.Plant.PlantSort.LandingPattern;
-        seedTo.Plant.PlantSort.MaxGerminationTime = seedFrom.Plant.PlantSort.MaxGerminationTime;
-        seedTo.Plant.PlantSort.MinGerminationTime = seedFrom.Plant.PlantSort.MinGerminationTime;
-        seedTo.Plant.PlantSort.PlantColor = seedFrom.Plant.PlantSort.PlantColor;
-        seedTo.Plant.PlantSort.PlantHeight = seedFrom.Plant.PlantSort.PlantHeight;
-
-        seedTo.Plant.PlantSort.Producer.Id = seedFrom.Plant.PlantSort.Producer.Id;
-        seedTo.Plant.PlantSort.Producer.Name = seedFrom.Plant.PlantSort.Producer.Name;
-
-        seedTo.SeedsInfo.Id = seedFrom.SeedsInfo.Id;
-        seedTo.SeedsInfo.AmountSeeds = seedFrom.SeedsInfo.AmountSeeds;
-        seedTo.SeedsInfo.AmountSeedsWeight = seedFrom.SeedsInfo.AmountSeedsWeight;
-        seedTo.SeedsInfo.CostPack = seedFrom.SeedsInfo.CostPack;
-        seedTo.SeedsInfo.DisposeComment = seedFrom.SeedsInfo.DisposeComment;
-        seedTo.SeedsInfo.ExpirationDate = seedFrom.SeedsInfo.ExpirationDate;
-        seedTo.SeedsInfo.Note = seedFrom.SeedsInfo.Note;
-        seedTo.SeedsInfo.PurchaseDate = seedFrom.SeedsInfo.PurchaseDate;
-        seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
-        seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
-        seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
         OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
 

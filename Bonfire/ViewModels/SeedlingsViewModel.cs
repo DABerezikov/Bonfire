@@ -11,22 +11,25 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System;
 using System.Linq;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services.Extensions;
 
 namespace Bonfire.ViewModels
 {
-    public class SeedlingsViewModel : ViewModel
+    public class SeedlingsViewModel  : ViewModel
     {
         private readonly ISeedlingsService _SeedlingsService;
         private readonly ISeedsService _SeedsService;
         private readonly IUserDialog _UserDialog;
+        private readonly IMapper _Mapper;
 
-        public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog)
+        public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IMapper mapper)
         {
             _SeedlingsService = seedlings;
             _SeedsService = seedsService;
             _UserDialog = dialog;
+            _Mapper = mapper;
             _SeedlingsView = new CollectionViewSource
             {
                 SortDescriptions =
@@ -1011,19 +1014,29 @@ namespace Bonfire.ViewModels
            
         }
 
-        private IOrderedEnumerable<SeedlingFromViewModel> GetSeedlingFromViewModels()
+        #endregion
+
+        #region Метод получения ссылки на изображение фазы Луны
+
+        private static string GetPathImageMoonPhase(string moonPhase)
         {
-            return Seedlings.Select(CreateSeedlingFromViewModel)
-                .SortSeedlings();
-        }
-        
-        private IOrderedEnumerable<SeedlingFromViewModel> GetSortedSeedlingFromViewModels(object p)
-        {
-            return Seedlings.Where(s => s.Plant.PlantCulture.Class == p.ToString())
-                .Select(CreateSeedlingFromViewModel)
-                .SortSeedlings();
+            return moonPhase switch
+            {
+                "Растущий серп" => "Image/MoonPhase_2.jpg",
+                "Первая четверть" => "Image/MoonPhase_3.jpg",
+                "Растущая луна" => "Image/MoonPhase_4.jpg",
+                "Полнолуние" => "Image/MoonPhase_5.jpg",
+                "Убывающая луна" => "Image/MoonPhase_6.jpg",
+                "Третья четверть" => "Image/MoonPhase_7.jpg",
+                "Убывающий месяц" => "Image/MoonPhase_8.jpg",
+                _ => "Image/MoonPhase_1.jpg"
+            };
+
         }
 
+        #endregion
+
+        #region Метод создания SeedlingFromViewModel
         private SeedlingFromViewModel CreateSeedlingFromViewModel(Seedling seedling)
         {
             var firstSeedlingInfo = seedling.SeedlingInfos.FirstOrDefault();
@@ -1051,29 +1064,21 @@ namespace Bonfire.ViewModels
                     })) : new ObservableCollection<SeedlingInfoFromViewModel>()
             };
         }
-
-        
-
         #endregion
 
-        #region Метод получения ссылки на изображение фазы Луны
-
-        private static string GetPathImageMoonPhase(string moonPhase)
+        #region Методы получения коллекций SeedlingFromViewModel
+        private IOrderedEnumerable<SeedlingFromViewModel> GetSeedlingFromViewModels()
         {
-            return moonPhase switch
-            {
-                "Растущий серп" => "Image/MoonPhase_2.jpg",
-                "Первая четверть" => "Image/MoonPhase_3.jpg",
-                "Растущая луна" => "Image/MoonPhase_4.jpg",
-                "Полнолуние" => "Image/MoonPhase_5.jpg",
-                "Убывающая луна" => "Image/MoonPhase_6.jpg",
-                "Третья четверть" => "Image/MoonPhase_7.jpg",
-                "Убывающий месяц" => "Image/MoonPhase_8.jpg",
-                _ => "Image/MoonPhase_1.jpg"
-            };
-
+            return Seedlings.Select(CreateSeedlingFromViewModel)
+                .SortSeedlings();
         }
 
+        private IOrderedEnumerable<SeedlingFromViewModel> GetSortedSeedlingFromViewModels(object p)
+        {
+            return Seedlings.Where(s => s.Plant.PlantCulture.Class == p.ToString())
+                .Select(CreateSeedlingFromViewModel)
+                .SortSeedlings();
+        } 
         #endregion
 
         #region Метод для копирования информации между семянами
@@ -1082,33 +1087,8 @@ namespace Bonfire.ViewModels
         {
             if (seedlingFrom == null) return;
 
-            seedlingTo.Id = seedlingFrom.Id;
-            seedlingTo.Quantity = seedlingFrom.Quantity;
-            seedlingTo.Weight = seedlingFrom.Weight;
-            seedlingTo.SeedId = seedlingFrom.SeedId;
+            _Mapper.Map(seedlingFrom, seedlingTo);
 
-            seedlingTo.Plant.Id = seedlingFrom.Plant.Id;
-
-            seedlingTo.Plant.PlantCulture.Id = seedlingFrom.Plant.PlantCulture.Id;
-            seedlingTo.Plant.PlantCulture.Name = seedlingFrom.Plant.PlantCulture.Name;
-            seedlingTo.Plant.PlantCulture.Class = seedlingFrom.Plant.PlantCulture.Class;
-
-            seedlingTo.Plant.PlantSort.Id = seedlingFrom.Plant.PlantSort.Id;
-            seedlingTo.Plant.PlantSort.Name = seedlingFrom.Plant.PlantSort.Name;
-            seedlingTo.Plant.PlantSort.AgeOfSeedlings = seedlingFrom.Plant.PlantSort.AgeOfSeedlings;
-            seedlingTo.Plant.PlantSort.Description = seedlingFrom.Plant.PlantSort.Description;
-            seedlingTo.Plant.PlantSort.GrowingSeason = seedlingFrom.Plant.PlantSort.GrowingSeason;
-            seedlingTo.Plant.PlantSort.LandingPattern = seedlingFrom.Plant.PlantSort.LandingPattern;
-            seedlingTo.Plant.PlantSort.MaxGerminationTime = seedlingFrom.Plant.PlantSort.MaxGerminationTime;
-            seedlingTo.Plant.PlantSort.MinGerminationTime = seedlingFrom.Plant.PlantSort.MinGerminationTime;
-            seedlingTo.Plant.PlantSort.PlantColor = seedlingFrom.Plant.PlantSort.PlantColor;
-            seedlingTo.Plant.PlantSort.PlantHeight = seedlingFrom.Plant.PlantSort.PlantHeight;
-
-            seedlingTo.Plant.PlantSort.Producer.Id = seedlingFrom.Plant.PlantSort.Producer.Id;
-            seedlingTo.Plant.PlantSort.Producer.Name = seedlingFrom.Plant.PlantSort.Producer.Name;
-
-            seedlingTo.SeedlingInfos.Clear();
-            seedlingTo.SeedlingInfos.AddRange(seedlingFrom.SeedlingInfos);
             OnPropertyChanged(nameof(EditedItem));
             OnPropertyChanged(nameof(SelectedItem));
 
