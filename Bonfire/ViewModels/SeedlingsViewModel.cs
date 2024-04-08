@@ -763,9 +763,14 @@ namespace Bonfire.ViewModels
         public int DeadNumbers
         {
             get => _DeadNumbers;
-            set => Set(ref _DeadNumbers, value <= SelectedItem.SeedlingInfos.Count - SelectedItem.SeedlingInfos.Count(d => d.IsDead == true) - 1
-                                            ? value
-                                            : SelectedItem.SeedlingInfos.Count - SelectedItem.SeedlingInfos.Count(d => d.IsDead == true) - 1);
+            set => Set(ref _DeadNumbers, value <= GetDeadSeedlingInfosCount()
+                ? value
+                : GetDeadSeedlingInfosCount());
+        }
+
+        private int GetDeadSeedlingInfosCount()
+        {
+            return SelectedItem.SeedlingInfos.Count - SelectedItem.SeedlingInfos.Count(d => d.IsDead == true) - 1;
         }
 
         #endregion
