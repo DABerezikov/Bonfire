@@ -789,39 +789,12 @@ namespace Bonfire.ViewModels
         #region Метод загрузки рассады
         private async Task LoadSeedling()
         {
-            var seedlingsQuery = _SeedlingsService.Seedlings
-                    .Select(seedlings => new SeedlingFromViewModel()
-                    {
-                        Id = seedlings.Id,
-                        Culture = seedlings.Plant.PlantCulture.Name,
-                        Sort = seedlings.Plant.PlantSort.Name,
-                        Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        Weight = seedlings.Weight,
-                        Quantity = seedlings.Quantity,
-                        LandingData = seedlings.SeedlingInfos[0].LandingDate,
-                        IsDead = seedlings.SeedlingInfos[0].IsDead,
-                        ReplantingData = seedlings.SeedlingInfos[0].Replants[0].ReplantingDate,
-                        SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
-                        SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
-                        {
-                            Id = info.Id,
-                            Number = info.SeedlingNumber,
-                            GerminationData = info.GerminationDate,
-                            QuenchingDate = info.QuenchingDate,
-                            IsDead = info.IsDead,
-                            IsQuarantine = info.QuarantineStartDate!=null && info.QuarantineStopDate==null
-                        }).Skip(1))
-
-
-                    })
-                    .OrderBy(c => c.LandingData)
-                    .ThenBy(c => c.Culture)
-                    .ThenBy(s => s.Sort)
-                    .ThenBy(p => p.Producer)
-                ;
-
             Seedlings = new ObservableCollection<Seedling>(await _SeedlingsService.Seedlings.ToArrayAsync().ConfigureAwait(false));
-            _SeedlingsView.Source = await seedlingsQuery.ToArrayAsync();
+            _SeedlingsView.Source = _SeedlingsService.Seedlings.AsEnumerable()
+                .Select(CreateSeedlingFromViewModel)
+                .SortSeedlings();
+
+            
             //_SeedlingsView.Source = Seedlings;
 
             OnPropertyChanged(nameof(SeedlingsView));
@@ -1022,36 +995,7 @@ namespace Bonfire.ViewModels
 
         private void UpdateCollectionViewSource(int id = -1)
         {
-            var newCollection = Seedlings
-                    .Select(seedlings => new SeedlingFromViewModel()
-                    {
-                        Id = seedlings.Id,
-                        Culture = seedlings.Plant.PlantCulture.Name,
-                        Sort = seedlings.Plant.PlantSort.Name,
-                        Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        Weight = seedlings.Weight,
-                        Quantity = seedlings.Quantity,
-                        LandingData = seedlings.SeedlingInfos[0].LandingDate,
-                        IsDead =  seedlings.SeedlingInfos[0].IsDead,
-                        ReplantingData = seedlings.SeedlingInfos[0].Replants?.ElementAtOrDefault(0)?.ReplantingDate,
-                        SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
-                        SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
-                        {
-                            Id = info.Id,
-                            Number = info.SeedlingNumber,
-                            GerminationData = info.GerminationDate,
-                            QuenchingDate = info.QuenchingDate,
-                            IsDead = info.IsDead,
-                            IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
-                        }).Skip(1))
-
-
-                    })
-                    .OrderBy(c => c.LandingData)
-                    .ThenBy(c => c.Culture)
-                    .ThenBy(s => s.Sort)
-                    .ThenBy(p => p.Producer)
-                ;
+            var newCollection = GetSeedlingFromViewModels();
 
             var collection =  newCollection.ToArray();
            
@@ -1067,8 +1011,51 @@ namespace Bonfire.ViewModels
            
         }
 
-        #endregion
+        private IOrderedEnumerable<SeedlingFromViewModel> GetSeedlingFromViewModels()
+        {
+            return Seedlings.Select(CreateSeedlingFromViewModel)
+                .SortSeedlings();
+        }
         
+        private IOrderedEnumerable<SeedlingFromViewModel> GetSortedSeedlingFromViewModels(object p)
+        {
+            return Seedlings.Where(s => s.Plant.PlantCulture.Class == p.ToString())
+                .Select(CreateSeedlingFromViewModel)
+                .SortSeedlings();
+        }
+
+        private SeedlingFromViewModel CreateSeedlingFromViewModel(Seedling seedling)
+        {
+            var firstSeedlingInfo = seedling.SeedlingInfos.FirstOrDefault();
+            return new SeedlingFromViewModel
+            {
+                Id = seedling.Id,
+                Culture = seedling.Plant.PlantCulture.Name,
+                Sort = seedling.Plant.PlantSort.Name,
+                Producer = seedling.Plant.PlantSort.Producer.Name,
+                Weight = seedling.Weight,
+                Quantity = seedling.Quantity,
+                LandingData = firstSeedlingInfo?.LandingDate ?? default,
+                IsDead = firstSeedlingInfo?.IsDead ?? false,
+                ReplantingData = firstSeedlingInfo?.Replants?.FirstOrDefault()?.ReplantingDate,
+                SeedlingMoonPhase = firstSeedlingInfo != null ? GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(firstSeedlingInfo.LandingDate)) : null,
+                SeedlingInfos = firstSeedlingInfo != null ? new ObservableCollection<SeedlingInfoFromViewModel>(
+                    seedling.SeedlingInfos.Skip(1).Select(info => new SeedlingInfoFromViewModel
+                    {
+                        Id = info.Id,
+                        Number = info.SeedlingNumber,
+                        GerminationData = info.GerminationDate,
+                        QuenchingDate = info.QuenchingDate,
+                        IsDead = info.IsDead,
+                        IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
+                    })) : new ObservableCollection<SeedlingInfoFromViewModel>()
+            };
+        }
+
+        
+
+        #endregion
+
         #region Метод получения ссылки на изображение фазы Луны
 
         private static string GetPathImageMoonPhase(string moonPhase)
@@ -1180,63 +1167,8 @@ namespace Bonfire.ViewModels
         {
 
             var seedlingsQuery = p.ToString() != "Выбрать все"
-                    ? Seedlings
-
-                    .Where(seedlings => seedlings.Plant.PlantCulture.Class == p.ToString())
-                    .Select(seedlings => new SeedlingFromViewModel()
-                    {
-                        Id = seedlings.Id,
-                        Culture = seedlings.Plant.PlantCulture.Name,
-                        Sort = seedlings.Plant.PlantSort.Name,
-                        Producer = seedlings.Plant.PlantSort.Producer.Name,
-                        Weight = seedlings.Weight,
-                        Quantity = seedlings.Quantity,
-                        LandingData = seedlings.SeedlingInfos[0].LandingDate,
-                        SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
-                        SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
-                        {
-                            Id = info.Id,
-                            Number = info.SeedlingNumber,
-                            GerminationData = info.GerminationDate,
-                            QuenchingDate = info.QuenchingDate,
-                            IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
-                        }).SkipWhile(n => n.Number == 0))
-
-
-                    })
-                    .OrderBy(c => c.LandingData)
-                    .ThenBy(c => c.Culture)
-                    .ThenBy(s => s.Sort)
-                    .ThenBy(p => p.Producer)
-
-                    : Seedlings
-                        .Select(seedlings => new SeedlingFromViewModel()
-                        {
-                            Id = seedlings.Id,
-                            Culture = seedlings.Plant.PlantCulture.Name,
-                            Sort = seedlings.Plant.PlantSort.Name,
-                            Producer = seedlings.Plant.PlantSort.Producer.Name,
-                            Weight = seedlings.Weight,
-                            Quantity = seedlings.Quantity,
-                            LandingData = seedlings.SeedlingInfos[0].LandingDate,
-                            SeedlingMoonPhase = GetPathImageMoonPhase(_SeedlingsService.Lunar.GetMoonPhase(seedlings.SeedlingInfos[0].LandingDate)),
-                            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>(seedlings.SeedlingInfos.Select(info => new SeedlingInfoFromViewModel()
-                            {
-                                Id = info.Id,
-                                Number = info.SeedlingNumber,
-                                GerminationData = info.GerminationDate,
-                                QuenchingDate = info.QuenchingDate,
-                                IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
-                            }).SkipWhile(n => n.Number == 0))
-
-
-                        })
-                        .OrderBy(c => c.LandingData)
-                        .ThenBy(c => c.Culture)
-                        .ThenBy(s => s.Sort)
-                        .ThenBy(p => p.Producer)
-
-                ;
+                ? GetSortedSeedlingFromViewModels(p)
+                : GetSeedlingFromViewModels();
             _SeedlingsView.Source = seedlingsQuery.ToArray();
             OnPropertyChanged(nameof(SeedlingsView));
         }

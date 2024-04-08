@@ -639,29 +639,13 @@ public class SeedsViewModel : ViewModel
 
     private async Task LoadSeed()
     {
-        var seedsQuery = _SeedsService.Seeds
-                .Select(seeds => new SeedsFromViewModel
-                {
-                    Id = seeds.Id,
-                    Culture = seeds.Plant.PlantCulture.Name,
-                    Sort = seeds.Plant.PlantSort.Name,
-                    Producer = seeds.Plant.PlantSort.Producer.Name,
-                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                    QuantityPack = seeds.SeedsInfo.QuantityPack,
-                    WeightPack = seeds.SeedsInfo.WeightPack,
-                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-                    
-                })
-                .OrderBy(c => c.Culture)
-                .ThenBy(s => s.Sort)
-                .ThenBy(p => p.Producer)
-            ;
+        _SeedsView.Source = _SeedsService.Seeds.AsEnumerable()
+                .Select(CreateSeedsFromViewModel).SortSeeds();
        
-            Seeds = new ObservableCollection<Seed>(await _SeedsService.Seeds.ToArrayAsync());
-            _SeedsView.Source = await seedsQuery.ToArrayAsync();
+        Seeds = new ObservableCollection<Seed>(await _SeedsService.Seeds.ToArrayAsync());
            
-            OnPropertyChanged(nameof(SeedsView));
+           
+        OnPropertyChanged(nameof(SeedsView));
         
     }
 
@@ -913,21 +897,9 @@ public class SeedsViewModel : ViewModel
 
     private void UpdateCollectionViewSource(int id = -1)
     {
-        var newCollection = Seeds.Select(seeds => new SeedsFromViewModel
-        {
-            Id = seeds.Id,
-            Culture = seeds.Plant.PlantCulture.Name,
-            Sort = seeds.Plant.PlantSort.Name,
-            Producer = seeds.Plant.PlantSort.Producer.Name,
-            ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-            QuantityPack = seeds.SeedsInfo.QuantityPack,
-            WeightPack = seeds.SeedsInfo.WeightPack,
-            AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-            AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-        })
-            .OrderBy(c => c.Culture)
-            .ThenBy(s => s.Sort)
-            .ThenBy(p => p.Producer);
+        var newCollection = Seeds
+            .Select(CreateSeedsFromViewModel)
+            .SortSeeds();
 
         var collection = newCollection.ToArray();
         _SeedsView.Source = collection;
@@ -941,6 +913,23 @@ public class SeedsViewModel : ViewModel
         OnPropertyChanged(nameof(SeedsView));
         OnPropertyChanged(nameof(ListCulture));
     }
+
+    private SeedsFromViewModel CreateSeedsFromViewModel(Seed seed)
+    {
+        return new SeedsFromViewModel
+        {
+            Id = seed.Id,
+            Culture = seed.Plant.PlantCulture.Name,
+            Sort = seed.Plant.PlantSort.Name,
+            Producer = seed.Plant.PlantSort.Producer.Name,
+            ExpirationDate = seed.SeedsInfo.ExpirationDate,
+            QuantityPack = seed.SeedsInfo.QuantityPack,
+            WeightPack = seed.SeedsInfo.WeightPack,
+            AmountSeedsQuantity = seed.SeedsInfo.AmountSeeds,
+            AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight
+        };
+    }
+
 
     #endregion
 
@@ -1276,46 +1265,15 @@ public class SeedsViewModel : ViewModel
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
     {
 
-        var seedsQuery = p.ToString() != "Выбрать все"
-                ? Seeds
+        var filteredSeeds = p != null && p.ToString() != "Выбрать все"
+            ? Seeds.Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
+            : Seeds;
 
-                .Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
-                .Select(seeds => new SeedsFromViewModel
-                {
-                    Id = seeds.Id,
-                    Culture = seeds.Plant.PlantCulture.Name,
-                    Sort = seeds.Plant.PlantSort.Name,
-                    Producer = seeds.Plant.PlantSort.Producer.Name,
-                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                    QuantityPack = seeds.SeedsInfo.QuantityPack,
-                    WeightPack = seeds.SeedsInfo.WeightPack,
-                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-                })
-                .OrderBy(c=>c.Culture)
-                .ThenBy(s=>s.Sort)
-                .ThenBy(model=>model.Producer)
-
-                : Seeds
-                .Select(seeds => new SeedsFromViewModel
-                {
-                    Id = seeds.Id,
-                    Culture = seeds.Plant.PlantCulture.Name,
-                    Sort = seeds.Plant.PlantSort.Name,
-                    Producer = seeds.Plant.PlantSort.Producer.Name,
-                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                    QuantityPack = seeds.SeedsInfo.QuantityPack,
-                    WeightPack = seeds.SeedsInfo.WeightPack,
-                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-                })
-                .OrderBy(c => c.Culture)
-                .ThenBy(s => s.Sort)
-                .ThenBy(model => model.Producer)
-
-            ;
+        var seedsQuery = filteredSeeds
+            .Select(CreateSeedsFromViewModel)
+            .SortSeeds();
         _SeedsView.Source = seedsQuery.ToArray();
-        //SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+       
         OnPropertyChanged(nameof(SeedsView));
     }
 

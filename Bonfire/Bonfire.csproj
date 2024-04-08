@@ -32,10 +32,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\Extensions\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="EPPlus" Version="7.1.0" />
     <PackageReference Include="FontAwesome5" Version="2.1.11" />
     <PackageReference Include="MathCore.WPF" Version="0.0.44.8" />
