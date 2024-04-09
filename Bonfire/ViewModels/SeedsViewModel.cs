@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Xml.Linq;
+using AutoMapper;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
@@ -14,27 +17,34 @@ using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
+using BonfireDB.Migrations;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using LicenseContext = OfficeOpenXml.LicenseContext;
 
 
 namespace Bonfire.ViewModels;
 
 public class SeedsViewModel : ViewModel
 {
-    private readonly ISeedsService _seedsService;
-    private readonly IUserDialog _userDialog;
+    private readonly ISeedsService _SeedsService;
+    private readonly IUserDialog _UserDialog;
+    private readonly IMapper _Mapper;
 
-    
-    
-    public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog)
+
+    public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog, IMapper mapper)
     {
-        _seedsService = seedsService;
-        _userDialog = userDialog;
+        _SeedsService = seedsService;
+        _UserDialog = userDialog;
+        _Mapper = mapper;
         _SeedsView = new CollectionViewSource
         {
             SortDescriptions =
             {
-                new SortDescription(nameof(SeedsFromViewModel.Culture), ListSortDirection.Ascending)
+                new SortDescription(nameof(SeedsFromViewModel.Culture), ListSortDirection.Ascending),
+                new SortDescription(nameof(SeedsFromViewModel.Sort), ListSortDirection.Ascending),
+                new SortDescription(nameof(SeedsFromViewModel.Producer), ListSortDirection.Ascending)
 
             }
 
@@ -56,7 +66,7 @@ public class SeedsViewModel : ViewModel
         {
             SortDescriptions =
             {
-                new SortDescription(nameof(SortFromViewModel.Name), ListSortDirection.Ascending)
+                new SortDescription(nameof(SortFromSeedsViewModel.Name), ListSortDirection.Ascending)
             }
         };
         
@@ -73,10 +83,7 @@ public class SeedsViewModel : ViewModel
        _ProducerListView.Filter += _ProducerListView_Filter;
     }
 
-    private void View_CurrentChanged(object? sender, EventArgs e)
-    {
-        SelectedItem = Seeds.First(s=>s.Id == ((SeedsFromViewModel)_SeedsView.View.CurrentItem).Id);
-    }
+   
 
 
 
@@ -85,13 +92,13 @@ public class SeedsViewModel : ViewModel
 
     #region FilterSeeds - Фильтрация по культуре
 
-    public ICollectionView SeedsView => _SeedsView?.View;
+    public ICollectionView? SeedsView => _SeedsView.View;
     private readonly CollectionViewSource _SeedsView;
 
     #region SeedFilter : string - Искомое слово
 
     /// <summary>Искомое слово</summary>
-    private string _SeedFilter = "Выбрать все";
+    private string _SeedFilter = "-Выбрать все-";
 
     /// <summary>Искомое слово</summary>
     public string SeedFilter
@@ -101,7 +108,7 @@ public class SeedsViewModel : ViewModel
         {
             if (Set(ref _SeedFilter, value))
             {
-                SeedsView.Refresh();
+                SeedsView?.Refresh();
             }
         } 
     }
@@ -109,9 +116,34 @@ public class SeedsViewModel : ViewModel
     #endregion
     private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SeedsFromViewModel seed) || string.IsNullOrEmpty(SeedFilter) || SeedFilter == "Выбрать все") return;
-        if (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
-            e.Accepted = false;
+        if (e.Item is not SeedsFromViewModel seed ) return;
+        if (SeedFilter != "-Выбрать все-" )
+        {
+            if (IsHaving)
+            {
+                if (seed.Culture != null && (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase) ||
+                                             (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)))
+                    e.Accepted = false;
+
+            }
+            else
+            {
+                if (seed.Culture != null && !seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
+                    e.Accepted = false;
+            }
+           
+        }
+        else
+        {
+            if (!IsHaving) return;
+            if (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)
+                e.Accepted = false;
+
+
+        }
+       
+
+       
     }
 
     #endregion
@@ -129,17 +161,69 @@ public class SeedsViewModel : ViewModel
     }
     #endregion
 
-    
+    #region SelectedSeedsViewItem : SeedsFromViewModel - Выбранный объект SeedsView
+
+    /// <summary>Выбранный объект SeedsView</summary>
+    private SeedsFromViewModel _SelectedSeedsViewItem;
+
+    /// <summary>Выбранный объект SeedsView</summary>
+    public SeedsFromViewModel SelectedSeedsViewItem
+    {
+        get => _SelectedSeedsViewItem;
+        set
+        {
+            Set(ref _SelectedSeedsViewItem, value);
+            SelectedItem = value!=null ? Seeds.First(s => s.Id == value.Id):null;
+           
+        }
+    }
+
+    #endregion
+
     #region SelectedItem : Seed - Выбранный объект
 
     /// <summary>Выбранный объект</summary>
     private Seed _SelectedItem;
+    
 
     /// <summary>Выбранный объект</summary>
     public Seed SelectedItem
     {
         get => _SelectedItem;
-        set => Set(ref _SelectedItem, value);
+        set
+        {
+            if(Set(ref _SelectedItem, value))
+                CopySeedToEditItem(SelectedItem, EditedItem);
+        }
+    }
+
+    #endregion
+
+    #region EditedItem : Seed - Редактируемый объект
+
+    /// <summary>Редактируемый объект</summary>
+    private Seed _EditedItem = new () 
+    {   Plant  = new Plant()
+        
+        { 
+            PlantCulture = new PlantCulture(),
+            PlantSort = new PlantSort()
+            {
+                Producer = new Producer()
+            }
+
+        },
+
+        SeedsInfo = new SeedsInfo()
+
+    };
+
+
+    /// <summary>Редактируемый объект</summary>
+    public Seed EditedItem
+    {
+        get => _EditedItem;
+        set => Set(ref _EditedItem, value);
     }
 
     #endregion
@@ -147,7 +231,7 @@ public class SeedsViewModel : ViewModel
     #region ListCulture : List<string> - Список культур
 
     /// <summary>Список культур</summary>
-    private List<string> _ListCulture = new List<string> { "Выбрать все" };
+    private List<string> _ListCulture = ["-Выбрать все-"];
 
     /// <summary>Список культур</summary>
     public List<string> ListCulture
@@ -159,33 +243,25 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region ListSort : List<string> - Список сортов
+    #region IsHaving : bool - В наличии
 
-    
-    /// <summary>Список сортов</summary>
-    private List<string> _ListSort = new List<string> { "Выбрать все" };
+    /// <summary>В наличии</summary>
+    private bool _IsHaving = true; 
 
-    /// <summary>Список сортов</summary>
-    public List<string> ListSort
+    /// <summary>В наличии</summary>
+    public bool IsHaving
     {
-        get => _ListSort;
-        set => Set(ref _ListSort, value);
-    } 
-    #endregion
-    
-    #region ListProducer : List<string> - Список производителей
-
-    
-    /// <summary>Список производителей</summary>
-    private List<string> _ListProducer = new List<string> { "Выбрать все" };
-
-    /// <summary>Список производителей</summary>
-    public List<string> ListProducer
-    {
-        get => _ListProducer;
-        set => Set(ref _ListProducer, value);
+        get => _IsHaving;
+        set
+        {
+            Set(ref _IsHaving, value); 
+            SeedsView?.Refresh();
+        }
     }
+
     #endregion
+    
+   
 
     #region AddQuantityInPac :string - Количество семян в упаковке
 
@@ -407,15 +483,15 @@ public class SeedsViewModel : ViewModel
 
     #region Выбор культуры для добавления семян
 
-    public ICollectionView CultureListView  => _CultureListView?.View;
+    public ICollectionView? CultureListView  => _CultureListView.View;
     private readonly CollectionViewSource _CultureListView;
     
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is CultureFromViewModel culture) || string.IsNullOrEmpty(AddCulture)) return ;
-        
-        if (!culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+        if (e.Item is not CultureFromViewModel culture || string.IsNullOrEmpty(AddCulture)) return ;
+       
+        if (culture.Name != null && !culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
@@ -445,7 +521,7 @@ public class SeedsViewModel : ViewModel
         set
         {
             if (Set(ref _AddCulture, value))
-                CultureListView.Refresh();
+                CultureListView?.Refresh();
         } 
     }
 
@@ -455,24 +531,24 @@ public class SeedsViewModel : ViewModel
     
     #region Выбор сорта для добавления семян
 
-    public ICollectionView SortListView  => _SortListView?.View;
+    public ICollectionView SortListView  => _SortListView.View;
     private readonly CollectionViewSource _SortListView;
     
 
     private void _SortListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is SortFromViewModel sort) || string.IsNullOrEmpty(AddSort)) return;
-        if (!sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+        if (e.Item is not SortFromSeedsViewModel sort || string.IsNullOrEmpty(AddSort)) return;
+        if (sort.Name != null && !sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
     #region AddSortList : List<string> - Список культур для добавления семян
 
     /// <summary>Список сортов для добавления семян</summary>
-    private ObservableCollection<SortFromViewModel> _AddSortList = new();
+    private ObservableCollection<SortFromSeedsViewModel> _AddSortList = new();
 
     /// <summary>Список сортов для добавления семян</summary>
-    public ObservableCollection<SortFromViewModel> AddSortList
+    public ObservableCollection<SortFromSeedsViewModel> AddSortList
     {
         get => _AddSortList;
         set => Set(ref _AddSortList, value);
@@ -502,14 +578,14 @@ public class SeedsViewModel : ViewModel
     
     #region Выбор производителя для добавления семян
 
-    public ICollectionView ProducerListView  => _ProducerListView?.View;
+    public ICollectionView ProducerListView  => _ProducerListView.View;
     private readonly CollectionViewSource _ProducerListView;
     
 
     private void _ProducerListView_Filter(object sender, FilterEventArgs e)
     {
         if (!(e.Item is ProducerFromViewModel producer) || string.IsNullOrEmpty(AddProducer)) return;
-        if (!producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
+        if (producer.Name != null && !producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
 
@@ -539,7 +615,11 @@ public class SeedsViewModel : ViewModel
         set
         {
             if (Set(ref _AddProducer, value))
+            {
                 ProducerListView.Refresh();
+                if(_AddProducer == "Свои семена")
+                    IsCollected = true;
+            }
         } 
     }
 
@@ -561,24 +641,14 @@ public class SeedsViewModel : ViewModel
 
     private async Task LoadSeed()
     {
-        var seedsQuery = _seedsService.Seeds
-                .Select(seeds => new SeedsFromViewModel
-                {
-                    Id = seeds.Id,
-                    Culture = seeds.Plant.PlantCulture.Name,
-                    Sort = seeds.Plant.PlantSort.Name,
-                    Producer = seeds.Plant.PlantSort.Producer.Name,
-                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                    QuantityPack = seeds.SeedsInfo.QuantityPack,
-                    WeightPack = seeds.SeedsInfo.WeightPack,
-                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-                })
-            ;
-        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
-        _SeedsView.Source = await seedsQuery.ToArrayAsync();
-        _SeedsView.View.CurrentChanged += View_CurrentChanged;
+        _SeedsView.Source = _SeedsService.Seeds.AsEnumerable()
+                .Select(CreateSeedsFromViewModel).SortSeeds();
+       
+        Seeds = new ObservableCollection<Seed>(await _SeedsService.Seeds.ToArrayAsync());
+           
+           
         OnPropertyChanged(nameof(SeedsView));
+        
     }
 
     #endregion
@@ -587,20 +657,20 @@ public class SeedsViewModel : ViewModel
 
     private void LoadListCulture()
     {
-        var listCultureQuery = _seedsService.Seeds
+        var listCultureQuery = _SeedsService.Seeds
             .Select(seeds => seeds.Plant.PlantCulture.Name)
             .Distinct()
             .OrderBy(s => s);
-        var addListCulture = _seedsService.Seeds
+        var addListCulture = _SeedsService.Seeds
             .Select(seeds => new CultureFromViewModel
             {
                 Id = seeds.Plant.PlantCulture.Id,
                 Name = seeds.Plant.PlantCulture.Name
-            })
-            .Distinct()
+            }).AsEnumerable()
+            .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
-        AddCultureList.AddRange(addListCulture.ToListAsync().Result);
+        AddCultureList.AddRange(addListCulture.ToList());
         _CultureListView.Source = AddCultureList;
         OnPropertyChanged(nameof(CultureListView));
 
@@ -612,20 +682,17 @@ public class SeedsViewModel : ViewModel
 
     private void LoadListSort()
     {
-        var listSortQuery = _seedsService.Seeds
-            .Select(seeds => seeds.Plant.PlantSort.Name)
-            .Distinct()
-            .OrderBy(s => s);
-        var addListSort = _seedsService.Seeds
-            .Select(seeds => new SortFromViewModel
+       
+        var addListSort = _SeedsService.Seeds
+            .Select(seeds => new SortFromSeedsViewModel
             {
                 Id = seeds.Plant.PlantSort.Id,
                 Name = seeds.Plant.PlantSort.Name
-            })
-            .Distinct()
+            }).AsEnumerable()
+            .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
-        ListSort.AddRange(listSortQuery.ToListAsync().Result.ToHashSet());
-        AddSortList.AddRange(addListSort.ToListAsync().Result.ToHashSet());
+       
+        AddSortList.AddRange(addListSort.ToList());
         _SortListView.Source = AddSortList;
         OnPropertyChanged(nameof(SortListView));
 
@@ -635,22 +702,18 @@ public class SeedsViewModel : ViewModel
     
     #region Метод загрузки списка производителей
 
-    private void LoadListProducer()
-    {
-        var listProducerQuery = _seedsService.Seeds
-            .Select(seeds => seeds.Plant.PlantSort.Producer.Name)
-            .Distinct()
-            .OrderBy(s => s);
-        var addListProducer = _seedsService.Seeds
+    private void LoadListProducer() {
+       
+        var addListProducer = _SeedsService.Seeds
             .Select(seeds => new ProducerFromViewModel
             {
                 Id = seeds.Plant.PlantSort.Producer.Id,
                 Name = seeds.Plant.PlantSort.Producer.Name
-            })
-            .Distinct()
+            }).AsEnumerable()
+            .Distinct(s => s.Name)
             .OrderBy(s=>s.Name);
-        ListProducer.AddRange(listProducerQuery.ToListAsync().Result.ToHashSet());
-        AddProducerList.AddRange(addListProducer.ToListAsync().Result.ToHashSet());
+       
+        AddProducerList.AddRange(addListProducer.ToList());
         _ProducerListView.Source = AddProducerList;
         OnPropertyChanged(nameof(ProducerListView));
 
@@ -658,38 +721,72 @@ public class SeedsViewModel : ViewModel
 
     #endregion
 
-    #region Метод для поиска или создания информации о семенах
+    #region Метод для поиска или создания растения
 
     private Plant GetOrCreatePlant()
     {
        
-        if (ListSort.Contains(AddSort) && ListCulture.Contains(AddCulture) && ListProducer.Contains(AddProducer))
+        if (AddSortList.Contains(c => c.Name == AddSort)
+            && AddCultureList.Contains(c => c.Name == AddCulture)
+            && AddProducerList.Contains(c => c.Name == AddProducer))
         {
             var seed = Seeds
                 .Find(s =>
                     s.Plant.PlantCulture.Name == AddCulture
                     && s.Plant.PlantSort.Name == AddSort
                     && s.Plant.PlantSort.Producer.Name == AddProducer);
-            if (seed != null)         
+            if (seed != null)
                 return seed.Plant;
+
         }
 
-        var plant = new Plant
-        {
-            PlantCulture = new PlantCulture
+        var plantCulture = AddCultureList.Contains(c => c.Name == AddCulture)
+            ? Seeds.First(pc => pc.Plant.PlantCulture.Name == AddCulture).Plant.PlantCulture
+            : new PlantCulture
             {
                 Name = AddCulture,
                 Class = AddClass
+            };
+
+        var producer = AddProducerList.Contains(c => c.Name == AddProducer)
+            ? Seeds.First(pc => pc.Plant.PlantSort.Producer.Name == AddProducer).Plant.PlantSort.Producer
+            : new Producer
+            {
+                Name = AddProducer
                 
-            },
-            PlantSort = new PlantSort
+            };
+
+        PlantSort? plantSort;
+
+        if (Seeds.Contains(s => s.Plant.PlantSort.Name == AddSort && s.Plant.PlantSort.Producer.Name == AddProducer))
+        {
+           plantSort = Seeds
+                .Find(s =>
+                    s.Plant.PlantSort.Name == AddSort
+                    && s.Plant.PlantSort.Producer.Name == AddProducer)
+                ?.Plant.PlantSort;
+           
+           if (plantSort == null)
+           {
+               plantSort = Seeds.First(pc => pc.Plant.PlantSort.Name == AddSort).Plant.PlantSort;
+               plantSort.Producer = producer;
+           }
+        }
+        else
+        {
+           plantSort =  new PlantSort
             {
                 Name = AddSort,
-                Producer = new Producer
-                {
-                    Name = AddProducer
-                }
-            }
+                Producer = producer
+            };
+            
+        }
+
+
+        var plant = new Plant
+        {
+            PlantCulture = plantCulture,
+            PlantSort = plantSort
         };
 
         return plant;
@@ -701,11 +798,11 @@ public class SeedsViewModel : ViewModel
 
     private (Seed?, SeedsInfo?) GetOrCreateSeedInfo()
     {
-        int.TryParse(AddQuantityInPac, out var quantity);
-        int.TryParse(AddQuantityPac, out var quantityPac);
-        decimal.TryParse(AddCostPack, out var costPack);
+        var quantity = AddQuantityInPac.DoubleParseAdvanced();
+        var quantityPac = AddQuantityPac.DoubleParseAdvanced();
+        var costPack = AddCostPack.DecimalParseAdvanced();
 
-        if (ListProducer.Contains(AddProducer))
+        if (AddProducerList.Contains(c => c.Name == AddProducer))
         {
             var seed = Seeds
                 .Find(s =>
@@ -747,12 +844,12 @@ public class SeedsViewModel : ViewModel
         if (AddSize!="Граммы")
         {
             seedInfo.QuantityPack = quantity;
-            seedInfo.AmountSeeds = quantity;
+            seedInfo.AmountSeeds = quantity * quantityPac;
         }
         else
         {
             seedInfo.WeightPack = quantity;
-            seedInfo.AmountSeedsWeight = quantity;
+            seedInfo.AmountSeedsWeight = quantity * quantityPac;
         }
 
         return (null,seedInfo);
@@ -800,24 +897,59 @@ public class SeedsViewModel : ViewModel
 
     #region Метод для обновления коллекции семян
 
-    private void UpdateCollectionViewSource()
+    private void UpdateCollectionViewSource(int id = -1)
     {
-        var newCollection = Seeds.Select(seeds => new SeedsFromViewModel
-        {
-            Id = seeds.Id,
-            Culture = seeds.Plant.PlantCulture.Name,
-            Sort = seeds.Plant.PlantSort.Name,
-            Producer = seeds.Plant.PlantSort.Producer.Name,
-            ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-            QuantityPack = seeds.SeedsInfo.QuantityPack,
-            WeightPack = seeds.SeedsInfo.WeightPack,
-            AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-            AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-        });
+        var newCollection = Seeds
+            .Select(CreateSeedsFromViewModel)
+            .SortSeeds();
 
-        _SeedsView.Source = newCollection.ToArray();
-        _SeedsView.View.CurrentChanged += View_CurrentChanged;
+        var collection = newCollection.ToArray();
+        _SeedsView.Source = collection;
+       
+        if (id != -1)
+        {
+            var current = collection.FirstOrDefault(s => s.Id == id);
+            _SeedsView.View.MoveCurrentTo(current);
+        }
+        
         OnPropertyChanged(nameof(SeedsView));
+        OnPropertyChanged(nameof(ListCulture));
+    }
+
+
+
+
+    #endregion
+
+    #region Метод создания  SeedsFromViewModel
+    private SeedsFromViewModel CreateSeedsFromViewModel(Seed seed)
+    {
+        return new SeedsFromViewModel
+        {
+            Id = seed.Id,
+            Culture = seed.Plant.PlantCulture.Name,
+            Sort = seed.Plant.PlantSort.Name,
+            Producer = seed.Plant.PlantSort.Producer.Name,
+            ExpirationDate = seed.SeedsInfo.ExpirationDate,
+            QuantityPack = seed.SeedsInfo.QuantityPack,
+            WeightPack = seed.SeedsInfo.WeightPack,
+            AmountSeedsQuantity = seed.SeedsInfo.AmountSeeds,
+            AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight
+        };
+    } 
+    #endregion
+
+    #region Метод для копирования информации между семянами
+
+    private void CopySeedToEditItem(Seed seedFrom, Seed seedTo)
+    {
+        if(seedFrom == null) return;
+
+        _Mapper.Map(seedFrom, seedTo);
+
+        OnPropertyChanged(nameof(EditedItem));
+        OnPropertyChanged(nameof(SelectedItem));
+
     }
 
     #endregion
@@ -835,6 +967,9 @@ public class SeedsViewModel : ViewModel
                 Name = newSeed.Plant.PlantCulture.Name
             });
             ListCulture.Add(newSeed.Plant.PlantCulture.Name);
+            ListCulture = new List<string>(ListCulture.OrderBy(c=>c));
+            AddCultureList = new ObservableCollection<CultureFromViewModel>(AddCultureList.OrderBy(c => c.Name));
+
         }
 
         if (!AddProducerList.Contains(p => p.Name == newSeed.Plant.PlantSort.Producer.Name))
@@ -844,20 +979,210 @@ public class SeedsViewModel : ViewModel
                 Id = newSeed.Plant.PlantSort.Producer.Id,
                 Name = newSeed.Plant.PlantSort.Producer.Name
             });
-            ListProducer.Add(newSeed.Plant.PlantSort.Producer.Name);
+            AddProducerList = new ObservableCollection<ProducerFromViewModel>(AddProducerList.OrderBy(c => c.Name));
         }
 
         if (AddSortList.Contains(s => s.Name == newSeed.Plant.PlantSort.Name)) return;
-        AddSortList.Add(new SortFromViewModel
+        AddSortList.Add(new SortFromSeedsViewModel
         {
             Id = newSeed.Plant.PlantSort.Id,
             Name = newSeed.Plant.PlantSort.Name
         });
-        ListSort.Add(newSeed.Plant.PlantSort.Name);
+        AddSortList = new ObservableCollection<SortFromSeedsViewModel>(AddSortList.OrderBy(c => c.Name));
 
 
 
-    } 
+
+    }
+    #endregion
+
+    #region Метод для очистки списков от удаленных культур, сортов, производителей
+    private void RemoveOfAddLists(Seed deleteSeed)
+    {
+        if (!Seeds.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
+        {
+            AddCultureList.Remove(AddCultureList.Find(c => c.Name == deleteSeed.Plant.PlantCulture.Name)!);
+        }
+
+        if (!Seeds.Contains(s => s.Plant.PlantSort.Name == deleteSeed.Plant.PlantSort.Name))
+        {
+            AddSortList.Remove(AddSortList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Name)!);
+        }
+
+        if (!Seeds.Contains(s => s.Plant.PlantSort.Producer.Name == deleteSeed.Plant.PlantSort.Producer.Name))
+        {
+            AddProducerList.Remove(AddProducerList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Producer.Name)!);
+        }
+    }
+    #endregion
+
+    #region Методы для создания отчета по семенам
+
+    public void CreateSeedReport()
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        using var package = new ExcelPackage();
+        var sheet = package.Workbook.Worksheets.Add("Семена");
+
+        ExcelSettings(sheet);
+
+        SetHeaderExcel(sheet);
+        
+        var listSeeds = GetListSeeds();
+
+        GenerateExcelReport(listSeeds,  sheet);
+
+        ExcelAutoFitColumns(sheet);
+
+        SaveExcelReport(package);
+
+    }
+
+    private void GenerateExcelReport(IReadOnlyList<ListSeed> listSeeds,  ExcelWorksheet sheet)
+    {
+        
+        var tempCulture = listSeeds[0].Culture;
+
+        var cell = sheet.Cells[2, 1, 2, 7];
+
+        MergeAndStyleCell(cell);
+
+        cell.Value = tempCulture;
+        
+        
+        for (int i = 0, row = 3; i < listSeeds.Count; i++, row++)
+        {
+            if (listSeeds[i].Culture != tempCulture)
+            {
+                tempCulture = listSeeds[i].Culture;
+                cell = sheet.Cells[row, 1, row, 7];
+                MergeAndStyleCell(cell);
+                cell.Value = tempCulture;
+                row++;
+            }
+
+            sheet.Cells[row, 1].Value = listSeeds[i].Sort;
+            sheet.Cells[row, 2].Value = listSeeds[i].Producer;
+            sheet.Cells[row, 3].Value = listSeeds[i].ExpirationDate.Split('.')[2];
+
+            if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > 0)
+            {
+                sheet.Cells[row, 3].Style.Font.Bold = true;
+            }
+
+            if ((DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) <= 0 &&
+                (DateTime.Now.Year - DateTime.Parse(listSeeds[i].ExpirationDate).Year) > -1)
+            {
+                sheet.Cells[row, 3].Style.Font.Italic = true;
+                sheet.Cells[row, 3].Style.Font.UnderLine = true;
+            }
+
+            sheet.Cells[row, 4].Value = listSeeds[i].WeightPack;
+            sheet.Cells[row, 5].Value = listSeeds[i].QuantityPack;
+
+            if (i != listSeeds.Count - 1) continue;
+            sheet.Cells[1, 1, row, 7].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            sheet.Cells[1, 1, row, 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            sheet.Cells[1, 1, row, 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            sheet.Cells[1, 1, row, 7].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+        }
+    }
+
+    private List<ListSeed> GetListSeeds()
+    {
+        var listSeeds = Seeds.Select(s => new ListSeed
+                (s.Plant.PlantCulture.Name,
+                    s.Plant.PlantSort.Name,
+                    s.Plant.PlantSort.Producer.Name,
+                    s.SeedsInfo.ExpirationDate.ToShortDateString(),
+                    s.SeedsInfo.WeightPack,
+                    s.SeedsInfo.QuantityPack)
+            )
+            .OrderBy(c => c.Culture)
+            .ToList();
+        return listSeeds;
+    }
+
+    private record ListSeed(string Culture, string Sort, string Producer, string ExpirationDate, double WeightPack,
+        double QuantityPack);
+
+    private void SaveExcelReport(ExcelPackage package)
+    {
+        try
+        {
+            var arrayBite = package.GetAsByteArray() ?? throw new ArgumentNullException("package.GetAsByteArray()");
+
+            var path = $"Семена_{DateTime.Now.ToShortDateString()}.xlsx";
+            
+            if (!Directory.Exists("Reports"))
+                Directory.CreateDirectory("Reports");
+            
+            File.WriteAllBytes($"Reports\\{path}", arrayBite);
+
+            _UserDialog.Information($"Отчет {path} сформирован", "Информация");
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e);
+            _UserDialog.Warning($"Что-то пошло не так...", "Предупреждение");
+        }
+    }
+
+    private static void SetHeaderExcel(ExcelWorksheet sheet)
+    {
+        sheet.Cells[1, 1].Value = "Сорт";
+        sheet.Cells[1, 2].Value = "Фирма";
+        sheet.Cells[1, 3].Value = "Годен до";
+        sheet.Cells[1, 4].Value = "Граммы";
+        sheet.Cells[1, 5].Value = "Штуки";
+        sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;
+    }
+
+    private static void ExcelAutoFitColumns(ExcelWorksheet sheet)
+    {
+        sheet.Columns[1].AutoFit(20);
+        sheet.Columns[2].AutoFit(15);
+        sheet.Columns[3].AutoFit(7);
+        sheet.Columns[4].AutoFit(7);
+        sheet.Columns[5].AutoFit(7);
+        sheet.Columns[6].AutoFit(18);
+        sheet.Columns[7].AutoFit(18);
+    }
+
+    private void ExcelSettings(ExcelWorksheet sheet)
+    {
+        sheet.PrinterSettings.BottomMargin = 0.1m;
+        sheet.PrinterSettings.FooterMargin = 0;
+        sheet.PrinterSettings.HeaderMargin = 0;
+        sheet.PrinterSettings.LeftMargin = 0.2m;
+        sheet.PrinterSettings.RightMargin = 0.1m;
+        sheet.PrinterSettings.TopMargin = 0.1m;
+        sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
+
+        sheet.Cells.Style.Font.Name = "Calibri";
+        sheet.Cells.Style.Font.Size = 12;
+
+        sheet.Columns[1, 2].Style.WrapText = true;
+        sheet.Cells["A:B"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+        sheet.Cells["C:G"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        sheet.Cells["A1:G1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+        sheet.Cells["A:G"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+    }
+
+    private void MergeAndStyleCell(ExcelRange cell)
+    {
+        
+        cell.Merge = true;
+        cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+        cell.Style.Font.Bold = true;
+        using var range = cell;
+        range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+        range.Style.Fill.BackgroundColor.SetColor(Color.DarkGray);
+        range.Style.Font.Color.SetColor(Color.Black);
+    }
+
     #endregion
 
     #endregion
@@ -884,10 +1209,18 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для загрузки данных из репозитория </summary>
     private async Task OnLoadDataCommandExecuted()
     {
+
+        if (Seeds != null)
+        {
+            UpdateCollectionViewSource();
+            return;
+        }
+        
         await LoadSeed();
         LoadListCulture();
         LoadListSort();
         LoadListProducer();
+        
     }
     #endregion
 
@@ -907,40 +1240,15 @@ public class SeedsViewModel : ViewModel
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
     {
 
-        var seedsQuery = p.ToString() != "Выбрать все"
-                ? _seedsService.Seeds
+        var filteredSeeds = p != null && p.ToString() != "Выбрать все"
+            ? Seeds.Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
+            : Seeds;
 
-                .Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
-                .Select(seeds => new SeedsFromViewModel
-                {
-                    Id = seeds.Id,
-                    Culture = seeds.Plant.PlantCulture.Name,
-                    Sort = seeds.Plant.PlantSort.Name,
-                    Producer = seeds.Plant.PlantSort.Producer.Name,
-                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                    QuantityPack = seeds.SeedsInfo.QuantityPack,
-                    WeightPack = seeds.SeedsInfo.WeightPack,
-                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-                })
-
-                : _seedsService.Seeds
-                .Select(seeds => new SeedsFromViewModel
-                {
-                    Id = seeds.Id,
-                    Culture = seeds.Plant.PlantCulture.Name,
-                    Sort = seeds.Plant.PlantSort.Name,
-                    Producer = seeds.Plant.PlantSort.Producer.Name,
-                    ExpirationDate = seeds.SeedsInfo.ExpirationDate,
-                    QuantityPack = seeds.SeedsInfo.QuantityPack,
-                    WeightPack = seeds.SeedsInfo.WeightPack,
-                    AmountSeedsQuantity = seeds.SeedsInfo.AmountSeeds,
-                    AmountSeedsWeight = seeds.SeedsInfo.AmountSeedsWeight
-                })
-
-            ;
-        _SeedsView.Source = await seedsQuery.ToArrayAsync();
-        //SeedsFromViewModels.AddClear(await seedsQuery.ToArrayAsync());
+        var seedsQuery = filteredSeeds
+            .Select(CreateSeedsFromViewModel)
+            .SortSeeds();
+        _SeedsView.Source = seedsQuery.ToArray();
+       
         OnPropertyChanged(nameof(SeedsView));
     }
 
@@ -964,21 +1272,25 @@ public class SeedsViewModel : ViewModel
     {
         var plant = GetOrCreatePlant();
         var seedsInfo = GetOrCreateSeedInfo();
+        Seed newSeed;
         switch (seedsInfo.Item1)
         {
             case null:
             {
-                var newSeed = await _seedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
+                newSeed = await _SeedsService.MakeASeed(plant, seedsInfo.Item2).ConfigureAwait(false);
 
                 UpdateCollectionSeedsViewModel(newSeed);
                 break;
             }
             default:
-                await _seedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
+              newSeed = await _SeedsService.UpdateSeed(seedsInfo.Item1).ConfigureAwait(false);
                 break;
         }
         ClearFieldSeedView();
-        UpdateCollectionViewSource();
+        UpdateCollectionViewSource(newSeed.Id);
+
+        //_SeedsView.View.MoveCurrentToFirst();
+        
         //await LoadSeed().ConfigureAwait(false);
     }
 
@@ -1001,11 +1313,74 @@ public class SeedsViewModel : ViewModel
     /// <summary> Логика выполнения - Команда для удаления семян </summary>
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (!_userDialog.YesNoQuestion($"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}", "Удаление семян")) return;
-       var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
-       Seeds.Remove(deleteSeed);
-       UpdateCollectionViewSource();
+        if (!_UserDialog.YesNoQuestion(
+                $"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}",
+                "Удаление семян")) return;
+
+        var deleteSeed = await _SeedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
+
+        Seeds.Remove(deleteSeed);
+
+        RemoveOfAddLists(deleteSeed);
+
+        UpdateCollectionViewSource();
     }
+
+
+
+    #endregion
+
+    #region Command UpdateSeedsInfoCommand - Команда для редактирования семян
+
+    /// <summary> Команда для редактирования семян </summary>
+    private ICommand _UpdateSeedsInfoCommand;
+
+    /// <summary> Команда для редактирования семян </summary>
+    public ICommand UpdateSeedsInfoCommand => _UpdateSeedsInfoCommand
+        ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted, CanUpdateSeedsInfoCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для редактирования семян </summary>
+    private bool CanUpdateSeedsInfoCommandExecute() => EditedItem != null;
+
+    /// <summary> Логика выполнения - Команда для редактирования семян </summary>
+    private async Task OnUpdateSeedsInfoCommandExecuted()
+    {
+        if (!_UserDialog.YesNoQuestion(
+                $"Вы уверены, что хотите изменить информацию о семенах сорта - {EditedItem.Plant.PlantSort.Name}",
+                "Редактирование семян")) return;
+
+        CopySeedToEditItem(EditedItem, SelectedItem);
+        if (SelectedItem.SeedsInfo.AmountSeeds > 0)
+            SelectedItem.SeedsInfo.AmountSeedsWeight = 0;
+        await _SeedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
+        UpdateCollectionViewSource(SelectedItem.Id);
+    }
+
+
+
+    #endregion
+
+    #region Command CancelUpdateSeedsInfoCommand - Команда для редактирования семян
+
+    /// <summary> Команда для редактирования семян </summary>
+    private ICommand _CancelUpdateSeedsInfoCommand;
+
+    /// <summary> Команда для редактирования семян </summary>
+    public ICommand CancelUpdateSeedsInfoCommand => _CancelUpdateSeedsInfoCommand
+        ??= new LambdaCommandAsync(OnCancelUpdateSeedsInfoCommandExecuted, CanCancelUpdateSeedsInfoCommandExecute);
+
+    /// <summary> Проверка возможности выполнения - Команда для редактирования семян </summary>
+    private bool CanCancelUpdateSeedsInfoCommandExecute() => true;
+
+    /// <summary> Логика выполнения - Команда для редактирования семян </summary>
+    private async Task OnCancelUpdateSeedsInfoCommandExecuted()
+    {
+        
+        UpdateCollectionViewSource(SelectedItem.Id);
+    }
+
+
+
     #endregion
 
     #endregion

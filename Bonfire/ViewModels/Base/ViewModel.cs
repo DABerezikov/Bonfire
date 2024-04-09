@@ -5,15 +5,15 @@ namespace Bonfire.ViewModels.Base
 {
     public abstract class ViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string PropertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(PropertyName));
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        protected virtual bool Set<T>(ref T field, T value, [CallerMemberName] string PropertyName = null)
+        protected virtual bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (Equals(field, value)) return false;
             field = value;
-            OnPropertyChanged(PropertyName);
+            OnPropertyChanged(propertyName);
             return true;
         }
     }

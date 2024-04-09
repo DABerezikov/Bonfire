@@ -8,7 +8,7 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         DataContext="{Binding MainWindowModel, Source={StaticResource Locator}}"
         Title="{Binding Title}"
-        Width="1920" Height="1080">
+        Width="1920" Height="1080" WindowState="Maximized">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding ShowSeedViewModelCommand}"></i:InvokeCommandAction>
@@ -24,15 +24,38 @@
             <MenuItem Header="Файл">
                 <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}"/>
             </MenuItem>
-            <MenuItem>
+            <MenuItem Header="Отчеты">
+                <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
+            </MenuItem>
+            <MenuItem Command="{Binding ShowSeedViewModelCommand}" Background="{Binding SeedBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
+                        
                         <fa5:ImageAwesome Icon="Solid_Leaf" Height="13"  Margin="0, 0,5,0" Foreground="Green"/>
-                        <TextBlock Text="Семена" ></TextBlock>
+                        <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}"/>
+                    </StackPanel>
+
+
+                </MenuItem.Header>
+                
+            </MenuItem>
+            <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}" Background="{Binding SeedlingBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Seedling" Height="13"  Margin="0, 0,5,0" Foreground="MediumSeaGreen"/>
+                        <TextBlock Text="Рассада" FontWeight="{Binding SeedlingsBold}"></TextBlock>
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-            
+            <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}" Background="{Binding LibraryBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Book" Height="13"  Margin="0, 0,5,0" Foreground="Chocolate"/>
+                        <TextBlock Text="Редактор библиотек" FontWeight="{Binding LibraryBold}"></TextBlock>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+           
         </Menu>
         
         <StatusBar DockPanel.Dock="Bottom">

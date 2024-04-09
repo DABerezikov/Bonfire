@@ -42,6 +42,7 @@ namespace Bonfire
                 scope.ServiceProvider.GetRequiredService<DbInitializer>().InitializeAsync().Wait();
             }
 
+           
             base.OnStartup(e);
             await host.StartAsync();
         }

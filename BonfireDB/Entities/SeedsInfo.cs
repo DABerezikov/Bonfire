@@ -7,11 +7,11 @@ public class SeedsInfo: Entity
     /// <summary>
     /// Вес семян в упаковке, грамм
     /// </summary>
-    public int WeightPack { get; set; }
+    public double WeightPack { get; set; }
     /// <summary>
     /// Количество семян в упаковке, штук
     /// </summary>
-    public int QuantityPack { get; set; }
+    public double QuantityPack { get; set; }
     /// <summary>
     /// Дата покупки
     /// </summary>
@@ -32,11 +32,11 @@ public class SeedsInfo: Entity
     /// <summary>
     /// Количество семян штук
     /// </summary>
-    public int AmountSeeds { get; set; }
+    public double AmountSeeds { get; set; }
     /// <summary>
     /// Количество семян грамм
     /// </summary>
-    public int? AmountSeedsWeight { get; set; }
+    public double? AmountSeedsWeight { get; set; }
     /// <summary>
     /// Источник семян
     /// </summary>

@@ -7,13 +7,17 @@ namespace BonfireDB;
 public static class RepositoryRegister
 {
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
-        .AddTransient<IRepository<Plant>, PlantRepository>()
-        .AddTransient<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
-        .AddTransient<IRepository<PlantSort>, PlantSortRepository>()
-        .AddTransient<IRepository<Producer>, DbRepository<Producer>>()
-        .AddTransient<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
-        .AddTransient<IRepository<Seed>, SeedsRepository>()
-        
+        .AddScoped<IRepository<Plant>, PlantRepository>()
+        .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
+        .AddScoped<IRepository<PlantSort>, PlantSortRepository>()
+        .AddScoped<IRepository<Producer>, DbRepository<Producer>>()
+        .AddScoped<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
+        .AddScoped<IRepository<Seed>, SeedsRepository>()
+        .AddScoped<IRepository<Seedling>, SeedlingsRepository>()
+        .AddScoped<IRepository<SeedlingInfo>, SeedlingInfoRepository>()
+        .AddScoped<IRepository<Replanting>, DbRepository<Replanting>>()
+        .AddScoped<IRepository<Treatment>, DbRepository<Treatment>>()
+
         ;
 
 }

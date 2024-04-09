@@ -4,13 +4,45 @@ namespace Bonfire.Models;
 
 public class SeedsFromViewModel
 {
+    private double? _AmountSeedsQuantity;
+
+    private double? _AmountSeedsWeight;
+    private double? _WeightPack;
+    private double? _QuantityPack;
     internal int Id { get; set; }
     public string? Culture { get; set; }
     public string? Sort { get; set; }
     public string? Producer { get; set; }
     public DateTime ExpirationDate { get; set; }
-    public int? WeightPack { get; set; }
-    public int? QuantityPack { get; set; }
-    public int? AmountSeedsWeight { get; set; }
-    public int? AmountSeedsQuantity { get; set; }
+    
+
+    public double? WeightPack
+    {
+        get => _WeightPack != 0.0 ? _WeightPack : null;
+        set => _WeightPack = value;
+    }
+
+    public double? QuantityPack
+    {
+        get => _QuantityPack != 0.0 ? _QuantityPack : null;
+        set => _QuantityPack = value;
+    }
+
+    public double? AmountSeedsWeight
+    {
+        get => _AmountSeedsWeight != 0.0 ? _AmountSeedsWeight : null;
+        set => _AmountSeedsWeight = value;
+    }
+
+    public double? AmountSeedsQuantity
+    {
+        get => _AmountSeedsQuantity != 0.0 ? _AmountSeedsQuantity : null;
+        set => _AmountSeedsQuantity = value;
+    }
+
+    public bool IsStillGood =>
+        DateTime.Now.Year - ExpirationDate.Year <= 0 && DateTime.Now.Year - ExpirationDate.Year > -1;
+
+    public bool IsOld => DateTime.Now.Year - ExpirationDate.Year > 0;
 }
+

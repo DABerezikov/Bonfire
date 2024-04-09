@@ -1,7 +1,5 @@
 ﻿using Bonfire.Infrastructure.Commands.Base;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Bonfire.Infrastructure.Commands
 {

@@ -15,7 +15,7 @@ namespace BonfireDB.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.3");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.3");
 
             modelBuilder.Entity("BonfireDB.Entities.Plant", b =>
                 {
@@ -116,6 +116,31 @@ namespace BonfireDB.Migrations
                     b.ToTable("Producers");
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Replanting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("PotVolume")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime>("ReplantingDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReplantingNote")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SeedlingInfoId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeedlingInfoId");
+
+                    b.ToTable("Replants");
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.Seed", b =>
                 {
                     b.Property<int>("Id")
@@ -138,17 +163,105 @@ namespace BonfireDB.Migrations
                     b.ToTable("Seeds");
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Seedling", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Quantity")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("SeedId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("Weight")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlantId");
+
+                    b.ToTable("Seedlings");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.SeedlingInfo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DeathNote")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("GerminationDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsDead")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LandingDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LunarPhase")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("MotherPlantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PlantPlace")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("QuarantineCause")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("QuarantineNote")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("QuarantineStartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("QuarantineStopDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("QuenchingDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SeedlingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SeedlingNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SeedlingSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeedlingId");
+
+                    b.ToTable("SeedlingInfos");
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.SeedsInfo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AmountSeeds")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("AmountSeeds")
+                        .HasColumnType("REAL");
 
-                    b.Property<int?>("AmountSeedsWeight")
-                        .HasColumnType("INTEGER");
+                    b.Property<double?>("AmountSeedsWeight")
+                        .HasColumnType("REAL");
 
                     b.Property<decimal>("CostPack")
                         .HasColumnType("TEXT");
@@ -165,18 +278,43 @@ namespace BonfireDB.Migrations
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("QuantityPack")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("QuantityPack")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("SeedSource")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("WeightPack")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("WeightPack")
+                        .HasColumnType("REAL");
 
                     b.HasKey("Id");
 
                     b.ToTable("SeedsInfo");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Treatment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Product")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SeedlingInfoId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("TreatmentDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TreatmentMethod")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeedlingInfoId");
+
+                    b.ToTable("Treatments");
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Plant", b =>
@@ -209,6 +347,17 @@ namespace BonfireDB.Migrations
                     b.Navigation("Producer");
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Replanting", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.SeedlingInfo", "SeedlingInfo")
+                        .WithMany("Replants")
+                        .HasForeignKey("SeedlingInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SeedlingInfo");
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.Seed", b =>
                 {
                     b.HasOne("BonfireDB.Entities.Plant", "Plant")
@@ -228,6 +377,35 @@ namespace BonfireDB.Migrations
                     b.Navigation("SeedsInfo");
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Seedling", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.Plant", "Plant")
+                        .WithMany()
+                        .HasForeignKey("PlantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plant");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.SeedlingInfo", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.Seedling", null)
+                        .WithMany("SeedlingInfos")
+                        .HasForeignKey("SeedlingId");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Treatment", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.SeedlingInfo", "SeedlingInfo")
+                        .WithMany("Treatments")
+                        .HasForeignKey("SeedlingInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SeedlingInfo");
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.PlantCulture", b =>
                 {
                     b.Navigation("Plants");
@@ -241,6 +419,18 @@ namespace BonfireDB.Migrations
             modelBuilder.Entity("BonfireDB.Entities.Producer", b =>
                 {
                     b.Navigation("PlantSorts");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Seedling", b =>
+                {
+                    b.Navigation("SeedlingInfos");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.SeedlingInfo", b =>
+                {
+                    b.Navigation("Replants");
+
+                    b.Navigation("Treatments");
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.SeedsInfo", b =>

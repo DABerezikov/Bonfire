@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <StartupObject>Bonfire.Program</StartupObject>
@@ -15,6 +15,14 @@
     <None Remove="Views\Image\Flower 4.jpg" />
     <None Remove="Views\Image\Fruit 1.jpg" />
     <None Remove="Views\Image\Herb 2.jpg" />
+    <None Remove="Views\Image\MoonPhase_1.jpg" />
+    <None Remove="Views\Image\MoonPhase_2.jpg" />
+    <None Remove="Views\Image\MoonPhase_3.jpg" />
+    <None Remove="Views\Image\MoonPhase_4.jpg" />
+    <None Remove="Views\Image\MoonPhase_5.jpg" />
+    <None Remove="Views\Image\MoonPhase_6.jpg" />
+    <None Remove="Views\Image\MoonPhase_7.jpg" />
+    <None Remove="Views\Image\MoonPhase_8.jpg" />
     <None Remove="Views\Image\VegetableGardenIcon_.ico" />
     <None Remove="Views\Image\Vegetables 7.jpg" />
   </ItemGroup>
@@ -24,18 +32,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\Extensions\" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="EPPlus" Version="7.1.0" />
     <PackageReference Include="FontAwesome5" Version="2.1.11" />
-    <PackageReference Include="MathCore.WPF" Version="0.0.44.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="7.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.3">
+    <PackageReference Include="MathCore.WPF" Version="0.0.44.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="NLog.Config" Version="4.7.15" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
     <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
   </ItemGroup>
 
@@ -44,12 +53,32 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="MoonCalendar">
+      <HintPath>..\..\MoonCalendar\MoonCalendar\MoonCalendar\bin\Release\net8.0\publish\MoonCalendar.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="Views\Image\All.jpg" />
     <Resource Include="Views\Image\Berry 2.jpg" />
     <Resource Include="Views\Image\Flower 4.jpg" />
     <Resource Include="Views\Image\Fruit 1.jpg" />
     <Resource Include="Views\Image\Herb 2.jpg" />
+    <Resource Include="Views\Image\MoonPhase_1.jpg" />
+    <Resource Include="Views\Image\MoonPhase_2.jpg" />
+    <Resource Include="Views\Image\MoonPhase_3.jpg" />
+    <Resource Include="Views\Image\MoonPhase_4.jpg" />
+    <Resource Include="Views\Image\MoonPhase_5.jpg" />
+    <Resource Include="Views\Image\MoonPhase_6.jpg" />
+    <Resource Include="Views\Image\MoonPhase_7.jpg" />
+    <Resource Include="Views\Image\MoonPhase_8.jpg" />
     <Resource Include="Views\Image\Vegetables 7.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="AssemblyInfo.cs">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

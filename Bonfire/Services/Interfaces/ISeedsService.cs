@@ -1,8 +1,5 @@
 ﻿using BonfireDB.Entities;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bonfire.Services.Interfaces
@@ -14,6 +11,11 @@ namespace Bonfire.Services.Interfaces
         Task<Seed> MakeASeed(Plant plant, SeedsInfo seedsInfo);
         Task<Seed> UpdateSeed(Seed seed);
         Task<Seed> DeleteSeed(Seed seed);
+        Task<PlantSort> UpdateSort(PlantSort seed);
+        Task<PlantCulture> UpdateCulture(PlantCulture culture);
+        Task<Producer> UpdateProducer(Producer producer);
 
     }
+
+    
 }

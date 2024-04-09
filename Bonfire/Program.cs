@@ -11,9 +11,11 @@ public class Program
         var app = new App();
         app.InitializeComponent();
         app.Run();
+        
     }
 
     public static IHostBuilder CreateHostBuilder(string[] args) => Host
         .CreateDefaultBuilder(args)
-        .ConfigureServices(App.ConfigureServices);
+        .ConfigureServices(App.ConfigureServices)
+        ;
 }

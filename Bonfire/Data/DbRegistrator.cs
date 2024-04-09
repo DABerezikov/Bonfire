@@ -26,7 +26,7 @@ namespace Bonfire.Data
 
                 }
             })
-            .AddTransient<DbInitializer>()
+            .AddSingleton<DbInitializer>()
             .AddRepositoriesInDb()
         ;
     }

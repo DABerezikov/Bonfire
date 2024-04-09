@@ -3,9 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bonfire", "Bonfire\Bonfire.csproj", "{4F7B5D00-1DCD-40C2-B664-C9F0C653699E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bonfire", "Bonfire\Bonfire.csproj", "{4F7B5D00-1DCD-40C2-B664-C9F0C653699E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BonfireDB", "BonfireDB\BonfireDB.csproj", "{E81D5CAF-FCE5-4C7C-957F-EC5FB4CF2860}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BonfireDB", "BonfireDB\BonfireDB.csproj", "{E81D5CAF-FCE5-4C7C-957F-EC5FB4CF2860}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{95DFA037-6764-4295-830A-D91AD775D58E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeedsFromViewModel.Tests", "Tests\SeedsFromViewModel.Tests\SeedsFromViewModel.Tests.csproj", "{DDB9B787-EE18-47B3-BB99-61A7301FBF4A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +25,16 @@ Global
 		{E81D5CAF-FCE5-4C7C-957F-EC5FB4CF2860}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E81D5CAF-FCE5-4C7C-957F-EC5FB4CF2860}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E81D5CAF-FCE5-4C7C-957F-EC5FB4CF2860}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDB9B787-EE18-47B3-BB99-61A7301FBF4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDB9B787-EE18-47B3-BB99-61A7301FBF4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDB9B787-EE18-47B3-BB99-61A7301FBF4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDB9B787-EE18-47B3-BB99-61A7301FBF4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DDB9B787-EE18-47B3-BB99-61A7301FBF4A} = {95DFA037-6764-4295-830A-D91AD775D58E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B8C09635-371F-4A06-8BDB-A7A1137A45CF}

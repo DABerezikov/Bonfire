@@ -9,16 +9,21 @@
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-             d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
-             d:DesignHeight="1080" d:DesignWidth="1920">
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:templates="clr-namespace:Bonfire.Templates"
+        d:DataContext="{d:DesignInstance {x:Type vm:SeedsViewModel}}"
+             d:DesignHeight="1080" d:DesignWidth="1920" KeyUp="ComboBox_OnKeyUp">
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadDataCommand}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <Grid Margin="10">
+    
 
+    <Grid Margin="10" >
+
+        
 
 
         <Grid.RowDefinitions>
@@ -34,28 +39,188 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid DataContext="{Binding SeedsView}"
-                                ItemsSource="{Binding }"
+
+
+        <DataGrid 
+                                ItemsSource="{Binding SeedsView }"
                               AutoGenerateColumns="False"
                               VerticalAlignment="Top"
                               Grid.Row="1"
+                              IsReadOnly="True"
+                              IsSelected="False"
                               Margin="10"
                               ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                                Grid.ColumnSpan="3" HorizontalAlignment="Center"
+                              Grid.ColumnSpan="3" HorizontalAlignment="Center"
                               EnableColumnVirtualization="True"
-                              EnableRowVirtualization="True">
+                              EnableRowVirtualization="True"
+                              SelectedItem="{Binding SelectedSeedsViewItem}"
+                              RowDetailsVisibilityMode="Collapsed">
+
+            <i:Interaction.Behaviors>
+                <templates:ScrollIntoViewBehavior/>
+                <templates:DoubleClickBehavior/>
+                <templates:SingleRowDetailsBehavior/>
+            </i:Interaction.Behaviors>
+
 
             <DataGrid.Columns >
                 <DataGridTextColumn Header="Культура" Binding="{Binding Culture}" Width="150"/>
                 <DataGridTextColumn Header="Сорт" Binding="{Binding Sort}" Width="*"/>
-                <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="180"/>
-                <DataGridTextColumn Header="Срок годности" Binding="{Binding ExpirationDate, StringFormat=12.yyyy}" Width="110"/>
-                <DataGridTextColumn Header="Кол-во, г" Binding="{Binding WeightPack}" Width="80"/>
-                <DataGridTextColumn Header="Кол-во, шт" Binding="{Binding QuantityPack}" Width="80"/>
-                <DataGridTextColumn Header="Остаток, г" Binding="{Binding AmountSeedsWeight}" Width="80"/>
-                <DataGridTextColumn Header="Остаток, шт" Binding="{Binding AmountSeedsQuantity}" Width="80"/>
+                <DataGridTextColumn Header="Производитель" Binding="{Binding Producer}" Width="230"/>
+                <DataGridTemplateColumn Header="Срок годности"  Width="120" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate >
+                            <StackPanel Orientation="Horizontal" Margin="35,0,0,0">
+                                <TextBlock Text="{Binding ExpirationDate, StringFormat=12.yyyy}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsStillGood}" Value="true">
+                                    <Setter Property="TextBlock.Foreground" Value="DarkGreen"/>
+                                    <Setter Property="TextBlock.FontWeight" Value="Bold"/>
+                                </DataTrigger>
+
+                                <DataTrigger Binding="{Binding IsOld}" Value="true">
+                                    <Setter Property="TextBlock.Foreground" Value="DarkRed"/>
+                                    <Setter Property="TextBlock.FontWeight" Value="Bold"/>
+                                </DataTrigger>
+
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+
+                    </DataGridTemplateColumn.CellTemplate>
+
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Кол-во в уп. г./шт." Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="50"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding WeightPack}" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="/"/>
+                                <TextBlock Grid.Column="2" Text="{Binding QuantityPack}" HorizontalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Остаток, г./шт." Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="50"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding AmountSeedsWeight, StringFormat=0.00}" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="/"/>
+                                <TextBlock Grid.Column="2" Text="{Binding AmountSeedsQuantity}" HorizontalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
             </DataGrid.Columns>
+            <DataGrid.RowDetailsTemplate>
+                <DataTemplate>
+                    <Grid Margin="5,10,5,10" >
+                        <Grid.ColumnDefinitions>
+                            
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="75"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="9" Grid.ColumnSpan="8" Style="{StaticResource SeedsBorderStyle}" CornerRadius="10" Margin="0,0,-10,0"/>
+
+                        <TextBlock  Grid.Row="1"  Grid.Column="0"  Text="Источник семян"  Style="{StaticResource SeedsTextBlockStyle}" />
+                        <ComboBox Grid.Row="2" Grid.Column="0" Margin="20,0,0,0" SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.EditedItem.SeedsInfo.SeedSource}" Style="{StaticResource SeedsComboBoxStyle}" Width="110" SelectedValuePath="Content" HorizontalContentAlignment="Center">
+                            <ComboBoxItem Content="Куплено" />
+                            <ComboBoxItem Content="Собрано" />
+                            <ComboBoxItem Content="Подарено" />
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Дата покупки" Style="{StaticResource SeedsTextBlockStyle}" Margin="0,0,0,0"/>
+                        <DatePicker Grid.Row="2"  Grid.Column="1" Margin="28,0,0,0" SelectedDate="{Binding  RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+                 Path=DataContext.EditedItem.SeedsInfo.PurchaseDate, StringFormat=dd.MM.yyyy}" Style="{StaticResource SeedsDatePickerStyle}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Вес в уп., грамм" Style="{StaticResource SeedsTextBlockStyle}" Margin="-3,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="2"  Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+             Path=DataContext.EditedItem.SeedsInfo.WeightPack}"  Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="3" Text="Кол-во в уп., штук" Style="{StaticResource SeedsTextBlockStyle}" Margin="-3,0,0,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="3" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.QuantityPack}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="4" Text="Срок годности" Style="{StaticResource SeedsTextBlockStyle}" Margin="-5,0,0,0"/>
+                        <DatePicker Grid.Row="2" Grid.Column="4" Margin="20,0,0,0" SelectedDate="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.ExpirationDate}" Style="{StaticResource SeedsDatePickerStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="5" Text="Стоимость уп., руб." Style="{StaticResource SeedsTextBlockStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="5" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.CostPack}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="6" Text="Остаток, штук" Style="{StaticResource SeedsTextBlockStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="6" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.AmountSeeds}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="7" Text="Остаток, грамм" Style="{StaticResource SeedsTextBlockStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="7" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.AmountSeedsWeight}" Style="{StaticResource SeedsTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4" Text="Примечание" Style="{StaticResource SeedsTextBlockStyle}" Width="500"/>
+                        <TextBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.Note}" Style="{StaticResource SeedsTextBoxStyle}" Width="500" Height="75" TextAlignment="Left"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="4" Grid.ColumnSpan="4" Text="Комментарий при удалении" Style="{StaticResource SeedsTextBlockStyle}" Width="500"/>
+                        <TextBox Grid.Row="5" Grid.Column="4" Grid.ColumnSpan="4" Margin="20,0,0,0" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+     Path=DataContext.EditedItem.SeedsInfo.DisposeComment}" Style="{StaticResource SeedsTextBoxStyle}" Width="500" Height="75" TextAlignment="Left"/>
+
+                        <Button Grid.Column="6" Grid.Row="7" Content="Сохранить" Style="{StaticResource SeedsButtonStyle}" 
+                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.UpdateSeedsInfoCommand}"/>
+                        <Button Grid.Column="7" Grid.Row="7" Content="Отмена" Style="{StaticResource SeedsButtonStyle}"
+                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Path=DataContext.CancelUpdateSeedsInfoCommand}"/>
+
+
+
+
+
+
+
+                    </Grid>
+
+
+                   
+
+
+
+
+                  
+
+                   
+                </DataTemplate>
+            </DataGrid.RowDetailsTemplate>
+
         </DataGrid>
         <!--Кнопки сортировки-->
         <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource SeedsChoiceButtonStyle}"
@@ -101,10 +266,10 @@
         </Button>
 
         <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5" Style="{StaticResource SeedsChoiceComboBoxStyle}"
-                   SelectedItem="{Binding SeedFilter}" ItemsSource="{Binding ListCulture}"
+                   Text="{Binding SeedFilter, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding ListCulture}"
                    IsEditable="True" />
 
-        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="True" />
+        <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="{Binding IsHaving}"  />
         <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                     Width="200" Text="Показывать в наличии" TextAlignment="Left" VerticalAlignment="Center"/>
 
@@ -120,7 +285,7 @@
 
 
         <TextBlock Margin="318,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
-                   TextWrapping="Wrap" Text="Добавление семян" FontSize="14"/>
+                   TextWrapping="Wrap" Text="Добавление семян" Width="200" FontSize="18" FontWeight="Bold" Height="30"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
                                  Content="Куплено" IsChecked="{Binding IsSold}" />
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 85, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
@@ -130,30 +295,30 @@
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Класс" Grid.ColumnSpan="2"/>
         <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,70,0,105" Style="{StaticResource SeedsComboBoxStyle}"
-                  ItemsSource="{Binding AddClassList}"
+                  ItemsSource="{Binding AddClassList}" KeyUp="ComboBox_OnKeyUp"
                               SelectedItem="{Binding AddClass}" Grid.ColumnSpan="2"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="154,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Культура" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding CultureListView}"
-                   Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" />
+                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddCultureList}" 
+                   Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
 
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Сорт" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
                    VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddSortList}"
-                   Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }"/>
+                   Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" KeyUp="ComboBox_OnKeyUp"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="520,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Производитель" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="520,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-                   VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True"
+                   VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True" KeyUp="ComboBox_OnKeyUp"
                    ItemsSource="{Binding AddProducerList}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="704,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                                Width="190" Text="Примечание" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="704,70,0,0" Style="{StaticResource SeedsTextBoxStyle}"
                   Width="190" Height="72" TextAlignment="Left" TextWrapping="Wrap" MaxLength="112"
                   Text="{Binding AddNote, UpdateSourceTrigger=PropertyChanged}"/>
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+            <TextBlock Grid.Row="3" Grid.Column="1" Margin="92,115,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Ед. измерения" Grid.ColumnSpan="2" />
         <ComboBox Grid.Row="3" Grid.Column="1" Margin="92,145,0,0" Style="{StaticResource SeedsComboBoxStyle}"
                    VerticalAlignment="Top" ItemsSource="{Binding AddSizeList}" Text="{Binding AddSize }" Grid.ColumnSpan="2"/>
@@ -177,6 +342,103 @@
                  Content="Добавить" Command="{Binding AddOrCorrectSeedCommand}" />
         <Button Grid.Row="3" Grid.Column="3" Margin="0,165,50,0" Style="{StaticResource SeedsButtonStyle}"
                 Content="Удалить" Command="{Binding DeleteSeedCommand}" HorizontalAlignment="Right" />
+
+
+
+        <Border Grid.Column="3" Grid.Row="1" Height="145"  HorizontalAlignment="Stretch" Margin="20, 60, 20, 0" VerticalAlignment="Top"
+                BorderBrush="LightGray" BorderThickness="1" CornerRadius="10"/>
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Stretch" Margin="20, 10, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.Name}" TextAlignment="Center" FontSize="16" FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="150" HorizontalAlignment="Left" Margin="25, 40, 20, 0" VerticalAlignment="Top" 
+                   Text="Краткая информация " TextAlignment="Left" FontSize="13" FontWeight="DemiBold" FontStyle="Italic" />
+
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="50" HorizontalAlignment="Left" Margin="25, 70, 20, 0" VerticalAlignment="Top" 
+                   Text="Класс - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 70, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantCulture.Class}" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="100" HorizontalAlignment="Left" Margin="25, 90, 20, 0" VerticalAlignment="Top" 
+                   Text="Источник семян - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 90, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.SeedsInfo.SeedSource}" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="120" HorizontalAlignment="Left" Margin="25, 110, 20, 0" VerticalAlignment="Top" 
+                   Text="Вес в упаковке, г - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 110, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.SeedsInfo.WeightPack}" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 130, 20, 0" VerticalAlignment="Top" 
+                   Text="Кол-во в уп., шт - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 130, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.SeedsInfo.QuantityPack}" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 150, 20, 0" VerticalAlignment="Top" 
+                   Text="Стоимость уп., руб - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 150, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.SeedsInfo.CostPack}" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 170, 20, 0" VerticalAlignment="Top" 
+                   Text="Дата покупки - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 170, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.SeedsInfo.PurchaseDate, StringFormat=dd.MM.yyyy }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="240, 65, 20, 0" VerticalAlignment="Top" 
+                   Text="Примечание" TextAlignment="Left"  FontWeight="DemiBold" />
+        <Border Grid.Column="3" Grid.Row="1" BorderBrush="LightGray" BorderThickness="1"
+                Height="105" Margin="230, 85, 30, 0" VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                CornerRadius="5">
+            <TextBlock Text="{Binding SelectedItem.SeedsInfo.Note }" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
+        </Border>
+
+
+        <Border Grid.Column="3" Grid.Row="1" Height="180" HorizontalAlignment="Stretch" Margin="20, 240, 20, 100" VerticalAlignment="Top"
+                BorderBrush="LightGray" BorderThickness="1" CornerRadius="10"/>
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="150" HorizontalAlignment="Left" Margin="25, 220, 20, 0" VerticalAlignment="Top" 
+                   Text="Информация о сорте " TextAlignment="Left" FontSize="13" FontWeight="DemiBold" FontStyle="Italic" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 250, 20, 0" VerticalAlignment="Top" 
+                   Text="Производитель - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 250, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.Producer.Name }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 270, 20, 0" VerticalAlignment="Top" 
+                   Text="Цвет - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 270, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.PlantColor }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 290, 20, 0" VerticalAlignment="Top" 
+                   Text="Высота растения, см - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 290, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.PlantHeight }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 310, 20, 0" VerticalAlignment="Top" 
+                   Text="Схема посадки, см - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 310, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.LandingPattern }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 330, 20, 0" VerticalAlignment="Top" 
+                   Text="Возраст рассады, дн - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 330, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.AgeOfSeedlings }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 350, 20, 0" VerticalAlignment="Top" 
+                   Text="Вегетация, дн - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 350, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.GrowingSeason }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="35, 370, 20, 0" VerticalAlignment="Top" 
+                   Text="- min время, дн - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 370, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.MinGerminationTime }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="35, 390, 20, 0" VerticalAlignment="Top" 
+                   Text="- max время, дн - " TextAlignment="Left"  FontWeight="DemiBold" />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 390, 20, 0" VerticalAlignment="Top"
+                   Text="{Binding SelectedItem.Plant.PlantSort.MaxGerminationTime }" TextAlignment="Left"  />
+        <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="240, 290, 20, 0" VerticalAlignment="Top" 
+                   Text="Описание" TextAlignment="Left"  FontWeight="DemiBold" />
+        <Border Grid.Column="3" Grid.Row="1" BorderBrush="LightGray" BorderThickness="1"
+                Height="100" Margin="230, 310, 30, 0" VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                CornerRadius="5">
+            <TextBlock Text="{Binding SelectedItem.Plant.PlantSort.Description }" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
+        </Border>
+
+
+
+
+        <Border Grid.Column="3" Grid.Row="1"  HorizontalAlignment="Stretch" Margin="20, 455, 20, 20" VerticalAlignment="Stretch"
+                BorderBrush="LightGray" BorderThickness="1" CornerRadius="10">
+            <TextBlock Text="{Binding SelectedItem.SeedsInfo.DisposeComment }" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
+        </Border>
+            <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="300" HorizontalAlignment="Left" Margin="25, 435, 20, 60" VerticalAlignment="Top" 
+                   Text="Комментарий при удалении" TextAlignment="Left" FontSize="13" FontWeight="DemiBold" FontStyle="Italic" />
+
 
 
 

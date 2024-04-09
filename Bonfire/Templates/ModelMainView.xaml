@@ -7,5 +7,15 @@
         <view:SeedsWindow DataContext="{Binding}"></view:SeedsWindow>
 
     </DataTemplate>
-    
+
+    <DataTemplate DataType="{x:Type vm:LibraryEditorViewModel}">
+        <view:LibraryEditorWindow DataContext="{Binding}"></view:LibraryEditorWindow>
+
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:SeedlingsViewModel}">
+        <view:SeedlingsWindow DataContext="{Binding}"></view:SeedlingsWindow>
+
+    </DataTemplate>
+
 </ResourceDictionary>
