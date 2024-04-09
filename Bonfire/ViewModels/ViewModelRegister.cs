@@ -8,7 +8,7 @@ namespace Bonfire.ViewModels
            .AddSingleton<MainWindowViewModel>()
            .AddSingleton<SeedsViewModel>()
            .AddSingleton<SeedlingsViewModel>()
-
+           .AddSingleton<GardenViewModel>()
         ;
     }
 }

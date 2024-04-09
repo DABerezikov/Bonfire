@@ -8,5 +8,6 @@ namespace Bonfire.ViewModels
         public SeedsViewModel SeedsModel => App.Services.GetRequiredService<SeedsViewModel>();
         public SeedlingsViewModel SeedlingsModel => App.Services.GetRequiredService<SeedlingsViewModel>();
         public LibraryEditorViewModel LibraryEditorModel => App.Services.GetRequiredService<LibraryEditorViewModel>();
+        public GardenViewModel GardenModel => App.Services.GetRequiredService<GardenViewModel>();
     }
 }

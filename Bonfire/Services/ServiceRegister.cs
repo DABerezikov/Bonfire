@@ -1,6 +1,4 @@
-﻿using System;
-using AutoMapper;
-using Bonfire.Services.Interfaces;
+﻿using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using MoonCalendar;
