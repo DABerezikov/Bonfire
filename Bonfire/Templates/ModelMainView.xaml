@@ -19,7 +19,7 @@
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:GardenViewModel}">
-        <view:SeedlingsWindow DataContext="{Binding}"></view:SeedlingsWindow>
+        <view:GardenWindow DataContext="{Binding}"></view:GardenWindow>
 
     </DataTemplate>
 

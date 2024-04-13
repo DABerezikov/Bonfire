@@ -13,5 +13,10 @@ public class Treatment : Entity
     /// <summary> Способ обработки </summary>
     public string? TreatmentMethod { get; set; }
 
-    public SeedlingInfo SeedlingInfo { get; set; }
+    public SeedlingInfo? SeedlingInfo { get; set; }
+
+    public PlantingInfo? PlantingInfo { get; set; }
+    
+    public Soil? Soil { get; set; }
+
 }

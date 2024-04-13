@@ -27,17 +27,21 @@
             <MenuItem Header="Отчеты">
                 <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
             </MenuItem>
+            
+           
+        </Menu>
+        <Menu DockPanel.Dock="Top">
             <MenuItem Command="{Binding ShowSeedViewModelCommand}" Background="{Binding SeedBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        
+
                         <fa5:ImageAwesome Icon="Solid_Leaf" Height="13"  Margin="0, 0,5,0" Foreground="Green"/>
                         <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}"/>
                     </StackPanel>
 
 
                 </MenuItem.Header>
-                
+
             </MenuItem>
             <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}" Background="{Binding SeedlingBackground}">
                 <MenuItem.Header>
@@ -47,6 +51,16 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
+
+            <MenuItem Command="{Binding ShowGardenViewModelCommand}" Background="{Binding GardenBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_List" Height="13"  Margin="0, 0,5,0" Foreground="DarkCyan"/>
+                        <TextBlock Text="Огород" FontWeight="{Binding GardenBold}"></TextBlock>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+
             <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}" Background="{Binding LibraryBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -55,7 +69,7 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-           
+
         </Menu>
         
         <StatusBar DockPanel.Dock="Bottom">

@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Bonfire.Views.Windows
+namespace Bonfire.Views
 {
     /// <summary>
     /// Логика взаимодействия для GardenWindow.xaml

@@ -16,6 +16,7 @@ namespace Bonfire.ViewModels
         ISeedlingsService SeedlingsService,
         SeedsViewModel SeedsViewModel,
         SeedlingsViewModel SeedlingsViewModel,
+        GardenViewModel GardenViewModel,
         IMapper Mapper)
         : ViewModel
     {
@@ -83,6 +84,13 @@ namespace Bonfire.ViewModels
         /// <summary>Окно редактора</summary>
         public FontWeight LibraryBold { get => _LibraryBold; set => Set(ref _LibraryBold, value); }
         public Brush LibraryBackground { get => _LibraryBackground; set => Set(ref _LibraryBackground, value); }
+        
+        /// <summary>Окно огорода</summary>
+        private FontWeight _GardenBold;
+        private Brush _GardenBackground;
+        /// <summary>Окно огорода</summary>
+        public FontWeight GardenBold { get => _GardenBold; set => Set(ref _GardenBold, value); }
+        public Brush GardenBackground { get => _GardenBackground; set => Set(ref _GardenBackground, value); }
 
 
 
@@ -123,6 +131,9 @@ namespace Bonfire.ViewModels
             SeedlingBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
             LibraryBold = default;
             LibraryBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
+            GardenBold = default;
+            GardenBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
+
         }
 
         #endregion
@@ -157,19 +168,19 @@ namespace Bonfire.ViewModels
 
         #endregion
 
-        #region Command ShowSeedlingsViewModelCommand - Отобразить представление редактора библиотек
+        #region Command ShowSeedlingsViewModelCommand - Отобразить представление рассады
 
-        /// <summary> Отобразить представление редактора библиотек </summary>
+        /// <summary> Отобразить представление рассады </summary>
         private ICommand _ShowSeedlingsViewModelCommand;
 
-        /// <summary> Отобразить представление редактора библиотек </summary>
+        /// <summary> Отобразить представление рассады </summary>
         public ICommand ShowSeedlingsViewModelCommand => _ShowSeedlingsViewModelCommand
             ??= new LambdaCommand(OnShowSeedlingsViewModelCommandExecuted, CanShowSeedlingsViewModelCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Отобразить представление редактора библиотек </summary>
+        /// <summary> Проверка возможности выполнения - Отобразить представление рассады </summary>
         private bool CanShowSeedlingsViewModelCommandExecute() => true;
 
-        /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
+        /// <summary> Логика выполнения - Отобразить представление рассады </summary>
         private void OnShowSeedlingsViewModelCommandExecuted()
         {
             if (CurrentViewModel is SeedlingsViewModel) return;
@@ -182,6 +193,33 @@ namespace Bonfire.ViewModels
         }
 
         #endregion
+
+        #region Command ShowGardenViewModelCommand - Отобразить представление рассады
+
+        /// <summary> Отобразить представление рассады </summary>
+        private ICommand _ShowGardenViewModelCommand;
+
+        /// <summary> Отобразить представление рассады </summary>
+        public ICommand ShowGardenViewModelCommand => _ShowGardenViewModelCommand
+            ??= new LambdaCommand(OnShowGardenViewModelCommandExecuted, CanShowGardenViewModelCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Отобразить представление рассады </summary>
+        private bool CanShowGardenViewModelCommandExecute() => true;
+
+        /// <summary> Логика выполнения - Отобразить представление рассады </summary>
+        private void OnShowGardenViewModelCommandExecuted()
+        {
+            if (CurrentViewModel is GardenViewModel) return;
+            CurrentViewModel = new GardenViewModel(SeedlingsService, SeedsService, UserDialog, Mapper);
+            ClearBold();
+            GardenBold = _BoldFontWeight;
+            GardenBackground = _BackgroundBrash;
+
+
+        }
+
+        #endregion
+
 
         #region Command CreateSeedsReportCommand - Команда для формирования отчета по семенам
 
