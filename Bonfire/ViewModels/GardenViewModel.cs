@@ -21,7 +21,7 @@ namespace Bonfire.ViewModels
         private readonly ISeedbedService _SeedBedService;
         private readonly IUserDialog _UserDialog;
         private readonly IMapper _Mapper;
-        private DrawBehavior? _Draw;
+       
 
         public GardenViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IMapper mapper)
         {
