@@ -377,25 +377,27 @@ Path=DataContext.EditedItem.SeedlingInfos[0].Note}" Style="{StaticResource Seeds
         <Button Grid.Row="3" Grid.Column="1" Margin="900,60,0,0" Style="{StaticResource SeedsButtonStyle}"
                 Content="Взошло" Command="{Binding GerminateSeedlingCommand}"  Grid.ColumnSpan="2" />
 
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="675,90,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-                   Width="110" Text="Дата черенкования"  Grid.ColumnSpan="2"/>
-        <DatePicker Grid.Row="3" Grid.Column="1" Margin="680,110,0,0" Style="{StaticResource SeedsDatePickerStyle}"
-                    SelectedDate="{Binding CuttingDate, UpdateSourceTrigger=PropertyChanged}"  Grid.ColumnSpan="2"/>
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="810,90,0,0" Style="{StaticResource SeedsTextBlockStyle}"
-                   Width="60" Text="Кол-во"  Grid.ColumnSpan="2"/>
-        <TextBox Grid.Row="3" Grid.Column="1" Margin="810,110,0,0" Width="60" Style="{StaticResource SeedsTextBoxStyle}"
-                 Text="{Binding Cutting}" Grid.ColumnSpan="2"/>
-        <Button Grid.Row="3" Grid.Column="1" Margin="900,110,0,0" Style="{StaticResource SeedsButtonStyle}"
-                Content="Черенковано" Command="{Binding CuttingSeedlingCommand}"  Grid.ColumnSpan="2" />
 
-
-<TextBlock Grid.Row="3" Grid.Column="1" Margin="680,140,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+<TextBlock Grid.Row="3" Grid.Column="1" Margin="680,90,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Width="100" Text="Дата пикировки"  Grid.ColumnSpan="2"/>
-        <DatePicker Grid.Row="3" Grid.Column="1" Margin="680,160,0,0" Style="{StaticResource SeedsDatePickerStyle}"
+        <DatePicker Grid.Row="3" Grid.Column="1" Margin="680,110,0,0" Style="{StaticResource SeedsDatePickerStyle}"
                     SelectedDate="{Binding ReplantsDate, UpdateSourceTrigger=PropertyChanged}"  Grid.ColumnSpan="2"/>
        
-        <Button Grid.Row="3" Grid.Column="1" Margin="900,160,0,0" Style="{StaticResource SeedsButtonStyle}"
+        <Button Grid.Row="3" Grid.Column="1" Margin="900,110,0,0" Style="{StaticResource SeedsButtonStyle}"
                 Content="Пикировано" Command="{Binding ReplantsSeedlingCommand}"  Grid.ColumnSpan="2" />
+
+
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="675,140,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Width="110" Text="Дата черенкования"  Grid.ColumnSpan="2"/>
+        <DatePicker Grid.Row="3" Grid.Column="1" Margin="680,160,0,0" Style="{StaticResource SeedsDatePickerStyle}"
+                    SelectedDate="{Binding CuttingDate, UpdateSourceTrigger=PropertyChanged}"  Grid.ColumnSpan="2"/>
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="810,140,0,0" Style="{StaticResource SeedsTextBlockStyle}"
+                   Width="60" Text="Кол-во"  Grid.ColumnSpan="2"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Margin="810,160,0,0" Width="60" Style="{StaticResource SeedsTextBoxStyle}"
+                 Text="{Binding Cutting}" Grid.ColumnSpan="2"/>
+        <Button Grid.Row="3" Grid.Column="1" Margin="900,160,0,0" Style="{StaticResource SeedsButtonStyle}"
+                Content="Черенковано" Command="{Binding CuttingSeedlingCommand}"  Grid.ColumnSpan="2" />
+
 
         <TextBlock Grid.Column="3" Grid.Row="3" Margin="0,10,0,0 " Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Удаление всходов" HorizontalAlignment="Center" Width="200" FontSize="18" FontWeight="Bold" Grid.ColumnSpan="2" Height="30"/>
