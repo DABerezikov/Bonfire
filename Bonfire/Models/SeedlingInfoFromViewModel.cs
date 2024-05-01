@@ -10,5 +10,6 @@ public class SeedlingInfoFromViewModel
     public DateTime? QuenchingDate { get; set; }
     public bool IsQuarantine { get; set; }
     public bool? IsDead { get; set; }
+    public int? MotherPlantId { get; set; }
 
 }

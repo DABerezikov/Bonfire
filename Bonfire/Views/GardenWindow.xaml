@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:templates="clr-namespace:Bonfire.Templates"
+             xmlns:fa5="http://schemas.fontawesome.com/icons/"
              d:DataContext="{d:DesignInstance {x:Type vm:GardenViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920" >
 
@@ -68,12 +69,31 @@
 
 
             </i:Interaction.Triggers>
-            <ItemsControl ItemsSource="{Binding SeedBeds}">
+            <ItemsControl ItemsSource="{Binding SeedBeds}" >
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Canvas/>
+                        <Canvas IsItemsHost="True"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Content="{Binding}">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                    <i:InvokeCommandAction Command="{Binding DataContext.SelectShapeCommand, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                           CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                            <ContentControl.Template>
+                                <ControlTemplate TargetType="ContentControl">
+                                    <ContentPresenter/>
+                                </ControlTemplate>
+                            </ContentControl.Template>
+                        </ContentControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+
             </ItemsControl>
             
 
@@ -85,10 +105,10 @@
 
         <TextBlock Grid.Column="3" Grid.Row="2" Text="{Binding MousePosition.X, Mode=OneWay}" Style="{StaticResource SeedsTextBlockStyle}" Margin="10,10,0,0"/>
         <TextBlock Grid.Column="3" Grid.Row="2" Text="{Binding MousePosition.Y, Mode=OneWay}" Style="{StaticResource SeedsTextBlockStyle}" Margin="10,40,0,0"/>
-        <Button Grid.Row="2" Grid.Column="3" Margin="0,145,50,0" Style="{StaticResource SeedsButtonStyle}"
-                Content="Удалить" Command="{Binding DeleteSeedlingCommand}" HorizontalAlignment="Right" />
-
-
+        <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentWidth}" Margin="20,70,0,0"/>
+        <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentHeight}" Margin="150,70,0,0"/>
+        <Button Grid.Row="2" Grid.Column="3" Margin="0,20,50,0" Style="{StaticResource SeedsButtonStyle}"
+             Content="Прямоугольник"   Command="{Binding IsCreateRectangleCommand}" HorizontalAlignment="Right"/>
 
 
     </Grid>

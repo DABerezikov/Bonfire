@@ -52,8 +52,21 @@ namespace Bonfire.Models
             }
         }
 
-        public int CountGerminate => SeedlingInfos != null && SeedlingInfos.Count != 0 ? SeedlingInfos.Count : 0;
+        public int CountGerminate => GetCountGerminate();
 
-        public int? Balance => SeedlingInfos == null ? null : CountGerminate - SeedlingInfos.Select(s => s).Skip(1).Count(s => s.IsDead == true);
+        public int? Balance => SeedlingInfos == null ? null : SeedlingInfos.Count - SeedlingInfos.Select(s => s).Skip(1).Count(s => s.IsDead == true);
+
+        private int GetCountGerminate()
+        {
+            var count = 0;
+            if (SeedlingInfos == null && SeedlingInfos.Count == 0) return count;
+            foreach (var info in SeedlingInfos)
+            {
+                if (info.MotherPlantId != null) continue;
+                count++;
+            }
+
+            return count;
+        }
     }
 }

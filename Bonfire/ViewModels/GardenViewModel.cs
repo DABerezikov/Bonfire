@@ -11,6 +11,7 @@ using Bonfire.Templates;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Rectangle = System.Windows.Shapes.Rectangle;
+using System.Reflection.Metadata;
 
 namespace Bonfire.ViewModels
 {
@@ -67,6 +68,19 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
+        #region CurrentRectangle : Rectangle - Коллекция рассады
+
+        /// <summary>Коллекция рассады</summary>
+        private Rectangle _CurrentRectangle;
+
+        /// <summary>Коллекция рассады</summary>
+        public Rectangle CurrentRectangle
+        {
+            get => _CurrentRectangle;
+            set => Set(ref _CurrentRectangle, value);
+        }
+        #endregion
+
 
 
 
@@ -74,7 +88,7 @@ namespace Bonfire.ViewModels
         #region MousePosition : Point - Коллекция рассады
 
         /// <summary>Коллекция рассады</summary>
-        private System.Windows.Point _MousePosition = new();
+        private System.Windows.Point _MousePosition ;
 
         /// <summary>Коллекция рассады</summary>
         public System.Windows.Point MousePosition
@@ -98,6 +112,51 @@ namespace Bonfire.ViewModels
         }
 
         #endregion
+        
+        #region CurrentWidth : double - Введенная ширина
+
+        /// <summary>Введенная ширина</summary>
+        private double _CurrentWidth;
+
+
+        /// <summary>Введенная ширина</summary>
+        public double CurrentWidth
+        {
+            get => _CurrentWidth;
+            set => Set(ref _CurrentWidth, value);
+        }
+
+        #endregion
+        
+        #region CurrentHeight : double - Введенная высота
+
+        /// <summary>Введенная высота</summary>
+        private double _CurrentHeight;
+
+
+        /// <summary>Введенная высота</summary>
+        public double CurrentHeight
+        {
+            get => _CurrentHeight;
+            set => Set(ref _CurrentHeight, value);
+        }
+
+        #endregion
+        
+        #region IsCreateRectangle : bool - Создать прямоугольник
+
+        /// <summary>Создать прямоугольник</summary>
+        private bool _IsCreateRectangle;
+
+
+        /// <summary>Создать прямоугольник</summary>
+        public bool IsCreateRectangle
+        {
+            get => _IsCreateRectangle;
+            set => Set(ref _IsCreateRectangle, value);
+        }
+
+        #endregion
 
 
 
@@ -110,8 +169,8 @@ namespace Bonfire.ViewModels
         {
             var rect = new Rectangle
             {
-                Width = 100,
-                Height = 100,
+                Width = CurrentWidth,
+                Height = CurrentHeight,
                 Fill = Brushes.Transparent,
                 Stroke = Brushes.Black,
                 StrokeThickness = 2
@@ -134,7 +193,7 @@ namespace Bonfire.ViewModels
         #region Command LoadDataCommand - Команда для рисования прямоугольника
 
         /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand _LoadDataCommand;
+        private ICommand? _LoadDataCommand;
 
         /// <summary> Команда для рисования прямоугольника </summary>
         public ICommand LoadDataCommand => _LoadDataCommand
@@ -158,7 +217,7 @@ namespace Bonfire.ViewModels
         #region Command MouseMoveCommand - Команда для рисования прямоугольника
 
         /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand _MouseMoveCommand;
+        private ICommand? _MouseMoveCommand;
 
         /// <summary> Команда для рисования прямоугольника </summary>
         public ICommand MouseMoveCommand => _MouseMoveCommand
@@ -180,7 +239,7 @@ namespace Bonfire.ViewModels
         #region Command MouseDownCommand - Команда для рисования прямоугольника
 
         /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand _MouseDownCommand;
+        private ICommand? _MouseDownCommand;
 
         /// <summary> Команда для рисования прямоугольника </summary>
         public ICommand MouseDownCommand => _MouseDownCommand
@@ -192,8 +251,9 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
         private async Task OnMouseDownCommandExecuted(object p)
         {
-            DrawRectangle();
-            
+            if(CreateRectangleCommand.CanExecute(this))
+                CreateRectangleCommand.Execute(this);
+
 
 
         }
@@ -202,7 +262,7 @@ namespace Bonfire.ViewModels
         #region Command MouseUpCommand - Команда для рисования прямоугольника
 
         /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand _MouseUpCommand;
+        private ICommand? _MouseUpCommand;
 
         /// <summary> Команда для рисования прямоугольника </summary>
         public ICommand MouseUpCommand => _MouseUpCommand
@@ -216,6 +276,72 @@ namespace Bonfire.ViewModels
         {
 
 
+
+
+        }
+        #endregion
+
+        #region Command SelectShapeCommand - Команда для рисования прямоугольника
+
+        /// <summary> Команда для рисования прямоугольника </summary>
+        private ICommand? _SelectShapeCommand;
+
+        /// <summary> Команда для рисования прямоугольника </summary>
+        public ICommand SelectShapeCommand => _SelectShapeCommand
+            ??= new LambdaCommandAsync(OnSelectShapeCommandExecuted, CanSelectShapeCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        private bool CanSelectShapeCommandExecute(object p) => true;
+
+        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        private async Task OnSelectShapeCommandExecuted(object p)
+        {
+            if (p is Rectangle shape)
+            {
+                CurrentRectangle = shape;
+            }
+
+
+        }
+        #endregion
+        
+        #region Command CreateRectangleCommand - Команда для рисования прямоугольника
+
+        /// <summary> Команда для рисования прямоугольника </summary>
+        private ICommand? _CreateRectangleCommand;
+
+        /// <summary> Команда для рисования прямоугольника </summary>
+        public ICommand CreateRectangleCommand => _CreateRectangleCommand
+            ??= new LambdaCommandAsync(OnCreateRectangleCommandExecuted, CanCreateRectangleCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        private bool CanCreateRectangleCommandExecute() => IsCreateRectangle;
+
+        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        private async Task OnCreateRectangleCommandExecuted()
+        {
+           DrawRectangle();
+
+
+        }
+        #endregion
+        
+        #region Command IsCreateRectangleCommand - Команда для рисования прямоугольника
+
+        /// <summary> Команда для рисования прямоугольника </summary>
+        private ICommand? _IsCreateRectangleCommand;
+
+        /// <summary> Команда для рисования прямоугольника </summary>
+        public ICommand IsCreateRectangleCommand => _IsCreateRectangleCommand
+            ??= new LambdaCommandAsync(OnIsCreateRectangleCommandExecuted, CanIsCreateRectangleCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        private bool CanIsCreateRectangleCommandExecute() => true;
+
+        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        private async Task OnIsCreateRectangleCommandExecuted()
+        {
+           IsCreateRectangle = !IsCreateRectangle;
 
 
         }

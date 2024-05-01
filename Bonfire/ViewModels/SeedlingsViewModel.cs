@@ -721,6 +721,36 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
+        #region Cutting : int - количество черенков
+
+        /// <summary>количество черенков</summary>
+        private int _Cutting;
+
+        /// <summary>количество черенков</summary>
+        public int Cutting
+        {
+            get => _Cutting;
+
+
+            set => Set(ref _Cutting, value);
+        }
+        #endregion
+
+        #region CuttingDate : DateTime - Дата черенкования
+
+        /// <summary>Дата черенкования</summary>
+        private DateTime _CuttingDate = DateTime.Now;
+
+        /// <summary>Дата черенкования</summary>
+        public DateTime CuttingDate
+        {
+            get => _CuttingDate;
+
+
+            set => Set(ref _CuttingDate, value);
+        }
+        #endregion
+
         #region ReplantsDate : DateTime - Дата пикировки
 
         /// <summary>Дата пикировки</summary>
@@ -982,7 +1012,8 @@ namespace Bonfire.ViewModels
 
         private void ClearFieldSeedlingView()
         {
-            PlantingDate = DateTime.Now;
+            var date = DateTime.Now;
+            PlantingDate = date;
             AddSize = string.Empty;
             IsSeeds = true;
             AddSort = string.Empty;
@@ -993,6 +1024,10 @@ namespace Bonfire.ViewModels
             AddSize = string.Empty;
             AddQuantity = 0.0;
             AddQuantityString = string.Empty;
+            Germinate = 0;
+            GerminationDate = date;
+            Cutting = 0;
+            CuttingDate = date;
 
 
         }
@@ -1065,7 +1100,9 @@ namespace Bonfire.ViewModels
                         GerminationData = info.GerminationDate,
                         QuenchingDate = info.QuenchingDate,
                         IsDead = info.IsDead,
-                        IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
+                        IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null,
+                        MotherPlantId = info.MotherPlantId
+                        
                     })) : new ObservableCollection<SeedlingInfoFromViewModel>()
             };
         }
@@ -1324,8 +1361,56 @@ namespace Bonfire.ViewModels
             await _SeedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
             
             UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
-            Germinate = 0;
-            GerminationDate = DateTime.Now;
+            ClearFieldSeedlingView();
+            
+        }
+
+
+
+        #endregion
+
+        #region Command CuttingSeedlingCommand - Команда для всходов рассады
+
+        /// <summary> Команда для всходов рассады </summary>
+        private ICommand? _CuttingSeedlingCommand;
+
+        /// <summary> Команда для всходов рассады </summary>
+        public ICommand CuttingSeedlingCommand => _CuttingSeedlingCommand
+            ??= new LambdaCommandAsync(OnCuttingSeedlingCommandExecuted, CanCuttingSeedlingCommandExecute);
+
+        /// <summary> Проверка возможности выполнения - Команда для всходов рассады </summary>
+        private bool CanCuttingSeedlingCommandExecute() => SelectedItem != null;
+
+        /// <summary> Логика выполнения - Команда для всходов рассады </summary>
+        private async Task OnCuttingSeedlingCommandExecuted()
+        {
+            
+            
+            for (var i = 0; i < Cutting; i++)
+            {
+                var info = new SeedlingInfo
+                {
+                    GerminationDate = SelectedItem.SeedlingInfos[0].GerminationDate,
+                    LandingDate = SelectedItem.SeedlingInfos[0].LandingDate,
+                    LunarPhase = SelectedItem.SeedlingInfos[0].LunarPhase,
+                    SeedlingNumber = SelectedItem.SeedlingInfos.Count - 1 + 1,
+                    SeedlingSource = SelectedItem.SeedlingInfos[0].SeedlingSource,
+                    MotherPlantId = SelectedItem.Id,
+                    Replants = [new Replanting {ReplantingDate = CuttingDate}]
+                    
+
+
+                };
+
+                SelectedItem.SeedlingInfos.Add(info);
+                await _SeedlingsService.AddSeedlingInfo(info);
+            }
+
+            await _SeedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
+
+            UpdateCollectionViewSource(SelectedSeedlingViewItem.Id);
+            ClearFieldSeedlingView();
+
         }
 
 
@@ -1335,7 +1420,7 @@ namespace Bonfire.ViewModels
         #region Command ReplantsSeedlingCommand - Команда для пикировки рассады
 
         /// <summary> Команда для пикировки рассады </summary>
-        private ICommand _ReplantsSeedlingCommand;
+        private ICommand? _ReplantsSeedlingCommand;
 
         /// <summary> Команда для пикировки рассады </summary>
         public ICommand ReplantsSeedlingCommand => _ReplantsSeedlingCommand
