@@ -23,6 +23,8 @@
     <None Remove="Views\Image\MoonPhase_6.jpg" />
     <None Remove="Views\Image\MoonPhase_7.jpg" />
     <None Remove="Views\Image\MoonPhase_8.jpg" />
+    <None Remove="Views\Image\movepointer.png" />
+    <None Remove="Views\Image\rectangle.png" />
     <None Remove="Views\Image\VegetableGardenIcon_.ico" />
     <None Remove="Views\Image\Vegetables 7.jpg" />
   </ItemGroup>
@@ -72,6 +74,8 @@
     <Resource Include="Views\Image\MoonPhase_6.jpg" />
     <Resource Include="Views\Image\MoonPhase_7.jpg" />
     <Resource Include="Views\Image\MoonPhase_8.jpg" />
+    <Resource Include="Views\Image\movepointer.png" />
+    <Resource Include="Views\Image\rectangle.png" />
     <Resource Include="Views\Image\Vegetables 7.jpg" />
   </ItemGroup>
 

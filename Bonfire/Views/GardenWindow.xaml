@@ -67,26 +67,48 @@
                 </i:EventTrigger>
             </i:Interaction.Triggers>
 
-            <ItemsControl ItemsSource="{Binding SeedBeds}" >
+            <ItemsControl ItemsSource="{Binding SeedBeds}" Width="1050" Height="1000">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Canvas IsItemsHost="True"/>
+                        <Canvas IsItemsHost="True" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ContentControl Content="{Binding}">
-                            
-                        </ContentControl>
+
+                        <Rectangle Width="{Binding Width}"
+                                   Height="{Binding Height}"
+                                   Fill="{Binding Fill}"
+                                   StrokeThickness="{Binding StrokeThickness}">
+
+                            <Rectangle.Style>
+                               
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Stroke" Value="{Binding Stroke}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <DataTrigger.Setters>
+                                                   <Setter Property="Stroke" Value="Aqua"></Setter>
+                                                </DataTrigger.Setters>
+                                                
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                
+                            </Rectangle.Style>
+                        </Rectangle>
+
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
                 <ItemsControl.ItemContainerStyle>
                     <Style>
                         <Setter Property="Canvas.Left" Value="{Binding Position.X}"/>
                         <Setter Property="Canvas.Top" Value="{Binding Position.Y}"/>
+                       
                     </Style>
+                    
                 </ItemsControl.ItemContainerStyle>
 
             </ItemsControl>
@@ -98,12 +120,29 @@
 
 
 
-        <TextBlock Grid.Column="3" Grid.Row="2" Text="{Binding MousePosition.X, Mode=OneWay}" Style="{StaticResource SeedsTextBlockStyle}" Margin="10,10,0,0"/>
-        <TextBlock Grid.Column="3" Grid.Row="2" Text="{Binding MousePosition.Y, Mode=OneWay}" Style="{StaticResource SeedsTextBlockStyle}" Margin="10,40,0,0"/>
+        
         <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentWidth}" Margin="20,70,0,0"/>
-        <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentHeight}" Margin="150,70,0,0"/>
-        <Button Grid.Row="2" Grid.Column="3" Margin="0,20,50,0" Style="{StaticResource SeedsButtonStyle}"
-             Content="Прямоугольник"   Command="{Binding IsCreateRectangleCommand}" HorizontalAlignment="Right"/>
+        <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentHeight}" Margin="150,70,0,0" />
+        <Button Grid.Row="2" Grid.Column="3" Margin="20,20,0,0" Style="{StaticResource SeedsButtonStyle}" Width="24" Background="{Binding CreateButtonPressedColor}" FontSize="18" 
+                Command="{Binding IsCreateSeedBedCommand}">
+            
+            <Button.Content>
+                <Image Source="Image/rectangle.png" ToolTip="Нарисовать грядку"/>
+               
+            </Button.Content>
+            
+        </Button>
+
+        <Button Grid.Row="2" Grid.Column="3" Margin="50,20,0,0" Style="{StaticResource SeedsButtonStyle}" Width="24" Background="{Binding MoveButtonPressedColor}" FontSize="18" 
+                Command="{Binding IsMoveSeedBedCommand}">
+
+            <Button.Content>
+                <Image Source="Image/movepointer.png"  ToolTip="Переместить грядку" />
+
+            </Button.Content>
+
+        </Button>
+
 
 
     </Grid>

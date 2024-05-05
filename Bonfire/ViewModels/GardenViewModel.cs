@@ -5,13 +5,16 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Bonfire.Infrastructure.Commands;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using AutoMapper;
 using System.Windows.Controls;
-using Bonfire.Templates;
-using Brush = System.Windows.Media.Brush;
+using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
 using Rectangle = System.Windows.Shapes.Rectangle;
-using System.Reflection.Metadata;
+using Bonfire.Models;
+using Brush = System.Windows.Media.Brush;
+using Color = System.Windows.Media.Color;
+using Point = System.Windows.Point;
 
 namespace Bonfire.ViewModels
 {
@@ -22,7 +25,12 @@ namespace Bonfire.ViewModels
         private readonly ISeedbedService _SeedBedService;
         private readonly IUserDialog _UserDialog;
         private readonly IMapper _Mapper;
-       
+
+        private Brush ButtonPressedColor = new SolidColorBrush(Colors.LightGray);
+        private Brush ButtonUnPressedColor = new SolidColorBrush(Colors.Transparent);
+
+
+
 
         public GardenViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IMapper mapper)
         {
@@ -58,36 +66,29 @@ namespace Bonfire.ViewModels
         #region SeedBeds : ObservableCollection<Rectangle> - Коллекция рассады
 
         /// <summary>Коллекция рассады</summary>
-        private ObservableCollection<Rectangle> _Seedbeds =
+        private ObservableCollection<SeedBedFromViewModel> _Seedbeds =
         [
-            new Rectangle()
-            {
-                Width = 150,
-                Height = 20,
-                Fill = Brushes.Transparent,
-                Stroke = Brushes.Black,
-                StrokeThickness = 2
-            }
+            
         ];
 
         /// <summary>Коллекция рассады</summary>
-        public ObservableCollection<Rectangle> SeedBeds
+        public ObservableCollection<SeedBedFromViewModel> SeedBeds
         {
             get => _Seedbeds;
             set => Set(ref _Seedbeds, value);
         }
         #endregion
 
-        #region CurrentRectangle : Rectangle - Коллекция рассады
+        #region CurrentSeedBedFromViewModel : SeedBedFromViewModel - Коллекция рассады
 
         /// <summary>Коллекция рассады</summary>
-        private Rectangle _CurrentRectangle;
+        private SeedBedFromViewModel _CurrentSeedBedFromViewModel;
 
         /// <summary>Коллекция рассады</summary>
-        public Rectangle CurrentRectangle
+        public SeedBedFromViewModel CurrentSeedBedFromViewModel
         {
-            get => _CurrentRectangle;
-            set => Set(ref _CurrentRectangle, value);
+            get => _CurrentSeedBedFromViewModel;
+            set => Set(ref _CurrentSeedBedFromViewModel, value);
         }
         #endregion
 
@@ -95,17 +96,40 @@ namespace Bonfire.ViewModels
 
 
 
-        #region MousePosition : Point - Коллекция рассады
+        #region MousePosition : Point - Положение мыши
 
-        /// <summary>Коллекция рассады</summary>
-        private System.Windows.Point _MousePosition ;
+        /// <summary>Положение мыши</summary>
+        private Point _MousePosition ;
 
-        /// <summary>Коллекция рассады</summary>
-        public System.Windows.Point MousePosition
+        /// <summary>Положение мыши</summary>
+        public Point MousePosition
         {
             get => _MousePosition;
-            set => Set(ref _MousePosition, value);
+            set
+            {
+                Set(ref _MousePosition, value);
+                if (IsMoveSeedBed)
+                {
+                    CurrentBed.Position = MousePosition;
+
+                }
+            }
         }
+
+        #endregion
+
+        #region CurrentBed : SeedBedFromViewModel - Выбранная грядка
+
+        /// <summary>Выбранная грядка</summary>
+        private SeedBedFromViewModel? _CurrentBed;
+
+        /// <summary>Выбранная грядка</summary>
+        public SeedBedFromViewModel? CurrentBed
+        {
+            get => _CurrentBed;
+            set => Set(ref _CurrentBed, value);
+        }
+
         #endregion
 
         #region SelectedItem : Seedling - Выбранный объект
@@ -153,17 +177,70 @@ namespace Bonfire.ViewModels
 
         #endregion
         
-        #region IsCreateRectangle : bool - Создать прямоугольник
+        #region IsCreateSeedBed : bool - Создать грядку
 
-        /// <summary>Создать прямоугольник</summary>
-        private bool _IsCreateRectangle;
+        /// <summary>Создать грядку</summary>
+        private bool _IsCreateSeedBed;
 
 
-        /// <summary>Создать прямоугольник</summary>
-        public bool IsCreateRectangle
+        /// <summary>Создать грядку</summary>
+        public bool IsCreateSeedBed
         {
-            get => _IsCreateRectangle;
-            set => Set(ref _IsCreateRectangle, value);
+            get => _IsCreateSeedBed;
+            set
+            {
+                Set(ref _IsCreateSeedBed, value);
+                CreateButtonPressedColor = IsCreateSeedBed ? ButtonPressedColor : ButtonUnPressedColor;
+            }
+        }
+
+        #endregion
+        
+        #region IsMoveSeedBed : bool - Переместить грядку
+
+        /// <summary>Переместить грядку</summary>
+        private bool _IsMoveSeedBed;
+
+
+        /// <summary>Переместить грядку</summary>
+        public bool IsMoveSeedBed
+        {
+            get => _IsMoveSeedBed;
+            set
+            {
+                Set(ref _IsMoveSeedBed, value);
+                MoveButtonPressedColor = IsMoveSeedBed ? ButtonPressedColor : ButtonUnPressedColor;
+            }
+        }
+
+        #endregion
+
+        #region CreateButtonPressedColor : Color - Цвет нажатой кнопки
+
+        /// <summary>Цвет нажатой кнопки</summary>
+        private Brush _CreateButtonPressedColor = new SolidColorBrush(Colors.Transparent);
+
+
+        /// <summary>Цвет нажатой кнопки</summary>
+        public Brush CreateButtonPressedColor
+        {
+            get => _CreateButtonPressedColor;
+            set => Set(ref _CreateButtonPressedColor, value);
+        }
+
+        #endregion
+        
+        #region MoveButtonPressedColor : Color - Цвет нажатой кнопки
+
+        /// <summary>Цвет нажатой кнопки</summary>
+        private Brush _MoveButtonPressedColor = new SolidColorBrush(Colors.Transparent);
+
+
+        /// <summary>Цвет нажатой кнопки</summary>
+        public Brush MoveButtonPressedColor
+        {
+            get => _MoveButtonPressedColor;
+            set => Set(ref _MoveButtonPressedColor, value);
         }
 
         #endregion
@@ -175,24 +252,37 @@ namespace Bonfire.ViewModels
 
         #region Методы
 
-        private void DrawRectangle()
+        private void DrawSeedBed(Point point)
         {
-            var rect = new Rectangle
+            var seedBed = new SeedBedFromViewModel()
             {
+                Position = point,
                 Width = CurrentWidth,
                 Height = CurrentHeight,
                 Fill = Brushes.Transparent,
                 Stroke = Brushes.Black,
                 StrokeThickness = 2
+                
+                
             };
-
-            // Установка позиции прямоугольника на Canvas
-            Canvas.SetLeft(rect, MousePosition.X);
-            Canvas.SetTop(rect, MousePosition.Y);
-
-            SeedBeds.Add(rect);
+            
+            SeedBeds.Add(seedBed);
 
             OnPropertyChanged(nameof(SeedBeds));
+        }
+
+        private void ChoiсeBed()
+        {
+            foreach (var bed in SeedBeds)
+            {
+                if (!(MousePosition.X >= bed.Position.X) || !(MousePosition.X <= bed.Position.X + bed.Width) ||
+                    !(MousePosition.Y >= bed.Position.Y) || !(MousePosition.Y <= bed.Position.Y + bed.Height)) continue;
+                if (CurrentBed != null)
+                    CurrentBed.IsSelected = false;
+                CurrentBed = bed;
+                CurrentBed.IsSelected = true;
+            }
+            if(CurrentBed !=null) CurrentBed.IsSelected = false;
         }
 
         #endregion
@@ -200,19 +290,19 @@ namespace Bonfire.ViewModels
 
         #region Комманды
 
-        #region Command LoadDataCommand - Команда для рисования прямоугольника
+        #region Command LoadDataCommand - Команда для загрузки данных
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда для загрузки данных </summary>
         private ICommand? _LoadDataCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда для загрузки данных </summary>
         public ICommand LoadDataCommand => _LoadDataCommand
             ??= new LambdaCommandAsync(OnLoadDataCommandExecuted, CanLoadDataCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Проверка возможности выполнения - Команда для загрузки данных </summary>
         private bool CanLoadDataCommandExecute() => true;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Логика выполнения - Команда для загрузки данных </summary>
         private async Task OnLoadDataCommandExecuted()
         {
 
@@ -224,19 +314,19 @@ namespace Bonfire.ViewModels
 
        
 
-        #region Command MouseMoveCommand - Команда для рисования прямоугольника
+        #region Command MouseMoveCommand - Команда для перемещения мыши
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда для перемещения мыши </summary>
         private ICommand? _MouseMoveCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда для перемещения мыши </summary>
         public ICommand MouseMoveCommand => _MouseMoveCommand
             ??= new LambdaCommandAsync(OnMouseMoveCommandExecuted, CanMouseMoveCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Проверка возможности выполнения - Команда для перемещения мыши </summary>
         private bool CanMouseMoveCommandExecute(object p) => true;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Логика выполнения - Команда для перемещения мыши </summary>
         private async Task OnMouseMoveCommandExecuted(object p)
         {
 
@@ -246,48 +336,48 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
-        #region Command MouseDownCommand - Команда для рисования прямоугольника
+        #region Command MouseDownCommand - Команда нажатия мыши
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда нажатия мыши </summary>
         private ICommand? _MouseDownCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда нажатия мыши </summary>
         public ICommand MouseDownCommand => _MouseDownCommand
             ??= new LambdaCommandAsync(OnMouseDownCommandExecuted, CanMouseDownCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Проверка возможности выполнения - Команда нажатия мыши </summary>
         private bool CanMouseDownCommandExecute(object p) => true;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Логика выполнения - Команда нажатия мыши </summary>
         private async Task OnMouseDownCommandExecuted(object p)
         {
-            if(CreateRectangleCommand.CanExecute(this))
-                CreateRectangleCommand.Execute(this);
+            if (IsMoveSeedBed)
+                IsMoveSeedBed = !IsMoveSeedBed;
 
-            if (p is Canvas canvas)
-            {
+            ChoiсeBed();
 
-               
-                
-                
-            }
 
+            if(CreateSeedBedCommand.CanExecute(this))
+                CreateSeedBedCommand.Execute(this);
         }
+
+       
+
         #endregion
 
-        #region Command MouseUpCommand - Команда для рисования прямоугольника
+        #region Command MouseUpCommand - Команда для отжатия мыши
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда для отжатия мыши </summary>
         private ICommand? _MouseUpCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
+        /// <summary> Команда для отжатия мыши </summary>
         public ICommand MouseUpCommand => _MouseUpCommand
             ??= new LambdaCommandAsync(OnMouseUpCommandExecuted, CanMouseUpCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Проверка возможности выполнения - Команда для отжатия мыши </summary>
         private bool CanMouseUpCommandExecute(object p) => true;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
+        /// <summary> Логика выполнения - Команда для отжатия мыши </summary>
         private async Task OnMouseUpCommandExecuted(object p)
         {
 
@@ -297,67 +387,65 @@ namespace Bonfire.ViewModels
         }
         #endregion
 
-        #region Command SelectShapeCommand - Команда для рисования прямоугольника
+        
+        #region Command CreateSeedBedCommand - Команда для рисования грядки
 
-        /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand? _SelectShapeCommand;
+        /// <summary> Команда для рисования грядки </summary>
+        private ICommand? _CreateSeedBedCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
-        public ICommand SelectShapeCommand => _SelectShapeCommand
-            ??= new LambdaCommandAsync(OnSelectShapeCommandExecuted, CanSelectShapeCommandExecute);
+        /// <summary> Команда для рисования грядки </summary>
+        public ICommand CreateSeedBedCommand => _CreateSeedBedCommand
+            ??= new LambdaCommandAsync(OnCreateSeedBedCommandExecuted, CanCreateSeedBedCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
-        private bool CanSelectShapeCommandExecute(object p) => true;
+        /// <summary> Проверка возможности выполнения - Команда для рисования грядки </summary>
+        private bool CanCreateSeedBedCommandExecute() => IsCreateSeedBed;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
-        private async Task OnSelectShapeCommandExecuted(object p)
+        /// <summary> Логика выполнения - Команда для рисования грядки </summary>
+        private async Task OnCreateSeedBedCommandExecuted()
         {
-            if (p is Rectangle shape)
-            {
-                CurrentRectangle = shape;
-            }
+           DrawSeedBed(MousePosition);
 
 
         }
         #endregion
         
-        #region Command CreateRectangleCommand - Команда для рисования прямоугольника
+        #region Command IsCreateSeedBedCommand - Команда для выбора редима рисования грядки
 
-        /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand? _CreateRectangleCommand;
+        /// <summary> Команда для выбора редима рисования грядки </summary>
+        private ICommand? _IsCreateSeedBedCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
-        public ICommand CreateRectangleCommand => _CreateRectangleCommand
-            ??= new LambdaCommandAsync(OnCreateRectangleCommandExecuted, CanCreateRectangleCommandExecute);
+        /// <summary> Команда для выбора редима рисования грядки </summary>
+        public ICommand IsCreateSeedBedCommand => _IsCreateSeedBedCommand
+            ??= new LambdaCommandAsync(OnIsCreateSeedBedCommandExecuted, CanIsCreateSeedBedCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
-        private bool CanCreateRectangleCommandExecute() => IsCreateRectangle;
+        /// <summary> Проверка возможности выполнения - Команда для выбора редима рисования грядки </summary>
+        private bool CanIsCreateSeedBedCommandExecute() => true;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
-        private async Task OnCreateRectangleCommandExecuted()
+        /// <summary> Логика выполнения - Команда для выбора редима рисования грядки </summary>
+        private async Task OnIsCreateSeedBedCommandExecuted()
         {
-           DrawRectangle();
+            IsCreateSeedBed = !IsCreateSeedBed;
 
 
         }
         #endregion
         
-        #region Command IsCreateRectangleCommand - Команда для рисования прямоугольника
+        #region Command IsMoveSeedBedCommand - Команда для выбора редима перемещения грядки
 
-        /// <summary> Команда для рисования прямоугольника </summary>
-        private ICommand? _IsCreateRectangleCommand;
+        /// <summary> Команда для выбора редима перемещения грядки </summary>
+        private ICommand? _IsMoveSeedBedCommand;
 
-        /// <summary> Команда для рисования прямоугольника </summary>
-        public ICommand IsCreateRectangleCommand => _IsCreateRectangleCommand
-            ??= new LambdaCommandAsync(OnIsCreateRectangleCommandExecuted, CanIsCreateRectangleCommandExecute);
+        /// <summary> Команда для выбора редима перемещения грядки </summary>
+        public ICommand IsMoveSeedBedCommand => _IsMoveSeedBedCommand
+            ??= new LambdaCommandAsync(OnIsMoveSeedBedCommandExecuted, CanIsMoveSeedBedCommandExecute);
 
-        /// <summary> Проверка возможности выполнения - Команда для рисования прямоугольника </summary>
-        private bool CanIsCreateRectangleCommandExecute() => true;
+        /// <summary> Проверка возможности выполнения - Команда для выбора редима перемещения грядки </summary>
+        private bool CanIsMoveSeedBedCommandExecute() => CurrentBed != null;
 
-        /// <summary> Логика выполнения - Команда для рисования прямоугольника </summary>
-        private async Task OnIsCreateRectangleCommandExecuted()
+        /// <summary> Логика выполнения - Команда для выбора редима перемещения грядки </summary>
+        private async Task OnIsMoveSeedBedCommandExecuted()
         {
-           IsCreateRectangle = !IsCreateRectangle;
+            IsMoveSeedBed = !IsMoveSeedBed;
 
 
         }
