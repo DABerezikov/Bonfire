@@ -1353,7 +1353,6 @@ public class SeedsViewModel : ViewModel
         if (SelectedItem.SeedsInfo.AmountSeeds > 0)
             SelectedItem.SeedsInfo.AmountSeedsWeight = 0;
         await _SeedsService.UpdateSeedInfo(SelectedItem.SeedsInfo).ConfigureAwait(false);
-        await _SeedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
         UpdateCollectionViewSource(SelectedItem.Id);
     }
 
