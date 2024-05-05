@@ -58,7 +58,17 @@ namespace Bonfire.ViewModels
         #region SeedBeds : ObservableCollection<Rectangle> - Коллекция рассады
 
         /// <summary>Коллекция рассады</summary>
-        private ObservableCollection<Rectangle> _Seedbeds = new();
+        private ObservableCollection<Rectangle> _Seedbeds =
+        [
+            new Rectangle()
+            {
+                Width = 150,
+                Height = 20,
+                Fill = Brushes.Transparent,
+                Stroke = Brushes.Black,
+                StrokeThickness = 2
+            }
+        ];
 
         /// <summary>Коллекция рассады</summary>
         public ObservableCollection<Rectangle> SeedBeds
@@ -230,7 +240,7 @@ namespace Bonfire.ViewModels
         private async Task OnMouseMoveCommandExecuted(object p)
         {
 
-            MousePosition = p is Canvas canvas ? Mouse.GetPosition(canvas) : default;
+            MousePosition = p is Grid canvas ? Mouse.GetPosition(canvas) : default;
            
 
         }
@@ -254,7 +264,13 @@ namespace Bonfire.ViewModels
             if(CreateRectangleCommand.CanExecute(this))
                 CreateRectangleCommand.Execute(this);
 
+            if (p is Canvas canvas)
+            {
 
+               
+                
+                
+            }
 
         }
         #endregion

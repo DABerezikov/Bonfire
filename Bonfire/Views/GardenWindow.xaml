@@ -50,25 +50,23 @@
         <Border Grid.Row="2" Grid.Column="3" CornerRadius="10" Style="{StaticResource SeedsBorderStyle}" HorizontalAlignment="Stretch"
          Margin="10,0,10,0" />
 
-        <Canvas Grid.Column="0" Grid.Row="0" Background="#A08E80" Grid.RowSpan="3" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" Margin="5" Name="Canvas"  >
+        <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Grid.ColumnSpan="3"  Background="#A08E80" HorizontalAlignment="Stretch" Margin="5" Name="Grid"  >
             
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="MouseMove">
                     <i:InvokeCommandAction Command="{Binding MouseMoveCommand}" 
-                                           CommandParameter="{Binding ElementName=Canvas}"/>
+                                           CommandParameter="{Binding ElementName=Grid}"/>
                 </i:EventTrigger>
                 <i:EventTrigger EventName="MouseDown">
                     <i:InvokeCommandAction Command="{Binding MouseDownCommand}"
-                                           CommandParameter="{Binding ElementName=Canvas}"/>
+                                           CommandParameter="{Binding ElementName=Grid}"/>
                 </i:EventTrigger>
                 <i:EventTrigger EventName="MouseUp">
                     <i:InvokeCommandAction Command="{Binding MouseUpCommand}"
-                                           CommandParameter="{Binding ElementName=Canvas}"/>
+                                           CommandParameter="{Binding ElementName=Grid}"/>
                 </i:EventTrigger>
-
-
-
             </i:Interaction.Triggers>
+
             <ItemsControl ItemsSource="{Binding SeedBeds}" >
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -76,28 +74,25 @@
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 
+
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ContentControl Content="{Binding}">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="MouseLeftButtonDown">
-                                    <i:InvokeCommandAction Command="{Binding DataContext.SelectShapeCommand, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
-                                                           CommandParameter="{Binding}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                            <ContentControl.Template>
-                                <ControlTemplate TargetType="ContentControl">
-                                    <ContentPresenter/>
-                                </ControlTemplate>
-                            </ContentControl.Template>
+                            
                         </ContentControl>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemContainerStyle>
+                    <Style>
+                        <Setter Property="Canvas.Left" Value="{Binding Position.X}"/>
+                        <Setter Property="Canvas.Top" Value="{Binding Position.Y}"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
 
             </ItemsControl>
             
 
-        </Canvas>
+        </Grid>
 
 
 

@@ -14,6 +14,7 @@ namespace Bonfire.Services.Interfaces
         Task<PlantSort> UpdateSort(PlantSort seed);
         Task<PlantCulture> UpdateCulture(PlantCulture culture);
         Task<Producer> UpdateProducer(Producer producer);
+        Task<SeedsInfo> UpdateSeedInfo(SeedsInfo info);
 
     }
 

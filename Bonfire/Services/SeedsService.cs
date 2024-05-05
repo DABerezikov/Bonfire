@@ -14,7 +14,7 @@ namespace Bonfire.Services
         IRepository<PlantSort> sort,
         IRepository<PlantCulture> culture,
         IRepository<Producer> producer,
-        IRepository<SeedsInfo> info)
+        IRepository<SeedsInfo> infos)
         : ISeedsService
     {
         public IQueryable<Seed> Seeds => seeds.Items;
@@ -34,7 +34,7 @@ namespace Bonfire.Services
 
             if (seedsInfo.Id == 0)
             {
-                seedsInfo = await info.AddAsync(seedsInfo);
+                seedsInfo = await infos.AddAsync(seedsInfo);
             }
 
             var seed = new Seed
@@ -84,6 +84,14 @@ namespace Bonfire.Services
 
             await producer.UpdateAsync(producer1);
             return producer1;
+
+        }
+
+        public async Task<SeedsInfo> UpdateSeedInfo(SeedsInfo info)
+        {
+
+            await infos.UpdateAsync(info);
+            return info;
 
         }
     }
