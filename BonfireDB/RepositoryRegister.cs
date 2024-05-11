@@ -17,6 +17,8 @@ public static class RepositoryRegister
         .AddScoped<IRepository<SeedlingInfo>, SeedlingInfoRepository>()
         .AddScoped<IRepository<Replanting>, DbRepository<Replanting>>()
         .AddScoped<IRepository<Treatment>, DbRepository<Treatment>>()
+        .AddScoped<IRepository<Soil>, DbRepository<Soil>>()
+        .AddScoped<IRepository<Seedbed>, SeedbedsRepository>()
 
         ;
 

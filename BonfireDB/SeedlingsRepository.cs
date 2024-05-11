@@ -1,6 +1,7 @@
 ﻿using BonfireDB.Context;
 using BonfireDB.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BonfireDB
 {
