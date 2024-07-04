@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using BonfireDB.Entities;
-using MoonCalendar;
 
 namespace Bonfire.Services.Interfaces;
 

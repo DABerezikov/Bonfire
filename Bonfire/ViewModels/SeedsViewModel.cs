@@ -17,7 +17,6 @@ using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
-using BonfireDB.Migrations;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -173,7 +172,7 @@ public class SeedsViewModel : ViewModel
         set
         {
             Set(ref _SelectedSeedsViewItem, value);
-            SelectedItem = value!=null ? Seeds.First(s => s.Id == value.Id):null;
+            SelectedItem = value != null ? Seeds.First(s => s.Id == value.Id):null;
            
         }
     }
@@ -421,7 +420,7 @@ public class SeedsViewModel : ViewModel
     #region AddSizeList : List<string> - Список единиц измерения
 
     /// <summary>Список единиц измерения</summary>
-    private List<string> _AddSizeList = new() {"Граммы", "Штуки"};
+    private List<string> _AddSizeList = ["Граммы", "Штуки"];
 
     /// <summary>Список единиц измерения</summary>
     public List<string> AddSizeList
@@ -584,7 +583,7 @@ public class SeedsViewModel : ViewModel
 
     private void _ProducerListView_Filter(object sender, FilterEventArgs e)
     {
-        if (!(e.Item is ProducerFromViewModel producer) || string.IsNullOrEmpty(AddProducer)) return;
+        if (e.Item is not ProducerFromViewModel producer || string.IsNullOrEmpty(AddProducer)) return;
         if (producer.Name != null && !producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
     }
@@ -614,12 +613,10 @@ public class SeedsViewModel : ViewModel
         get => _AddProducer;
         set
         {
-            if (Set(ref _AddProducer, value))
-            {
-                ProducerListView.Refresh();
-                if(_AddProducer == "Свои семена")
-                    IsCollected = true;
-            }
+            if (!Set(ref _AddProducer, value)) return;
+            ProducerListView.Refresh();
+            if(_AddProducer == "Свои семена")
+                IsCollected = true;
         } 
     }
 
@@ -943,7 +940,7 @@ public class SeedsViewModel : ViewModel
 
     private void CopySeedToEditItem(Seed seedFrom, Seed seedTo)
     {
-        if(seedFrom == null) return;
+        if(seedFrom is null) return;
 
         _Mapper.Map(seedFrom, seedTo);
 
@@ -967,7 +964,7 @@ public class SeedsViewModel : ViewModel
                 Name = newSeed.Plant.PlantCulture.Name
             });
             ListCulture.Add(newSeed.Plant.PlantCulture.Name);
-            ListCulture = new List<string>(ListCulture.OrderBy(c=>c));
+            ListCulture = [..ListCulture.OrderBy(c => c)];
             AddCultureList = new ObservableCollection<CultureFromViewModel>(AddCultureList.OrderBy(c => c.Name));
 
         }
@@ -1197,7 +1194,7 @@ public class SeedsViewModel : ViewModel
     #region Command LoadDataCommand - Команда для загрузки данных из репозитория
 
     /// <summary> Команда для загрузки данных из репозитория </summary>
-    private ICommand _LoadDataCommand;
+    private ICommand? _LoadDataCommand;
 
     /// <summary> Команда для загрузки данных из репозитория </summary>
     public ICommand LoadDataCommand => _LoadDataCommand
@@ -1227,7 +1224,7 @@ public class SeedsViewModel : ViewModel
     #region Command SeedsChoiceClassCommand - Команда для выбора растений по классам
 
     /// <summary> Команда для выбора растений по классам </summary>
-    private ICommand _SeedsChoiceClassCommand;
+    private ICommand? _SeedsChoiceClassCommand;
 
     /// <summary> Команда для выбора растений по классам </summary>
     public ICommand SeedsChoiceClassCommand => _SeedsChoiceClassCommand
@@ -1258,7 +1255,7 @@ public class SeedsViewModel : ViewModel
     #region Command AddOrCorrectSeedCommand - Команда для создания или редактирования семян
 
     /// <summary> Команда для создания или редактирования семян </summary>
-    private ICommand _AddOrCorrectSeedCommand;
+    private ICommand? _AddOrCorrectSeedCommand;
 
     /// <summary> Команда для создания или редактирования семян </summary>
     public ICommand AddOrCorrectSeedCommand => _AddOrCorrectSeedCommand
@@ -1301,7 +1298,7 @@ public class SeedsViewModel : ViewModel
     #region Command DeleteSeedCommand - Команда для удаления семян
 
     /// <summary> Команда для удаления семян </summary>
-    private ICommand _DeleteSeedCommand;
+    private ICommand? _DeleteSeedCommand;
 
     /// <summary> Команда для удаления семян </summary>
     public ICommand DeleteSeedCommand => _DeleteSeedCommand
@@ -1333,7 +1330,7 @@ public class SeedsViewModel : ViewModel
     #region Command UpdateSeedsInfoCommand - Команда для редактирования семян
 
     /// <summary> Команда для редактирования семян </summary>
-    private ICommand _UpdateSeedsInfoCommand;
+    private ICommand? _UpdateSeedsInfoCommand;
 
     /// <summary> Команда для редактирования семян </summary>
     public ICommand UpdateSeedsInfoCommand => _UpdateSeedsInfoCommand
@@ -1363,7 +1360,7 @@ public class SeedsViewModel : ViewModel
     #region Command CancelUpdateSeedsInfoCommand - Команда для редактирования семян
 
     /// <summary> Команда для редактирования семян </summary>
-    private ICommand _CancelUpdateSeedsInfoCommand;
+    private ICommand? _CancelUpdateSeedsInfoCommand;
 
     /// <summary> Команда для редактирования семян </summary>
     public ICommand CancelUpdateSeedsInfoCommand => _CancelUpdateSeedsInfoCommand
