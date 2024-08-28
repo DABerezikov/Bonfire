@@ -11,9 +11,11 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System;
 using System.Linq;
+using System.Windows;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services.Extensions;
+using Bonfire.Data;
 
 namespace Bonfire.ViewModels
 {
@@ -277,8 +279,9 @@ namespace Bonfire.ViewModels
             get => _IsSold;
             set
             {
-                if (Set(ref _IsSold, value))
-                    SeedlingSource = "Куплено";
+                if (!Set(ref _IsSold, value)) return;
+                SeedlingSource = "Куплено";
+                SetVisible();
 
             }
         }
@@ -296,10 +299,16 @@ namespace Bonfire.ViewModels
             get => _IsDonated;
             set
             {
-                if (Set(ref _IsDonated, value))
-                    SeedlingSource = "Подарено";
+                if (!Set(ref _IsDonated, value)) return;
+                SeedlingSource = "Подарено";
+                SetVisible();
 
             }
+        }
+
+        private void SetVisible()
+        {
+            IsVisible = _IsDonated || _IsSold ? Visibility.Visible : Visibility.Collapsed;
         }
 
         #endregion
@@ -408,7 +417,7 @@ namespace Bonfire.ViewModels
                 if (!string.IsNullOrWhiteSpace(AddCulture) && !string.IsNullOrWhiteSpace(AddSort))
                 {
                     if(string.IsNullOrWhiteSpace(AddProducer)) return;
-                    CurrentPlant = AddPlantList.First(p => p.Producer + " " + p.ExpirationDate.Year == value
+                    CurrentPlant = AddPlantList.FirstOrDefault(p => p.Producer + " " + p.ExpirationDate.Year == value
                                                            &&  p.Culture == AddCulture
                                                            && p.Sort == AddSort);
 
@@ -424,18 +433,18 @@ namespace Bonfire.ViewModels
         #region CurrentPlant : PlantFromViewModel - Выбранное растение
 
         /// <summary>Выбранное растение</summary>
-        private PlantFromViewModel _CurrentPlant;
+        private PlantFromViewModel? _CurrentPlant;
 
 
         /// <summary>Выбранное растение</summary>
-        public PlantFromViewModel CurrentPlant
+        public PlantFromViewModel? CurrentPlant
         {
             get => _CurrentPlant;
             set
             {
                 if (!Set(ref _CurrentPlant, value)) return;
                 if (value is null) return;
-                CurrentSeed = _SeedsService.Seeds.First(s => s.Id == CurrentPlant.Id);
+                CurrentSeed = _SeedsService.Seeds.First(s => s.Id == CurrentPlant!.Id);
 
             }
         }
@@ -445,17 +454,17 @@ namespace Bonfire.ViewModels
         #region CurrentSeed : Seed - Выбранные семена
 
         /// <summary>Выбранные семена</summary>
-        private Seed _CurrentSeed;
+        private Seed? _CurrentSeed;
 
         /// <summary>Выбранные семена</summary>
-        public Seed CurrentSeed
+        public Seed? CurrentSeed
         {
             get => _CurrentSeed;
             set
             {
                 if (!Set(ref _CurrentSeed, value)) return;
                 if (value is null) return;
-                Plantable = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? CurrentSeed.SeedsInfo.AmountSeedsWeight : CurrentSeed.SeedsInfo.AmountSeeds;
+                Plantable = CurrentSeed!.SeedsInfo.AmountSeedsWeight > 0.0 ? CurrentSeed.SeedsInfo.AmountSeedsWeight : CurrentSeed.SeedsInfo.AmountSeeds;
                 AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? "гр." : "шт.";
             }
         }
@@ -690,7 +699,54 @@ namespace Bonfire.ViewModels
             set => Set(ref _MoonPhase, value);
         }
         #endregion
-        
+
+        #region Выбор класса для добавления семян
+
+        #region AddClassList : ObservableCollection<string> - Список классов семян
+
+        /// <summary>Список классов семян</summary>
+        private ObservableCollection<string> _AddClassList = new(PlantClassList.GetClassList());
+
+        /// <summary>Список классов семян</summary>
+        public ObservableCollection<string> AddClassList
+        {
+            get => _AddClassList;
+            set => Set(ref _AddClassList, value);
+        }
+
+        #endregion
+
+        #region AddClass : string - Выбранный класс
+
+        /// <summary>Выбранный класс</summary>
+        private string _AddClass;
+
+        /// <summary>Выбранный класс</summary>
+        public string AddClass
+        {
+            get => _AddClass;
+            set => Set(ref _AddClass, value);
+        }
+
+        #endregion
+
+        #region IsVisible : Visibility - Выбранный класс
+
+        /// <summary>Выбранный класс</summary>
+        private Visibility _IsVisible = Visibility.Collapsed;
+
+        /// <summary>Выбранный класс</summary>
+        public Visibility IsVisible
+        {
+            get => _IsVisible;
+            set => Set(ref _IsVisible, value);
+        }
+
+        #endregion
+
+        #endregion
+
+
         #region Germinate : int - количество всходов
 
         /// <summary>количество всходов</summary>
@@ -920,13 +976,22 @@ namespace Bonfire.ViewModels
 
         private bool Verification()
         {
-            var result = PlantingDate != default
-                         && AddSize != string.Empty
-                         && AddCulture != string.Empty
-                         && AddProducer != string.Empty
-                         && AddQuantity > 0.0
-                         && AddSort != string.Empty
-                         && SeedlingSource != string.Empty;
+            var result = (_IsSeeds
+                                 &&  PlantingDate != default
+                                 && AddSize != string.Empty
+                                 && AddCulture != string.Empty
+                                 && AddProducer != string.Empty
+                                 && AddQuantity > 0.0
+                                 && AddSort != string.Empty
+                                 && SeedlingSource != string.Empty)
+                            || ( (_IsDonated || _IsSold)
+                                && PlantingDate != default
+                                && AddQuantity > 0.0
+                                && AddCulture != string.Empty
+                                && AddProducer != string.Empty
+                                && AddClass != string.Empty
+                                && AddSort != string.Empty
+                                && SeedlingSource != string.Empty);
 
             return result;
         }
@@ -937,10 +1002,62 @@ namespace Bonfire.ViewModels
 
         private Plant GetPlant()
         {
-
-           return _SeedsService.Seeds.First(s=>s.Id == CurrentPlant.Id).Plant;
-
+            if (_IsSeeds || CurrentSeed != null)
+                return _SeedsService.Seeds.First(s => s.Id == CurrentPlant.Id).Plant;
            
+
+            var plantCulture = AddCultureList.Contains(c => c.Name == AddCulture)
+                ? _SeedsService.Seeds.First(pc => pc.Plant.PlantCulture.Name == AddCulture).Plant.PlantCulture
+                : new PlantCulture
+                {
+                    Name = AddCulture,
+                    Class = AddClass
+                };
+
+            var producer = AddPlantList.Contains(c => c.Producer == AddProducer)
+                ? _SeedsService.Seeds.First(pc => pc.Plant.PlantSort.Producer.Name == AddProducer).Plant.PlantSort.Producer
+                : new Producer
+                {
+                    Name = AddProducer
+
+                };
+
+            PlantSort? plantSort;
+
+            if (_SeedsService.Seeds.Contains(s => s.Plant.PlantSort.Name == AddSort && s.Plant.PlantSort.Producer.Name == AddProducer))
+            {
+                plantSort = _SeedsService.Seeds
+                    .Find(s =>
+                        s.Plant.PlantSort.Name == AddSort
+                        && s.Plant.PlantSort.Producer.Name == AddProducer)
+                    ?.Plant.PlantSort;
+
+                if (plantSort == null)
+                {
+                    plantSort = _SeedsService.Seeds.First(pc => pc.Plant.PlantSort.Name == AddSort).Plant.PlantSort;
+                    plantSort.Producer = producer;
+                }
+            }
+            else
+            {
+                plantSort = new PlantSort
+                {
+                    Name = AddSort,
+                    Producer = producer
+                };
+
+            }
+
+
+            var plant = new Plant
+            {
+                PlantCulture = plantCulture,
+                PlantSort = plantSort
+            };
+
+            return plant;
+            
+
         }
 
         #endregion
@@ -1200,7 +1317,7 @@ namespace Bonfire.ViewModels
         #region Command AddOrCorrectSeedlingCommand - Команда для добавления или корректировки посадки
 
         /// <summary> Команда для добавления или корректировки посадки </summary>
-        private ICommand _AddOrCorrectSeedlingCommand;
+        private ICommand? _AddOrCorrectSeedlingCommand;
 
         /// <summary> Команда для добавления или корректировки посадки </summary>
         public ICommand AddOrCorrectSeedlingCommand => _AddOrCorrectSeedlingCommand
@@ -1225,7 +1342,7 @@ namespace Bonfire.ViewModels
             var seedling = new Seedling
             {
                 Plant = plant,
-                SeedId = CurrentSeed.Id,
+                SeedId =CurrentSeed?.Id ?? 0,
                 SeedlingInfos = [seedlingInfo]
 
             };
@@ -1234,11 +1351,13 @@ namespace Bonfire.ViewModels
             {
                 case "гр.":
                     seedling.Weight = AddQuantity;
+                    if (!_IsSeeds) break;
                     CurrentSeed.SeedsInfo.AmountSeedsWeight -= AddQuantity;
                     break;
 
                 case "шт.":
                     seedling.Quantity = AddQuantity;
+                    if (!_IsSeeds) break;
                     CurrentSeed.SeedsInfo.AmountSeeds -= AddQuantity;
                     break;
             }
@@ -1246,9 +1365,14 @@ namespace Bonfire.ViewModels
 
             seedling = await _SeedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
             Seedlings.Add(seedling);
-            var seed = await _SeedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
+
+            if (_IsSeeds && CurrentSeed != null)
+            {
+                var seed = await _SeedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
+                RemoveItemFromCollection(seed);
+
+            }
             
-            RemoveItemFromCollection(seed);
             ClearFieldSeedlingView();
             UpdateCollectionViewSource(seedling.Id);
 
