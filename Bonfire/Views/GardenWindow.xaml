@@ -80,8 +80,9 @@
 
                         <Rectangle Width="{Binding Width}"
                                    Height="{Binding Height}"
-                                   Fill="{Binding Fill}"
-                                   StrokeThickness="{Binding StrokeThickness}">
+                                   Fill="{Binding DataContext.FillSeedbed, RelativeSource={RelativeSource AncestorType=UserControl, Mode=FindAncestor}}"
+                                   Stroke="{Binding DataContext.StrokeSeedbed, RelativeSource={RelativeSource AncestorType=UserControl, Mode=FindAncestor}}"
+                                   StrokeThickness="{Binding DataContext.StrokeThicknessSeedbed, RelativeSource={RelativeSource AncestorType=UserControl, Mode=FindAncestor}}">
 
                             <Rectangle.Style>
                                
@@ -121,8 +122,10 @@
 
 
         
-        <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentWidth}" Margin="20,70,0,0"/>
+        <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentWidth}" Margin="20,70,0,0" />
         <TextBox Grid.Column="3" Grid.Row="2" Style="{StaticResource SeedsTextBoxStyle}" Text="{Binding CurrentHeight}" Margin="150,70,0,0" />
+        <CheckBox Grid.Column="3" Grid.Row="2" Content="Постоянная" Margin="280,70,0,0" Width="150" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top"
+                  IsChecked="{Binding IsRegularSeedbed}"/>
         <Button Grid.Row="2" Grid.Column="3" Margin="20,20,0,0" Style="{StaticResource SeedsButtonStyle}" Width="24" Background="{Binding CreateButtonPressedColor}" FontSize="18" 
                 Command="{Binding IsCreateSeedBedCommand}">
             

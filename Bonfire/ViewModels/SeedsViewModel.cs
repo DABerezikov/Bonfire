@@ -1078,8 +1078,8 @@ public class SeedsViewModel : ViewModel
                 sheet.Cells[row, 3].Style.Font.UnderLine = true;
             }
 
-            sheet.Cells[row, 4].Value = listSeeds[i].WeightPack;
-            sheet.Cells[row, 5].Value = listSeeds[i].QuantityPack;
+            sheet.Cells[row, 4].Value = listSeeds[i].AmountSeedsWeight;
+            sheet.Cells[row, 5].Value = listSeeds[i].AmountSeeds;
 
             if (i != listSeeds.Count - 1) continue;
             sheet.Cells[1, 1, row, 7].Style.Border.Top.Style = ExcelBorderStyle.Thin;
@@ -1096,16 +1096,16 @@ public class SeedsViewModel : ViewModel
                     s.Plant.PlantSort.Name,
                     s.Plant.PlantSort.Producer.Name,
                     s.SeedsInfo.ExpirationDate.ToShortDateString(),
-                    s.SeedsInfo.WeightPack,
-                    s.SeedsInfo.QuantityPack)
+                    s.SeedsInfo.AmountSeedsWeight,
+                    s.SeedsInfo.AmountSeeds)
             )
             .OrderBy(c => c.Culture)
             .ToList();
         return listSeeds;
     }
 
-    private record ListSeed(string Culture, string Sort, string Producer, string ExpirationDate, double WeightPack,
-        double QuantityPack);
+    private record ListSeed(string Culture, string Sort, string Producer, string ExpirationDate, double? AmountSeedsWeight,
+        double AmountSeeds);
 
     private void SaveExcelReport(ExcelPackage package)
     {

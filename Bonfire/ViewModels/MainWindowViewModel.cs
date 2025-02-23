@@ -14,6 +14,7 @@ namespace Bonfire.ViewModels
         IUserDialog UserDialog,
         ISeedsService SeedsService,
         ISeedlingsService SeedlingsService,
+        ISeedbedsService SeedbedsService,
         SeedsViewModel SeedsViewModel,
         SeedlingsViewModel SeedlingsViewModel,
         GardenViewModel GardenViewModel,
@@ -209,8 +210,8 @@ namespace Bonfire.ViewModels
         /// <summary> Логика выполнения - Отобразить представление рассады </summary>
         private void OnShowGardenViewModelCommandExecuted()
         {
-            if (CurrentViewModel is GardenViewModel) return;
-            CurrentViewModel = new GardenViewModel(SeedlingsService, SeedsService, UserDialog, Mapper);
+            if (CurrentViewModel is GardenViewModel) return; 
+            CurrentViewModel = new GardenViewModel(SeedlingsService, SeedsService, SeedbedsService, UserDialog, Mapper);
             ClearBold();
             GardenBold = _BoldFontWeight;
             GardenBackground = _BackgroundBrash;

@@ -16,3 +16,4 @@ class SeedsRepository : DbRepository<Seed>
         .Include(item => item.Plant.PlantSort.Producer)
     ;
 }
+

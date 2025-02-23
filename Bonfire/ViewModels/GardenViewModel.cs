@@ -22,7 +22,7 @@ namespace Bonfire.ViewModels
     {
         private readonly ISeedlingsService _SeedlingsService;
         private readonly ISeedsService _SeedsService;
-        private readonly ISeedbedService _SeedBedService;
+        private readonly ISeedbedsService _SeedBedService;
         private readonly IUserDialog _UserDialog;
         private readonly IMapper _Mapper;
 
@@ -32,11 +32,11 @@ namespace Bonfire.ViewModels
 
 
 
-        public GardenViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IMapper mapper)
+        public GardenViewModel(ISeedlingsService seedlings, ISeedsService seedsService, ISeedbedsService seedbedsService, IUserDialog dialog, IMapper mapper)
         {
             _SeedlingsService = seedlings;
             _SeedsService = seedsService;
-           
+            _SeedBedService = seedbedsService;
             _UserDialog = dialog;
             _Mapper = mapper;
             
@@ -229,7 +229,6 @@ namespace Bonfire.ViewModels
         }
 
         #endregion
-        
         #region MoveButtonPressedColor : Color - Цвет нажатой кнопки
 
         /// <summary>Цвет нажатой кнопки</summary>
@@ -245,6 +244,67 @@ namespace Bonfire.ViewModels
 
         #endregion
 
+        #region FillSeedbed : Brush - Цвет заливки грядки
+
+        /// <summary>Цвет заливки грядки</summary>
+        private Brush _FillSeedbed = new SolidColorBrush(Colors.Transparent);
+
+
+        /// <summary>Цвет заливки грядки</summary>
+        public Brush FillSeedbed
+        {
+            get => _FillSeedbed;
+            set => Set(ref _FillSeedbed, value);
+        }
+
+        #endregion
+
+        #region StrokeSeedbed : Brush - Цвет обводки грядки
+
+        /// <summary>Цвет обводки грядки</summary>
+        private Brush _StrokeSeedbed = new SolidColorBrush(Colors.Black);
+
+
+        /// <summary>Цвет обводки грядки</summary>
+        public Brush StrokeSeedbed
+        {
+            get => _StrokeSeedbed;
+            set => Set(ref _StrokeSeedbed, value);
+        }
+
+        #endregion
+        
+        #region StrokeThicknessSeedbed : int - Толщина обводки грядки
+
+        /// <summary>Толщина обводки грядки</summary>
+        private int _StrokeThicknessSeedbed = 2;
+
+
+        /// <summary>Толщина обводки грядки</summary>
+        public int StrokeThicknessSeedbed
+        {
+            get => _StrokeThicknessSeedbed;
+            set => Set(ref _StrokeThicknessSeedbed, value);
+        }
+
+        #endregion
+        
+        #region IsRegularSeedbed : bool - Толщина обводки грядки
+
+        /// <summary>Толщина обводки грядки</summary>
+        private bool _IsRegularSeedbed = true;
+
+
+        /// <summary>Толщина обводки грядки</summary>
+        public bool IsRegularSeedbed
+        {
+            get => _IsRegularSeedbed;
+            set => Set(ref _IsRegularSeedbed, value);
+        }
+
+        #endregion
+
+
 
 
         #endregion
@@ -254,21 +314,36 @@ namespace Bonfire.ViewModels
 
         private void DrawSeedBed(Point point)
         {
-            var seedBed = new SeedBedFromViewModel()
+            var seedBedFromViewModel = CreateSeedBedFromViewModel(point);
+
+            CreateSeedbed(seedBedFromViewModel);
+
+            SeedBeds.Add(seedBedFromViewModel);
+
+            OnPropertyChanged(nameof(SeedBeds));
+
+        }
+
+        private SeedBedFromViewModel CreateSeedBedFromViewModel(Point point)
+        {
+            var seedBedFromViewModel = new SeedBedFromViewModel()
             {
                 Position = point,
                 Width = CurrentWidth,
                 Height = CurrentHeight,
-                Fill = Brushes.Transparent,
-                Stroke = Brushes.Black,
-                StrokeThickness = 2
-                
-                
+               
+                Soil = new Soil()
             };
-            
-            SeedBeds.Add(seedBed);
+            return seedBedFromViewModel;
+        }
 
-            OnPropertyChanged(nameof(SeedBeds));
+        private void CreateSeedbed(SeedBedFromViewModel seedBedFromViewModel)
+        {
+            var seedbed = new Seedbed();
+
+            _Mapper.Map(seedBedFromViewModel, seedbed);
+
+            _SeedBedService.MakeASeedbed(seedbed);
         }
 
         private void ChoiсeBed()
