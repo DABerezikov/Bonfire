@@ -105,9 +105,10 @@ public class SeedsViewModel : ViewModel
         {
             if (Set(ref _SeedFilter, value))
             {
+                SelectedItem = null;
                 SeedsView?.Refresh();
             }
-        } 
+        }
     }
 
     #endregion
@@ -251,7 +252,8 @@ public class SeedsViewModel : ViewModel
         get => _IsHaving;
         set
         {
-            Set(ref _IsHaving, value); 
+            Set(ref _IsHaving, value);
+            SelectedItem = null;
             SeedsView?.Refresh();
         }
     }

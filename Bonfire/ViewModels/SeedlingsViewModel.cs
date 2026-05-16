@@ -103,6 +103,7 @@ namespace Bonfire.ViewModels
             {
                 if (Set(ref _SeedlingFilter, value))
                 {
+                    SelectedItem = null;
                     SeedlingsView?.Refresh();
                 }
             }
@@ -745,6 +746,7 @@ namespace Bonfire.ViewModels
             set
             {
                 Set(ref _IsHaving, value);
+                SelectedItem = null;
                 SeedlingsView?.Refresh();
             }
         }
