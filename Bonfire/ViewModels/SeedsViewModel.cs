@@ -20,7 +20,6 @@ using BonfireDB.Migrations;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
-using LicenseContext = OfficeOpenXml.LicenseContext;
 
 
 namespace Bonfire.ViewModels;
@@ -1049,7 +1048,7 @@ public class SeedsViewModel : ViewModel
 
     public void CreateSeedReport()
     {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        ExcelPackage.License.SetNonCommercialPersonal("Bonfire");
 
         using var package = new ExcelPackage();
         var sheet = package.Workbook.Worksheets.Add("Семена");
