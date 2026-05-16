@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <StartupObject>Bonfire.Program</StartupObject>
@@ -32,30 +32,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="EPPlus" Version="7.1.0" />
+    <PackageReference Include="EPPlus" Version="8.5.4" />
     <PackageReference Include="FontAwesome5" Version="2.1.11" />
-    <PackageReference Include="MathCore.WPF" Version="0.0.44.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.3">
+    <PackageReference Include="MathCore.WPF" Version="0.0.50" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
+    <PackageReference Include="NLog" Version="6.1.3" />
     <PackageReference Include="NLog.Config" Version="4.7.15" />
-    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
-    <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="6.1.3" />
+    <PackageReference Include="System.Interactive.Async" Version="7.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BonfireDB\BonfireDB.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="MoonCalendar">
-      <HintPath>..\..\MoonCalendar\MoonCalendar\MoonCalendar\bin\Release\net8.0\publish\MoonCalendar.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\MoonCalendar\MoonCalendar.csproj" />
   </ItemGroup>
 
   <ItemGroup>

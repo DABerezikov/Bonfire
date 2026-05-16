@@ -1,0 +1,19 @@
+#!/bin/sh
+# Запуск тестов перед каждым коммитом.
+# Установка: git config core.hooksPath .githooks
+# (выполняется автоматически при открытии проекта через .claude/settings.json SessionStart)
+
+echo "Running tests before commit..."
+
+dotnet test Bonfire.sln --no-build --nologo -v q
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "COMMIT BLOCKED: tests failed. Fix the errors above and try again."
+  echo "To skip (not recommended): git commit --no-verify"
+  exit 1
+fi
+
+echo "All tests passed."
+exit 0

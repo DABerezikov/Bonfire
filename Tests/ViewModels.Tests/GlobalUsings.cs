@@ -1,0 +1,9 @@
+global using Xunit;
+global using NSubstitute;
+global using System;
+global using System.Collections.ObjectModel;
+global using System.Linq;
+global using Bonfire.Models;
+global using Bonfire.Services.Interfaces;
+global using Bonfire.ViewModels;
+global using BonfireDB.Entities;

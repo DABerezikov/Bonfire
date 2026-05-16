@@ -11,7 +11,6 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System;
 using System.Linq;
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Services.Extensions;
 
@@ -22,14 +21,12 @@ namespace Bonfire.ViewModels
         private readonly ISeedlingsService _SeedlingsService;
         private readonly ISeedsService _SeedsService;
         private readonly IUserDialog _UserDialog;
-        private readonly IMapper _Mapper;
 
-        public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IMapper mapper)
+        public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog)
         {
             _SeedlingsService = seedlings;
             _SeedsService = seedsService;
             _UserDialog = dialog;
-            _Mapper = mapper;
             _SeedlingsView = new CollectionViewSource
             {
                 SortDescriptions =
@@ -258,7 +255,7 @@ namespace Bonfire.ViewModels
         private string _SeedlingSource;
 
         /// <summary>Результат выбора источника рассады</summary>
-        private string SeedlingSource
+        internal string SeedlingSource
         {
             get => _SeedlingSource;
             set => Set(ref _SeedlingSource, value);
@@ -1092,7 +1089,29 @@ namespace Bonfire.ViewModels
         {
             if (seedlingFrom == null) return;
 
-            _Mapper.Map(seedlingFrom, seedlingTo);
+            seedlingTo.Id = seedlingFrom.Id;
+            seedlingTo.Weight = seedlingFrom.Weight;
+            seedlingTo.Quantity = seedlingFrom.Quantity;
+            seedlingTo.SeedId = seedlingFrom.SeedId;
+
+            seedlingTo.Plant.Id = seedlingFrom.Plant.Id;
+            seedlingTo.Plant.PlantCulture.Id = seedlingFrom.Plant.PlantCulture.Id;
+            seedlingTo.Plant.PlantCulture.Name = seedlingFrom.Plant.PlantCulture.Name;
+            seedlingTo.Plant.PlantCulture.Class = seedlingFrom.Plant.PlantCulture.Class;
+            seedlingTo.Plant.PlantSort.Id = seedlingFrom.Plant.PlantSort.Id;
+            seedlingTo.Plant.PlantSort.Name = seedlingFrom.Plant.PlantSort.Name;
+            seedlingTo.Plant.PlantSort.Description = seedlingFrom.Plant.PlantSort.Description;
+            seedlingTo.Plant.PlantSort.MinGerminationTime = seedlingFrom.Plant.PlantSort.MinGerminationTime;
+            seedlingTo.Plant.PlantSort.MaxGerminationTime = seedlingFrom.Plant.PlantSort.MaxGerminationTime;
+            seedlingTo.Plant.PlantSort.AgeOfSeedlings = seedlingFrom.Plant.PlantSort.AgeOfSeedlings;
+            seedlingTo.Plant.PlantSort.GrowingSeason = seedlingFrom.Plant.PlantSort.GrowingSeason;
+            seedlingTo.Plant.PlantSort.LandingPattern = seedlingFrom.Plant.PlantSort.LandingPattern;
+            seedlingTo.Plant.PlantSort.PlantHeight = seedlingFrom.Plant.PlantSort.PlantHeight;
+            seedlingTo.Plant.PlantSort.PlantColor = seedlingFrom.Plant.PlantSort.PlantColor;
+            seedlingTo.Plant.PlantSort.Producer.Id = seedlingFrom.Plant.PlantSort.Producer.Id;
+            seedlingTo.Plant.PlantSort.Producer.Name = seedlingFrom.Plant.PlantSort.Producer.Name;
+
+            seedlingTo.SeedlingInfos = seedlingFrom.SeedlingInfos;
 
             OnPropertyChanged(nameof(EditedItem));
             OnPropertyChanged(nameof(SelectedItem));

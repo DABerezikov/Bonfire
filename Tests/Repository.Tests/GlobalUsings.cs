@@ -1,0 +1,9 @@
+global using Xunit;
+global using System;
+global using System.Linq;
+global using System.Threading.Tasks;
+global using Microsoft.EntityFrameworkCore;
+global using BonfireDB;
+global using BonfireDB.Context;
+global using BonfireDB.Entities;
+global using BonfireDB.Entities.Base;

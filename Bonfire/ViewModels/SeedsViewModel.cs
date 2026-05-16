@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
-using AutoMapper;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
@@ -30,14 +29,12 @@ public class SeedsViewModel : ViewModel
 {
     private readonly ISeedsService _SeedsService;
     private readonly IUserDialog _UserDialog;
-    private readonly IMapper _Mapper;
 
 
-    public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog, IMapper mapper)
+    public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog)
     {
         _SeedsService = seedsService;
         _UserDialog = userDialog;
-        _Mapper = mapper;
         _SeedsView = new CollectionViewSource
         {
             SortDescriptions =
@@ -331,7 +328,7 @@ public class SeedsViewModel : ViewModel
     private string _SeedSource;
 
     /// <summary>Результат выбора источника семян</summary>
-    private string SeedSource
+    internal string SeedSource
     {
         get => _SeedSource;
         set
@@ -568,7 +565,7 @@ public class SeedsViewModel : ViewModel
         set
         {
             if (Set(ref _AddSort, value))
-                SortListView.Refresh();
+                SortListView?.Refresh();
         } 
     }
 
@@ -616,7 +613,7 @@ public class SeedsViewModel : ViewModel
         {
             if (Set(ref _AddProducer, value))
             {
-                ProducerListView.Refresh();
+                ProducerListView?.Refresh();
                 if(_AddProducer == "Свои семена")
                     IsCollected = true;
             }
@@ -945,7 +942,37 @@ public class SeedsViewModel : ViewModel
     {
         if(seedFrom == null) return;
 
-        _Mapper.Map(seedFrom, seedTo);
+        seedTo.Id = seedFrom.Id;
+        seedTo.SeedsInfoId = seedFrom.SeedsInfoId;
+
+        seedTo.Plant.Id = seedFrom.Plant.Id;
+        seedTo.Plant.PlantCulture.Id = seedFrom.Plant.PlantCulture.Id;
+        seedTo.Plant.PlantCulture.Name = seedFrom.Plant.PlantCulture.Name;
+        seedTo.Plant.PlantCulture.Class = seedFrom.Plant.PlantCulture.Class;
+        seedTo.Plant.PlantSort.Id = seedFrom.Plant.PlantSort.Id;
+        seedTo.Plant.PlantSort.Name = seedFrom.Plant.PlantSort.Name;
+        seedTo.Plant.PlantSort.Description = seedFrom.Plant.PlantSort.Description;
+        seedTo.Plant.PlantSort.MinGerminationTime = seedFrom.Plant.PlantSort.MinGerminationTime;
+        seedTo.Plant.PlantSort.MaxGerminationTime = seedFrom.Plant.PlantSort.MaxGerminationTime;
+        seedTo.Plant.PlantSort.AgeOfSeedlings = seedFrom.Plant.PlantSort.AgeOfSeedlings;
+        seedTo.Plant.PlantSort.GrowingSeason = seedFrom.Plant.PlantSort.GrowingSeason;
+        seedTo.Plant.PlantSort.LandingPattern = seedFrom.Plant.PlantSort.LandingPattern;
+        seedTo.Plant.PlantSort.PlantHeight = seedFrom.Plant.PlantSort.PlantHeight;
+        seedTo.Plant.PlantSort.PlantColor = seedFrom.Plant.PlantSort.PlantColor;
+        seedTo.Plant.PlantSort.Producer.Id = seedFrom.Plant.PlantSort.Producer.Id;
+        seedTo.Plant.PlantSort.Producer.Name = seedFrom.Plant.PlantSort.Producer.Name;
+
+        seedTo.SeedsInfo.Id = seedFrom.SeedsInfo.Id;
+        seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
+        seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
+        seedTo.SeedsInfo.PurchaseDate = seedFrom.SeedsInfo.PurchaseDate;
+        seedTo.SeedsInfo.ExpirationDate = seedFrom.SeedsInfo.ExpirationDate;
+        seedTo.SeedsInfo.CostPack = seedFrom.SeedsInfo.CostPack;
+        seedTo.SeedsInfo.DisposeComment = seedFrom.SeedsInfo.DisposeComment;
+        seedTo.SeedsInfo.AmountSeeds = seedFrom.SeedsInfo.AmountSeeds;
+        seedTo.SeedsInfo.AmountSeedsWeight = seedFrom.SeedsInfo.AmountSeedsWeight;
+        seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
+        seedTo.SeedsInfo.Note = seedFrom.SeedsInfo.Note;
 
         OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
@@ -1152,12 +1179,12 @@ public class SeedsViewModel : ViewModel
 
     private void ExcelSettings(ExcelWorksheet sheet)
     {
-        sheet.PrinterSettings.BottomMargin = 0.1m;
+        sheet.PrinterSettings.BottomMargin = 0.1;
         sheet.PrinterSettings.FooterMargin = 0;
         sheet.PrinterSettings.HeaderMargin = 0;
-        sheet.PrinterSettings.LeftMargin = 0.2m;
-        sheet.PrinterSettings.RightMargin = 0.1m;
-        sheet.PrinterSettings.TopMargin = 0.1m;
+        sheet.PrinterSettings.LeftMargin = 0.2;
+        sheet.PrinterSettings.RightMargin = 0.1;
+        sheet.PrinterSettings.TopMargin = 0.1;
         sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
 
         sheet.Cells.Style.Font.Name = "Calibri";

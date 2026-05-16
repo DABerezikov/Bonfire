@@ -2,7 +2,6 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using AutoMapper;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
@@ -15,8 +14,7 @@ namespace Bonfire.ViewModels
         ISeedsService SeedsService,
         ISeedlingsService SeedlingsService,
         SeedsViewModel SeedsViewModel,
-        SeedlingsViewModel SeedlingsViewModel,
-        IMapper Mapper)
+        SeedlingsViewModel SeedlingsViewModel)
         : ViewModel
     {
         private readonly SeedlingsViewModel _SeedlingsViewModel = SeedlingsViewModel;
@@ -173,7 +171,7 @@ namespace Bonfire.ViewModels
         private void OnShowSeedlingsViewModelCommandExecuted()
         {
             if (CurrentViewModel is SeedlingsViewModel) return;
-            CurrentViewModel = new SeedlingsViewModel(SeedlingsService, SeedsService, UserDialog, Mapper);
+            CurrentViewModel = new SeedlingsViewModel(SeedlingsService, SeedsService, UserDialog);
             ClearBold();
             SeedlingsBold = _BoldFontWeight;
             SeedlingBackground = _BackgroundBrash;

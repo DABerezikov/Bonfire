@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "git config core.hooksPath .githooks; Write-Host 'Git hooks path set to .githooks'",
+            "timeout": 10,
+            "statusMessage": "Configuring git hooks..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "if": "Bash(git commit*)",
+            "command": "$input_json = $input | ConvertFrom-Json; $cmd = $input_json.tool_input.command; if ($cmd -match '^git commit') { Write-Host 'Running tests before commit...'; dotnet test 'Bonfire.sln' --no-build --nologo -v q; if ($LASTEXITCODE -ne 0) { @{ continue = $false; stopReason = 'Tests failed — commit blocked. Fix failing tests first.' } | ConvertTo-Json -Compress } }",
+            "timeout": 120,
+            "statusMessage": "Running dotnet test before commit..."
+          }
+        ]
+      }
+    ]
+  }
+}

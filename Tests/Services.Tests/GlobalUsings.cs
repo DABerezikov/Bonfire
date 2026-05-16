@@ -1,0 +1,12 @@
+global using Xunit;
+global using NSubstitute;
+global using System;
+global using System.Collections.Generic;
+global using System.Collections.ObjectModel;
+global using System.Linq;
+global using System.Threading.Tasks;
+global using Bonfire.Models;
+global using Bonfire.Services;
+global using Bonfire.Services.Extensions;
+global using BonfireDB.Entities;
+global using BonfireDB.Entities.Base;
