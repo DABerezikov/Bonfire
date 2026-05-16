@@ -1,27 +1,18 @@
 ﻿using Bonfire.Infrastructure.Commands.Base;
 using System;
 
-namespace Bonfire.Infrastructure.Commands
+namespace Bonfire.Infrastructure.Commands;
+
+internal class LambdaCommandAsync(ActionAsync<object> execute, Func<object, bool> canExecute = null)
+    : Command
 {
-    internal class LambdaCommandAsync : Command
+    public LambdaCommandAsync(ActionAsync Execute, Func<bool> CanExecute = null)
+        : this(async p => await Execute(), CanExecute is null ? (Func<object, bool>)null : p => CanExecute())
     {
-        private readonly ActionAsync<object> _Execute;
-        private readonly Func<object, bool> _CanExecute;
 
-        public LambdaCommandAsync(ActionAsync Execute, Func<bool> CanExecute = null)
-            : this(async p => await Execute(), CanExecute is null ? (Func<object, bool>)null : p => CanExecute())
-        {
-
-        }
-
-        public LambdaCommandAsync(ActionAsync<object> Execute, Func<object, bool> CanExecute = null)
-        {
-            _Execute = Execute;
-            _CanExecute = CanExecute;
-        }
-
-        protected override bool CanExecute(object p) => _CanExecute?.Invoke(p) ?? true;
-
-        protected override void Execute(object p) => _Execute(p);
     }
+
+    protected override bool CanExecute(object p) => canExecute?.Invoke(p) ?? true;
+
+    protected override void Execute(object p) => execute(p);
 }

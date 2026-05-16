@@ -1,14 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Bonfire.ViewModels
-{
-    internal static class ViewModelRegister
-    {
-        public static IServiceCollection AddViews(this IServiceCollection services) => services
-           .AddSingleton<MainWindowViewModel>()
-           .AddSingleton<SeedsViewModel>()
-           .AddSingleton<SeedlingsViewModel>()
+namespace Bonfire.ViewModels;
 
-        ;
-    }
+internal static class ViewModelRegister
+{
+    public static IServiceCollection AddViews(this IServiceCollection services) => services
+        .AddSingleton<MainWindowViewModel>()
+        .AddSingleton<SeedsViewModel>()
+        .AddSingleton<SeedlingsViewModel>()
+
+    ;
 }

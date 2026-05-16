@@ -1,15 +1,14 @@
 ﻿using System.Windows.Controls;
 
-namespace Bonfire.Views
+namespace Bonfire.Views;
+
+/// <summary>
+/// Логика взаимодействия для LibraryEditorWindow.xaml
+/// </summary>
+public partial class LibraryEditorWindow : UserControl
 {
-    /// <summary>
-    /// Логика взаимодействия для LibraryEditorWindow.xaml
-    /// </summary>
-    public partial class LibraryEditorWindow : UserControl
+    public LibraryEditorWindow()
     {
-        public LibraryEditorWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }

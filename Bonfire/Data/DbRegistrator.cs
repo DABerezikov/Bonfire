@@ -5,29 +5,28 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Bonfire.Data
+namespace Bonfire.Data;
+
+internal static class DbRegistrator
 {
-    internal static class DbRegistrator
-    {
-        public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration) => services
-            .AddDbContext<DbBonfire>(opt =>
+    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration) => services
+        .AddDbContext<DbBonfire>(opt =>
+        {
+            var type = configuration["Type"];
+            switch (type)
             {
-                var type = configuration["Type"];
-                switch (type)
-                {
-                    case null: throw new InvalidOperationException("Не определён тип БД");
+                case null: throw new InvalidOperationException("Не определён тип БД");
 
-                    default: throw new InvalidOperationException($"Тип подключения {type} не поддерживается");
+                default: throw new InvalidOperationException($"Тип подключения {type} не поддерживается");
 
-                    case "SQLite":
-                        opt.UseSqlite(configuration.GetConnectionString(type));
-                        break;
+                case "SQLite":
+                    opt.UseSqlite(configuration.GetConnectionString(type));
+                    break;
                     
 
-                }
-            })
-            .AddSingleton<DbInitializer>()
-            .AddRepositoriesInDb()
-        ;
-    }
+            }
+        })
+        .AddSingleton<DbInitializer>()
+        .AddRepositoriesInDb()
+    ;
 }

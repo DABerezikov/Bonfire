@@ -5,10 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using BonfireDB.Entities.Base;
 
-namespace BonfireDB.Entities
+namespace BonfireDB.Entities;
+
+public class Producer: NamedEntity
 {
-    public class Producer: NamedEntity
-    {
-        public ICollection<PlantSort> PlantSorts { get; set; }
-    }
+    public ICollection<PlantSort> PlantSorts { get; set; }
 }

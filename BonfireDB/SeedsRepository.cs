@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB;
 
-class SeedsRepository : DbRepository<Seed>
+class SeedsRepository(DbBonfire db) : DbRepository<Seed>(db)
 {
-    public SeedsRepository(DbBonfire db) : base(db) { }
-
     public override IQueryable<Seed> Items => base.Items
         .Include(item=>item.Plant)
         .Include(item=>item.SeedsInfo)
