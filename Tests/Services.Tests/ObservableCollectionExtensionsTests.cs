@@ -1,32 +1,30 @@
-using ObservableCollectionExtensions = Bonfire.Services.Extensions.ObservableCollectionExtensions;
-
 namespace Services.Tests;
 
 public class ObservableCollectionExtensionsTests
 {
-    // ── Add(IEnumerable) ──────────────────────────────────────────────────────
+    // ── AddRange (встроенный .NET 10) ─────────────────────────────────────────
 
     [Fact]
-    public void Add_AddsAllItemsToCollection()
+    public void AddRange_AddsAllItemsToCollection()
     {
         var collection = new ObservableCollection<int> { 1 };
-        ObservableCollectionExtensions.AddRange(collection, new[] { 2, 3, 4 });
+        collection.AddRange(new[] { 2, 3, 4 });
         Assert.Equal(new[] { 1, 2, 3, 4 }, collection);
     }
 
     [Fact]
-    public void Add_EmptySource_CollectionUnchanged()
+    public void AddRange_EmptySource_CollectionUnchanged()
     {
         var collection = new ObservableCollection<int> { 1, 2 };
-        ObservableCollectionExtensions.AddRange(collection, Array.Empty<int>());
+        collection.AddRange(Array.Empty<int>());
         Assert.Equal(new[] { 1, 2 }, collection);
     }
 
     [Fact]
-    public void Add_ToEmptyCollection_AddsAllItems()
+    public void AddRange_ToEmptyCollection_AddsAllItems()
     {
         var collection = new ObservableCollection<string>();
-        ObservableCollectionExtensions.AddRange(collection, new[] { "a", "b", "c" });
+        collection.AddRange(new[] { "a", "b", "c" });
         Assert.Equal(new[] { "a", "b", "c" }, collection);
     }
 

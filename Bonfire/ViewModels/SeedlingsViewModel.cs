@@ -550,7 +550,7 @@ public class SeedlingsViewModel : ViewModel
                 ExpirationDate = seeds.SeedsInfo.ExpirationDate
             }).AsEnumerable()
             .OrderBy(s => s.Culture);
-        AddPlantList.Add(addListPlant.ToList());
+        AddPlantList.AddRange(addListPlant.ToList());
         _PlantListView.Source = AddPlantList;
         OnPropertyChanged(nameof(PlantListView));
     }
@@ -567,7 +567,7 @@ public class SeedlingsViewModel : ViewModel
             }).AsEnumerable()
             .Distinct(s => s.Sort)
             .OrderBy(s => s.Sort);
-        AddSortList.Add(addListSort.ToList());
+        AddSortList.AddRange(addListSort.ToList());
         _SortListView.Source = AddSortList;
         OnPropertyChanged(nameof(SortListView));
     }
