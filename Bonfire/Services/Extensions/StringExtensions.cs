@@ -7,35 +7,31 @@ public static class StringExtension
 {
     public static double DoubleParseAdvanced(this string strToParse, char decimalSymbol = ',')
     {
-        string tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?").Value;
+        var tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?").Value;
 
-        if (tmp.Length > 0 && strToParse.Contains(tmp))
-        {
-            var curDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
+        if (tmp.Length <= 0 || !strToParse.Contains(tmp)) return 0;
 
-            tmp = tmp.Replace(".", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
-            tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
+        var curDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
 
-            return double.Parse(tmp);
-        }
+        tmp = tmp.Replace(".", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
+        tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
 
-        return 0;
+        return double.Parse(tmp);
+
     }
 
     public static decimal DecimalParseAdvanced(this string strToParse, char decimalSymbol = ',')
     {
-        string tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?").Value;
+        var tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?").Value;
 
-        if (tmp.Length > 0 && strToParse.Contains(tmp))
-        {
-            var curDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
+        if (tmp.Length <= 0 || !strToParse.Contains(tmp)) return 0;
 
-            tmp = tmp.Replace(".", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
-            tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
+        var curDecSeparator = NumberFormatInfo.CurrentInfo.CurrencyDecimalSeparator;
 
-            return decimal.Parse(tmp);
-        }
+        tmp = tmp.Replace(".", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
+        tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
 
-        return 0;
+        return decimal.Parse(tmp);
+
     }
 }

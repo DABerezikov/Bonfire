@@ -1,3 +1,5 @@
+using ObservableCollectionExtensions = Bonfire.Services.Extensions.ObservableCollectionExtensions;
+
 namespace Services.Tests;
 
 public class ObservableCollectionExtensionsTests
@@ -8,7 +10,7 @@ public class ObservableCollectionExtensionsTests
     public void Add_AddsAllItemsToCollection()
     {
         var collection = new ObservableCollection<int> { 1 };
-        collection.Add(new[] { 2, 3, 4 });
+        ObservableCollectionExtensions.AddRange(collection, new[] { 2, 3, 4 });
         Assert.Equal(new[] { 1, 2, 3, 4 }, collection);
     }
 
@@ -16,7 +18,7 @@ public class ObservableCollectionExtensionsTests
     public void Add_EmptySource_CollectionUnchanged()
     {
         var collection = new ObservableCollection<int> { 1, 2 };
-        collection.Add(Array.Empty<int>());
+        ObservableCollectionExtensions.AddRange(collection, Array.Empty<int>());
         Assert.Equal(new[] { 1, 2 }, collection);
     }
 
@@ -24,7 +26,7 @@ public class ObservableCollectionExtensionsTests
     public void Add_ToEmptyCollection_AddsAllItems()
     {
         var collection = new ObservableCollection<string>();
-        collection.Add(new[] { "a", "b", "c" });
+        ObservableCollectionExtensions.AddRange(collection, new[] { "a", "b", "c" });
         Assert.Equal(new[] { "a", "b", "c" }, collection);
     }
 
