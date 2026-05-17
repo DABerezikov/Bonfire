@@ -4,11 +4,12 @@ public class SeedsViewModelTests
 {
     private readonly ISeedsService _seedsService = Substitute.For<ISeedsService>();
     private readonly IUserDialog _userDialog = Substitute.For<IUserDialog>();
+    private readonly IReportService _reportService = Substitute.For<IReportService>();
 
     private SeedsViewModel CreateVm()
     {
         _seedsService.Seeds.Returns(Enumerable.Empty<Seed>().AsQueryable());
-        return new SeedsViewModel(_seedsService, _userDialog);
+        return new SeedsViewModel(_seedsService, _userDialog, _reportService);
     }
 
     // ── Verification via AddOrCorrectSeedCommand.CanExecute ───────────────────

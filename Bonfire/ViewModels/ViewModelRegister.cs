@@ -8,6 +8,5 @@ internal static class ViewModelRegister
         .AddSingleton<MainWindowViewModel>()
         .AddSingleton<SeedsViewModel>()
         .AddSingleton<SeedlingsViewModel>()
-
-    ;
+        .AddSingleton<LibraryEditorViewModel>();
 }
