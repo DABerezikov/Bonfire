@@ -28,7 +28,7 @@ public class SeedlingsServiceTests
         var seedling = new Seedling
         {
             Id = 0,
-            SeedlingInfos = new List<SeedlingInfo> { info1, info2 }
+            SeedlingInfos = [info1, info2]
         };
         _seedlings.AddAsync(seedling).Returns(seedling);
 
@@ -43,7 +43,7 @@ public class SeedlingsServiceTests
     [Fact]
     public async Task MakeASeedling_EmptySeedlingInfos_OnlyAddsSeedling()
     {
-        var seedling = new Seedling { Id = 0, SeedlingInfos = new List<SeedlingInfo>() };
+        var seedling = new Seedling { Id = 0, SeedlingInfos = [] };
         _seedlings.AddAsync(seedling).Returns(seedling);
 
         var service = CreateService();
@@ -100,7 +100,7 @@ public class SeedlingsServiceTests
     [Fact]
     public async Task UpdateSeedlingInfo_NoReplants_OnlyCallsUpdateAsync()
     {
-        var info = new SeedlingInfo { Id = 1, Replants = new List<Replanting>() };
+        var info = new SeedlingInfo { Id = 1, Replants = [] };
         var service = CreateService();
 
         await service.UpdateSeedlingInfo(info);
@@ -116,7 +116,7 @@ public class SeedlingsServiceTests
         var info = new SeedlingInfo
         {
             Id = 1,
-            Replants = new List<Replanting> { newReplant }
+            Replants = [newReplant]
         };
         var service = CreateService();
 
@@ -132,7 +132,7 @@ public class SeedlingsServiceTests
         var info = new SeedlingInfo
         {
             Id = 1,
-            Replants = new List<Replanting> { existingReplant }
+            Replants = [existingReplant]
         };
         var service = CreateService();
 
@@ -149,7 +149,7 @@ public class SeedlingsServiceTests
         var info = new SeedlingInfo
         {
             Id = 1,
-            Replants = new List<Replanting> { existingReplant, newReplant }
+            Replants = [existingReplant, newReplant]
         };
         var service = CreateService();
 

@@ -256,7 +256,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new() { "Граммы", "Штуки" };
+    } = ["Граммы", "Штуки"];
 
     public string AddSize
     {
@@ -294,7 +294,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new();
+    } = [];
 
     public string AddCulture
     {
@@ -322,7 +322,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new();
+    } = [];
 
     public string AddSort
     {
@@ -350,7 +350,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new();
+    } = [];
 
     public string AddProducer
     {

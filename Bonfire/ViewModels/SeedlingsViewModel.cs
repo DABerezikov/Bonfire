@@ -180,7 +180,7 @@ public class SeedlingsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new() { "-Выбрать все-" };
+    } = ["-Выбрать все-"];
 
     // Источник рассады (радио-кнопки)
 
@@ -259,7 +259,7 @@ public class SeedlingsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new();
+    } = [];
 
     public string AddProducer
     {
@@ -326,7 +326,7 @@ public class SeedlingsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new();
+    } = [];
 
     public string AddCulture
     {
@@ -379,7 +379,7 @@ public class SeedlingsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new();
+    } = [];
 
     public string AddSort
     {
@@ -622,7 +622,7 @@ public class SeedlingsViewModel : ViewModel
                         IsDead = info.IsDead,
                         IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
                     }))
-                : new ObservableCollection<SeedlingInfoFromViewModel>()
+                : []
         };
     }
 

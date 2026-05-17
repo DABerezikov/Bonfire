@@ -56,7 +56,7 @@ public class SeedlingFromViewModelTests
     [Fact]
     public void CountGerminate_EmptyCollection_ReturnsZero()
     {
-        var model = new SeedlingFromViewModel { SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>() };
+        var model = new SeedlingFromViewModel { SeedlingInfos = [] };
         Assert.Equal(0, model.CountGerminate);
     }
 
@@ -65,12 +65,12 @@ public class SeedlingFromViewModelTests
     {
         var model = new SeedlingFromViewModel
         {
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
+            SeedlingInfos =
+            [
                 MakeInfo(DateTime.Today),
                 MakeInfo(DateTime.Today.AddDays(1)),
                 MakeInfo(DateTime.Today.AddDays(2))
-            }
+            ]
         };
         Assert.Equal(3, model.CountGerminate);
     }
@@ -83,7 +83,7 @@ public class SeedlingFromViewModelTests
         var model = new SeedlingFromViewModel
         {
             LandingData = DateTime.Today,
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>()
+            SeedlingInfos = []
         };
         Assert.Null(model.MinGerminate);
     }
@@ -96,10 +96,7 @@ public class SeedlingFromViewModelTests
         var model = new SeedlingFromViewModel
         {
             LandingData = landing,
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
-                MakeInfo(germination)
-            }
+            SeedlingInfos = [MakeInfo(germination)]
         };
         Assert.Equal(7, model.MinGerminate);
     }
@@ -111,12 +108,12 @@ public class SeedlingFromViewModelTests
         var model = new SeedlingFromViewModel
         {
             LandingData = landing,
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
-                MakeInfo(new DateTime(2025, 3, 8)),   // 7 days
-                MakeInfo(new DateTime(2025, 3, 11)),  // 10 days
-                MakeInfo(new DateTime(2025, 3, 15))   // 14 days
-            }
+            SeedlingInfos =
+            [
+                MakeInfo(new DateTime(2025, 3, 8)), // 7 days
+                MakeInfo(new DateTime(2025, 3, 11)), // 10 days
+                MakeInfo(new DateTime(2025, 3, 15))
+            ]
         };
         Assert.Equal(7, model.MinGerminate);
     }
@@ -129,7 +126,7 @@ public class SeedlingFromViewModelTests
         var model = new SeedlingFromViewModel
         {
             LandingData = DateTime.Today,
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>()
+            SeedlingInfos = []
         };
         Assert.Null(model.MaxGerminate);
     }
@@ -141,12 +138,12 @@ public class SeedlingFromViewModelTests
         var model = new SeedlingFromViewModel
         {
             LandingData = landing,
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
-                MakeInfo(new DateTime(2025, 3, 8)),   // 7 days
-                MakeInfo(new DateTime(2025, 3, 11)),  // 10 days
-                MakeInfo(new DateTime(2025, 3, 15))   // 14 days
-            }
+            SeedlingInfos =
+            [
+                MakeInfo(new DateTime(2025, 3, 8)), // 7 days
+                MakeInfo(new DateTime(2025, 3, 11)), // 10 days
+                MakeInfo(new DateTime(2025, 3, 15))
+            ]
         };
         Assert.Equal(14, model.MaxGerminate);
     }
@@ -165,12 +162,12 @@ public class SeedlingFromViewModelTests
     {
         var model = new SeedlingFromViewModel
         {
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
+            SeedlingInfos =
+            [
                 MakeInfo(DateTime.Today, isDead: false),
                 MakeInfo(DateTime.Today, isDead: false),
                 MakeInfo(DateTime.Today, isDead: false)
-            }
+            ]
         };
         Assert.Equal(3, model.Balance);
     }
@@ -181,12 +178,12 @@ public class SeedlingFromViewModelTests
         // Skip(1) — первый элемент не считается мёртвым
         var model = new SeedlingFromViewModel
         {
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
-                MakeInfo(DateTime.Today, isDead: true),  // index 0 — пропускается Skip(1)
-                MakeInfo(DateTime.Today, isDead: true),  // index 1 — считается
-                MakeInfo(DateTime.Today, isDead: false)  // index 2
-            }
+            SeedlingInfos =
+            [
+                MakeInfo(DateTime.Today, isDead: true), // index 0 — пропускается Skip(1)
+                MakeInfo(DateTime.Today, isDead: true), // index 1 — считается
+                MakeInfo(DateTime.Today, isDead: false)
+            ]
         };
         // CountGerminate=3, dead from index 1 = 1 → Balance = 3 - 1 = 2
         Assert.Equal(2, model.Balance);
@@ -197,12 +194,12 @@ public class SeedlingFromViewModelTests
     {
         var model = new SeedlingFromViewModel
         {
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
-                MakeInfo(DateTime.Today, isDead: true),  // index 0 — пропускается
-                MakeInfo(DateTime.Today, isDead: true),  // index 1
-                MakeInfo(DateTime.Today, isDead: true)   // index 2
-            }
+            SeedlingInfos =
+            [
+                MakeInfo(DateTime.Today, isDead: true), // index 0 — пропускается
+                MakeInfo(DateTime.Today, isDead: true), // index 1
+                MakeInfo(DateTime.Today, isDead: true)
+            ]
         };
         // CountGerminate=3, dead from index 1 = 2 → Balance = 3 - 2 = 1
         Assert.Equal(1, model.Balance);
@@ -214,10 +211,7 @@ public class SeedlingFromViewModelTests
         // Single item: Skip(1) даёт 0 мёртвых → Balance = 1
         var model = new SeedlingFromViewModel
         {
-            SeedlingInfos = new ObservableCollection<SeedlingInfoFromViewModel>
-            {
-                MakeInfo(DateTime.Today, isDead: true)
-            }
+            SeedlingInfos = [MakeInfo(DateTime.Today, isDead: true)]
         };
         Assert.Equal(1, model.Balance);
     }
