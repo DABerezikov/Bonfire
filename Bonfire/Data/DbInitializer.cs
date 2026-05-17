@@ -39,7 +39,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int PlantCulturesCount = 20;
-    private PlantCulture[] _PlantCultures;
+    private PlantCulture[] _plantCultures;
 
     private async Task InitializePlantCulture()
     {
@@ -47,50 +47,50 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
         var rnd = new Random();
         logger.LogInformation("Инициализация культур...");
         var classList = PlantClassList.GetClassList().ToArray();
-        _PlantCultures = Enumerable.Range(1, PlantCulturesCount)
-            .Select(i => new PlantCulture()
+        _plantCultures = Enumerable.Range(1, PlantCulturesCount)
+            .Select(i => new PlantCulture
             {
                 Name = $"Культура {i}",
                 Class = rnd.NextItem(classList)
             }).ToArray();
 
-        await db.PlantsCulture.AddRangeAsync(_PlantCultures);
+        await db.PlantsCulture.AddRangeAsync(_plantCultures);
         await db.SaveChangesAsync();
         logger.LogInformation("Инициализация культур выполнена за {0} мс", timer.ElapsedMilliseconds);
     }
 
     private const int ProducersCount = 20;
-    private Producer[] _Producers;
+    private Producer[] _producers;
 
     private async Task InitializeProducers()
     {
         var timer = Stopwatch.StartNew();
         logger.LogInformation("Инициализация производителей...");
-        _Producers = Enumerable.Range(1, ProducersCount)
-            .Select(i => new Producer()
+        _producers = Enumerable.Range(1, ProducersCount)
+            .Select(i => new Producer
             {
                 Name = $"Производитель {i}"
                     
             }).ToArray();
 
-        await db.Producers.AddRangeAsync(_Producers);
+        await db.Producers.AddRangeAsync(_producers);
         await db.SaveChangesAsync();
         logger.LogInformation("Инициализация производителей выполнена за {0} мс", timer.ElapsedMilliseconds);
     }
 
     private const int PlantSortsCount = 20;
-    private PlantSort[] _PlantSorts;
+    private PlantSort[] _plantSorts;
 
     private async Task InitializePlantSort()
     {
         var rnd = new Random();
         var timer = Stopwatch.StartNew();
         logger.LogInformation("Инициализация сортов...");
-        _PlantSorts = Enumerable.Range(1, PlantSortsCount)
-            .Select(i => new PlantSort()
+        _plantSorts = Enumerable.Range(1, PlantSortsCount)
+            .Select(i => new PlantSort
             {
                 Name = $"Сорт {i}",
-                Producer = rnd.NextItem((IList<Producer>)_Producers),
+                Producer = rnd.NextItem((IList<Producer>)_producers),
                 Description = $"Описание {i}",
                 AgeOfSeedlings = 10*i,
                 GrowingSeason = 15*i,
@@ -102,42 +102,42 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
 
             }).ToArray();
 
-        await db.PlantsSort.AddRangeAsync(_PlantSorts);
+        await db.PlantsSort.AddRangeAsync(_plantSorts);
         await db.SaveChangesAsync();
         logger.LogInformation("Инициализация сортов выполнена за {0} мс", timer.ElapsedMilliseconds);
     }
 
     private const int PlantsCount = 20;
-    private Plant[] _Plants;
+    private Plant[] _plants;
 
     private async Task InitializePlant()
     {
         var rnd = new Random();
         var timer = Stopwatch.StartNew();
         logger.LogInformation("Инициализация растений...");
-        _Plants = Enumerable.Range(1, PlantsCount)
-            .Select(_ => new Plant()
+        _plants = Enumerable.Range(1, PlantsCount)
+            .Select(_ => new Plant
             {
                 //Name = $"Растение {i}",
-                PlantCulture = rnd.NextItem((IList<PlantCulture>)_PlantCultures),
-                PlantSort = rnd.NextItem((IList<PlantSort>)_PlantSorts)
+                PlantCulture = rnd.NextItem((IList<PlantCulture>)_plantCultures),
+                PlantSort = rnd.NextItem((IList<PlantSort>)_plantSorts)
 
             }).ToArray();
 
-        await db.Plants.AddRangeAsync(_Plants);
+        await db.Plants.AddRangeAsync(_plants);
         await db.SaveChangesAsync();
         logger.LogInformation("Инициализация растений выполнена за {0} мс", timer.ElapsedMilliseconds);
     }
 
     private const int SeedsInfoCount = 20;
-    private SeedsInfo[] _SeedsInfo;
+    private SeedsInfo[] _seedsInfo;
 
     private async Task InitializeSeedsInfo()
     {
         var timer = Stopwatch.StartNew();
         logger.LogInformation("Инициализация описания семян...");
-        _SeedsInfo = Enumerable.Range(1, SeedsInfoCount)
-            .Select(i => new SeedsInfo()
+        _seedsInfo = Enumerable.Range(1, SeedsInfoCount)
+            .Select(i => new SeedsInfo
             {
                 WeightPack = i,
                 AmountSeedsWeight = 10*i,
@@ -151,28 +151,28 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
 
             }).ToArray();
 
-        await db.SeedsInfo.AddRangeAsync(_SeedsInfo);
+        await db.SeedsInfo.AddRangeAsync(_seedsInfo);
         await db.SaveChangesAsync();
         logger.LogInformation("Инициализация описания семян выполнена за {0} мс", timer.ElapsedMilliseconds);
     }
 
     private const int SeedsCount = 20;
-    private Seed[] _Seeds;
+    private Seed[] _seeds;
 
     private async Task InitializeSeeds()
     {
         var rnd = new Random();
         var timer = Stopwatch.StartNew();
         logger.LogInformation("Инициализация семян...");
-        _Seeds = Enumerable.Range(1, SeedsCount)
-            .Select(_ => new Seed()
+        _seeds = Enumerable.Range(1, SeedsCount)
+            .Select(_ => new Seed
             {
-                Plant = rnd.NextItem((IList<Plant>)_Plants),
-                SeedsInfo = rnd.NextItem((IList<SeedsInfo>)_SeedsInfo)
+                Plant = rnd.NextItem((IList<Plant>)_plants),
+                SeedsInfo = rnd.NextItem((IList<SeedsInfo>)_seedsInfo)
 
             }).ToArray();
 
-        await db.Seeds.AddRangeAsync(_Seeds);
+        await db.Seeds.AddRangeAsync(_seeds);
         await db.SaveChangesAsync();
         logger.LogInformation("Инициализация семян выполнена за {0} мс", timer.ElapsedMilliseconds);
     }

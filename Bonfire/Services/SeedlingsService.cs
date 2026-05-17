@@ -21,13 +21,13 @@ internal class SeedlingsService(
     MoonPhase lunar)
     : ISeedlingsService
 {
-    private readonly IRepository<Plant> _Plants = plants;
-    private readonly IRepository<PlantSort> _Sort = sort;
-    private readonly IRepository<PlantCulture> _Culture = culture;
-    private readonly IRepository<Producer> _Producer = producer;
-    private readonly IRepository<Replanting> _Replantings = replantings;
-    private readonly IRepository<Treatment> _Treatments = treatments;
-    private readonly IRepository<SeedlingInfo>_SeedlingsInfo = seedlingsInfo;
+    private readonly IRepository<Plant> _plants = plants;
+    private readonly IRepository<PlantSort> _sort = sort;
+    private readonly IRepository<PlantCulture> _culture = culture;
+    private readonly IRepository<Producer> _producer = producer;
+    private readonly IRepository<Replanting> _replantings = replantings;
+    private readonly IRepository<Treatment> _treatments = treatments;
+    private readonly IRepository<SeedlingInfo>_seedlingsInfo = seedlingsInfo;
 
     public IQueryable<Seedling> Seedlings => seedlings.Items;
 

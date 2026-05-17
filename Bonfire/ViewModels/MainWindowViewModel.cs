@@ -16,53 +16,78 @@ namespace Bonfire.ViewModels
         public SeedlingsViewModel SeedlingsViewModel { get; } = seedlingsViewModel;
         public LibraryEditorViewModel LibraryEditorViewModel { get; } = libraryEditorViewModel;
 
-        private string _Title = "Огородик";
-        public string Title { get => _Title; set => Set(ref _Title, value); }
+        public string Title
+        {
+            get;
+            set => Set(ref field, value);
+        } = "Огородик";
 
-        private string _Status = "Готов!";
-        public string Status { get => _Status; set => Set(ref _Status, value); }
+        public string Status
+        {
+            get;
+            set => Set(ref field, value);
+        } = "Готов!";
 
-        private ViewModel _CurrentViewModel;
         public ViewModel CurrentViewModel
         {
-            get => _CurrentViewModel;
-            set => Set(ref _CurrentViewModel, value);
+            get;
+            set => Set(ref field, value);
         }
 
         // Подсветка активного пункта меню
-        private readonly FontWeight _BoldFontWeight = FontWeights.Bold;
-        private readonly Brush _BackgroundBrash = Brushes.LightGray;
-        private static readonly Brush _TransparentBrush = new SolidColorBrush(Colors.Transparent);
+        private readonly FontWeight _boldFontWeight = FontWeights.Bold;
+        private readonly Brush _backgroundBrash = Brushes.LightGray;
+        private static readonly Brush TransparentBrush = new SolidColorBrush(Colors.Transparent);
 
-        private FontWeight _SeedsBold;
-        private Brush _SeedBackground;
-        public FontWeight SeedsBold { get => _SeedsBold; set => Set(ref _SeedsBold, value); }
-        public Brush SeedBackground { get => _SeedBackground; set => Set(ref _SeedBackground, value); }
+        public FontWeight SeedsBold
+        {
+            get;
+            set => Set(ref field, value);
+        }
 
-        private FontWeight _SeedlingsBold;
-        private Brush _SeedlingBackground;
-        public FontWeight SeedlingsBold { get => _SeedlingsBold; set => Set(ref _SeedlingsBold, value); }
-        public Brush SeedlingBackground { get => _SeedlingBackground; set => Set(ref _SeedlingBackground, value); }
+        public Brush SeedBackground
+        {
+            get;
+            set => Set(ref field, value);
+        }
 
-        private FontWeight _LibraryBold;
-        private Brush _LibraryBackground;
-        public FontWeight LibraryBold { get => _LibraryBold; set => Set(ref _LibraryBold, value); }
-        public Brush LibraryBackground { get => _LibraryBackground; set => Set(ref _LibraryBackground, value); }
+        public FontWeight SeedlingsBold
+        {
+            get;
+            set => Set(ref field, value);
+        }
+
+        public Brush SeedlingBackground
+        {
+            get;
+            set => Set(ref field, value);
+        }
+
+        public FontWeight LibraryBold
+        {
+            get;
+            set => Set(ref field, value);
+        }
+
+        public Brush LibraryBackground
+        {
+            get;
+            set => Set(ref field, value);
+        }
 
         private void ClearBold()
         {
             SeedsBold = default;
-            SeedBackground = _TransparentBrush;
+            SeedBackground = TransparentBrush;
             SeedlingsBold = default;
-            SeedlingBackground = _TransparentBrush;
+            SeedlingBackground = TransparentBrush;
             LibraryBold = default;
-            LibraryBackground = _TransparentBrush;
+            LibraryBackground = TransparentBrush;
         }
 
         // Команды навигации
 
-        private ICommand _ShowSeedViewModelCommand;
-        public ICommand ShowSeedViewModelCommand => _ShowSeedViewModelCommand
+        public ICommand ShowSeedViewModelCommand => field
             ??= new LambdaCommand(() =>
             {
                 if (CurrentViewModel is SeedsViewModel) return;
@@ -70,12 +95,11 @@ namespace Bonfire.ViewModels
                 SeedlingsViewModel.IsActive = false;
                 CurrentViewModel = SeedsViewModel;
                 ClearBold();
-                SeedsBold = _BoldFontWeight;
-                SeedBackground = _BackgroundBrash;
+                SeedsBold = _boldFontWeight;
+                SeedBackground = _backgroundBrash;
             });
 
-        private ICommand _ShowSeedlingsViewModelCommand;
-        public ICommand ShowSeedlingsViewModelCommand => _ShowSeedlingsViewModelCommand
+        public ICommand ShowSeedlingsViewModelCommand => field
             ??= new LambdaCommand(() =>
             {
                 if (CurrentViewModel is SeedlingsViewModel) return;
@@ -83,12 +107,11 @@ namespace Bonfire.ViewModels
                 SeedlingsViewModel.IsActive = true;
                 CurrentViewModel = SeedlingsViewModel;
                 ClearBold();
-                SeedlingsBold = _BoldFontWeight;
-                SeedlingBackground = _BackgroundBrash;
+                SeedlingsBold = _boldFontWeight;
+                SeedlingBackground = _backgroundBrash;
             });
 
-        private ICommand _ShowLibraryEditorViewModelCommand;
-        public ICommand ShowLibraryEditorViewModelCommand => _ShowLibraryEditorViewModelCommand
+        public ICommand ShowLibraryEditorViewModelCommand => field
             ??= new LambdaCommand(() =>
             {
                 if (CurrentViewModel is LibraryEditorViewModel) return;
@@ -96,8 +119,8 @@ namespace Bonfire.ViewModels
                 SeedlingsViewModel.IsActive = false;
                 CurrentViewModel = LibraryEditorViewModel;
                 ClearBold();
-                LibraryBold = _BoldFontWeight;
-                LibraryBackground = _BackgroundBrash;
+                LibraryBold = _boldFontWeight;
+                LibraryBackground = _backgroundBrash;
             });
     }
 }

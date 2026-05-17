@@ -10,22 +10,19 @@ public class SeedlingFromViewModel
     public string? Culture { get; set; }
     public string? Sort { get; set; }
     public string? Producer { get; set; }
-    private double? _Weight;
 
     public double? Weight
     {
-        get => _Weight != 0 ? _Weight : null;
-        set => _Weight = value;
-            
+        get => field != 0 ? field : null;
+        set;
     }
 
-    private double? _Quantity;
     public double? Quantity
     {
-        get => _Quantity != 0 ? _Quantity : null;
-        set => _Quantity = value;
-
+        get => field != 0 ? field : null;
+        set;
     }
+
     public DateTime? LandingData { get; set; }
     public DateTime? ReplantingData { get; set; }
     public string? SeedlingMoonPhase { get; set; }

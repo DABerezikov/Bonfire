@@ -4,40 +4,35 @@ namespace Bonfire.Models;
 
 public class SeedsFromViewModel
 {
-    private double? _AmountSeedsQuantity;
-
-    private double? _AmountSeedsWeight;
-    private double? _WeightPack;
-    private double? _QuantityPack;
     internal int Id { get; set; }
     public string? Culture { get; set; }
     public string? Sort { get; set; }
     public string? Producer { get; set; }
     public DateTime ExpirationDate { get; set; }
-    
+
 
     public double? WeightPack
     {
-        get => _WeightPack != 0.0 ? _WeightPack : null;
-        set => _WeightPack = value;
+        get => field != 0.0 ? field : null;
+        set;
     }
 
     public double? QuantityPack
     {
-        get => _QuantityPack != 0.0 ? _QuantityPack : null;
-        set => _QuantityPack = value;
+        get => field != 0.0 ? field : null;
+        set;
     }
 
     public double? AmountSeedsWeight
     {
-        get => _AmountSeedsWeight != 0.0 ? _AmountSeedsWeight : null;
-        set => _AmountSeedsWeight = value;
+        get => field != 0.0 ? field : null;
+        set;
     }
 
     public double? AmountSeedsQuantity
     {
-        get => _AmountSeedsQuantity != 0.0 ? _AmountSeedsQuantity : null;
-        set => _AmountSeedsQuantity = value;
+        get => field != 0.0 ? field : null;
+        set;
     }
 
     public bool IsStillGood =>

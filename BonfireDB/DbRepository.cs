@@ -7,33 +7,33 @@ namespace BonfireDB;
 public class DbRepository<T> : IRepository<T> where T : Entity, new()
 {
 
-    private readonly DbBonfire _Db;
-    private readonly DbSet<T> _Set;
+    private readonly DbBonfire _db;
+    private readonly DbSet<T> _set;
     public bool AutoSaveChanges { get; set; } = true;
 
     public DbRepository(DbBonfire db)
     {
-        _Db=db;
-        _Set = _Db.Set<T>();
+        _db=db;
+        _set = _db.Set<T>();
     }
 
-    public virtual IQueryable<T?> Items => _Set;
+    public virtual IQueryable<T?> Items => _set;
 
     public T Add(T item)
     {
         if (item is null) throw new ArgumentNullException(nameof(item));
-        _Db.Entry(item).State = EntityState.Added;
+        _db.Entry(item).State = EntityState.Added;
         if (AutoSaveChanges)
-            _Db.SaveChanges();
+            _db.SaveChanges();
         return item;
     }
 
     public async Task<T> AddAsync(T item, CancellationToken cancel = default)
     {
         if (item is null) throw new ArgumentNullException(nameof(item));
-        _Db.Entry(item).State = EntityState.Added;
+        _db.Entry(item).State = EntityState.Added;
         if (AutoSaveChanges)
-            await _Db.SaveChangesAsync(cancel).ConfigureAwait(false);
+            await _db.SaveChangesAsync(cancel).ConfigureAwait(false);
         return item;
     }
 
@@ -46,33 +46,33 @@ public class DbRepository<T> : IRepository<T> where T : Entity, new()
 
     public void Remove(int id)
     {
-        var item = _Set.Local.FirstOrDefault(i => i.Id == id) ?? new T { Id = id };
-        _Db.Remove(item);
+        var item = _set.Local.FirstOrDefault(i => i.Id == id) ?? new T { Id = id };
+        _db.Remove(item);
         if (AutoSaveChanges)
-            _Db.SaveChanges();
+            _db.SaveChanges();
     }
 
     public async Task RemoveAsync(int id, CancellationToken cancel = default)
     {
-        var item = _Set.Local.FirstOrDefault(i => i.Id == id) ?? new T { Id = id };
-        _Db.Remove(item);
+        var item = _set.Local.FirstOrDefault(i => i.Id == id) ?? new T { Id = id };
+        _db.Remove(item);
         if (AutoSaveChanges)
-            await _Db.SaveChangesAsync(cancel).ConfigureAwait(false);
+            await _db.SaveChangesAsync(cancel).ConfigureAwait(false);
     }
 
     public void Update(T item)
     {
         if (item is null) throw new ArgumentNullException(nameof(item));
-        _Db.Entry(item).State = EntityState.Modified;
+        _db.Entry(item).State = EntityState.Modified;
         if (AutoSaveChanges)
-            _Db.SaveChanges();
+            _db.SaveChanges();
     }
 
     public async Task UpdateAsync(T item, CancellationToken cancel = default)
     {
         if (item is null) throw new ArgumentNullException(nameof(item));
-        _Db.Entry(item).State = EntityState.Modified;
+        _db.Entry(item).State = EntityState.Modified;
         if (AutoSaveChanges)
-            await _Db.SaveChangesAsync(cancel).ConfigureAwait(false);
+            await _db.SaveChangesAsync(cancel).ConfigureAwait(false);
     }
 }

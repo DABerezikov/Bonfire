@@ -19,16 +19,16 @@ namespace Bonfire.ViewModels;
 
 public class SeedsViewModel : ViewModel
 {
-    private readonly ISeedsService _SeedsService;
-    private readonly IUserDialog _UserDialog;
-    private readonly IReportService _ReportService;
+    private readonly ISeedsService _seedsService;
+    private readonly IUserDialog _userDialog;
+    private readonly IReportService _reportService;
 
     public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog, IReportService reportService)
     {
-        _SeedsService = seedsService;
-        _UserDialog = userDialog;
-        _ReportService = reportService;
-        _SeedsView = new CollectionViewSource
+        _seedsService = seedsService;
+        _userDialog = userDialog;
+        _reportService = reportService;
+        _seedsView = new CollectionViewSource
         {
             SortDescriptions =
             {
@@ -37,65 +37,63 @@ public class SeedsViewModel : ViewModel
                 new SortDescription(nameof(SeedsFromViewModel.Producer), ListSortDirection.Ascending)
             }
         };
-        _SeedsView.Filter += _SeedsViewSource_Filter;
+        _seedsView.Filter += _SeedsViewSource_Filter;
 
-        _CultureListView = new CollectionViewSource
+        _cultureListView = new CollectionViewSource
         {
             SortDescriptions =
             {
                 new SortDescription(nameof(CultureFromViewModel.Name), ListSortDirection.Ascending)
             }
         };
-        _CultureListView.Filter += _CultureListView_Filter;
+        _cultureListView.Filter += _CultureListView_Filter;
 
-        _SortListView = new CollectionViewSource
+        _sortListView = new CollectionViewSource
         {
             SortDescriptions =
             {
                 new SortDescription(nameof(SortFromSeedsViewModel.Name), ListSortDirection.Ascending)
             }
         };
-        _SortListView.Filter += _SortListView_Filter;
+        _sortListView.Filter += _SortListView_Filter;
 
-        _ProducerListView = new CollectionViewSource
+        _producerListView = new CollectionViewSource
         {
             SortDescriptions =
             {
                 new SortDescription(nameof(ProducerFromViewModel.Name), ListSortDirection.Ascending)
             }
         };
-        _ProducerListView.Filter += _ProducerListView_Filter;
+        _producerListView.Filter += _ProducerListView_Filter;
     }
 
-    private bool _IsActive;
     public bool IsActive
     {
-        get => _IsActive;
+        get;
         set
         {
-            Set(ref _IsActive, value);
+            Set(ref field, value);
             CommandManager.InvalidateRequerySuggested();
         }
     }
 
     // Фильтрация главного списка
 
-    public ICollectionView? SeedsView => _SeedsView.View;
-    private readonly CollectionViewSource _SeedsView;
+    public ICollectionView? SeedsView => _seedsView.View;
+    private readonly CollectionViewSource _seedsView;
 
-    private string _SeedFilter = "-Выбрать все-";
     public string SeedFilter
     {
-        get => _SeedFilter;
+        get;
         set
         {
-            if (Set(ref _SeedFilter, value))
+            if (Set(ref field, value))
             {
                 SelectedItem = null;
                 SeedsView?.Refresh();
             }
         }
-    }
+    } = "-Выбрать все-";
 
     private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
     {
@@ -124,113 +122,103 @@ public class SeedsViewModel : ViewModel
 
     // Основные данные
 
-    private ObservableCollection<Seed> _Seeds;
     public ObservableCollection<Seed> Seeds
     {
-        get => _Seeds;
-        set => Set(ref _Seeds, value);
+        get;
+        set => Set(ref field, value);
     }
 
-    private SeedsFromViewModel _SelectedSeedsViewItem;
     public SeedsFromViewModel SelectedSeedsViewItem
     {
-        get => _SelectedSeedsViewItem;
+        get;
         set
         {
-            Set(ref _SelectedSeedsViewItem, value);
+            Set(ref field, value);
             SelectedItem = value != null ? Seeds.First(s => s.Id == value.Id) : null;
         }
     }
 
-    private Seed _SelectedItem;
     public Seed SelectedItem
     {
-        get => _SelectedItem;
+        get;
         set
         {
-            if (Set(ref _SelectedItem, value))
+            if (Set(ref field, value))
                 CopySeedToEditItem(SelectedItem, EditedItem);
         }
     }
 
-    private Seed _EditedItem = new()
+    public Seed EditedItem
     {
-        Plant = new Plant()
+        get;
+        set => Set(ref field, value);
+    } = new()
+    {
+        Plant = new Plant
         {
             PlantCulture = new PlantCulture(),
-            PlantSort = new PlantSort()
+            PlantSort = new PlantSort
             {
                 Producer = new Producer()
             }
         },
         SeedsInfo = new SeedsInfo()
     };
-    public Seed EditedItem
-    {
-        get => _EditedItem;
-        set => Set(ref _EditedItem, value);
-    }
 
-    private List<string> _ListCulture = ["-Выбрать все-"];
     public List<string> ListCulture
     {
-        get => _ListCulture;
-        set => Set(ref _ListCulture, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = ["-Выбрать все-"];
 
-    private bool _IsHaving = true;
     public bool IsHaving
     {
-        get => _IsHaving;
+        get;
         set
         {
-            Set(ref _IsHaving, value);
+            Set(ref field, value);
             SelectedItem = null;
             SeedsView?.Refresh();
         }
-    }
+    } = true;
 
-    private string _AddQuantityInPac = string.Empty;
     public string AddQuantityInPac
     {
-        get => _AddQuantityInPac;
-        set => Set(ref _AddQuantityInPac, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = string.Empty;
 
-    private string _AddQuantityPac = "1";
     public string AddQuantityPac
     {
-        get => _AddQuantityPac;
-        set => Set(ref _AddQuantityPac, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = "1";
 
-    private DateTime _AddBestBy = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
     public DateTime AddBestBy
     {
-        get => _AddBestBy;
-        set => Set(ref _AddBestBy, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
 
-    private string _AddCostPack = "0";
     public string AddCostPack
     {
-        get => _AddCostPack;
-        set => Set(ref _AddCostPack, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = "0";
 
     // Источник семян (радио-кнопки)
 
-    private string _SeedSource = string.Empty;
+    private string _seedSource = string.Empty;
     internal string SeedSource
     {
-        get => _SeedSource;
+        get => _seedSource;
         set => SetSeedSource(value);
     }
 
     private void SetSeedSource(string value)
     {
-        if (_SeedSource == value) return;
-        _SeedSource = value;
+        if (_seedSource == value) return;
+        _seedSource = value;
         OnPropertyChanged(nameof(IsSold));
         OnPropertyChanged(nameof(IsDonated));
         OnPropertyChanged(nameof(IsCollected));
@@ -238,67 +226,62 @@ public class SeedsViewModel : ViewModel
 
     public bool IsSold
     {
-        get => _SeedSource == "Куплено";
+        get => _seedSource == "Куплено";
         set { if (value) SetSeedSource("Куплено"); }
     }
 
     public bool IsDonated
     {
-        get => _SeedSource == "Подарено";
+        get => _seedSource == "Подарено";
         set { if (value) SetSeedSource("Подарено"); }
     }
 
     public bool IsCollected
     {
-        get => _SeedSource == "Собрано";
+        get => _seedSource == "Собрано";
         set { if (value) { SetSeedSource("Собрано"); AddProducer = "Свои семена"; } }
     }
 
     // Примечание
 
-    private string _AddNote;
     public string AddNote
     {
-        get => _AddNote;
-        set => Set(ref _AddNote, value);
+        get;
+        set => Set(ref field, value);
     }
 
     // Единицы измерения
 
-    private List<string> _AddSizeList = new() { "Граммы", "Штуки" };
     public List<string> AddSizeList
     {
-        get => _AddSizeList;
-        set => Set(ref _AddSizeList, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = new() { "Граммы", "Штуки" };
 
-    private string _AddSize;
     public string AddSize
     {
-        get => _AddSize;
-        set => Set(ref _AddSize, value);
+        get;
+        set => Set(ref field, value);
     }
 
     // Класс растения
 
-    private ObservableCollection<string> _AddClassList = new(PlantClassList.GetClassList());
     public ObservableCollection<string> AddClassList
     {
-        get => _AddClassList;
-        set => Set(ref _AddClassList, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = new(PlantClassList.GetClassList());
 
-    private string _AddClass;
     public string AddClass
     {
-        get => _AddClass;
-        set => Set(ref _AddClass, value);
+        get;
+        set => Set(ref field, value);
     }
 
     // Выбор культуры
 
-    public ICollectionView? CultureListView => _CultureListView.View;
-    private readonly CollectionViewSource _CultureListView;
+    public ICollectionView? CultureListView => _cultureListView.View;
+    private readonly CollectionViewSource _cultureListView;
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
@@ -307,28 +290,26 @@ public class SeedsViewModel : ViewModel
             e.Accepted = false;
     }
 
-    private ObservableCollection<CultureFromViewModel> _AddCultureList = new();
     public ObservableCollection<CultureFromViewModel> AddCultureList
     {
-        get => _AddCultureList;
-        set => Set(ref _AddCultureList, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = new();
 
-    private string _AddCulture;
     public string AddCulture
     {
-        get => _AddCulture;
+        get;
         set
         {
-            if (Set(ref _AddCulture, value))
+            if (Set(ref field, value))
                 CultureListView?.Refresh();
         }
     }
 
     // Выбор сорта
 
-    public ICollectionView SortListView => _SortListView.View;
-    private readonly CollectionViewSource _SortListView;
+    public ICollectionView SortListView => _sortListView.View;
+    private readonly CollectionViewSource _sortListView;
 
     private void _SortListView_Filter(object sender, FilterEventArgs e)
     {
@@ -337,28 +318,26 @@ public class SeedsViewModel : ViewModel
             e.Accepted = false;
     }
 
-    private ObservableCollection<SortFromSeedsViewModel> _AddSortList = new();
     public ObservableCollection<SortFromSeedsViewModel> AddSortList
     {
-        get => _AddSortList;
-        set => Set(ref _AddSortList, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = new();
 
-    private string _AddSort;
     public string AddSort
     {
-        get => _AddSort;
+        get;
         set
         {
-            if (Set(ref _AddSort, value))
+            if (Set(ref field, value))
                 SortListView?.Refresh();
         }
     }
 
     // Выбор производителя
 
-    public ICollectionView ProducerListView => _ProducerListView.View;
-    private readonly CollectionViewSource _ProducerListView;
+    public ICollectionView ProducerListView => _producerListView.View;
+    private readonly CollectionViewSource _producerListView;
 
     private void _ProducerListView_Filter(object sender, FilterEventArgs e)
     {
@@ -367,23 +346,21 @@ public class SeedsViewModel : ViewModel
             e.Accepted = false;
     }
 
-    private ObservableCollection<ProducerFromViewModel> _AddProducerList = new();
     public ObservableCollection<ProducerFromViewModel> AddProducerList
     {
-        get => _AddProducerList;
-        set => Set(ref _AddProducerList, value);
-    }
+        get;
+        set => Set(ref field, value);
+    } = new();
 
-    private string _AddProducer;
     public string AddProducer
     {
-        get => _AddProducer;
+        get;
         set
         {
-            if (Set(ref _AddProducer, value))
+            if (Set(ref field, value))
             {
                 ProducerListView?.Refresh();
-                if (_AddProducer == "Свои семена")
+                if (field == "Свои семена")
                     IsCollected = true;
             }
         }
@@ -393,19 +370,19 @@ public class SeedsViewModel : ViewModel
 
     private async Task LoadSeed()
     {
-        _SeedsView.Source = _SeedsService.Seeds.AsEnumerable()
+        _seedsView.Source = _seedsService.Seeds.AsEnumerable()
             .Select(CreateSeedsFromViewModel).SortSeeds();
-        Seeds = new ObservableCollection<Seed>(await _SeedsService.Seeds.ToArrayAsync());
+        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
         OnPropertyChanged(nameof(SeedsView));
     }
 
     private void LoadListCulture()
     {
-        var listCultureQuery = _SeedsService.Seeds
+        var listCultureQuery = _seedsService.Seeds
             .Select(seeds => seeds.Plant.PlantCulture.Name)
             .Distinct()
             .OrderBy(s => s);
-        var addListCulture = _SeedsService.Seeds
+        var addListCulture = _seedsService.Seeds
             .Select(seeds => new CultureFromViewModel
             {
                 Id = seeds.Plant.PlantCulture.Id,
@@ -415,13 +392,13 @@ public class SeedsViewModel : ViewModel
             .OrderBy(s => s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
         AddCultureList.AddRange(addListCulture.ToList());
-        _CultureListView.Source = AddCultureList;
+        _cultureListView.Source = AddCultureList;
         OnPropertyChanged(nameof(CultureListView));
     }
 
     private void LoadListSort()
     {
-        var addListSort = _SeedsService.Seeds
+        var addListSort = _seedsService.Seeds
             .Select(seeds => new SortFromSeedsViewModel
             {
                 Id = seeds.Plant.PlantSort.Id,
@@ -430,13 +407,13 @@ public class SeedsViewModel : ViewModel
             .Distinct(s => s.Name)
             .OrderBy(s => s.Name);
         AddSortList.AddRange(addListSort.ToList());
-        _SortListView.Source = AddSortList;
+        _sortListView.Source = AddSortList;
         OnPropertyChanged(nameof(SortListView));
     }
 
     private void LoadListProducer()
     {
-        var addListProducer = _SeedsService.Seeds
+        var addListProducer = _seedsService.Seeds
             .Select(seeds => new ProducerFromViewModel
             {
                 Id = seeds.Plant.PlantSort.Producer.Id,
@@ -445,7 +422,7 @@ public class SeedsViewModel : ViewModel
             .Distinct(s => s.Name)
             .OrderBy(s => s.Name);
         AddProducerList.AddRange(addListProducer.ToList());
-        _ProducerListView.Source = AddProducerList;
+        _producerListView.Source = AddProducerList;
         OnPropertyChanged(nameof(ProducerListView));
     }
 
@@ -479,11 +456,11 @@ public class SeedsViewModel : ViewModel
     {
         var newCollection = Seeds.Select(CreateSeedsFromViewModel).SortSeeds();
         var collection = newCollection.ToArray();
-        _SeedsView.Source = collection;
+        _seedsView.Source = collection;
         if (id != -1)
         {
             var current = collection.FirstOrDefault(s => s.Id == id);
-            _SeedsView.View.MoveCurrentTo(current);
+            _seedsView.View.MoveCurrentTo(current);
         }
         OnPropertyChanged(nameof(SeedsView));
         OnPropertyChanged(nameof(ListCulture));
@@ -599,7 +576,7 @@ public class SeedsViewModel : ViewModel
             s.SeedsInfo.WeightPack,
             s.SeedsInfo.QuantityPack))
             .OrderBy(s => s.Culture);
-        _ReportService.CreateSeedsReport(items);
+        _reportService.CreateSeedsReport(items);
     }
 
     private void CreateFilteredSeedReport()
@@ -614,13 +591,12 @@ public class SeedsViewModel : ViewModel
                 s.WeightPack ?? 0,
                 s.QuantityPack ?? 0))
             .OrderBy(s => s.Culture);
-        _ReportService.CreateSeedsReport(items, "Семена_выборка");
+        _reportService.CreateSeedsReport(items, "Семена_выборка");
     }
 
     // Команды
 
-    private ICommand _LoadDataCommand;
-    public ICommand LoadDataCommand => _LoadDataCommand
+    public ICommand LoadDataCommand => field
         ??= new LambdaCommandAsync(OnLoadDataCommandExecuted);
 
     private async Task OnLoadDataCommandExecuted()
@@ -636,8 +612,7 @@ public class SeedsViewModel : ViewModel
         LoadListProducer();
     }
 
-    private ICommand _SeedsChoiceClassCommand;
-    public ICommand SeedsChoiceClassCommand => _SeedsChoiceClassCommand
+    public ICommand SeedsChoiceClassCommand => field
         ??= new LambdaCommandAsync(OnSeedsChoiceClassCommandExecuted);
 
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
@@ -646,12 +621,11 @@ public class SeedsViewModel : ViewModel
             ? Seeds.Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
             : Seeds;
 
-        _SeedsView.Source = filteredSeeds.Select(CreateSeedsFromViewModel).SortSeeds().ToArray();
+        _seedsView.Source = filteredSeeds.Select(CreateSeedsFromViewModel).SortSeeds().ToArray();
         OnPropertyChanged(nameof(SeedsView));
     }
 
-    private ICommand _AddOrCorrectSeedCommand;
-    public ICommand AddOrCorrectSeedCommand => _AddOrCorrectSeedCommand
+    public ICommand AddOrCorrectSeedCommand => field
         ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, Verification);
 
     private async Task OnAddOrCorrectSeedCommandExecuted()
@@ -664,7 +638,7 @@ public class SeedsViewModel : ViewModel
             AddCostPack.DecimalParseAdvanced(),
             AddBestBy, AddNote);
 
-        var (seed, isNew) = await _SeedsService.AddOrUpdateSeedAsync(request, Seeds).ConfigureAwait(false);
+        var (seed, isNew) = await _seedsService.AddOrUpdateSeedAsync(request, Seeds).ConfigureAwait(false);
 
         if (isNew)
             UpdateCollectionSeedsViewModel(seed);
@@ -673,48 +647,43 @@ public class SeedsViewModel : ViewModel
         UpdateCollectionViewSource(seed.Id);
     }
 
-    private ICommand _DeleteSeedCommand;
-    public ICommand DeleteSeedCommand => _DeleteSeedCommand
+    public ICommand DeleteSeedCommand => field
         ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null);
 
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (!_UserDialog.YesNoQuestion(
+        if (!_userDialog.YesNoQuestion(
                 $"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}",
                 "Удаление семян")) return;
 
-        var deleteSeed = await _SeedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
+        var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
         Seeds.Remove(deleteSeed);
         RemoveOfAddLists(deleteSeed);
         UpdateCollectionViewSource();
     }
 
-    private ICommand _UpdateSeedsInfoCommand;
-    public ICommand UpdateSeedsInfoCommand => _UpdateSeedsInfoCommand
+    public ICommand UpdateSeedsInfoCommand => field
         ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted, () => EditedItem != null);
 
     private async Task OnUpdateSeedsInfoCommandExecuted()
     {
-        if (!_UserDialog.YesNoQuestion(
+        if (!_userDialog.YesNoQuestion(
                 $"Вы уверены, что хотите изменить информацию о семенах сорта - {EditedItem.Plant.PlantSort.Name}",
                 "Редактирование семян")) return;
 
         CopySeedToEditItem(EditedItem, SelectedItem);
         if (SelectedItem.SeedsInfo.AmountSeeds > 0)
             SelectedItem.SeedsInfo.AmountSeedsWeight = 0;
-        await _SeedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
+        await _seedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
         UpdateCollectionViewSource(SelectedItem.Id);
     }
 
-    private ICommand _CancelUpdateSeedsInfoCommand;
-    public ICommand CancelUpdateSeedsInfoCommand => _CancelUpdateSeedsInfoCommand
+    public ICommand CancelUpdateSeedsInfoCommand => field
         ??= new LambdaCommandAsync(async () => UpdateCollectionViewSource(SelectedItem.Id));
 
-    private ICommand _CreateSeedsReportCommand;
-    public ICommand CreateSeedsReportCommand => _CreateSeedsReportCommand
+    public ICommand CreateSeedsReportCommand => field
         ??= new LambdaCommand(CreateSeedReport, () => Seeds != null && IsActive);
 
-    private ICommand _CreateFilteredSeedsReportCommand;
-    public ICommand CreateFilteredSeedsReportCommand => _CreateFilteredSeedsReportCommand
+    public ICommand CreateFilteredSeedsReportCommand => field
         ??= new LambdaCommand(CreateFilteredSeedReport, () => SeedsView != null && IsActive);
 }

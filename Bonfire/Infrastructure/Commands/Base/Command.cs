@@ -5,15 +5,15 @@ namespace Bonfire.Infrastructure.Commands.Base;
 
 internal abstract class Command : ICommand
 {
-    private bool _Executable = true;
+    private bool _executable = true;
 
     public bool Executable
     {
-        get => _Executable;
+        get => _executable;
         set
         {
-            if (_Executable == value) return;
-            _Executable = value;
+            if (_executable == value) return;
+            _executable = value;
             ExecutableChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -26,7 +26,7 @@ internal abstract class Command : ICommand
         remove => CommandManager.RequerySuggested -= value;
     }
 
-    bool ICommand.CanExecute(object parameter) => _Executable && CanExecute(parameter);
+    bool ICommand.CanExecute(object parameter) => _executable && CanExecute(parameter);
 
     void ICommand.Execute(object parameter)
     {

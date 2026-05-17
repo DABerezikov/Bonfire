@@ -19,9 +19,7 @@ public partial class App : Application
 
     public static Window FocusedWindow => Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsFocused);
 
-    private static IHost __Host;
-
-    public static IHost Host => __Host ??= Microsoft.Extensions.Hosting.Host
+    public static IHost Host => field ??= Microsoft.Extensions.Hosting.Host
         .CreateDefaultBuilder(Environment.GetCommandLineArgs())
         .ConfigureAppConfiguration(cfg => cfg.AddJsonFile("appsettings.json", true, true))
         .ConfigureServices((host, services) => services

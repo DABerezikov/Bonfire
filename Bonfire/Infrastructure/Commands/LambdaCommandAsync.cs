@@ -6,8 +6,8 @@ namespace Bonfire.Infrastructure.Commands;
 internal class LambdaCommandAsync(ActionAsync<object> execute, Func<object, bool> canExecute = null)
     : Command
 {
-    public LambdaCommandAsync(ActionAsync Execute, Func<bool> CanExecute = null)
-        : this(async p => await Execute(), CanExecute is null ? (Func<object, bool>)null : p => CanExecute())
+    public LambdaCommandAsync(ActionAsync execute, Func<bool> canExecute = null)
+        : this(async p => await execute(), canExecute is null ? (Func<object, bool>)null : p => canExecute())
     {
 
     }
