@@ -25,7 +25,11 @@
                 <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}"/>
             </MenuItem>
             <MenuItem Header="Отчеты">
-                <MenuItem Header="Отчет по семенам" Command="{Binding CreateSeedsReportCommand}"/>
+                <MenuItem Header="Отчет по семенам" Command="{Binding SeedsViewModel.CreateSeedsReportCommand}"/>
+                <MenuItem Header="Отчет по выбранным семенам" Command="{Binding SeedsViewModel.CreateFilteredSeedsReportCommand}"/>
+                <Separator/>
+                <MenuItem Header="Отчет по рассаде" Command="{Binding SeedlingsViewModel.CreateSeedlingsReportCommand}"/>
+                <MenuItem Header="Отчет по выбранной рассаде" Command="{Binding SeedlingsViewModel.CreateFilteredSeedlingsReportCommand}"/>
             </MenuItem>
             <MenuItem Command="{Binding ShowSeedViewModelCommand}" Background="{Binding SeedBackground}">
                 <MenuItem.Header>

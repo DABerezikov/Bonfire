@@ -7,13 +7,14 @@ public class SeedlingsViewModelTests
     private readonly ISeedlingsService _seedlingsService = Substitute.For<ISeedlingsService>();
     private readonly ISeedsService _seedsService = Substitute.For<ISeedsService>();
     private readonly IUserDialog _userDialog = Substitute.For<IUserDialog>();
+    private readonly IReportService _reportService = Substitute.For<IReportService>();
 
     private SeedlingsViewModel CreateVm()
     {
         _seedsService.Seeds.Returns(Enumerable.Empty<Seed>().AsQueryable());
         _seedlingsService.Seedlings.Returns(Enumerable.Empty<Seedling>().AsQueryable());
         _seedlingsService.Lunar.Returns(new MoonPhase());
-        return new SeedlingsViewModel(_seedlingsService, _seedsService, _userDialog);
+        return new SeedlingsViewModel(_seedlingsService, _seedsService, _userDialog, _reportService);
     }
 
     // ── Verification via AddOrCorrectSeedlingCommand.CanExecute ───────────────

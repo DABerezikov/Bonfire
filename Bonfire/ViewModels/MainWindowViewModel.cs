@@ -1,208 +1,103 @@
-﻿using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using Bonfire.Infrastructure.Commands;
-using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-
 
 namespace Bonfire.ViewModels
 {
     internal class MainWindowViewModel(
-        IUserDialog UserDialog,
-        ISeedsService SeedsService,
-        ISeedlingsService SeedlingsService,
-        SeedsViewModel SeedsViewModel,
-        SeedlingsViewModel SeedlingsViewModel)
+        SeedsViewModel seedsViewModel,
+        SeedlingsViewModel seedlingsViewModel,
+        LibraryEditorViewModel libraryEditorViewModel)
         : ViewModel
     {
-        private readonly SeedlingsViewModel _SeedlingsViewModel = SeedlingsViewModel;
+        public SeedsViewModel SeedsViewModel { get; } = seedsViewModel;
+        public SeedlingsViewModel SeedlingsViewModel { get; } = seedlingsViewModel;
+        public LibraryEditorViewModel LibraryEditorViewModel { get; } = libraryEditorViewModel;
 
-        #region Title : string - Заголовок окна
-
-        /// <summary>Заголовок окна</summary>
         private string _Title = "Огородик";
-
-        /// <summary>Заголовок окна</summary>
         public string Title { get => _Title; set => Set(ref _Title, value); }
 
-        #endregion
-
-        #region Status : string - Статус
-
-        /// <summary>Статус</summary>
         private string _Status = "Готов!";
-
-        /// <summary>Статус</summary>
         public string Status { get => _Status; set => Set(ref _Status, value); }
 
-        #endregion
-
-        #region CurrentViewModel : ViewModel - Текущая модель представления
-
-        /// <summary>Текущая модель представления</summary>
         private ViewModel _CurrentViewModel;
-
-        /// <summary>Текущая модель представления</summary>
         public ViewModel CurrentViewModel
         {
             get => _CurrentViewModel;
             set => Set(ref _CurrentViewModel, value);
         }
 
-        #endregion
-
-
-
-        #region SeedsBold : FontWeight - Выделение выбранного окна
-
+        // Подсветка активного пункта меню
         private readonly FontWeight _BoldFontWeight = FontWeights.Bold;
         private readonly Brush _BackgroundBrash = Brushes.LightGray;
+        private static readonly Brush _TransparentBrush = new SolidColorBrush(Colors.Transparent);
 
-        /// <summary>Окно семян</summary>
         private FontWeight _SeedsBold;
         private Brush _SeedBackground;
-
-        /// <summary>Окно семян</summary>
         public FontWeight SeedsBold { get => _SeedsBold; set => Set(ref _SeedsBold, value); }
         public Brush SeedBackground { get => _SeedBackground; set => Set(ref _SeedBackground, value); }
 
-        /// <summary>Окно рассады</summary>
         private FontWeight _SeedlingsBold;
         private Brush _SeedlingBackground;
-        /// <summary>Окно рассады</summary>
         public FontWeight SeedlingsBold { get => _SeedlingsBold; set => Set(ref _SeedlingsBold, value); }
         public Brush SeedlingBackground { get => _SeedlingBackground; set => Set(ref _SeedlingBackground, value); }
 
-        /// <summary>Окно редактора</summary>
         private FontWeight _LibraryBold;
         private Brush _LibraryBackground;
-        /// <summary>Окно редактора</summary>
         public FontWeight LibraryBold { get => _LibraryBold; set => Set(ref _LibraryBold, value); }
         public Brush LibraryBackground { get => _LibraryBackground; set => Set(ref _LibraryBackground, value); }
-
-
-
-
-
-        #endregion
-
-        #region Command ShowSeedViewModelCommand - Отобразить представление семян
-
-        /// <summary> Отобразить представление семян </summary>
-        private ICommand _ShowSeedViewModelCommand;
-
-        /// <summary> Отобразить представление семян </summary>
-        public ICommand ShowSeedViewModelCommand => _ShowSeedViewModelCommand
-            ??= new LambdaCommand(OnShowSeedViewModelCommandExecuted, CanShowSeedViewModelCommandExecute);
-
-        /// <summary> Проверка возможности выполнения - Отобразить представление семян </summary>
-        private bool CanShowSeedViewModelCommandExecute() => true;
-
-        /// <summary> Логика выполнения - Отобразить представление семян </summary>
-        private void OnShowSeedViewModelCommandExecuted()
-        {
-            if (CurrentViewModel is SeedsViewModel) return;
-            CurrentViewModel = SeedsViewModel;
-            ClearBold();
-            SeedsBold = _BoldFontWeight;
-            SeedBackground = _BackgroundBrash;
-
-
-
-        }
 
         private void ClearBold()
         {
             SeedsBold = default;
-            SeedBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
+            SeedBackground = _TransparentBrush;
             SeedlingsBold = default;
-            SeedlingBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
+            SeedlingBackground = _TransparentBrush;
             LibraryBold = default;
-            LibraryBackground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FFFFFF"));
+            LibraryBackground = _TransparentBrush;
         }
 
-        #endregion
+        // Команды навигации
 
-        #region Command ShowLibraryEditorViewModelCommand - Отобразить представление редактора библиотек
+        private ICommand _ShowSeedViewModelCommand;
+        public ICommand ShowSeedViewModelCommand => _ShowSeedViewModelCommand
+            ??= new LambdaCommand(() =>
+            {
+                if (CurrentViewModel is SeedsViewModel) return;
+                SeedsViewModel.IsActive = true;
+                SeedlingsViewModel.IsActive = false;
+                CurrentViewModel = SeedsViewModel;
+                ClearBold();
+                SeedsBold = _BoldFontWeight;
+                SeedBackground = _BackgroundBrash;
+            });
 
-        /// <summary> Отобразить представление редактора библиотек </summary>
-        private ICommand _ShowLibraryEditorViewModelCommand;
-
-        /// <summary> Отобразить представление редактора библиотек </summary>
-        public ICommand ShowLibraryEditorViewModelCommand => _ShowLibraryEditorViewModelCommand
-            ??= new LambdaCommand(OnShowLibraryEditorViewModelCommandExecuted, CanShowLibraryEditorViewModelCommandExecute);
-
-        /// <summary> Проверка возможности выполнения - Отобразить представление редактора библиотек </summary>
-        private bool CanShowLibraryEditorViewModelCommandExecute() => true;
-
-        /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
-        private void OnShowLibraryEditorViewModelCommandExecuted()
-        {
-            if (CurrentViewModel is LibraryEditorViewModel) return;
-            var sort = SeedsViewModel.AddSortList;
-            var culture = SeedsViewModel.AddCultureList;
-            var producer = SeedsViewModel.AddProducerList;
-            var seeds = SeedsViewModel.Seeds;
-            CurrentViewModel = new LibraryEditorViewModel(SeedsService, UserDialog, sort, culture, producer, seeds);
-            ClearBold();
-            LibraryBold = _BoldFontWeight;
-            LibraryBackground = _BackgroundBrash;
-
-
-        }
-
-        #endregion
-
-        #region Command ShowSeedlingsViewModelCommand - Отобразить представление редактора библиотек
-
-        /// <summary> Отобразить представление редактора библиотек </summary>
         private ICommand _ShowSeedlingsViewModelCommand;
-
-        /// <summary> Отобразить представление редактора библиотек </summary>
         public ICommand ShowSeedlingsViewModelCommand => _ShowSeedlingsViewModelCommand
-            ??= new LambdaCommand(OnShowSeedlingsViewModelCommandExecuted, CanShowSeedlingsViewModelCommandExecute);
+            ??= new LambdaCommand(() =>
+            {
+                if (CurrentViewModel is SeedlingsViewModel) return;
+                SeedsViewModel.IsActive = false;
+                SeedlingsViewModel.IsActive = true;
+                CurrentViewModel = SeedlingsViewModel;
+                ClearBold();
+                SeedlingsBold = _BoldFontWeight;
+                SeedlingBackground = _BackgroundBrash;
+            });
 
-        /// <summary> Проверка возможности выполнения - Отобразить представление редактора библиотек </summary>
-        private bool CanShowSeedlingsViewModelCommandExecute() => true;
-
-        /// <summary> Логика выполнения - Отобразить представление редактора библиотек </summary>
-        private void OnShowSeedlingsViewModelCommandExecuted()
-        {
-            if (CurrentViewModel is SeedlingsViewModel) return;
-            CurrentViewModel = new SeedlingsViewModel(SeedlingsService, SeedsService, UserDialog);
-            ClearBold();
-            SeedlingsBold = _BoldFontWeight;
-            SeedlingBackground = _BackgroundBrash;
-
-
-        }
-
-        #endregion
-
-        #region Command CreateSeedsReportCommand - Команда для формирования отчета по семенам
-
-        /// <summary> Команда для формирования отчета по семенам </summary>
-        private ICommand _CreateSeedsReportCommand;
-
-        /// <summary> Команда для формирования отчета по семенам </summary>
-        public ICommand CreateSeedsReportCommand => _CreateSeedsReportCommand
-            ??= new LambdaCommandAsync(OnCreateSeedsReportCommandExecuted, CanCreateSeedsReportCommandExecute);
-
-       
-
-        /// <summary> Проверка возможности выполнения - Команда для формирования отчета по семенам </summary>
-        private bool CanCreateSeedsReportCommandExecute() => CurrentViewModel == SeedsViewModel;
-
-        /// <summary> Логика выполнения - Команда для формирования отчета по семенам </summary>
-        private async Task OnCreateSeedsReportCommandExecuted()
-        {
-           SeedsViewModel.CreateSeedReport();
-        }
-
-
-
-        #endregion
+        private ICommand _ShowLibraryEditorViewModelCommand;
+        public ICommand ShowLibraryEditorViewModelCommand => _ShowLibraryEditorViewModelCommand
+            ??= new LambdaCommand(() =>
+            {
+                if (CurrentViewModel is LibraryEditorViewModel) return;
+                SeedsViewModel.IsActive = false;
+                SeedlingsViewModel.IsActive = false;
+                CurrentViewModel = LibraryEditorViewModel;
+                ClearBold();
+                LibraryBold = _BoldFontWeight;
+                LibraryBackground = _BackgroundBrash;
+            });
     }
 }
