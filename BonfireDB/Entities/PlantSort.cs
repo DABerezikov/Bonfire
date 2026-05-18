@@ -12,7 +12,7 @@ public class PlantSort : NamedEntity
     /// <summary>
     /// Производитель семян
     /// </summary>
-    public Producer Producer { get; set; }
+    public Producer Producer { get; set; } = null!;
 
     /// <summary>
     /// Минимальное время вегетации, дней
@@ -49,5 +49,5 @@ public class PlantSort : NamedEntity
     /// </summary>
     public string? PlantColor { get; set; }
 
-    public ICollection<Plant> Plants { get; set; }
+    public ICollection<Plant> Plants { get; set; } = [];
 }

@@ -4,6 +4,6 @@ namespace BonfireDB.Entities;
 
 public class Plant : Entity
 {
-    public virtual PlantCulture PlantCulture { get; set; }
-    public virtual PlantSort PlantSort { get; set; }
+    public virtual PlantCulture PlantCulture { get; set; } = null!;
+    public virtual PlantSort PlantSort { get; set; } = null!;
 }

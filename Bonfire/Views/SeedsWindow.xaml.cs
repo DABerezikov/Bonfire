@@ -21,7 +21,7 @@ public partial class SeedsWindow : UserControl
         if (sender is UserControl control && e.Key == Key.Escape &&
             (DataGrid)(control.Content as Grid)?.Children[0]! != null)
         {
-            var dataGrid = (DataGrid)(control.Content as Grid).Children[0];
+            var dataGrid = (DataGrid)(control.Content as Grid)!.Children[0];
             dataGrid.SelectedIndex = -1;
             dataGrid.UnselectAllCells();
                    

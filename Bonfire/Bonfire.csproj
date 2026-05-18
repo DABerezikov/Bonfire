@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS8622;CS8634;CS8769</NoWarn>
     <UseWPF>true</UseWPF>
     <StartupObject>Bonfire.Program</StartupObject>
     <ApplicationIcon>Views\Image\VegetableGardenIcon_.ico</ApplicationIcon>

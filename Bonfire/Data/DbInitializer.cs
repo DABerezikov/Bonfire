@@ -39,7 +39,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int PlantCulturesCount = 20;
-    private PlantCulture[] _plantCultures;
+    private PlantCulture[] _plantCultures = null!;
 
     private async Task InitializePlantCulture()
     {
@@ -60,7 +60,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int ProducersCount = 20;
-    private Producer[] _producers;
+    private Producer[] _producers = null!;
 
     private async Task InitializeProducers()
     {
@@ -79,7 +79,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int PlantSortsCount = 20;
-    private PlantSort[] _plantSorts;
+    private PlantSort[] _plantSorts = null!;
 
     private async Task InitializePlantSort()
     {
@@ -108,7 +108,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int PlantsCount = 20;
-    private Plant[] _plants;
+    private Plant[] _plants = null!;
 
     private async Task InitializePlant()
     {
@@ -130,7 +130,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int SeedsInfoCount = 20;
-    private SeedsInfo[] _seedsInfo;
+    private SeedsInfo[] _seedsInfo = null!;
 
     private async Task InitializeSeedsInfo()
     {
@@ -157,7 +157,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
     }
 
     private const int SeedsCount = 20;
-    private Seed[] _seeds;
+    private Seed[] _seeds = null!;
 
     private async Task InitializeSeeds()
     {

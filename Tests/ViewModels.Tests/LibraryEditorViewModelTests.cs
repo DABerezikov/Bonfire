@@ -159,8 +159,8 @@ public class LibraryEditorViewModelTests
 
         var vm = CreateVm(seeds: seeds);
 
-        Assert.Single(vm.Seeds);
-        Assert.Equal(1, vm.Seeds.First().Id);
+        Assert.Single(vm.Seeds!);
+        Assert.Equal(1, vm.Seeds!.First().Id);
     }
 
     [Fact]

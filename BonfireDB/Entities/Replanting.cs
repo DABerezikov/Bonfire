@@ -13,5 +13,5 @@ public class Replanting : Entity
     /// <summary> Поле комментариев </summary>
     public string? ReplantingNote { get; set; }
 
-    public SeedlingInfo SeedlingInfo { get; set; }
+    public SeedlingInfo SeedlingInfo { get; set; } = null!;
 }

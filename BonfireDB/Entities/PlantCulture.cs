@@ -4,6 +4,6 @@ namespace BonfireDB.Entities;
 
 public class PlantCulture : NamedEntity
 {
-    public string Class { get; set; }
-    public ICollection<Plant> Plants { get; set; }
+    public string Class { get; set; } = string.Empty;
+    public ICollection<Plant> Plants { get; set; } = [];
 }
