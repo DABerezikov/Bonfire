@@ -2,7 +2,7 @@
 
 public interface IRepository<T> where T : class, IEntity, new()
 {
-    IQueryable<T?> Items { get; }
+    IQueryable<T> Items { get; }
     bool AutoSaveChanges { get; set; }
     T? Get(int id);
     Task<T?> GetAsync(int id, CancellationToken cancel = default);

@@ -13,5 +13,5 @@ public class Treatment : Entity
     /// <summary> Способ обработки </summary>
     public string? TreatmentMethod { get; set; }
 
-    public SeedlingInfo SeedlingInfo { get; set; }
+    public SeedlingInfo SeedlingInfo { get; set; } = null!;
 }

@@ -17,7 +17,7 @@ public class DbRepository<T> : IRepository<T> where T : Entity, new()
         _set = _db.Set<T>();
     }
 
-    public virtual IQueryable<T?> Items => _set;
+    public virtual IQueryable<T> Items => _set;
 
     public T Add(T item)
     {
@@ -37,11 +37,11 @@ public class DbRepository<T> : IRepository<T> where T : Entity, new()
         return item;
     }
 
-    public T? Get(int id) => Items.SingleOrDefault(item => item != null && item.Id == id);
+    public T? Get(int id) => Items.SingleOrDefault(item => item.Id == id);
    
 
     public async Task<T?> GetAsync(int id, CancellationToken cancel = default) => await Items
-        .SingleOrDefaultAsync(item => item != null && item.Id == id, cancel)
+        .SingleOrDefaultAsync(item => item.Id == id, cancel)
         .ConfigureAwait(false);
 
     public void Remove(int id)

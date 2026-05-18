@@ -122,23 +122,23 @@ public class SeedsViewModel : ViewModel
 
     // Основные данные
 
-    public ObservableCollection<Seed> Seeds
+    public ObservableCollection<Seed>? Seeds
     {
         get;
         set => Set(ref field, value);
     }
 
-    public SeedsFromViewModel SelectedSeedsViewItem
+    public SeedsFromViewModel? SelectedSeedsViewItem
     {
         get;
         set
         {
             Set(ref field, value);
-            SelectedItem = value != null ? Seeds.First(s => s.Id == value.Id) : null;
+            SelectedItem = value != null ? Seeds!.First(s => s.Id == value.Id) : null;
         }
     }
 
-    public Seed SelectedItem
+    public Seed? SelectedItem
     {
         get;
         set
@@ -248,7 +248,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    }
+    } = string.Empty;
 
     // Единицы измерения
 
@@ -262,7 +262,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    }
+    } = string.Empty;
 
     // Класс растения
 
@@ -276,7 +276,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    }
+    } = string.Empty;
 
     // Выбор культуры
 
@@ -304,7 +304,7 @@ public class SeedsViewModel : ViewModel
             if (Set(ref field, value))
                 CultureListView?.Refresh();
         }
-    }
+    } = string.Empty;
 
     // Выбор сорта
 
@@ -332,7 +332,7 @@ public class SeedsViewModel : ViewModel
             if (Set(ref field, value))
                 SortListView?.Refresh();
         }
-    }
+    } = string.Empty;
 
     // Выбор производителя
 
@@ -364,7 +364,7 @@ public class SeedsViewModel : ViewModel
                     IsCollected = true;
             }
         }
-    }
+    } = string.Empty;
 
     // Методы
 
@@ -388,7 +388,7 @@ public class SeedsViewModel : ViewModel
                 Id = seeds.Plant.PlantCulture.Id,
                 Name = seeds.Plant.PlantCulture.Name
             }).AsEnumerable()
-            .Distinct(s => s.Name)
+            .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
         ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
         AddCultureList.AddRange(addListCulture.ToList());
@@ -404,7 +404,7 @@ public class SeedsViewModel : ViewModel
                 Id = seeds.Plant.PlantSort.Id,
                 Name = seeds.Plant.PlantSort.Name
             }).AsEnumerable()
-            .Distinct(s => s.Name)
+            .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
         AddSortList.AddRange(addListSort.ToList());
         _sortListView.Source = AddSortList;
@@ -419,7 +419,7 @@ public class SeedsViewModel : ViewModel
                 Id = seeds.Plant.PlantSort.Producer.Id,
                 Name = seeds.Plant.PlantSort.Producer.Name
             }).AsEnumerable()
-            .Distinct(s => s.Name)
+            .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
         AddProducerList.AddRange(addListProducer.ToList());
         _producerListView.Source = AddProducerList;
@@ -454,7 +454,7 @@ public class SeedsViewModel : ViewModel
 
     private void UpdateCollectionViewSource(int id = -1)
     {
-        var newCollection = Seeds.Select(CreateSeedsFromViewModel).SortSeeds();
+        var newCollection = Seeds!.Select(CreateSeedsFromViewModel).SortSeeds();
         var collection = newCollection.ToArray();
         _seedsView.Source = collection;
         if (id != -1)
@@ -479,7 +479,7 @@ public class SeedsViewModel : ViewModel
         AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight
     };
 
-    private void CopySeedToEditItem(Seed seedFrom, Seed seedTo)
+    private void CopySeedToEditItem(Seed? seedFrom, Seed seedTo)
     {
         if (seedFrom == null) return;
 
@@ -521,7 +521,7 @@ public class SeedsViewModel : ViewModel
 
     private void UpdateCollectionSeedsViewModel(Seed newSeed)
     {
-        Seeds.Add(newSeed);
+        Seeds!.Add(newSeed);
 
         if (!AddCultureList.Contains(c => c.Name == newSeed.Plant.PlantCulture.Name))
         {
@@ -556,19 +556,19 @@ public class SeedsViewModel : ViewModel
 
     private void RemoveOfAddLists(Seed deleteSeed)
     {
-        if (!Seeds.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
+        if (!Seeds!.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
             AddCultureList.Remove(AddCultureList.Find(c => c.Name == deleteSeed.Plant.PlantCulture.Name)!);
 
-        if (!Seeds.Contains(s => s.Plant.PlantSort.Name == deleteSeed.Plant.PlantSort.Name))
+        if (!Seeds!.Contains(s => s.Plant.PlantSort.Name == deleteSeed.Plant.PlantSort.Name))
             AddSortList.Remove(AddSortList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Name)!);
 
-        if (!Seeds.Contains(s => s.Plant.PlantSort.Producer.Name == deleteSeed.Plant.PlantSort.Producer.Name))
+        if (!Seeds!.Contains(s => s.Plant.PlantSort.Producer.Name == deleteSeed.Plant.PlantSort.Producer.Name))
             AddProducerList.Remove(AddProducerList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Producer.Name)!);
     }
 
     private void CreateSeedReport()
     {
-        var items = Seeds.Select(s => new SeedReportItem(
+        var items = Seeds!.Select(s => new SeedReportItem(
             s.Plant.PlantCulture.Name,
             s.Plant.PlantSort.Name,
             s.Plant.PlantSort.Producer.Name,
@@ -618,8 +618,8 @@ public class SeedsViewModel : ViewModel
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
     {
         var filteredSeeds = p != null && p.ToString() != "Выбрать все"
-            ? Seeds.Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
-            : Seeds;
+            ? Seeds!.Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
+            : Seeds!;
 
         _seedsView.Source = filteredSeeds.Select(CreateSeedsFromViewModel).SortSeeds().ToArray();
         OnPropertyChanged(nameof(SeedsView));
@@ -638,7 +638,7 @@ public class SeedsViewModel : ViewModel
             AddCostPack.DecimalParseAdvanced(),
             AddBestBy, AddNote);
 
-        var (seed, isNew) = await _seedsService.AddOrUpdateSeedAsync(request, Seeds).ConfigureAwait(false);
+        var (seed, isNew) = await _seedsService.AddOrUpdateSeedAsync(request, Seeds!).ConfigureAwait(false);
 
         if (isNew)
             UpdateCollectionSeedsViewModel(seed);
@@ -653,11 +653,11 @@ public class SeedsViewModel : ViewModel
     private async Task OnDeleteSeedCommandExecuted()
     {
         if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите удалить семена сорта - {SelectedItem.Plant.PlantSort.Name}",
+                $"Вы уверены, что хотите удалить семена сорта - {SelectedItem!.Plant.PlantSort.Name}",
                 "Удаление семян")) return;
 
         var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
-        Seeds.Remove(deleteSeed);
+        Seeds!.Remove(deleteSeed);
         RemoveOfAddLists(deleteSeed);
         UpdateCollectionViewSource();
     }
@@ -671,15 +671,15 @@ public class SeedsViewModel : ViewModel
                 $"Вы уверены, что хотите изменить информацию о семенах сорта - {EditedItem.Plant.PlantSort.Name}",
                 "Редактирование семян")) return;
 
-        CopySeedToEditItem(EditedItem, SelectedItem);
-        if (SelectedItem.SeedsInfo.AmountSeeds > 0)
+        CopySeedToEditItem(EditedItem, SelectedItem!);
+        if (SelectedItem!.SeedsInfo.AmountSeeds > 0)
             SelectedItem.SeedsInfo.AmountSeedsWeight = 0;
         await _seedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
         UpdateCollectionViewSource(SelectedItem.Id);
     }
 
     public ICommand CancelUpdateSeedsInfoCommand => field
-        ??= new LambdaCommandAsync(async () => UpdateCollectionViewSource(SelectedItem.Id));
+        ??= new LambdaCommandAsync(async () => UpdateCollectionViewSource(SelectedItem?.Id ?? -1));
 
     public ICommand CreateSeedsReportCommand => field
         ??= new LambdaCommand(CreateSeedReport, () => Seeds != null && IsActive);

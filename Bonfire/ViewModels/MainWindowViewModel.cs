@@ -28,7 +28,7 @@ namespace Bonfire.ViewModels
             set => Set(ref field, value);
         } = "Готов!";
 
-        public ViewModel CurrentViewModel
+        public ViewModel? CurrentViewModel
         {
             get;
             set => Set(ref field, value);
@@ -45,7 +45,7 @@ namespace Bonfire.ViewModels
             set => Set(ref field, value);
         }
 
-        public Brush SeedBackground
+        public Brush? SeedBackground
         {
             get;
             set => Set(ref field, value);
@@ -57,7 +57,7 @@ namespace Bonfire.ViewModels
             set => Set(ref field, value);
         }
 
-        public Brush SeedlingBackground
+        public Brush? SeedlingBackground
         {
             get;
             set => Set(ref field, value);
@@ -69,7 +69,7 @@ namespace Bonfire.ViewModels
             set => Set(ref field, value);
         }
 
-        public Brush LibraryBackground
+        public Brush? LibraryBackground
         {
             get;
             set => Set(ref field, value);

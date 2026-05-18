@@ -16,7 +16,7 @@ public class SeedlingInfo : Entity
     public DateTime LandingDate { get; set; }
 
     /// <summary> Фаза Луны в момент посадки </summary>
-    public string LunarPhase { get; set; }
+    public string LunarPhase { get; set; } = string.Empty;
 
     /// <summary> Куда посажено (горшок, теплица) </summary>
     public string? PlantPlace { get; set; }
@@ -37,7 +37,7 @@ public class SeedlingInfo : Entity
     public string? QuarantineNote { get; set; }
 
     /// <summary> Источник рассады (куплено, посеяно, подарено, черенкование) </summary>
-    public string SeedlingSource { get; set; }
+    public string SeedlingSource { get; set; } = string.Empty;
 
     /// <summary> Комментарий - где куплено/ кем подарено </summary>
     public string? Note { get; set; }

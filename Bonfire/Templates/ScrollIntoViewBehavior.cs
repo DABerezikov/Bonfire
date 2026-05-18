@@ -23,7 +23,7 @@ public class ScrollIntoViewBehavior : Behavior<DataGrid>
     private async void AssociatedObjectSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is not DataGrid grid) return;
-        var item = grid?.SelectedItem;
+        var item = grid.SelectedItem;
 
         if (item == null) return;
 

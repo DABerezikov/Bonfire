@@ -39,7 +39,7 @@ public static class BehaviorInStyleAttacher
         if (e.NewValue is IEnumerable == false)
             return;
 
-        var newBehaviorCollection = e.NewValue as IEnumerable;
+        var newBehaviorCollection = (IEnumerable)e.NewValue;
 
         BehaviorCollection behaviorCollection = Interaction.GetBehaviors(depObj);
         behaviorCollection.Clear();

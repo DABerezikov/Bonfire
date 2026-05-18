@@ -18,9 +18,9 @@ internal abstract class Command : ICommand
         }
     }
 
-    public event EventHandler ExecutableChanged;
+    public event EventHandler? ExecutableChanged;
 
-    event EventHandler ICommand.CanExecuteChanged
+    event EventHandler? ICommand.CanExecuteChanged
     {
         add => CommandManager.RequerySuggested += value;
         remove => CommandManager.RequerySuggested -= value;

@@ -1,13 +1,13 @@
-﻿using Bonfire.Infrastructure.Commands.Base;
 using System;
+using Bonfire.Infrastructure.Commands.Base;
 
 namespace Bonfire.Infrastructure.Commands;
 
-internal class LambdaCommand(Action<object> execute, Func<object, bool> canExecute = null)
+internal class LambdaCommand(Action<object> execute, Func<object, bool>? canExecute = null)
     : Command
 {
-    public LambdaCommand(Action execute, Func<bool> canExecute = null)
-        : this(p => execute(), canExecute is null ? (Func<object, bool>)null : p => canExecute())
+    public LambdaCommand(Action execute, Func<bool>? canExecute = null)
+        : this(p => execute(), canExecute is null ? null : p => canExecute())
     {
 
     }
