@@ -182,13 +182,10 @@ Path=DataContext.EditedItem.Quantity}" Style="{StaticResource SeedsTextBoxStyle}
 Path=DataContext.EditedItem.SeedlingInfos[0].Note}" Style="{StaticResource SeedsTextBoxStyle}" Width="210" Height="100" TextAlignment="Left"/>
 
                         <TextBlock  Grid.Row="1"  Grid.Column="4"  Text="Посеяно в"  Style="{StaticResource SeedsTextBlockStyle}" />
-                        <ComboBox Grid.Row="2" Grid.Column="4" Margin="20,0,0,0" 
-                                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
-           Path=DataContext.EditedItem.SeedlingInfos[0].PlantPlace}"
-                                  Style="{StaticResource SeedsComboBoxStyle}" Width="110" SelectedValuePath="Content" HorizontalContentAlignment="Center">
-                           
-                            <ComboBoxItem Content="Теплица" />
-                        </ComboBox>
+                        <TextBox Grid.Row="2" Grid.Column="4" Margin="20,0,0,0"
+                                 Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
+           Path=DataContext.EditedItem.SeedlingInfos[0].PlantPlace, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource SeedsTextBoxStyle}" Width="110" />
 
                         <DataGrid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Grid.RowSpan="5" Margin="20, 10, 0,0" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
                                   Path=DataContext.EditedItem.SeedlingInfos}" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" >

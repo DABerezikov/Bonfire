@@ -821,7 +821,7 @@ public class GardenPlanViewModel : ViewModel
             var newInfo = new SeedlingInfo
             {
                 LandingDate    = NewPlantingDate,
-                SeedlingSource = "посажено в грунт",
+                SeedlingSource = "Из семян",
                 PlantPlace     = plantPlace
             };
             seedling.SeedlingInfos.Add(newInfo);
@@ -857,7 +857,7 @@ public class GardenPlanViewModel : ViewModel
                 LandingDate    = NewPlantingDate,
                 LunarPhase     = moonPhase,
                 SeedlingNumber = 0,
-                SeedlingSource = "посеяно",
+                SeedlingSource = "Из семян",
                 PlantPlace     = plantPlace
             };
             var newSeedling = new Seedling
@@ -866,7 +866,7 @@ public class GardenPlanViewModel : ViewModel
                 SeedId         = seed.Id,
                 LandingDate    = NewPlantingDate,
                 LunarPhase     = moonPhase,
-                SeedlingSource = "посеяно",
+                SeedlingSource = "Из семян",
                 PlantPlace     = plantPlace,
                 SeedlingInfos  = [newSeedlingInfo]
             };
