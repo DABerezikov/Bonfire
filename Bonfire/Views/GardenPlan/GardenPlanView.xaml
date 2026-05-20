@@ -407,7 +407,7 @@
                         <TextBlock Text="(сетка заблокирована в активном состоянии)"
                                    VerticalAlignment="Center" Foreground="#9E9E9E" FontSize="11" Margin="8,0,0,0"
                                    Visibility="{Binding EditingGridElement.CanModifyGrid,
-                                       Converter={StaticResource BoolToVisibility}}"/>
+                                       Converter={StaticResource NotBoolToVisibility}}"/>
                     </StackPanel>
 
                     <!-- Панель действий с выбранной ячейкой (Dock=Bottom, отображается при выборе) -->

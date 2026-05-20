@@ -263,6 +263,44 @@ public class GardenServiceTests
         await _spots.DidNotReceive().RemoveAsync(1);
     }
 
+    [Fact]
+    public async Task RebuildGridAsync_CreatesNewSpotsForMissingCells()
+    {
+        // Грядка без ячеек, просим 2×2 = 4 ячейки — все четыре должны создаться
+        var bed = new Bed
+        {
+            Id = 7,
+            StateTypeName = "PlannedState",
+            PlantingSpots = []
+        };
+
+        var svc = CreateService();
+        await svc.RebuildGridAsync(bed, rows: 2, cols: 2);
+
+        // AddAsync должен быть вызван ровно 4 раза (0:0, 0:1, 1:0, 1:1)
+        await _spots.Received(4).AddAsync(Arg.Any<PlantingSpot>());
+    }
+
+    [Fact]
+    public async Task RebuildGridAsync_DoesNotDuplicateExistingSpots()
+    {
+        // Уже есть ячейка 0:0 — при создании 1×2 должны добавить только 0:1
+        var existing = new PlantingSpot { Id = 1, Row = 0, Column = 0 };
+        var bed = new Bed
+        {
+            Id = 8,
+            StateTypeName = "PlannedState",
+            PlantingSpots = [existing]
+        };
+
+        var svc = CreateService();
+        await svc.RebuildGridAsync(bed, rows: 1, cols: 2);
+
+        // Только один новый спот (0:1), существующий 0:0 не дублируется
+        await _spots.Received(1).AddAsync(Arg.Is<PlantingSpot>(s => s.Row == 0 && s.Column == 1));
+        await _spots.DidNotReceive().AddAsync(Arg.Is<PlantingSpot>(s => s.Row == 0 && s.Column == 0));
+    }
+
     // ── ClearSpotAsync ────────────────────────────────────────────────────────
 
     [Fact]

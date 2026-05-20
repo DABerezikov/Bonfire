@@ -179,7 +179,29 @@ internal class GardenService(
             .Where(s => s.Row >= rows || s.Column >= cols)
             .ToList();
         foreach (var spot in toRemove)
+        {
+            element.PlantingSpots.Remove(spot);
             await spots.RemoveAsync(spot.Id);
+        }
+
+        // Создать недостающие ячейки (те, которых ещё нет в сетке)
+        for (var r = 0; r < rows; r++)
+        {
+            for (var c = 0; c < cols; c++)
+            {
+                if (!element.PlantingSpots.Any(s => s.Row == r && s.Column == c))
+                {
+                    var newSpot = new PlantingSpot
+                    {
+                        GardenElementId = element.Id,
+                        Row = r,
+                        Column = c
+                    };
+                    await spots.AddAsync(newSpot);
+                    element.PlantingSpots.Add(newSpot);
+                }
+            }
+        }
 
         element.GridRows = rows;
         element.GridColumns = cols;
