@@ -1,5 +1,6 @@
 ﻿using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
+using BonfireDB.Entities.GardenPlanning;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BonfireDB;
@@ -17,7 +18,12 @@ public static class RepositoryRegister
         .AddScoped<IRepository<SeedlingInfo>, SeedlingInfoRepository>()
         .AddScoped<IRepository<Replanting>, DbRepository<Replanting>>()
         .AddScoped<IRepository<Treatment>, DbRepository<Treatment>>()
-
+        // Планировка огорода
+        .AddScoped<IRepository<GardenPlan>, DbRepository<GardenPlan>>()
+        .AddScoped<IRepository<Garden>, GardenRepository>()
+        .AddScoped<IRepository<Greenhouse>, GreenhouseRepository>()
+        .AddScoped<IRepository<GardenElement>, GardenElementRepository>()
+        .AddScoped<IRepository<PlantingSpot>, DbRepository<PlantingSpot>>()
         ;
 
 }

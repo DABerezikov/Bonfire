@@ -9,6 +9,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Infrastructure/Commands/Commands.xaml"/>
                 <ResourceDictionary Source="Resources/Base/Brushes.xaml"/>
+                <ResourceDictionary Source="Resources/Base/Converters.xaml"/>
                 <ResourceDictionary Source="Templates/ModelMainView.xaml"/>
                 <ResourceDictionary Source="Templates/DataGridStyle.xaml"/>
                 <ResourceDictionary Source="Templates/SeedsViewStyle.xaml"/>

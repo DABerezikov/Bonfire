@@ -16,11 +16,11 @@
     -->
     <UserControl.Resources>
         <Style x:Key="SpotButtonStyle" TargetType="Button">
-            <Setter Property="Width"  Value="84"/>
-            <Setter Property="Height" Value="74"/>
-            <Setter Property="Margin" Value="1"/>
-            <Setter Property="Padding" Value="4,3"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Width"  Value="120"/>
+            <Setter Property="Height" Value="100"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="6,5"/>
+            <Setter Property="FontSize" Value="11"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -80,7 +80,7 @@
 
                     <StackPanel>
                         <!-- Статус-иконка -->
-                        <TextBlock HorizontalAlignment="Center" FontSize="16">
+                        <TextBlock HorizontalAlignment="Center" FontSize="20" Margin="0,0,0,2">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
@@ -88,7 +88,7 @@
                                             <Setter Property="Text" Value=""/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="ReservedSpotState">
-                                            <Setter Property="Text" Value="📅"/>
+                                            <Setter Property="Text" Value="📋"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="PlantedSpotState">
                                             <Setter Property="Text" Value="🌱"/>
@@ -106,18 +106,19 @@
                         <!-- Название растения -->
                         <TextBlock Text="{Binding PlantLabel}"
                                    TextWrapping="Wrap" TextAlignment="Center"
-                                   FontSize="9" Foreground="#212121"
-                                   MaxHeight="22" TextTrimming="CharacterEllipsis"/>
+                                   FontSize="11" FontWeight="SemiBold" Foreground="#212121"
+                                   MaxHeight="34" TextTrimming="CharacterEllipsis"
+                                   Margin="0,0,0,2"/>
                         <!-- Дата посадки -->
                         <TextBlock Text="{Binding PlantedDate, StringFormat={}{0:dd.MM.yy}}"
                                    HorizontalAlignment="Center"
-                                   FontSize="9" Foreground="#757575"/>
+                                   FontSize="10" Foreground="#616161"/>
                         <!-- Статус -->
                         <TextBlock Text="{Binding StateDisplayName}"
                                    HorizontalAlignment="Center"
-                                   FontSize="9" Foreground="#9E9E9E"/>
+                                   FontSize="10" Foreground="#9E9E9E"/>
                         <!-- Строка:Столбец -->
-                        <TextBlock HorizontalAlignment="Center" FontSize="8" Foreground="#BDBDBD">
+                        <TextBlock HorizontalAlignment="Center" FontSize="9" Foreground="#BDBDBD">
                             <Run Text="{Binding Row}"/>
                             <Run Text=":"/>
                             <Run Text="{Binding Column}"/>

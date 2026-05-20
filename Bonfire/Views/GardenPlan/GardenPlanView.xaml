@@ -375,7 +375,7 @@
               Visibility="{Binding IsGridOpen, Converter={StaticResource BoolToVisibility}}">
             <Rectangle Fill="#AA000000"/>
             <Border Background="White" CornerRadius="8" Padding="20"
-                    Width="860" MaxHeight="680"
+                    Width="960" MaxHeight="720"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <DockPanel>
 
@@ -439,27 +439,74 @@
                             <!-- Кнопки переходов состояний -->
                             <WrapPanel Orientation="Horizontal">
 
-                                <!-- Зарезервировать (Empty → Reserved) -->
-                                <Button Content="📅 Зарезервировать"
-                                        Padding="10,5" Margin="0,0,6,4"
-                                        Visibility="{Binding SelectedSpot.CanGoToReserved,
-                                            Converter={StaticResource BoolToVisibility}}"
-                                        Command="{Binding ReserveSpotCommand}"
-                                        CommandParameter="{Binding SelectedSpot}"/>
+                                <!-- Запланировать (Empty → Reserved/Запланировано) -->
+                                <StackPanel Orientation="Vertical" Margin="0,0,8,4"
+                                            Visibility="{Binding SelectedSpot.CanGoToReserved,
+                                                Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Запланировать посадку:"
+                                               FontSize="11" FontWeight="SemiBold"
+                                               Foreground="#616161" Margin="0,0,0,4"/>
+                                    <ComboBox Width="220" Margin="0,0,0,4"
+                                              IsEditable="True"
+                                              ItemsSource="{Binding AvailablePlantLabels}"
+                                              Text="{Binding PlanPickerLabel, UpdateSourceTrigger=PropertyChanged}"
+                                              ToolTip="Выберите культуру из рассады/семян или введите вручную"/>
+                                    <Button Content="📋 Запланировать"
+                                            HorizontalAlignment="Left" Padding="10,5"
+                                            Command="{Binding ReserveSpotCommand}"
+                                            CommandParameter="{Binding SelectedSpot}"/>
+                                </StackPanel>
 
                                 <!-- Посадить: Empty/Reserved/Harvested → Planted -->
-                                <StackPanel Orientation="Vertical" Margin="0,0,6,4"
+                                <StackPanel Orientation="Vertical" Margin="0,0,8,4"
                                             Visibility="{Binding SelectedSpot.CanGoToPlanted,
                                                 Converter={StaticResource BoolToVisibility}}">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <TextBox Width="160"
-                                                 Text="{Binding NewPlantingLabel, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="Что сажаем (название растения)" Padding="4,4"
-                                                 VerticalContentAlignment="Center"/>
-                                        <DatePicker Width="130" Margin="4,0,0,0"
-                                                    SelectedDate="{Binding NewPlantingDate}"
-                                                    ToolTip="Дата посадки"/>
+                                    <TextBlock Text="Что высаживаем:"
+                                               FontSize="11" FontWeight="SemiBold"
+                                               Foreground="#616161" Margin="0,0,0,5"/>
+
+                                    <!-- Источник: рассада или семена -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <RadioButton Content="🌿 Из рассады"
+                                                     IsChecked="{Binding IsFromSeedling}"
+                                                     VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                        <RadioButton Content="🌰 Из семян"
+                                                     IsChecked="{Binding IsFromSeed}"
+                                                     VerticalAlignment="Center"/>
                                     </StackPanel>
+
+                                    <!-- Пикер рассады -->
+                                    <ComboBox Width="280" Margin="0,0,0,5" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding AvailableSeedlingItems}"
+                                              SelectedItem="{Binding SelectedPlantSource}"
+                                              DisplayMemberPath="Label"
+                                              IsEditable="True"
+                                              IsTextSearchEnabled="True"
+                                              TextSearch.TextPath="Label"
+                                              StaysOpenOnEdit="True"
+                                              ToolTip="Начните вводить название для поиска"
+                                              Visibility="{Binding IsFromSeedling,
+                                                  Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- Пикер семян -->
+                                    <ComboBox Width="280" Margin="0,0,0,5" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding AvailableSeedItems}"
+                                              SelectedItem="{Binding SelectedPlantSource}"
+                                              DisplayMemberPath="Label"
+                                              IsEditable="True"
+                                              IsTextSearchEnabled="True"
+                                              TextSearch.TextPath="Label"
+                                              StaysOpenOnEdit="True"
+                                              ToolTip="Начните вводить название для поиска"
+                                              Visibility="{Binding IsFromSeed,
+                                                  Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- Дата посадки -->
+                                    <DatePicker HorizontalAlignment="Left" Width="150" Margin="0,0,0,6"
+                                                SelectedDate="{Binding NewPlantingDate}"
+                                                ToolTip="Дата посадки в грядку"/>
+
+                                    <!-- Кнопка активна только при выборе из пикера -->
                                     <Button Content="🌱 Посадить"
                                             HorizontalAlignment="Left" Padding="10,5"
                                             Command="{Binding PlantSpotCommand}"

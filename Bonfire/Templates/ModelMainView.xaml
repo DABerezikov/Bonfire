@@ -1,21 +1,30 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:vm="clr-namespace:Bonfire.ViewModels"
-                    xmlns:view="clr-namespace:Bonfire.Views">
+                    xmlns:view="clr-namespace:Bonfire.Views"
+                    xmlns:gp="clr-namespace:Bonfire.Views.GardenPlan">
 
     <DataTemplate DataType="{x:Type vm:SeedsViewModel}">
-        <view:SeedsWindow DataContext="{Binding}"></view:SeedsWindow>
-
+        <view:SeedsWindow DataContext="{Binding}"/>
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:LibraryEditorViewModel}">
-        <view:LibraryEditorWindow DataContext="{Binding}"></view:LibraryEditorWindow>
-
+        <view:LibraryEditorWindow DataContext="{Binding}"/>
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:SeedlingsViewModel}">
-        <view:SeedlingsWindow DataContext="{Binding}"></view:SeedlingsWindow>
-
+        <view:SeedlingsWindow DataContext="{Binding}"/>
     </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:GardenPlanViewModel}">
+        <gp:GardenPlanView DataContext="{Binding}"/>
+    </DataTemplate>
+
+    <!-- Общий стиль метки-подсказки (используется в GardenPlanView) -->
+    <Style x:Key="LabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize"    Value="11"/>
+        <Setter Property="Foreground"  Value="#757575"/>
+        <Setter Property="Margin"      Value="0,0,0,2"/>
+    </Style>
 
 </ResourceDictionary>

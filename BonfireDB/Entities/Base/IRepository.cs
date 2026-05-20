@@ -1,6 +1,6 @@
 ﻿namespace BonfireDB.Entities.Base;
 
-public interface IRepository<T> where T : class, IEntity, new()
+public interface IRepository<T> where T : class, IEntity
 {
     IQueryable<T> Items { get; }
     bool AutoSaveChanges { get; set; }

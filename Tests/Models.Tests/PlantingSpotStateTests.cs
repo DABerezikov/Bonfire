@@ -220,7 +220,7 @@ public class PlantingSpotStateTests
     [Fact]
     public void ReservedSpotState_DisplayName_IsCorrect()
     {
-        Assert.Equal("Зарезервировано", new ReservedSpotState().DisplayName);
+        Assert.Equal("Запланировано", new ReservedSpotState().DisplayName);
     }
 
     [Fact]

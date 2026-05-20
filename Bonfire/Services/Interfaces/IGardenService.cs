@@ -48,7 +48,7 @@ public interface IGardenService
 
     /// <summary>Переводит ячейку в новое состояние и сохраняет в БД.</summary>
     Task ChangeSpotStateAsync(PlantingSpot spot, PlantingSpotState newState,
-        string? plantLabel = null, DateTime? plantedDate = null);
+        string? plantLabel = null, DateTime? plantedDate = null, int? seedlingInfoId = null);
 
     // --- Перестройка сетки ---
     Task RebuildGridAsync(GardenElement element, int rows, int cols);

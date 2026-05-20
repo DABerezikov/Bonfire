@@ -156,13 +156,12 @@ internal class GardenService(
     }
 
     public async Task ChangeSpotStateAsync(PlantingSpot spot, PlantingSpotState newState,
-        string? plantLabel = null, DateTime? plantedDate = null)
+        string? plantLabel = null, DateTime? plantedDate = null, int? seedlingInfoId = null)
     {
         spot.TransitionTo(newState);
-        if (plantLabel is not null)
-            spot.Note = plantLabel;
-        if (plantedDate.HasValue)
-            spot.PlantedDate = plantedDate;
+        if (plantLabel is not null)     spot.Note          = plantLabel;
+        if (plantedDate.HasValue)       spot.PlantedDate   = plantedDate;
+        if (seedlingInfoId.HasValue)    spot.SeedlingInfoId = seedlingInfoId;
         await spots.UpdateAsync(spot);
     }
 

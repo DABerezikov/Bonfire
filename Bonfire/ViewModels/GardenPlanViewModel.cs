@@ -8,6 +8,7 @@ using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
+using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
 using BonfireDB.Entities.GardenPlanning.States;
@@ -19,11 +20,16 @@ public class GardenPlanViewModel : ViewModel
 {
     private readonly IGardenService _gardenService;
     private readonly IUserDialog _userDialog;
+    private readonly ISeedlingsService _seedlingsService;
+    private readonly ISeedsService _seedsService;
 
-    public GardenPlanViewModel(IGardenService gardenService, IUserDialog userDialog)
+    public GardenPlanViewModel(IGardenService gardenService, IUserDialog userDialog,
+        ISeedlingsService seedlingsService, ISeedsService seedsService)
     {
-        _gardenService = gardenService;
-        _userDialog = userDialog;
+        _gardenService    = gardenService;
+        _userDialog       = userDialog;
+        _seedlingsService = seedlingsService;
+        _seedsService     = seedsService;
     }
 
     public bool IsActive { get; set; }
@@ -128,19 +134,85 @@ public class GardenPlanViewModel : ViewModel
         }
     }
 
-    /// <summary>Название того, что сажаем (сохраняется в PlantingSpot.Note).</summary>
-    public string NewPlantingLabel
-    {
-        get;
-        set => Set(ref field, value);
-    } = "";
-
     /// <summary>Дата посадки — по умолчанию сегодня.</summary>
     public DateTime NewPlantingDate
     {
         get;
         set => Set(ref field, value);
     } = DateTime.Today;
+
+    // --- Планирование посадок (Запланировать) ---
+
+    /// <summary>
+    /// Список меток растений (культура + сорт) без количества.
+    /// Используется как источник для ComboBox при планировании ячейки — без расхода инвентаря.
+    /// </summary>
+    public ObservableCollection<string> AvailablePlantLabels
+    {
+        get;
+        set => Set(ref field, value);
+    } = [];
+
+    /// <summary>
+    /// Растение, выбранное (или введённое вручную) для планирования.
+    /// Сохраняется в PlantingSpot.Note без расхода инвентаря.
+    /// </summary>
+    public string PlanPickerLabel
+    {
+        get;
+        set => Set(ref field, value);
+    } = "";
+
+    // --- Посадка (Посадить) ---
+
+    /// <summary>Доступные партии рассады (Seedling.Quantity > 0).</summary>
+    public ObservableCollection<PlantSourceItem> AvailableSeedlingItems
+    {
+        get;
+        set => Set(ref field, value);
+    } = [];
+
+    /// <summary>Доступные пакеты семян (SeedsInfo.AmountSeeds > 0).</summary>
+    public ObservableCollection<PlantSourceItem> AvailableSeedItems
+    {
+        get;
+        set => Set(ref field, value);
+    } = [];
+
+    /// <summary>True — высаживаем рассаду; False — сеем семена напрямую.</summary>
+    private bool _isFromSeedling = true;
+    public bool IsFromSeedling
+    {
+        get => _isFromSeedling;
+        set
+        {
+            if (value == _isFromSeedling) return;
+            _isFromSeedling = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsFromSeed));
+            SelectedPlantSource = null;
+        }
+    }
+
+    public bool IsFromSeed
+    {
+        get => !_isFromSeedling;
+        set => IsFromSeedling = !value;
+    }
+
+    /// <summary>
+    /// Выбранная позиция для посадки (рассада или семена).
+    /// Пока null — кнопка «Посадить» задизаблена.
+    /// </summary>
+    public PlantSourceItem? SelectedPlantSource
+    {
+        get;
+        set
+        {
+            if (Set(ref field, value))
+                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+        }
+    }
 
     // ─────────────────────────────────────
     //  Загрузка данных
@@ -157,6 +229,76 @@ public class GardenPlanViewModel : ViewModel
 
         Plans = new ObservableCollection<GardenPlan>(planList);
         SelectedPlan = Plans.FirstOrDefault();
+
+        await LoadPlantLabelsAsync();
+    }
+
+    private async Task LoadPlantLabelsAsync()
+    {
+        // ── Рассада: штучная (Quantity > 0) и граммовая (Weight > 0) ────────
+        var seedlingEntities = await _seedlingsService.Seedlings
+            .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
+            .Include(s => s.Plant).ThenInclude(p => p.PlantSort)
+            .Where(s => s.Quantity > 0 || s.Weight > 0)
+            .ToListAsync();
+
+        AvailableSeedlingItems = new ObservableCollection<PlantSourceItem>(
+            seedlingEntities
+            .Select(s =>
+            {
+                var name        = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
+                var weightBased = s.Quantity <= 0 && s.Weight > 0;
+                var qty         = weightBased ? s.Weight : s.Quantity;
+                var qtyLabel    = weightBased ? $"{qty:F1} г." : $"{(int)qty} шт.";
+                return new PlantSourceItem
+                {
+                    Kind          = PlantSourceKind.Seedling,
+                    EntityId      = s.Id,
+                    PlantName     = name,
+                    Label         = $"{name} ({qtyLabel})",
+                    IsWeightBased = weightBased,
+                    AvailableQty  = qty
+                };
+            })
+            .OrderBy(i => i.PlantName));
+
+        // ── Семена: штучные (AmountSeeds > 0) и граммовые (AmountSeedsWeight > 0) ──
+        var seedEntities = await _seedsService.Seeds
+            .Include(s => s.SeedsInfo)
+            .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
+            .Include(s => s.Plant).ThenInclude(p => p.PlantSort)
+            .Where(s => s.SeedsInfo.AmountSeeds > 0 || s.SeedsInfo.AmountSeedsWeight > 0)
+            .ToListAsync();
+
+        AvailableSeedItems = new ObservableCollection<PlantSourceItem>(
+            seedEntities
+            .Select(s =>
+            {
+                var name        = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
+                var weightBased = s.SeedsInfo.AmountSeeds <= 0 && s.SeedsInfo.AmountSeedsWeight > 0;
+                var qty         = weightBased ? (s.SeedsInfo.AmountSeedsWeight ?? 0) : s.SeedsInfo.AmountSeeds;
+                var qtyLabel    = weightBased ? $"{qty:F1} г." : $"{(int)qty} шт.";
+                return new PlantSourceItem
+                {
+                    Kind          = PlantSourceKind.Seed,
+                    EntityId      = s.Id,
+                    PlantName     = name,
+                    Label         = $"{name} ({qtyLabel})",
+                    IsWeightBased = weightBased,
+                    AvailableQty  = qty
+                };
+            })
+            .OrderBy(i => i.PlantName));
+
+        // ── Метки для планирования (без количества, для свободного ввода) ───
+        var planLabels = seedlingEntities
+            .Select(s => $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}")
+            .Concat(seedEntities.Select(s => $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}"))
+            .Distinct()
+            .OrderBy(l => l)
+            .ToList();
+
+        AvailablePlantLabels = new ObservableCollection<string>(planLabels);
     }
 
     private void LoadGardens()
@@ -577,30 +719,114 @@ public class GardenPlanViewModel : ViewModel
 
     public ICommand ReserveSpotCommand => field
         ??= new LambdaCommandAsync(
-            async p => await ChangeSpotAsync(p as PlantingSpotFromViewModel, new ReservedSpotState()),
+            async p => await PlanSpotReserveAsync(p as PlantingSpotFromViewModel),
             _ => true);
+
+    private async Task PlanSpotReserveAsync(PlantingSpotFromViewModel? spotVm)
+    {
+        if (spotVm is null) return;
+        var entity = await LoadSpotEntityAsync(spotVm.Id);
+        if (entity is null) return;
+        var newState = new ReservedSpotState();
+        if (!entity.State.CanTransitionTo(newState)) return;
+
+        // Сохраняем метку растения в Note — инвентарь НЕ расходуется
+        var label = string.IsNullOrWhiteSpace(PlanPickerLabel) ? null : PlanPickerLabel.Trim();
+        await _gardenService.ChangeSpotStateAsync(entity, newState, plantLabel: label);
+        UpdateSpotVm(spotVm, newState, plantLabel: label);
+    }
 
     public ICommand PlantSpotCommand => field
         ??= new LambdaCommandAsync(
             async p => await PlantSpotAsync(p as PlantingSpotFromViewModel),
-            _ => true);
+            _ => SelectedPlantSource is not null);
 
     private async Task PlantSpotAsync(PlantingSpotFromViewModel? spotVm)
     {
-        if (spotVm is null) return;
+        if (spotVm is null || SelectedPlantSource is null) return;
         var entity = await LoadSpotEntityAsync(spotVm.Id);
         if (entity is null) return;
 
         var newState = new PlantedSpotState();
         if (!entity.State.CanTransitionTo(newState)) return;
 
+        var source = SelectedPlantSource;
+        int? savedInfoId = null;
+
+        if (source.Kind == PlantSourceKind.Seedling)
+        {
+            // ── Из рассады: списать из партии, создать SeedlingInfo ──────────
+            var seedling = await _seedlingsService.Seedlings
+                .FirstOrDefaultAsync(s => s.Id == source.EntityId);
+            if (seedling is null) return;
+
+            var info = await _seedlingsService.AddSeedlingInfo(new SeedlingInfo
+            {
+                LandingDate    = NewPlantingDate,
+                SeedlingSource = "посеяно",
+                PlantPlace     = EditingGridElement?.Name ?? ""
+            });
+            savedInfoId = info.Id;
+
+            // Списываем 1 шт. (штучная) или 1 г. (граммовая)
+            if (source.IsWeightBased)
+                seedling.Weight = Math.Max(0, seedling.Weight - 1);
+            else
+                seedling.Quantity = Math.Max(0, seedling.Quantity - 1);
+            await _seedlingsService.UpdateSeedling(seedling);
+
+            source.AvailableQty -= 1;
+            if (source.AvailableQty <= 0)
+                AvailableSeedlingItems.Remove(source);
+        }
+        else
+        {
+            // ── Из семян: создать рассаду через MakeASeedling, списать семя ──
+            var seed = await _seedsService.Seeds
+                .Include(s => s.SeedsInfo)
+                .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
+                .Include(s => s.Plant).ThenInclude(p => p.PlantSort)
+                .FirstOrDefaultAsync(s => s.Id == source.EntityId);
+            if (seed is null) return;
+
+            var newSeedlingInfo = new SeedlingInfo
+            {
+                LandingDate    = NewPlantingDate,
+                SeedlingSource = "посеяно",
+                PlantPlace     = EditingGridElement?.Name ?? ""
+            };
+            var saved = await _seedlingsService.MakeASeedling(new Seedling
+            {
+                Plant         = seed.Plant,
+                SeedId        = seed.Id,
+                Quantity      = 0,
+                SeedlingInfos = [newSeedlingInfo]
+            });
+            savedInfoId = saved.SeedlingInfos[0].Id;
+
+            // Списываем 1 шт. или 1 г. в зависимости от типа пакета семян
+            if (source.IsWeightBased)
+                seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - 1);
+            else
+                seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - 1);
+            await _seedsService.UpdateSeed(seed);
+
+            source.AvailableQty -= 1;
+            if (source.AvailableQty <= 0)
+                AvailableSeedItems.Remove(source);
+        }
+
+        // ── Зафиксировать посадку в ячейке ──────────────────────────────────
         await _gardenService.ChangeSpotStateAsync(
             entity, newState,
-            string.IsNullOrWhiteSpace(NewPlantingLabel) ? null : NewPlantingLabel,
-            NewPlantingDate);
+            plantLabel:    source.PlantName,
+            plantedDate:   NewPlantingDate,
+            seedlingInfoId: savedInfoId);
 
-        UpdateSpotVm(spotVm, newState, NewPlantingDate,
-            string.IsNullOrWhiteSpace(NewPlantingLabel) ? null : NewPlantingLabel);
+        spotVm.SeedlingInfoId = savedInfoId;
+        UpdateSpotVm(spotVm, newState, NewPlantingDate, source.PlantName);
+
+        SelectedPlantSource = null;   // сброс пикера после посадки
     }
 
     public ICommand HarvestSpotCommand => field
