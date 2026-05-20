@@ -1,0 +1,211 @@
+<UserControl x:Class="Bonfire.Views.GardenPlan.GardenElementControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:m="clr-namespace:Bonfire.Models"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:vm="clr-namespace:Bonfire.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance {x:Type m:GardenElementFromViewModel}}"
+             Width="{Binding Width}" Height="{Binding Height}"
+             Cursor="Hand"
+             Focusable="True" FocusVisualStyle="{x:Null}">
+
+    <UserControl.Resources>
+        <Style x:Key="ResizeThumbStyle" TargetType="Thumb">
+            <Setter Property="Width"  Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Rectangle Fill="{TemplateBinding Background}"
+                                   Width="{TemplateBinding Width}"
+                                   Height="{TemplateBinding Height}"
+                                   RadiusX="2" RadiusY="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!--
+        Tag содержит GardenPlanViewModel (прокинут из DataTemplate в GardenPlanView).
+        Используем его для привязки команд вместо навигации по дереву.
+    -->
+    <!--
+        MouseLeftButtonDown срабатывает на UserControl-уровне НЕ работает:
+        невидимый DragThumb (ZIndex=10) перехватывает событие и ставит e.Handled = true.
+        Выделение вынесено в DragStarted на самом DragThumb.
+        Правый клик — на UserControl, т.к. Thumb не перехватывает MouseRightButtonDown.
+    -->
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="MouseRightButtonDown">
+            <i:InvokeCommandAction
+                Command="{Binding Tag.SelectElementCommand,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}"/>
+        </i:EventTrigger>
+        <!-- Двойной клик — открыть схему посадок -->
+        <i:EventTrigger EventName="MouseDoubleClick">
+            <i:InvokeCommandAction
+                Command="{Binding Tag.OpenPlantingGridCommand,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
+    <Grid>
+        <!-- Основной блок элемента -->
+        <Border Background="{Binding TypeFill, Converter={StaticResource StringToBrushConverter}}"
+                CornerRadius="4" Padding="6,4">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="BorderThickness" Value="3"/>
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#1976D2" BlurRadius="8" ShadowDepth="0"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <DockPanel>
+                <!-- Название + тип -->
+                <TextBlock DockPanel.Dock="Top" Text="{Binding Name}"
+                           FontWeight="SemiBold" FontSize="11"
+                           TextTrimming="CharacterEllipsis"/>
+                <TextBlock DockPanel.Dock="Top" Text="{Binding TypeLabel}"
+                           FontSize="10" Foreground="#757575"/>
+
+                <!-- Статус-бейдж -->
+                <Border DockPanel.Dock="Bottom"
+                        Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
+                        CornerRadius="3" Padding="3,1" HorizontalAlignment="Left" Margin="0,4,0,0">
+                    <TextBlock Text="{Binding StateDisplayName}"
+                               Foreground="White" FontSize="9"/>
+                </Border>
+
+                <!-- Площадь -->
+                <TextBlock DockPanel.Dock="Bottom" FontSize="10" Foreground="#9E9E9E" Margin="0,2,0,0">
+                    <Run Text="{Binding AreaSquareMeters, StringFormat={}{0:F1}}"/>
+                    <Run Text=" м²"/>
+                </TextBlock>
+
+                <!-- Подсказка двойного клика -->
+                <TextBlock DockPanel.Dock="Bottom" Text="[2× — схема посадок]"
+                           FontSize="8" Foreground="#BDBDBD" Margin="0,1,0,0"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Ручка перемещения — через Thumb drag -->
+        <Thumb x:Name="DragThumb" Cursor="SizeAll"
+               Width="{Binding Width}" Height="{Binding Height}"
+               Opacity="0" Panel.ZIndex="10"
+               DragCompleted="OnMoveDragCompleted">
+            <i:Interaction.Triggers>
+                <!-- DragStarted = MouseLeftButtonDown на Thumb → выделяем и берём фокус -->
+                <i:EventTrigger EventName="DragStarted">
+                    <i:InvokeCommandAction
+                        Command="{Binding Tag.SelectElementCommand,
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"/>
+                    <i:CallMethodAction
+                        TargetObject="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        MethodName="OnDragStarted"/>
+                </i:EventTrigger>
+                <i:EventTrigger EventName="DragDelta">
+                    <i:CallMethodAction TargetObject="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        MethodName="OnDragDelta"/>
+                </i:EventTrigger>
+                <i:EventTrigger EventName="DragCompleted">
+                    <i:InvokeCommandAction
+                        Command="{Binding Tag.SaveElementPositionCommand,
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
+        </Thumb>
+
+        <!-- Ручка изменения размера (правый нижний угол) -->
+        <Thumb Style="{StaticResource ResizeThumbStyle}"
+               HorizontalAlignment="Right" VerticalAlignment="Bottom"
+               Cursor="SizeNWSE" Panel.ZIndex="11"
+               DragDelta="ResizeThumb_DragDelta"
+               DragCompleted="OnResizeDragCompleted">
+            <i:Interaction.Triggers>
+                <!-- DragStarted = MouseLeftButtonDown на Thumb → выделяем и берём фокус -->
+                <i:EventTrigger EventName="DragStarted">
+                    <i:InvokeCommandAction
+                        Command="{Binding Tag.SelectElementCommand,
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"/>
+                    <i:CallMethodAction
+                        TargetObject="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        MethodName="OnDragStarted"/>
+                </i:EventTrigger>
+                <!-- После отпускания — сохранить новый размер в БД -->
+                <i:EventTrigger EventName="DragCompleted">
+                    <i:InvokeCommandAction
+                        Command="{Binding Tag.SaveElementPositionCommand,
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
+        </Thumb>
+    </Grid>
+
+    <UserControl.ContextMenu>
+        <!--
+            PlacementTarget = GardenElementControl (этот UserControl).
+            PlacementTarget.Tag = GardenPlanViewModel (прокинут из DataTemplate).
+            PlacementTarget.DataContext = GardenElementFromViewModel (текущий элемент).
+        -->
+        <ContextMenu>
+            <MenuItem Header="Схема посадок"
+                      Command="{Binding PlacementTarget.Tag.OpenPlantingGridCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <Separator/>
+            <!-- PlacementTarget.DataContext = GardenElementFromViewModel → CanGoTo* -->
+            <MenuItem Header="Запланирована"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPlanned,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="PlannedState"/>
+            <MenuItem Header="Подготовлена"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPrepared,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="PreparedState"/>
+            <MenuItem Header="Активна"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToActive,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="ActiveState"/>
+            <MenuItem Header="Под паром"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToFallow,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="FallowState"/>
+            <MenuItem Header="Зимовка"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToResting,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="RestingState"/>
+            <Separator/>
+            <MenuItem Header="Удалить"
+                      Command="{Binding PlacementTarget.Tag.DeleteElementCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Foreground="Red"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
+</UserControl>

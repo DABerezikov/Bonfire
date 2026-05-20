@@ -59,7 +59,15 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-           
+            <MenuItem Command="{Binding ShowGardenPlanViewModelCommand}" Background="{Binding GardenBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Map" Height="13" Margin="0,0,5,0" Foreground="#388E3C"/>
+                        <TextBlock Text="Планировка огорода" FontWeight="{Binding GardenBold}"/>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+
         </Menu>
         
         <StatusBar DockPanel.Dock="Bottom">

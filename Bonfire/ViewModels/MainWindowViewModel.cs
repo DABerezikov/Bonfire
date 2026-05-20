@@ -9,12 +9,14 @@ namespace Bonfire.ViewModels
     internal class MainWindowViewModel(
         SeedsViewModel seedsViewModel,
         SeedlingsViewModel seedlingsViewModel,
-        LibraryEditorViewModel libraryEditorViewModel)
+        LibraryEditorViewModel libraryEditorViewModel,
+        GardenPlanViewModel gardenPlanViewModel)
         : ViewModel
     {
         public SeedsViewModel SeedsViewModel { get; } = seedsViewModel;
         public SeedlingsViewModel SeedlingsViewModel { get; } = seedlingsViewModel;
         public LibraryEditorViewModel LibraryEditorViewModel { get; } = libraryEditorViewModel;
+        public GardenPlanViewModel GardenPlanViewModel { get; } = gardenPlanViewModel;
 
         public string Title
         {
@@ -75,6 +77,18 @@ namespace Bonfire.ViewModels
             set => Set(ref field, value);
         }
 
+        public FontWeight GardenBold
+        {
+            get;
+            set => Set(ref field, value);
+        }
+
+        public Brush? GardenBackground
+        {
+            get;
+            set => Set(ref field, value);
+        }
+
         private void ClearBold()
         {
             SeedsBold = default;
@@ -83,6 +97,8 @@ namespace Bonfire.ViewModels
             SeedlingBackground = TransparentBrush;
             LibraryBold = default;
             LibraryBackground = TransparentBrush;
+            GardenBold = default;
+            GardenBackground = TransparentBrush;
         }
 
         // Команды навигации
@@ -121,6 +137,19 @@ namespace Bonfire.ViewModels
                 ClearBold();
                 LibraryBold = _boldFontWeight;
                 LibraryBackground = _backgroundBrash;
+            });
+
+        public ICommand ShowGardenPlanViewModelCommand => field
+            ??= new LambdaCommand(() =>
+            {
+                if (CurrentViewModel is GardenPlanViewModel) return;
+                SeedsViewModel.IsActive = false;
+                SeedlingsViewModel.IsActive = false;
+                GardenPlanViewModel.IsActive = true;
+                CurrentViewModel = GardenPlanViewModel;
+                ClearBold();
+                GardenBold = _boldFontWeight;
+                GardenBackground = _backgroundBrash;
             });
     }
 }

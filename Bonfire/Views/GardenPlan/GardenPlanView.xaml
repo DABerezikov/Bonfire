@@ -1,0 +1,632 @@
+<UserControl x:Class="Bonfire.Views.GardenPlan.GardenPlanView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:Bonfire.ViewModels"
+             xmlns:m="clr-namespace:Bonfire.Models"
+             xmlns:gp="clr-namespace:Bonfire.Views.GardenPlan"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:fa5="http://schemas.fontawesome.com/icons/"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance {x:Type vm:GardenPlanViewModel}}"
+             d:DesignHeight="900" d:DesignWidth="1600">
+
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadDataCommand}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═══ TOOLBAR ═══ -->
+        <Border Grid.Row="0" Grid.ColumnSpan="2"
+                Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="8,6">
+            <WrapPanel Orientation="Horizontal">
+
+                <!-- Выбор плана -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="План:" VerticalAlignment="Center" Margin="0,0,6,0" FontWeight="SemiBold"/>
+                    <ComboBox Width="150" ItemsSource="{Binding Plans}"
+                              SelectedItem="{Binding SelectedPlan}"
+                              DisplayMemberPath="Name" VerticalAlignment="Center"/>
+                    <Button Content="+" Width="26" Height="26" Margin="4,0,2,0"
+                            ToolTip="Создать план" Command="{Binding CreatePlanCommand}"
+                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                    <Button Content="✕" Width="26" Height="26"
+                            ToolTip="Удалить план" Command="{Binding DeletePlanCommand}"
+                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                </StackPanel>
+
+                <!-- Выбор участка -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="Участок:" VerticalAlignment="Center" Margin="0,0,6,0" FontWeight="SemiBold"/>
+                    <ComboBox Width="150" ItemsSource="{Binding Gardens}"
+                              SelectedItem="{Binding SelectedGarden}"
+                              DisplayMemberPath="Name" VerticalAlignment="Center"/>
+                    <Button Content="+" Width="26" Height="26" Margin="4,0,2,0"
+                            ToolTip="Новый участок" Command="{Binding CreateGardenCommand}"
+                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                    <Button Content="✕" Width="26" Height="26"
+                            ToolTip="Удалить участок" Command="{Binding DeleteGardenCommand}"
+                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                </StackPanel>
+
+                <Separator Margin="4,0" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
+
+                <!-- Тип добавляемого элемента -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <TextBlock Text="Тип:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox Width="140" SelectedValue="{Binding SelectedElementType}"
+                              SelectedValuePath="Tag" VerticalAlignment="Center">
+                        <ComboBoxItem Content="Грядка"           Tag="Bed"/>
+                        <ComboBoxItem Content="Парник"           Tag="ColdFrame"/>
+                        <ComboBoxItem Content="Цветник"          Tag="FlowerBed"/>
+                        <ComboBoxItem Content="Открытый грунт"   Tag="OpenGroundArea"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <Button Height="28" Padding="10,0" Margin="0,0,4,0"
+                        ToolTip="Добавить элемент на участок"
+                        Command="{Binding AddElementCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Plus" Height="11" Margin="0,0,5,0" Foreground="#388E3C"/>
+                        <TextBlock Text="Добавить"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Height="28" Padding="10,0"
+                        ToolTip="Добавить теплицу на участок"
+                        Command="{Binding AddGreenhouseCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Home" Height="11" Margin="0,0,5,0" Foreground="#7B1FA2"/>
+                        <TextBlock Text="Теплица"/>
+                    </StackPanel>
+                </Button>
+
+            </WrapPanel>
+        </Border>
+
+        <!-- ═══ CANVAS (левая зона) ═══ -->
+        <ScrollViewer Grid.Row="1" Grid.Column="0"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Background="#ECEFF1">
+            <Grid>
+            <!-- Заглушка «нет участка» -->
+            <TextBlock Text="Создайте или выберите участок огорода"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="#9E9E9E" FontSize="16"
+                       Visibility="{Binding SelectedGarden,
+                           Converter={StaticResource NotNullToVisibilityConverter}}"/>
+
+            <!-- Сам участок -->
+            <Border Margin="20"
+                    Width="{Binding SelectedGarden.CanvasWidth}"
+                    Height="{Binding SelectedGarden.CanvasHeight}"
+                    HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Background="#FAFDF7" BorderBrush="#A5D6A7" BorderThickness="2"
+                    Visibility="{Binding SelectedGarden,
+                        Converter={StaticResource NullToVisibilityConverter}}">
+
+                <Canvas x:Name="GardenCanvas"
+                        Width="{Binding SelectedGarden.CanvasWidth}"
+                        Height="{Binding SelectedGarden.CanvasHeight}"
+                        Background="Transparent"
+                        Focusable="True" FocusVisualStyle="{x:Null}"
+                        MouseLeftButtonDown="GardenCanvas_MouseLeftButtonDown">
+                    <!--
+                        Background="Transparent" — чтобы Canvas получал клики на пустом месте.
+                        Клики по элементам НЕ доходят сюда: Thumb.OnMouseLeftButtonDown
+                        ставит e.Handled = true, и событие не всплывает выше.
+                        GardenCanvas_MouseLeftButtonDown в code-behind берёт фокус + снимает выделение.
+                    -->
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseLeftButtonDown">
+                            <i:InvokeCommandAction Command="{Binding DeselectElementCommand}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+
+                    <!-- Теплицы -->
+                    <ItemsControl ItemsSource="{Binding SelectedGarden.Greenhouses}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type m:GreenhouseFromViewModel}">
+                                <!-- Tag передаёт GardenPlanViewModel для команд внутри GreenhouseControl -->
+                                <gp:GreenhouseControl
+                                    Tag="{Binding DataContext,
+                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Элементы (грядки, парники, цветники, открытый грунт) -->
+                    <ItemsControl ItemsSource="{Binding SelectedGarden.Elements}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
+                                <!-- Tag передаёт GardenPlanViewModel в ContextMenu и триггеры элемента -->
+                                <gp:GardenElementControl
+                                    Tag="{Binding DataContext,
+                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </Canvas>
+            </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ═══ БОКОВАЯ ПАНЕЛЬ редактора ═══ -->
+        <Border Grid.Row="1" Grid.Column="1"
+                BorderBrush="#E0E0E0" BorderThickness="1,0,0,0" Background="White">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="12">
+
+                    <!-- Нет участка -->
+                    <TextBlock Text="Создайте или выберите&#10;участок огорода"
+                               Foreground="#BDBDBD" FontSize="14" TextAlignment="Center"
+                               HorizontalAlignment="Center" Margin="0,60,0,0"
+                               Visibility="{Binding SelectedGarden,
+                                   Converter={StaticResource NotNullToVisibilityConverter}}"/>
+
+                    <!-- Свойства участка (участок выбран, элемент не выбран) -->
+                    <StackPanel DataContext="{Binding GardenPropertiesPanel}"
+                                Visibility="{Binding DataContext.GardenPropertiesPanel,
+                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                    Converter={StaticResource NullToVisibilityConverter}}">
+
+                        <Border Background="#E8F5E9" CornerRadius="4" Padding="8,4" Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal">
+                                <fa5:ImageAwesome Icon="Solid_Map" Height="13" Margin="0,0,6,0" Foreground="#388E3C"/>
+                                <TextBlock Text="Свойства участка" Foreground="#388E3C"
+                                           FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Размер (в метрах)" Style="{StaticResource LabelStyle}"/>
+                        <UniformGrid Columns="4" Margin="0,2,0,10">
+                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
+                                         StringFormat={}{0:F1}}"/>
+                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
+                                         StringFormat={}{0:F1}}"/>
+                        </UniformGrid>
+
+                        <TextBlock Foreground="#757575" FontSize="11" Margin="0,0,0,10">
+                            <Run Text="Холст: "/>
+                            <Run Text="{Binding CanvasWidth, StringFormat={}{0:F0}}"/>
+                            <Run Text=" × "/>
+                            <Run Text="{Binding CanvasHeight, StringFormat={}{0:F0}}"/>
+                            <Run Text=" пкс (масштаб 40 пкс/м)"/>
+                        </TextBlock>
+
+                        <TextBlock Text="Адрес" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="Wrap" MinHeight="40" AcceptsReturn="True" Margin="0,2,0,12"/>
+
+                        <Button HorizontalAlignment="Stretch"
+                                Command="{Binding DataContext.SaveGardenSizeCommand,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                            <StackPanel Orientation="Horizontal">
+                                <fa5:ImageAwesome Icon="Solid_Save" Height="12" Margin="0,0,6,0" Foreground="#388E3C"/>
+                                <TextBlock Text="Сохранить размер и название"/>
+                            </StackPanel>
+                        </Button>
+
+                    </StackPanel>
+
+                    <!-- Подсказка «выберите элемент» (участок выбран, но элемент не выбран) -->
+                    <TextBlock Text="↑ Выберите элемент&#10;на схеме или добавьте новый"
+                               Foreground="#BDBDBD" FontSize="12" TextAlignment="Center"
+                               HorizontalAlignment="Center" Margin="0,16,0,0"
+                               Visibility="{Binding GardenPropertiesPanel,
+                                   Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                    <!-- Редактор выбранного элемента -->
+                    <StackPanel DataContext="{Binding SelectedElement}"
+                                Visibility="{Binding DataContext.SelectedElement,
+                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                    Converter={StaticResource NullToVisibilityConverter}}">
+
+                        <!-- Тип и цвет -->
+                        <Border Background="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}"
+                                CornerRadius="4" Padding="8,4" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding TypeLabel}" Foreground="White"
+                                       FontWeight="Bold" FontSize="14"/>
+                        </Border>
+
+                        <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                        <!-- Состояние -->
+                        <TextBlock Text="Состояние" Style="{StaticResource LabelStyle}"/>
+                        <Border Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
+                                CornerRadius="3" Padding="6,3" Margin="0,2,0,4" HorizontalAlignment="Left">
+                            <TextBlock Text="{Binding StateDisplayName}" Foreground="White" FontWeight="SemiBold"/>
+                        </Border>
+
+                        <TextBlock Text="Перевести в состояние:" Style="{StaticResource LabelStyle}" Margin="0,6,0,2"/>
+                        <!-- DataContext здесь = SelectedElement (GardenElementFromViewModel),
+                             поэтому IsEnabled биндится напрямую к CanGoTo* -->
+                        <WrapPanel Margin="0,0,0,10">
+                            <Button Content="Запланирована" Margin="0,2,4,2" FontSize="11"
+                                    IsEnabled="{Binding CanGoToPlanned}"
+                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="PlannedState"/>
+                            <Button Content="Подготовлена" Margin="0,2,4,2" FontSize="11"
+                                    IsEnabled="{Binding CanGoToPrepared}"
+                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="PreparedState"/>
+                            <Button Content="Активна" Margin="0,2,4,2" FontSize="11"
+                                    IsEnabled="{Binding CanGoToActive}"
+                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="ActiveState"/>
+                            <Button Content="Под паром" Margin="0,2,4,2" FontSize="11"
+                                    IsEnabled="{Binding CanGoToFallow}"
+                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="FallowState"/>
+                            <Button Content="Зимовка" Margin="0,2,4,2" FontSize="11"
+                                    IsEnabled="{Binding CanGoToResting}"
+                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="RestingState"/>
+                            <Button Content="В архив" Margin="0,2,4,2" FontSize="11"
+                                    IsEnabled="{Binding CanGoToArchived}"
+                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="ArchivedState"/>
+                        </WrapPanel>
+
+                        <Separator Margin="0,4,0,10"/>
+
+                        <TextBlock Text="Почва" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding SoilType, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                        <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="Wrap" MinHeight="50" AcceptsReturn="True" Margin="0,2,0,10"/>
+
+                        <Separator Margin="0,4,0,10"/>
+
+                        <!-- Позиция -->
+                        <TextBlock Text="Позиция (пиксели)" Style="{StaticResource LabelStyle}"/>
+                        <UniformGrid Columns="4" Margin="0,2,0,4">
+                            <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged}"/>
+                        </UniformGrid>
+                        <UniformGrid Columns="4" Margin="0,0,0,10">
+                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}"/>
+                        </UniformGrid>
+
+                        <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                Command="{Binding DataContext.SaveElementPositionCommand,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
+                        <Separator Margin="0,6,0,10"/>
+
+                        <Button HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                Command="{Binding DataContext.OpenPlantingGridCommand,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                            <StackPanel Orientation="Horizontal">
+                                <fa5:ImageAwesome Icon="Solid_ThLarge" Height="12" Margin="0,0,6,0" Foreground="#1976D2"/>
+                                <TextBlock Text="Схема посадок"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button HorizontalAlignment="Stretch" Foreground="#C62828" BorderBrush="#C62828"
+                                Command="{Binding DataContext.DeleteElementCommand,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                            <StackPanel Orientation="Horizontal">
+                                <fa5:ImageAwesome Icon="Solid_Trash" Height="12" Margin="0,0,6,0" Foreground="#C62828"/>
+                                <TextBlock Text="Удалить элемент"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ═══ OVERLAY: Схема посадок ═══ -->
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" Panel.ZIndex="100"
+              Visibility="{Binding IsGridOpen, Converter={StaticResource BoolToVisibility}}">
+            <Rectangle Fill="#AA000000"/>
+            <Border Background="White" CornerRadius="8" Padding="20"
+                    Width="960" MaxHeight="720"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <DockPanel>
+
+                    <!-- Заголовок -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal">
+                            <fa5:ImageAwesome Icon="Solid_ThLarge" Height="16" Margin="0,0,8,0" Foreground="#1976D2"/>
+                            <TextBlock FontSize="16" FontWeight="Bold" VerticalAlignment="Center">
+                                <Run Text="Схема посадок: "/>
+                                <Run Text="{Binding EditingGridElement.Name}" Foreground="#1976D2"/>
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Content="✕" Width="28" Height="28" HorizontalAlignment="Right"
+                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                Command="{Binding CloseGridCommand}"/>
+                    </Grid>
+
+                    <!-- Настройка сетки -->
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="Строк:" VerticalAlignment="Center" Margin="0,0,6,0" FontWeight="SemiBold"/>
+                        <TextBox Width="50" VerticalAlignment="Center"
+                                 Text="{Binding EditingGridElement.GridRows, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Столбцов:" VerticalAlignment="Center" Margin="16,0,6,0" FontWeight="SemiBold"/>
+                        <TextBox Width="50" VerticalAlignment="Center"
+                                 Text="{Binding EditingGridElement.GridColumns, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Content="Пересоздать сетку" Margin="12,0,0,0" Padding="10,4"
+                                Command="{Binding RebuildGridCommand}"
+                                IsEnabled="{Binding EditingGridElement.CanModifyGrid}"/>
+                        <TextBlock Text="(сетка заблокирована в активном состоянии)"
+                                   VerticalAlignment="Center" Foreground="#9E9E9E" FontSize="11" Margin="8,0,0,0"
+                                   Visibility="{Binding EditingGridElement.CanModifyGrid,
+                                       Converter={StaticResource NotBoolToVisibility}}"/>
+                    </StackPanel>
+
+                    <!-- Панель действий с выбранной ячейкой (Dock=Bottom, отображается при выборе) -->
+                    <Border DockPanel.Dock="Bottom"
+                            Margin="0,8,0,0" Padding="12,10"
+                            Background="#F5F5F5" CornerRadius="6" BorderBrush="#E0E0E0" BorderThickness="1"
+                            Visibility="{Binding SelectedSpot,
+                                Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel>
+                            <!-- Заголовок панели: строка, столбец, состояние -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock FontWeight="SemiBold" Margin="0,0,8,0">
+                                    <Run Text="Ячейка "/>
+                                    <Run Text="{Binding SelectedSpot.Row}"/>
+                                    <Run Text=":"/>
+                                    <Run Text="{Binding SelectedSpot.Column}"/>
+                                </TextBlock>
+                                <Border Background="{Binding SelectedSpot.CellBorderColor,
+                                            Converter={StaticResource StringToBrushConverter}}"
+                                        CornerRadius="3" Padding="6,2">
+                                    <TextBlock Text="{Binding SelectedSpot.StateDisplayName}"
+                                               Foreground="White" FontSize="11"/>
+                                </Border>
+                                <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+                                           Foreground="#757575" FontSize="11"
+                                           Text="{Binding SelectedSpot.PlantLabel}"/>
+                            </StackPanel>
+
+                            <!-- Кнопки переходов состояний -->
+                            <WrapPanel Orientation="Horizontal">
+
+                                <!-- Запланировать (Empty → Reserved/Запланировано) -->
+                                <StackPanel Orientation="Vertical" Margin="0,0,8,4"
+                                            Visibility="{Binding SelectedSpot.CanGoToReserved,
+                                                Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Запланировать посадку:"
+                                               FontSize="11" FontWeight="SemiBold"
+                                               Foreground="#616161" Margin="0,0,0,4"/>
+                                    <ComboBox Width="220" Margin="0,0,0,4"
+                                              IsEditable="True"
+                                              ItemsSource="{Binding AvailablePlantLabels}"
+                                              Text="{Binding PlanPickerLabel, UpdateSourceTrigger=PropertyChanged}"
+                                              ToolTip="Выберите культуру из рассады/семян или введите вручную"/>
+                                    <Button Content="📋 Запланировать"
+                                            HorizontalAlignment="Left" Padding="10,5"
+                                            Command="{Binding ReserveSpotCommand}"
+                                            CommandParameter="{Binding SelectedSpot}"/>
+                                </StackPanel>
+
+                                <!-- Посадить: Empty/Reserved/Harvested → Planted -->
+                                <StackPanel Orientation="Vertical" Margin="0,0,8,4"
+                                            Visibility="{Binding SelectedSpot.CanGoToPlanted,
+                                                Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Что высаживаем:"
+                                               FontSize="11" FontWeight="SemiBold"
+                                               Foreground="#616161" Margin="0,0,0,5"/>
+
+                                    <!-- Источник: рассада или семена -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <RadioButton Content="🌿 Из рассады"
+                                                     IsChecked="{Binding IsFromSeedling}"
+                                                     VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                        <RadioButton Content="🌰 Из семян"
+                                                     IsChecked="{Binding IsFromSeed}"
+                                                     VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- Пикер рассады -->
+                                    <ComboBox Width="280" Margin="0,0,0,5" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding AvailableSeedlingItems}"
+                                              SelectedItem="{Binding SelectedPlantSource}"
+                                              DisplayMemberPath="Label"
+                                              IsEditable="True"
+                                              IsTextSearchEnabled="True"
+                                              TextSearch.TextPath="Label"
+                                              StaysOpenOnEdit="True"
+                                              ToolTip="Начните вводить название для поиска"
+                                              Visibility="{Binding IsFromSeedling,
+                                                  Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- Пикер семян -->
+                                    <ComboBox Width="280" Margin="0,0,0,5" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding AvailableSeedItems}"
+                                              SelectedItem="{Binding SelectedPlantSource}"
+                                              DisplayMemberPath="Label"
+                                              IsEditable="True"
+                                              IsTextSearchEnabled="True"
+                                              TextSearch.TextPath="Label"
+                                              StaysOpenOnEdit="True"
+                                              ToolTip="Начните вводить название для поиска"
+                                              Visibility="{Binding IsFromSeed,
+                                                  Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- Дата посадки -->
+                                    <DatePicker HorizontalAlignment="Left" Width="150" Margin="0,0,0,6"
+                                                SelectedDate="{Binding NewPlantingDate}"
+                                                ToolTip="Дата посадки в грядку"/>
+
+                                    <!-- Кнопка активна только при выборе из пикера -->
+                                    <Button Content="🌱 Посадить"
+                                            HorizontalAlignment="Left" Padding="10,5"
+                                            Command="{Binding PlantSpotCommand}"
+                                            CommandParameter="{Binding SelectedSpot}"/>
+                                </StackPanel>
+
+                                <!-- Убрать урожай (Planted → Harvested) -->
+                                <Button Content="🧺 Убрать урожай"
+                                        Padding="10,5" Margin="0,0,6,4"
+                                        Visibility="{Binding SelectedSpot.CanGoToHarvested,
+                                            Converter={StaticResource BoolToVisibility}}"
+                                        Command="{Binding HarvestSpotCommand}"
+                                        CommandParameter="{Binding SelectedSpot}"/>
+
+                                <!-- Погибло (Planted → Dead) -->
+                                <Button Content="💀 Погибло"
+                                        Padding="10,5" Margin="0,0,6,4"
+                                        Foreground="#C62828" BorderBrush="#C62828"
+                                        Visibility="{Binding SelectedSpot.CanGoToDead,
+                                            Converter={StaticResource BoolToVisibility}}"
+                                        Command="{Binding MarkDeadSpotCommand}"
+                                        CommandParameter="{Binding SelectedSpot}"/>
+
+                                <!-- Очистить (Reserved/Harvested/Dead → Empty) -->
+                                <Button Content="✕ Очистить"
+                                        Padding="10,5" Margin="0,0,6,4"
+                                        Foreground="#9E9E9E" BorderBrush="#9E9E9E"
+                                        Visibility="{Binding SelectedSpot.CanGoToEmpty,
+                                            Converter={StaticResource BoolToVisibility}}"
+                                        Command="{Binding ClearSpotCommand}"
+                                        CommandParameter="{Binding SelectedSpot}"/>
+
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Подсказка когда ячейка не выбрана -->
+                    <TextBlock DockPanel.Dock="Bottom"
+                               Text="Кликните на ячейку, чтобы выбрать действие"
+                               HorizontalAlignment="Center" Foreground="#9E9E9E" FontSize="12"
+                               Margin="0,8,0,0"
+                               Visibility="{Binding SelectedSpot,
+                                   Converter={StaticResource NotNullToVisibilityConverter}}"/>
+
+                    <!-- Сетка ячеек -->
+                    <!--
+                        DataContext = EditingGridElement (GardenElementFromViewModel) — для PlantingSpots и GridColumns.
+                        Tag         = DataContext этого View (GardenPlanViewModel) — для команд ячеек.
+                    -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <gp:PlantingGridView
+                            DataContext="{Binding EditingGridElement}"
+                            Tag="{Binding DataContext,
+                                RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                    </ScrollViewer>
+
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══ OVERLAY: Внутреннее пространство теплицы ═══ -->
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" Panel.ZIndex="90"
+              Visibility="{Binding SelectedGreenhouse,
+                  Converter={StaticResource NullToVisibilityConverter}}">
+            <Rectangle Fill="#CC000000"/>
+            <Border Background="White" CornerRadius="8" Padding="16"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20">
+                <DockPanel>
+                    <!-- Заголовок теплицы -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal">
+                            <fa5:ImageAwesome Icon="Solid_Home" Height="16" Margin="0,0,8,0" Foreground="#7B1FA2"/>
+                            <TextBlock FontSize="16" FontWeight="Bold" VerticalAlignment="Center">
+                                <Run Text="Теплица: "/>
+                                <Run Text="{Binding SelectedGreenhouse.Name}" Foreground="#7B1FA2"/>
+                            </TextBlock>
+                            <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#757575">
+                                <Run Text="{Binding SelectedGreenhouse.WidthMeters, StringFormat={}{0:F1}}"/>
+                                <Run Text=" × "/>
+                                <Run Text="{Binding SelectedGreenhouse.HeightMeters, StringFormat={}{0:F1}}"/>
+                                <Run Text=" м"/>
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Content="✕ Закрыть теплицу" HorizontalAlignment="Right"
+                                Padding="10,4"
+                                Command="{Binding CloseGreenhouseCommand}"/>
+                    </Grid>
+
+                    <!-- Canvas внутри теплицы -->
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <Border Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
+                                Height="{Binding SelectedGreenhouse.InnerCanvasHeight}"
+                                HorizontalAlignment="Left" VerticalAlignment="Top"
+                                Background="#FDF3FF" BorderBrush="#CE93D8" BorderThickness="2">
+                            <Canvas Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
+                                    Height="{Binding SelectedGreenhouse.InnerCanvasHeight}">
+                                <ItemsControl ItemsSource="{Binding SelectedGreenhouse.InnerElements}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style>
+                                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                            <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
+                                            <gp:GardenElementControl
+                                                Tag="{Binding DataContext,
+                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Canvas>
+                        </Border>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+    </Grid>
+</UserControl>

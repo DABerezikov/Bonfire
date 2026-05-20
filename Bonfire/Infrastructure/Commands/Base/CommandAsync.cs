@@ -38,10 +38,11 @@ internal abstract class CommandAsync : ICommand
             Executable = false;
             await ExecuteAsync(parameter);
         }
-        catch
+        finally
         {
+            // Сбрасываем блокировку всегда — и при успехе, и при ошибке.
+            // Без finally команда навсегда остаётся задизаблированной после первого успешного выполнения.
             Executable = true;
-            throw;
         }
     }
 

@@ -2,6 +2,7 @@
 using BonfireDB;
 using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +22,9 @@ internal static class DbRegistrator
 
                 case "SQLite":
                     opt.UseSqlite(configuration.GetConnectionString(type));
+                    // Снимок модели записан вручную — подавляем предупреждение о расхождении
+                    opt.ConfigureWarnings(w =>
+                        w.Ignore(RelationalEventId.PendingModelChangesWarning));
                     break;
                     
 
