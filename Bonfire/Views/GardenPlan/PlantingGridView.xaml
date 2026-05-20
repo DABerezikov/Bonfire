@@ -18,7 +18,7 @@
         <Style x:Key="SpotButtonStyle" TargetType="Button">
             <Setter Property="Width"  Value="84"/>
             <Setter Property="Height" Value="74"/>
-            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Margin" Value="1"/>
             <Setter Property="Padding" Value="4,3"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="BorderThickness" Value="2"/>
@@ -44,7 +44,8 @@
         </Style>
     </UserControl.Resources>
 
-    <ItemsControl ItemsSource="{Binding PlantingSpots}">
+    <ItemsControl ItemsSource="{Binding PlantingSpots}"
+                  HorizontalAlignment="Left">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
                 <UniformGrid Columns="{Binding DataContext.GridColumns,
