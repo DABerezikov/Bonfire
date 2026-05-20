@@ -97,11 +97,8 @@
         </Border>
 
         <!-- ═══ CANVAS (левая зона) ═══ -->
-        <ScrollViewer Grid.Row="1" Grid.Column="0"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto"
-                      Background="#ECEFF1">
-            <Grid>
+        <Grid Grid.Row="1" Grid.Column="0" Background="#ECEFF1">
+
             <!-- Заглушка «нет участка» -->
             <TextBlock Text="Создайте или выберите участок огорода"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -109,79 +106,79 @@
                        Visibility="{Binding SelectedGarden,
                            Converter={StaticResource NotNullToVisibilityConverter}}"/>
 
-            <!-- Сам участок -->
-            <Border Margin="20"
-                    Width="{Binding SelectedGarden.CanvasWidth}"
-                    Height="{Binding SelectedGarden.CanvasHeight}"
-                    HorizontalAlignment="Left" VerticalAlignment="Top"
-                    Background="#FAFDF7" BorderBrush="#A5D6A7" BorderThickness="2"
-                    Visibility="{Binding SelectedGarden,
-                        Converter={StaticResource NullToVisibilityConverter}}">
+            <!-- Сам участок — Viewbox масштабирует холст под доступную площадь -->
+            <Viewbox Stretch="Uniform" Margin="16"
+                     Visibility="{Binding SelectedGarden,
+                         Converter={StaticResource NullToVisibilityConverter}}">
 
-                <Canvas x:Name="GardenCanvas"
-                        Width="{Binding SelectedGarden.CanvasWidth}"
+                <Border Width="{Binding SelectedGarden.CanvasWidth}"
                         Height="{Binding SelectedGarden.CanvasHeight}"
-                        Background="Transparent"
-                        Focusable="True" FocusVisualStyle="{x:Null}"
-                        MouseLeftButtonDown="GardenCanvas_MouseLeftButtonDown">
-                    <!--
-                        Background="Transparent" — чтобы Canvas получал клики на пустом месте.
-                        Клики по элементам НЕ доходят сюда: Thumb.OnMouseLeftButtonDown
-                        ставит e.Handled = true, и событие не всплывает выше.
-                        GardenCanvas_MouseLeftButtonDown в code-behind берёт фокус + снимает выделение.
-                    -->
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="MouseLeftButtonDown">
-                            <i:InvokeCommandAction Command="{Binding DeselectElementCommand}"/>
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
+                        Background="#FAFDF7" BorderBrush="#A5D6A7" BorderThickness="2">
 
-                    <!-- Теплицы -->
-                    <ItemsControl ItemsSource="{Binding SelectedGarden.Greenhouses}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style>
-                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type m:GreenhouseFromViewModel}">
-                                <!-- Tag передаёт GardenPlanViewModel для команд внутри GreenhouseControl -->
-                                <gp:GreenhouseControl
-                                    Tag="{Binding DataContext,
-                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <Canvas x:Name="GardenCanvas"
+                            Width="{Binding SelectedGarden.CanvasWidth}"
+                            Height="{Binding SelectedGarden.CanvasHeight}"
+                            Background="Transparent"
+                            Focusable="True" FocusVisualStyle="{x:Null}"
+                            MouseLeftButtonDown="GardenCanvas_MouseLeftButtonDown">
+                        <!--
+                            Background="Transparent" — чтобы Canvas получал клики на пустом месте.
+                            Клики по элементам НЕ доходят сюда: Thumb.OnMouseLeftButtonDown
+                            ставит e.Handled = true, и событие не всплывает выше.
+                            GardenCanvas_MouseLeftButtonDown в code-behind берёт фокус + снимает выделение.
+                        -->
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseLeftButtonDown">
+                                <i:InvokeCommandAction Command="{Binding DeselectElementCommand}"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
 
-                    <!-- Элементы (грядки, парники, цветники, открытый грунт) -->
-                    <ItemsControl ItemsSource="{Binding SelectedGarden.Elements}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style>
-                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
-                                <!-- Tag передаёт GardenPlanViewModel в ContextMenu и триггеры элемента -->
-                                <gp:GardenElementControl
-                                    Tag="{Binding DataContext,
-                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        <!-- Теплицы -->
+                        <ItemsControl ItemsSource="{Binding SelectedGarden.Greenhouses}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style>
+                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                    <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type m:GreenhouseFromViewModel}">
+                                    <!-- Tag передаёт GardenPlanViewModel для команд внутри GreenhouseControl -->
+                                    <gp:GreenhouseControl
+                                        Tag="{Binding DataContext,
+                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                </Canvas>
-            </Border>
-            </Grid>
-        </ScrollViewer>
+                        <!-- Элементы (грядки, парники, цветники, открытый грунт) -->
+                        <ItemsControl ItemsSource="{Binding SelectedGarden.Elements}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style>
+                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                    <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
+                                    <!-- Tag передаёт GardenPlanViewModel в ContextMenu и триггеры элемента -->
+                                    <gp:GardenElementControl
+                                        Tag="{Binding DataContext,
+                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                    </Canvas>
+                </Border>
+            </Viewbox>
+        </Grid>
 
         <!-- ═══ БОКОВАЯ ПАНЕЛЬ редактора ═══ -->
         <Border Grid.Row="1" Grid.Column="1"
@@ -501,6 +498,26 @@
                                               Visibility="{Binding IsFromSeed,
                                                   Converter={StaticResource BoolToVisibility}}"/>
 
+                                    <!-- Количество к списанию -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5"
+                                                Visibility="{Binding SelectedPlantSource,
+                                                    Converter={StaticResource NullToVisibilityConverter}}">
+                                        <TextBlock Text="Количество:" VerticalAlignment="Center"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#616161" Margin="0,0,6,0"/>
+                                        <TextBox Width="70" VerticalAlignment="Center"
+                                                 Text="{Binding PlantingAmount, UpdateSourceTrigger=LostFocus}"/>
+                                        <TextBlock Text="{Binding PlantingAmountUnit, Mode=OneWay}"
+                                                   VerticalAlignment="Center" FontSize="11" Margin="4,0,10,0"/>
+                                        <TextBlock VerticalAlignment="Center" FontSize="10" Foreground="#9E9E9E">
+                                            <Run Text="доступно: "/>
+                                            <Run Text="{Binding SelectedPlantSource.AvailableQty,
+                                                     Mode=OneWay, StringFormat={}{0:G}}"/>
+                                            <Run Text=" "/>
+                                            <Run Text="{Binding PlantingAmountUnit, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
                                     <!-- Дата посадки -->
                                     <DatePicker HorizontalAlignment="Left" Width="150" Margin="0,0,0,6"
                                                 SelectedDate="{Binding NewPlantingDate}"
@@ -595,11 +612,10 @@
                                 Command="{Binding CloseGreenhouseCommand}"/>
                     </Grid>
 
-                    <!-- Canvas внутри теплицы -->
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <!-- Canvas внутри теплицы — Viewbox масштабирует под доступную площадь оверлея -->
+                    <Viewbox Stretch="Uniform">
                         <Border Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
                                 Height="{Binding SelectedGreenhouse.InnerCanvasHeight}"
-                                HorizontalAlignment="Left" VerticalAlignment="Top"
                                 Background="#FDF3FF" BorderBrush="#CE93D8" BorderThickness="2">
                             <Canvas Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
                                     Height="{Binding SelectedGreenhouse.InnerCanvasHeight}">
@@ -623,7 +639,7 @@
                                 </ItemsControl>
                             </Canvas>
                         </Border>
-                    </ScrollViewer>
+                    </Viewbox>
                 </DockPanel>
             </Border>
         </Grid>

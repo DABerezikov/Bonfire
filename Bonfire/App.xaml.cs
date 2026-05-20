@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Markup;
 using Bonfire.Data;
 
 namespace Bonfire;
@@ -33,6 +35,14 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // WPF по умолчанию использует en-US для биндингов (десятичный разделитель ".").
+        // Переопределяем Language всех FrameworkElement на текущую культуру системы,
+        // чтобы биндинги double/decimal корректно работали с запятой.
+        FrameworkElement.LanguageProperty.OverrideMetadata(
+            typeof(FrameworkElement),
+            new FrameworkPropertyMetadata(
+                XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+
         var host = Host;
 
         using (var scope = Services.CreateScope())

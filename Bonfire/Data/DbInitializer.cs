@@ -23,6 +23,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
         logger.LogInformation("Миграция БД...");
         await db.Database.MigrateAsync().ConfigureAwait(false);
         logger.LogInformation("Миграция БД выполнена за {0} мс", timer.ElapsedMilliseconds);
+        await MigrateSeedlingMetadataAsync().ConfigureAwait(false);
         if (await db.Seeds.AnyAsync())
         {
             logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
@@ -36,6 +37,32 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
         //await InitializeSeedsInfo();
         //await InitializeSeeds();
         logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
+    }
+
+    // Копирует метаданные партии из SeedlingInfo[SeedlingNumber=0] в поля Seedling.
+    // Однократно выполняется для существующих данных до введения новых полей.
+    private async Task MigrateSeedlingMetadataAsync()
+    {
+        var toMigrate = await db.Seedlings
+            .Where(s => s.LandingDate == null)
+            .Include(s => s.SeedlingInfos)
+            .ToListAsync()
+            .ConfigureAwait(false);
+
+        if (toMigrate.Count == 0) return;
+
+        foreach (var seedling in toMigrate)
+        {
+            var meta = seedling.SeedlingInfos.FirstOrDefault(i => i.SeedlingNumber == 0);
+            if (meta == null) continue;
+            if (meta.LandingDate > DateTime.MinValue) seedling.LandingDate = meta.LandingDate;
+            seedling.LunarPhase     = meta.LunarPhase;
+            seedling.SeedlingSource = meta.SeedlingSource;
+            seedling.PlantPlace     = meta.PlantPlace;
+        }
+
+        await db.SaveChangesAsync().ConfigureAwait(false);
+        logger.LogInformation("Миграция метаданных рассады: перенесено {0} записей", toMigrate.Count);
     }
 
     private const int PlantCulturesCount = 20;

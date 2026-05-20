@@ -197,7 +197,8 @@ internal class GardenService(
                         Column = c
                     };
                     await spots.AddAsync(newSpot);
-                    element.PlantingSpots.Add(newSpot);
+                    // EF auto-fixup уже добавил newSpot в element.PlantingSpots
+                    // (через relationship fixup при db.Entry().State = Added)
                 }
             }
         }

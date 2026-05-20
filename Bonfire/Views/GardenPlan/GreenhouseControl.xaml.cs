@@ -15,7 +15,7 @@ public partial class GreenhouseControl : UserControl
 
     private void DragThumb_DragDelta(object sender, DragDeltaEventArgs e)
     {
-        if (DataContext is not GreenhouseFromViewModel vm) return;
+        if (DataContext is not GreenhouseFromViewModel vm || vm.IsLocked) return;
 
         double maxX = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.DisplayWidth  : double.MaxValue;
         double maxY = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.DisplayHeight : double.MaxValue;
@@ -26,7 +26,7 @@ public partial class GreenhouseControl : UserControl
 
     private void ResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
     {
-        if (DataContext is not GreenhouseFromViewModel vm) return;
+        if (DataContext is not GreenhouseFromViewModel vm || vm.IsLocked) return;
 
         double maxW = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.X : double.MaxValue;
         double maxH = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Y : double.MaxValue;

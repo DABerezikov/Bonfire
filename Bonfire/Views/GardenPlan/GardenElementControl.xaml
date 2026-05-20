@@ -6,11 +6,29 @@
              xmlns:m="clr-namespace:Bonfire.Models"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
+             xmlns:fa5="http://schemas.fontawesome.com/icons/"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance {x:Type m:GardenElementFromViewModel}}"
              Width="{Binding Width}" Height="{Binding Height}"
-             Cursor="Hand"
              Focusable="True" FocusVisualStyle="{x:Null}">
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+
+    <UserControl.ToolTip>
+        <TextBlock>
+            <Run Text="Двойной клик — схема посадок"/>
+            <LineBreak/>
+            <Run Text="Правый клик — контекстное меню"/>
+        </TextBlock>
+    </UserControl.ToolTip>
 
     <UserControl.Resources>
         <Style x:Key="ResizeThumbStyle" TargetType="Thumb">
@@ -94,13 +112,10 @@
 
                 <!-- Площадь -->
                 <TextBlock DockPanel.Dock="Bottom" FontSize="10" Foreground="#9E9E9E" Margin="0,2,0,0">
-                    <Run Text="{Binding AreaSquareMeters, StringFormat={}{0:F1}}"/>
+                    <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
                     <Run Text=" м²"/>
                 </TextBlock>
 
-                <!-- Подсказка двойного клика -->
-                <TextBlock DockPanel.Dock="Bottom" Text="[2× — схема посадок]"
-                           FontSize="8" Foreground="#BDBDBD" Margin="0,1,0,0"/>
             </DockPanel>
         </Border>
 
@@ -132,10 +147,27 @@
             </i:Interaction.Triggers>
         </Thumb>
 
-        <!-- Ручка изменения размера (правый нижний угол) -->
+        <!-- Кнопка замка — верхний правый угол, над DragThumb -->
+        <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                Width="18" Height="18" Panel.ZIndex="12" Padding="0"
+                Cursor="Arrow" Background="Transparent" BorderThickness="0"
+                ToolTip="Заблокировать / разблокировать перемещение и изменение размера"
+                Command="{Binding Tag.ToggleLockElementCommand,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}">
+            <Grid>
+                <fa5:ImageAwesome Icon="Solid_Lock" Height="9" Foreground="#E53935"
+                                  Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}"/>
+                <fa5:ImageAwesome Icon="Solid_LockOpen" Height="9" Foreground="#BDBDBD"
+                                  Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"/>
+            </Grid>
+        </Button>
+
+        <!-- Ручка изменения размера (правый нижний угол) — скрыта при блокировке -->
         <Thumb Style="{StaticResource ResizeThumbStyle}"
                HorizontalAlignment="Right" VerticalAlignment="Bottom"
                Cursor="SizeNWSE" Panel.ZIndex="11"
+               Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"
                DragDelta="ResizeThumb_DragDelta"
                DragCompleted="OnResizeDragCompleted">
             <i:Interaction.Triggers>

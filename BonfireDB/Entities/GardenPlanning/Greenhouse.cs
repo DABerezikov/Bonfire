@@ -31,6 +31,8 @@ public class Greenhouse : GardenPlot
         StateTypeName = newState.GetType().Name;
     }
 
+    public bool IsLocked { get; set; }
+
     public string? Material { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.Now;
 }

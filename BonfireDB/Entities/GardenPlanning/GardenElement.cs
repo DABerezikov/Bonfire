@@ -39,6 +39,8 @@ public abstract class GardenElement : NamedEntity
     public int GridRows { get; set; } = 1;
     public int GridColumns { get; set; } = 1;
 
+    public bool IsLocked { get; set; }
+
     public string? SoilType { get; set; }
     public string? Note { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.Now;

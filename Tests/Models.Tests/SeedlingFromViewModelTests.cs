@@ -173,46 +173,45 @@ public class SeedlingFromViewModelTests
     }
 
     [Fact]
-    public void Balance_SomeDeadItems_SubtractsDeadFromIndex1()
+    public void Balance_SomeDeadItems_SubtractsAllDead()
     {
-        // Skip(1) — первый элемент не считается мёртвым
         var model = new SeedlingFromViewModel
         {
             SeedlingInfos =
             [
-                MakeInfo(DateTime.Today, isDead: true), // index 0 — пропускается Skip(1)
-                MakeInfo(DateTime.Today, isDead: true), // index 1 — считается
+                MakeInfo(DateTime.Today, isDead: true),
+                MakeInfo(DateTime.Today, isDead: true),
                 MakeInfo(DateTime.Today, isDead: false)
             ]
         };
-        // CountGerminate=3, dead from index 1 = 1 → Balance = 3 - 1 = 2
-        Assert.Equal(2, model.Balance);
-    }
-
-    [Fact]
-    public void Balance_AllDeadFromIndex1_ReturnsCountMinusDead()
-    {
-        var model = new SeedlingFromViewModel
-        {
-            SeedlingInfos =
-            [
-                MakeInfo(DateTime.Today, isDead: true), // index 0 — пропускается
-                MakeInfo(DateTime.Today, isDead: true), // index 1
-                MakeInfo(DateTime.Today, isDead: true)
-            ]
-        };
-        // CountGerminate=3, dead from index 1 = 2 → Balance = 3 - 2 = 1
+        // CountGerminate=3, dead=2 → Balance = 1
         Assert.Equal(1, model.Balance);
     }
 
     [Fact]
-    public void Balance_SingleItem_ReturnsOne()
+    public void Balance_AllDead_ReturnsZero()
     {
-        // Single item: Skip(1) даёт 0 мёртвых → Balance = 1
+        var model = new SeedlingFromViewModel
+        {
+            SeedlingInfos =
+            [
+                MakeInfo(DateTime.Today, isDead: true),
+                MakeInfo(DateTime.Today, isDead: true),
+                MakeInfo(DateTime.Today, isDead: true)
+            ]
+        };
+        // CountGerminate=3, dead=3 → Balance = 0
+        Assert.Equal(0, model.Balance);
+    }
+
+    [Fact]
+    public void Balance_SingleDeadItem_ReturnsZero()
+    {
         var model = new SeedlingFromViewModel
         {
             SeedlingInfos = [MakeInfo(DateTime.Today, isDead: true)]
         };
-        Assert.Equal(1, model.Balance);
+        // CountGerminate=1, dead=1 → Balance = 0
+        Assert.Equal(0, model.Balance);
     }
 }

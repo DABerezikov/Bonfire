@@ -35,7 +35,8 @@ public class SeedlingFromViewModel
         {
             if (SeedlingInfos!.Count < 1) return null;
             var minDate = SeedlingInfos.Min(d => d.GerminationData);
-            return (minDate -  LandingData)!.Value.Days;
+            if (minDate is null || LandingData is null) return null;
+            return (minDate - LandingData).Value.Days;
         }
     }
 
@@ -45,11 +46,12 @@ public class SeedlingFromViewModel
         {
             if (SeedlingInfos!.Count < 1) return null;
             var maxDate = SeedlingInfos.Max(d => d.GerminationData);
-            return (maxDate - LandingData)!.Value.Days;
+            if (maxDate is null || LandingData is null) return null;
+            return (maxDate - LandingData).Value.Days;
         }
     }
 
     public int CountGerminate => SeedlingInfos != null && SeedlingInfos.Count != 0 ? SeedlingInfos.Count : 0;
 
-    public int? Balance => SeedlingInfos == null ? null : CountGerminate - SeedlingInfos.Select(s => s).Skip(1).Count(s => s.IsDead == true);
+    public int? Balance => SeedlingInfos == null ? null : CountGerminate - SeedlingInfos.Count(s => s.IsDead == true);
 }
