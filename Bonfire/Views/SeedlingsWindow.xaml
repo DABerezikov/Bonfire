@@ -141,7 +141,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="25"/>
                             <RowDefinition Height="25"/>
-                            <RowDefinition Height="45"/>
+                            <RowDefinition Height="65"/>
                             <RowDefinition Height="25"/>
                             <RowDefinition Height="25"/>
                             <RowDefinition Height="25"/>
@@ -187,7 +187,7 @@ Path=DataContext.EditedItem.SeedlingInfos[0].Note}" Style="{StaticResource Seeds
            Path=DataContext.EditedItem.SeedlingInfos[0].PlantPlace, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource SeedsTextBoxStyle}"
                                  TextWrapping="Wrap" AcceptsReturn="False"
-                                 VerticalAlignment="Top" Height="40" VerticalContentAlignment="Top" />
+                                 VerticalAlignment="Top" Height="60" VerticalContentAlignment="Top" />
 
                         <DataGrid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Grid.RowSpan="5" Margin="20, 10, 0,0" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}},
                                   Path=DataContext.EditedItem.SeedlingInfos}" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" >
