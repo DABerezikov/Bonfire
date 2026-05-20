@@ -205,6 +205,39 @@ public class GardenPlanningViewModelTests
         Assert.Equal(expectedFill, vm.TypeFill);
     }
 
+    // ── GridRows / GridColumns / PlantingSpots INPC ───────────────────────────
+
+    [Fact]
+    public void GardenElement_GridColumns_RaisesPropertyChanged()
+    {
+        var vm = new GardenElementFromViewModel();
+        var raised = CollectChanges(vm);
+        vm.GridColumns = 4;
+        Assert.Contains("GridColumns", raised);
+    }
+
+    [Fact]
+    public void GardenElement_GridRows_RaisesPropertyChanged()
+    {
+        var vm = new GardenElementFromViewModel();
+        var raised = CollectChanges(vm);
+        vm.GridRows = 3;
+        Assert.Contains("GridRows", raised);
+    }
+
+    [Fact]
+    public void GardenElement_PlantingSpots_RaisesPropertyChanged_OnCollectionReplace()
+    {
+        var vm = new GardenElementFromViewModel();
+        var raised = CollectChanges(vm);
+        vm.PlantingSpots = [new PlantingSpotFromViewModel { Row = 0, Column = 0 }];
+        Assert.Contains("PlantingSpots", raised);
+    }
+
+    [Fact]
+    public void GardenElement_GridColumns_DefaultIsOne()
+        => Assert.Equal(1, new GardenElementFromViewModel().GridColumns);
+
     // ── IsSelected INPC ───────────────────────────────────────────────────────
 
     [Fact]
