@@ -77,9 +77,18 @@ public class SeedlingsViewModel : ViewModel
         get;
         set
         {
-            Set(ref field, value);
+            if (!Set(ref field, value)) return;
+            if (value && Seedlings != null)
+                _ = RefreshSeedlingsAsync();
             CommandManager.InvalidateRequerySuggested();
         }
+    }
+
+    private async Task RefreshSeedlingsAsync()
+    {
+        Seedlings = new ObservableCollection<Seedling>(
+            await _seedlingsService.Seedlings.ToArrayAsync());
+        UpdateCollectionViewSource();
     }
 
     // Фильтрация главного списка
@@ -396,6 +405,14 @@ public class SeedlingsViewModel : ViewModel
         }
     } = string.Empty;
 
+    // Куда посажено (при добавлении рассады вручную)
+
+    public string AddPlantPlace
+    {
+        get;
+        set => Set(ref field, value);
+    } = string.Empty;
+
     // Количество и даты
 
     public string AddQuantityString
@@ -471,8 +488,11 @@ public class SeedlingsViewModel : ViewModel
             : GetDeadSeedlingInfosCount());
     }
 
-    private int GetDeadSeedlingInfosCount() =>
-        SelectedItem!.SeedlingInfos.Count - SelectedItem.SeedlingInfos.Count(d => d.IsDead == true) - 1;
+    private int GetDeadSeedlingInfosCount()
+    {
+        var germinations = SelectedItem!.SeedlingInfos.Where(i => i.GerminationDate.HasValue).ToList();
+        return germinations.Count - germinations.Count(d => d.IsDead == true);
+    }
 
     public string DeathNote
     {
@@ -540,7 +560,7 @@ public class SeedlingsViewModel : ViewModel
                 Sort = seeds.Plant.PlantSort.Name,
                 Culture = seeds.Plant.PlantCulture.Name
             }).AsEnumerable()
-            .Distinct(s => s!.Sort)
+            .Distinct(s => s!.Sort + "|" + s.Culture)
             .OrderBy(s => s.Sort);
         AddSortList.AddRange(addListSort.ToList());
         _sortListView.Source = AddSortList;
@@ -570,6 +590,7 @@ public class SeedlingsViewModel : ViewModel
         Plantable = null;
         AddQuantity = 0.0;
         AddQuantityString = string.Empty;
+        AddPlantPlace = string.Empty;
     }
 
     private void UpdateCollectionViewSource(int id = -1)
@@ -598,31 +619,39 @@ public class SeedlingsViewModel : ViewModel
 
     private SeedlingFromViewModel CreateSeedlingFromViewModel(Seedling seedling)
     {
-        var firstSeedlingInfo = seedling.SeedlingInfos.FirstOrDefault();
+        // Метаданные: предпочитаем поля на Seedling (новый стиль), иначе берём из SeedlingInfo[0]
+        var metaInfo   = seedling.SeedlingInfos.FirstOrDefault(i => !i.GerminationDate.HasValue);
+        var landingDate = seedling.LandingDate ?? metaInfo?.LandingDate;
+        var moonPhaseStr = seedling.LunarPhase ?? (metaInfo != null
+            ? _seedlingsService.Lunar.GetMoonPhase(metaInfo.LandingDate)
+            : string.Empty);
+
+        // Только записи всходов (с датой); метаданные и "посажено в грунт" отфильтрованы
+        var germinations = seedling.SeedlingInfos
+            .Where(i => i.GerminationDate.HasValue)
+            .Select(info => new SeedlingInfoFromViewModel
+            {
+                Id            = info.Id,
+                Number        = info.SeedlingNumber,
+                GerminationData = info.GerminationDate,
+                QuenchingDate = info.QuenchingDate,
+                IsDead        = info.IsDead,
+                IsQuarantine  = info.QuarantineStartDate != null && info.QuarantineStopDate == null
+            });
+
         return new SeedlingFromViewModel
         {
-            Id = seedling.Id,
-            Culture = seedling.Plant.PlantCulture.Name,
-            Sort = seedling.Plant.PlantSort.Name,
-            Producer = seedling.Plant.PlantSort.Producer.Name,
-            Weight = seedling.Weight,
-            Quantity = seedling.Quantity,
-            LandingData = firstSeedlingInfo?.LandingDate ?? default,
-            IsDead = firstSeedlingInfo?.IsDead ?? false,
-            ReplantingData = firstSeedlingInfo?.Replants?.FirstOrDefault()?.ReplantingDate,
-            SeedlingMoonPhase = firstSeedlingInfo != null ? GetPathImageMoonPhase(_seedlingsService.Lunar.GetMoonPhase(firstSeedlingInfo.LandingDate)) : null,
-            SeedlingInfos = firstSeedlingInfo != null
-                ? new ObservableCollection<SeedlingInfoFromViewModel>(
-                    seedling.SeedlingInfos.Skip(1).Select(info => new SeedlingInfoFromViewModel
-                    {
-                        Id = info.Id,
-                        Number = info.SeedlingNumber,
-                        GerminationData = info.GerminationDate,
-                        QuenchingDate = info.QuenchingDate,
-                        IsDead = info.IsDead,
-                        IsQuarantine = info.QuarantineStartDate != null && info.QuarantineStopDate == null
-                    }))
-                : []
+            Id             = seedling.Id,
+            Culture        = seedling.Plant.PlantCulture.Name,
+            Sort           = seedling.Plant.PlantSort.Name,
+            Producer       = seedling.Plant.PlantSort.Producer.Name,
+            Weight         = seedling.Weight,
+            Quantity       = seedling.Quantity,
+            LandingData    = landingDate,
+            IsDead         = metaInfo?.IsDead ?? false,
+            ReplantingData = metaInfo?.Replants?.FirstOrDefault()?.ReplantingDate,
+            SeedlingMoonPhase = GetPathImageMoonPhase(moonPhaseStr),
+            SeedlingInfos  = new ObservableCollection<SeedlingInfoFromViewModel>(germinations)
         };
     }
 
@@ -736,19 +765,27 @@ public class SeedlingsViewModel : ViewModel
     private async Task OnAddOrCorrectSeedlingCommandExecuted()
     {
         var plant = GetPlant();
+        var moonPhase  = _seedlingsService.Lunar.GetMoonPhase(PlantingDate);
+        var plantPlace = string.IsNullOrWhiteSpace(AddPlantPlace) ? null : AddPlantPlace;
+
         var seedlingInfo = new SeedlingInfo
         {
-            LandingDate = PlantingDate,
-            LunarPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate),
+            LandingDate    = PlantingDate,
+            LunarPhase     = moonPhase,
             SeedlingNumber = 0,
-            SeedlingSource = SeedlingSource
+            SeedlingSource = SeedlingSource,
+            PlantPlace     = plantPlace
         };
 
         var seedling = new Seedling
         {
-            Plant = plant,
-            SeedId = CurrentSeed!.Id,
-            SeedlingInfos = [seedlingInfo]
+            Plant          = plant,
+            SeedId         = CurrentSeed!.Id,
+            LandingDate    = PlantingDate,
+            LunarPhase     = moonPhase,
+            SeedlingSource = SeedlingSource,
+            PlantPlace     = plantPlace,
+            SeedlingInfos  = [seedlingInfo]
         };
 
         switch (AddSize)
@@ -823,9 +860,10 @@ public class SeedlingsViewModel : ViewModel
                 return;
         }
 
-        if (SelectedItem!.Quantity > 0)
-            Germinate = Germinate + SelectedItem.SeedlingInfos.Count - 1 > (int)SelectedItem.Quantity
-                ? (int)SelectedItem.Quantity - (SelectedItem.SeedlingInfos.Count - 1)
+        var germCount = SelectedItem!.SeedlingInfos.Count(i => i.GerminationDate.HasValue);
+        if (SelectedItem.Quantity > 0)
+            Germinate = Germinate + germCount > (int)SelectedItem.Quantity
+                ? (int)SelectedItem.Quantity - germCount
                 : Germinate;
 
         for (var i = 0; i < Germinate; i++)
@@ -833,10 +871,7 @@ public class SeedlingsViewModel : ViewModel
             var info = new SeedlingInfo
             {
                 GerminationDate = GerminationDate,
-                LandingDate = SelectedItem.SeedlingInfos[0].LandingDate,
-                LunarPhase = SelectedItem.SeedlingInfos[0].LunarPhase,
-                SeedlingNumber = SelectedItem.SeedlingInfos.Count - 1 + 1,
-                SeedlingSource = SelectedItem.SeedlingInfos[0].SeedlingSource
+                SeedlingNumber  = germCount + i + 1
             };
             SelectedItem.SeedlingInfos.Add(info);
             await _seedlingsService.AddSeedlingInfo(info);
@@ -894,14 +929,20 @@ public class SeedlingsViewModel : ViewModel
     private async Task OnDeathSeedlingCommandExecuted()
     {
         _seedlingsService.InvertAutoSave();
-        var dead = SelectedItem!.SeedlingInfos.Count(d => d.IsDead == true);
-        for (var i = SelectedItem.SeedlingInfos.Count - dead; i > SelectedItem.SeedlingInfos.Count - dead - DeadNumbers; i--)
+
+        var toMark = SelectedItem!.SeedlingInfos
+            .Where(i => i.GerminationDate.HasValue && i.IsDead != true)
+            .OrderByDescending(i => i.SeedlingNumber)
+            .Take(DeadNumbers)
+            .ToList();
+
+        for (var i = 0; i < toMark.Count; i++)
         {
-            SelectedItem.SeedlingInfos[i - 1].IsDead = true;
-            SelectedItem.SeedlingInfos[i - 1].DeathNote = DeathNote;
-            if (i == SelectedItem.SeedlingInfos.Count - dead - DeadNumbers + 1)
+            toMark[i].IsDead    = true;
+            toMark[i].DeathNote = DeathNote;
+            if (i == toMark.Count - 1)
                 _seedlingsService.InvertAutoSave();
-            await _seedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[i - 1]);
+            await _seedlingsService.UpdateSeedlingInfo(toMark[i]);
         }
 
         await _seedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);

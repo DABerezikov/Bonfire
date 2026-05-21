@@ -5,10 +5,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:m="clr-namespace:Bonfire.Models"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:fa5="http://schemas.fontawesome.com/icons/"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance {x:Type m:GreenhouseFromViewModel}}"
-             Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}"
-             Cursor="Hand">
+             Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLocked}" Value="True">
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
 
     <!--
         Tag содержит GardenPlanViewModel (прокинут из DataTemplate в GardenPlanView).
@@ -70,6 +80,22 @@
             </DockPanel>
         </Border>
 
+        <!-- Кнопка замка — верхний правый угол -->
+        <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                Width="20" Height="20" Panel.ZIndex="12" Padding="0"
+                Cursor="Arrow" Background="Transparent" BorderThickness="0"
+                ToolTip="Заблокировать / разблокировать перемещение и изменение размера"
+                Command="{Binding Tag.ToggleLockGreenhouseCommand,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}">
+            <Grid>
+                <fa5:ImageAwesome Icon="Solid_Lock" Height="10" Foreground="#E53935"
+                                  Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}"/>
+                <fa5:ImageAwesome Icon="Solid_LockOpen" Height="10" Foreground="#BDBDBD"
+                                  Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"/>
+            </Grid>
+        </Button>
+
         <!-- Перемещение -->
         <Thumb Cursor="SizeAll" Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}"
                Opacity="0" Panel.ZIndex="10" DragDelta="DragThumb_DragDelta">
@@ -84,10 +110,12 @@
             </i:Interaction.Triggers>
         </Thumb>
 
-        <!-- Изменение размера -->
+        <!-- Изменение размера — скрыто при блокировке -->
         <Thumb Width="10" Height="10" Cursor="SizeNWSE"
                HorizontalAlignment="Right" VerticalAlignment="Bottom"
-               Panel.ZIndex="11" DragDelta="ResizeThumb_DragDelta">
+               Panel.ZIndex="11"
+               Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"
+               DragDelta="ResizeThumb_DragDelta">
             <Thumb.Template>
                 <ControlTemplate TargetType="Thumb">
                     <Rectangle Fill="#7B1FA2" Width="10" Height="10" RadiusX="2" RadiusY="2"/>

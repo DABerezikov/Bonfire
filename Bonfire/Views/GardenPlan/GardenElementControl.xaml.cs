@@ -36,7 +36,7 @@ public partial class GardenElementControl : UserControl
     // Перемещение: обновляем позицию без проверки коллизий (проверка — при отпускании)
     public void OnDragDelta(object sender, DragDeltaEventArgs e)
     {
-        if (DataContext is not GardenElementFromViewModel vm) return;
+        if (DataContext is not GardenElementFromViewModel vm || vm.IsLocked) return;
 
         double maxX = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.Width  : double.MaxValue;
         double maxY = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Height : double.MaxValue;
@@ -61,7 +61,7 @@ public partial class GardenElementControl : UserControl
     // Изменение размера: обновляем размер без проверки коллизий
     private void ResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
     {
-        if (DataContext is not GardenElementFromViewModel vm) return;
+        if (DataContext is not GardenElementFromViewModel vm || vm.IsLocked) return;
 
         double maxW = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.X : double.MaxValue;
         double maxH = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Y : double.MaxValue;

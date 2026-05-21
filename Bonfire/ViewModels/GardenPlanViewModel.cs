@@ -210,9 +210,24 @@ public class GardenPlanViewModel : ViewModel
         set
         {
             if (Set(ref field, value))
+            {
+                PlantingAmount = 1;
+                OnPropertyChanged(nameof(PlantingAmountUnit));
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+            }
         }
     }
+
+    /// <summary>Сколько посадить/списать при нажатии «Посадить».</summary>
+    public double PlantingAmount
+    {
+        get;
+        set => Set(ref field, value > 0 ? value : 1);
+    } = 1;
+
+    /// <summary>Единица измерения выбранного источника: «г.» или «шт.»</summary>
+    public string PlantingAmountUnit =>
+        SelectedPlantSource?.IsWeightBased == true ? "г." : "шт.";
 
     // ─────────────────────────────────────
     //  Загрузка данных
@@ -582,6 +597,40 @@ public class GardenPlanViewModel : ViewModel
         SelectedElement = null;
     }
 
+    public ICommand ToggleLockElementCommand => field
+        ??= new LambdaCommandAsync(
+            async p => await ToggleLockElementAsync(p as GardenElementFromViewModel),
+            _ => true);
+
+    private async Task ToggleLockElementAsync(GardenElementFromViewModel? vm)
+    {
+        if (vm is null) return;
+        vm.IsLocked = !vm.IsLocked;
+        var entity = await _gardenService.Gardens
+            .SelectMany(g => g.Elements)
+            .FirstOrDefaultAsync(e => e.Id == vm.Id);
+        if (entity is null) return;
+        entity.IsLocked = vm.IsLocked;
+        await _gardenService.UpdateElementAsync(entity);
+    }
+
+    public ICommand ToggleLockGreenhouseCommand => field
+        ??= new LambdaCommandAsync(
+            async p => await ToggleLockGreenhouseAsync(p as GreenhouseFromViewModel),
+            _ => true);
+
+    private async Task ToggleLockGreenhouseAsync(GreenhouseFromViewModel? vm)
+    {
+        if (vm is null) return;
+        vm.IsLocked = !vm.IsLocked;
+        var entity = await _gardenService.Gardens
+            .SelectMany(g => g.Greenhouses)
+            .FirstOrDefaultAsync(gh => gh.Id == vm.Id);
+        if (entity is null) return;
+        entity.IsLocked = vm.IsLocked;
+        await _gardenService.UpdateGreenhouseAsync(entity);
+    }
+
     public ICommand SaveElementPositionCommand => field
         ??= new LambdaCommandAsync(SaveElementPositionAsync,
             () => SelectedElement is not null);
@@ -598,6 +647,7 @@ public class GardenPlanViewModel : ViewModel
         entity.Y = SelectedElement.Y;
         entity.DisplayWidth = SelectedElement.Width;
         entity.DisplayHeight = SelectedElement.Height;
+        entity.AreaSquareMeters = SelectedElement.AreaSquareMeters;
         entity.Name = SelectedElement.Name;
         entity.Note = SelectedElement.Note;
         entity.SoilType = SelectedElement.SoilType;
@@ -753,29 +803,40 @@ public class GardenPlanViewModel : ViewModel
         var source = SelectedPlantSource;
         int? savedInfoId = null;
 
+        // Полный адрес посадки: план / участок / элемент
+        var plantPlace = string.Join(" / ", new[]
+        {
+            SelectedPlan?.Name,
+            SelectedGarden?.Name,
+            EditingGridElement?.Name
+        }.Where(s => !string.IsNullOrEmpty(s)));
+
         if (source.Kind == PlantSourceKind.Seedling)
         {
-            // ── Из рассады: списать из партии, создать SeedlingInfo ──────────
+            // ── Из рассады: списать из партии, добавить SeedlingInfo к рассаде ──
             var seedling = await _seedlingsService.Seedlings
                 .FirstOrDefaultAsync(s => s.Id == source.EntityId);
             if (seedling is null) return;
 
-            var info = await _seedlingsService.AddSeedlingInfo(new SeedlingInfo
+            var newInfo = new SeedlingInfo
             {
                 LandingDate    = NewPlantingDate,
-                SeedlingSource = "посеяно",
-                PlantPlace     = EditingGridElement?.Name ?? ""
-            });
+                SeedlingSource = "Из семян",
+                PlantPlace     = plantPlace
+            };
+            seedling.SeedlingInfos.Add(newInfo);
+            var info = await _seedlingsService.AddSeedlingInfo(newInfo);
             savedInfoId = info.Id;
 
-            // Списываем 1 шт. (штучная) или 1 г. (граммовая)
+            // Списываем указанное количество шт. или г.
+            var deduct = PlantingAmount;
             if (source.IsWeightBased)
-                seedling.Weight = Math.Max(0, seedling.Weight - 1);
+                seedling.Weight = Math.Max(0, seedling.Weight - deduct);
             else
-                seedling.Quantity = Math.Max(0, seedling.Quantity - 1);
+                seedling.Quantity = Math.Max(0, seedling.Quantity - (int)Math.Round(deduct));
             await _seedlingsService.UpdateSeedling(seedling);
 
-            source.AvailableQty -= 1;
+            source.AvailableQty -= deduct;
             if (source.AvailableQty <= 0)
                 AvailableSeedlingItems.Remove(source);
         }
@@ -789,29 +850,42 @@ public class GardenPlanViewModel : ViewModel
                 .FirstOrDefaultAsync(s => s.Id == source.EntityId);
             if (seed is null) return;
 
+            var deduct      = PlantingAmount;
+            var moonPhase   = _seedlingsService.Lunar.GetMoonPhase(NewPlantingDate);
             var newSeedlingInfo = new SeedlingInfo
             {
                 LandingDate    = NewPlantingDate,
-                SeedlingSource = "посеяно",
-                PlantPlace     = EditingGridElement?.Name ?? ""
+                LunarPhase     = moonPhase,
+                SeedlingNumber = 0,
+                SeedlingSource = "Из семян",
+                PlantPlace     = plantPlace
             };
-            var saved = await _seedlingsService.MakeASeedling(new Seedling
+            var newSeedling = new Seedling
             {
-                Plant         = seed.Plant,
-                SeedId        = seed.Id,
-                Quantity      = 0,
-                SeedlingInfos = [newSeedlingInfo]
-            });
+                Plant          = seed.Plant,
+                SeedId         = seed.Id,
+                LandingDate    = NewPlantingDate,
+                LunarPhase     = moonPhase,
+                SeedlingSource = "Из семян",
+                PlantPlace     = plantPlace,
+                SeedlingInfos  = [newSeedlingInfo]
+            };
+            if (source.IsWeightBased)
+                newSeedling.Weight = deduct;
+            else
+                newSeedling.Quantity = (int)Math.Round(deduct);
+
+            var saved = await _seedlingsService.MakeASeedling(newSeedling);
             savedInfoId = saved.SeedlingInfos[0].Id;
 
-            // Списываем 1 шт. или 1 г. в зависимости от типа пакета семян
+            // Списываем указанное количество шт. или г.
             if (source.IsWeightBased)
-                seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - 1);
+                seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - deduct);
             else
-                seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - 1);
+                seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(deduct));
             await _seedsService.UpdateSeed(seed);
 
-            source.AvailableQty -= 1;
+            source.AvailableQty -= deduct;
             if (source.AvailableQty <= 0)
                 AvailableSeedItems.Remove(source);
         }
@@ -826,7 +900,7 @@ public class GardenPlanViewModel : ViewModel
         spotVm.SeedlingInfoId = savedInfoId;
         UpdateSpotVm(spotVm, newState, NewPlantingDate, source.PlantName);
 
-        SelectedPlantSource = null;   // сброс пикера после посадки
+        SelectedPlantSource = null;   // сброс пикера и количества после посадки
     }
 
     public ICommand HarvestSpotCommand => field
@@ -926,7 +1000,7 @@ public class GardenPlanViewModel : ViewModel
             Width = e.DisplayWidth,
             Height = e.DisplayHeight,
             Rotation = e.Rotation,
-            AreaSquareMeters = e.AreaSquareMeters,
+            IsLocked = e.IsLocked,
             StateTypeName = e.StateTypeName,
             StateDisplayName = state.DisplayName,
             StateColor = state.StatusColor,
@@ -940,7 +1014,7 @@ public class GardenPlanViewModel : ViewModel
             CoverMaterial = (e as ColdFrame)?.CoverMaterial,
             Shape = (e as FlowerBed)?.Shape,
             PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(
-                e.PlantingSpots.Select(MapSpot))
+                e.PlantingSpots.OrderBy(s => s.Row).ThenBy(s => s.Column).Select(MapSpot))
         };
     }
 
@@ -963,6 +1037,7 @@ public class GardenPlanViewModel : ViewModel
             HeightMeters = gh.HeightMeters,
             InnerCanvasWidth = gh.CanvasWidth,
             InnerCanvasHeight = gh.CanvasHeight,
+            IsLocked = gh.IsLocked,
             StateTypeName = gh.StateTypeName,
             StateDisplayName = state.DisplayName,
             StateColor = state.StatusColor,
@@ -991,7 +1066,7 @@ public class GardenPlanViewModel : ViewModel
         vm.GridRows = entity.GridRows;
         vm.GridColumns = entity.GridColumns;
         vm.PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(
-            entity.PlantingSpots.Select(MapSpot));
+            entity.PlantingSpots.OrderBy(s => s.Row).ThenBy(s => s.Column).Select(MapSpot));
     }
 
     /// <summary>

@@ -48,6 +48,14 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
     public double InnerCanvasWidth { get; set; }
     public double InnerCanvasHeight { get; set; }
 
+    // --- Блокировка ---
+    private bool _isLocked;
+    public bool IsLocked
+    {
+        get => _isLocked;
+        set { _isLocked = value; OnPropertyChanged(); }
+    }
+
     // --- Выделение ---
     private bool _isSelected;
     public bool IsSelected

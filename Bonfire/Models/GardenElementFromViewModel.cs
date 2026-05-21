@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -57,13 +58,31 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
     public double Y { get => _y; set { _y = value; OnPropertyChanged(); } }
 
     private double _width = 120;
-    public double Width { get => _width; set { _width = value; OnPropertyChanged(); } }
+    public double Width
+    {
+        get => _width;
+        set { _width = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); }
+    }
 
     private double _height = 80;
-    public double Height { get => _height; set { _height = value; OnPropertyChanged(); } }
+    public double Height
+    {
+        get => _height;
+        set { _height = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); }
+    }
 
     public double Rotation { get; set; }
-    public double AreaSquareMeters { get; set; }
+
+    // Масштаб 40 пкс/м → 1 м² = 1600 пкс²
+    public double AreaSquareMeters => Math.Round(_width * _height / 1600.0, 1);
+
+    // --- Блокировка ---
+    private bool _isLocked;
+    public bool IsLocked
+    {
+        get => _isLocked;
+        set { _isLocked = value; OnPropertyChanged(); }
+    }
 
     // --- Выделение ---
     private bool _isSelected;
