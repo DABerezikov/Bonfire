@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
@@ -10,8 +10,12 @@ namespace Bonfire.Services.Interfaces;
 
 public interface IGardenService
 {
-    IQueryable<GardenPlan> Plans { get; }
-    IQueryable<Garden> Gardens { get; }
+    // --- Чтение ---
+    Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
+    Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);
+    Task<Garden?> GetGardenByIdAsync(int id);
+    Task<GardenElement?> GetElementByIdAsync(int id);
+    Task<Greenhouse?> GetGreenhouseByIdAsync(int id);
 
     // --- Планы ---
     Task<GardenPlan> CreatePlanAsync(string name, int year, string? description = null);
@@ -41,6 +45,8 @@ public interface IGardenService
     Task ChangeGreenhouseStateAsync(Greenhouse greenhouse, GardenElementState newState);
 
     // --- Посадки в ячейки ---
+    /// <summary>Загружает ячейку по Id (по элементам участков верхнего уровня).</summary>
+    Task<PlantingSpot?> GetSpotAsync(int spotId);
     Task<PlantingSpot> PlantSeedlingAsync(int elementId, int row, int col,
         SeedlingInfo seedlingInfo, DateTime plantedDate);
     Task ClearSpotAsync(PlantingSpot spot);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Services.Interfaces;
@@ -7,6 +8,7 @@ using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
 using BonfireDB.Entities.GardenPlanning.States;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
@@ -18,8 +20,22 @@ internal class GardenService(
     IRepository<PlantingSpot> spots)
     : IGardenService
 {
-    public IQueryable<GardenPlan> Plans => plans.Items;
-    public IQueryable<Garden> Gardens => gardens.Items;
+    // --- Чтение ---
+
+    public async Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync()
+        => await plans.Items.OrderByDescending(p => p.Year).ToListAsync();
+
+    public async Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId)
+        => await gardens.Items.Where(g => g.GardenPlanId == planId).ToListAsync();
+
+    public async Task<Garden?> GetGardenByIdAsync(int id)
+        => await gardens.Items.FirstOrDefaultAsync(g => g.Id == id);
+
+    public async Task<GardenElement?> GetElementByIdAsync(int id)
+        => await elements.Items.FirstOrDefaultAsync(e => e.Id == id);
+
+    public async Task<Greenhouse?> GetGreenhouseByIdAsync(int id)
+        => await greenhouses.Items.FirstOrDefaultAsync(g => g.Id == id);
 
     // --- Планы ---
 
@@ -124,6 +140,12 @@ internal class GardenService(
     }
 
     // --- Посадки ---
+
+    public async Task<PlantingSpot?> GetSpotAsync(int spotId)
+        => await gardens.Items
+            .SelectMany(g => g.Elements)
+            .SelectMany(e => e.PlantingSpots)
+            .FirstOrDefaultAsync(s => s.Id == spotId);
 
     public async Task<PlantingSpot> PlantSeedlingAsync(int elementId, int row, int col,
         SeedlingInfo seedlingInfo, DateTime plantedDate)

@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
+using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
 
 namespace Bonfire.Services;
@@ -28,9 +30,11 @@ internal class SeedlingsService(
     private readonly IRepository<Replanting> _replantings = replantings;
     private readonly IRepository<Treatment> _treatments = treatments;
 
-    public IQueryable<Seedling> Seedlings => _seedlings.Items;
-
     public MoonPhase Lunar { get; } = lunar;
+
+    public async Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync() => await _seedlings.Items.ToListAsync();
+
+    public async Task<Seedling?> GetSeedlingAsync(int id) => await _seedlings.GetAsync(id);
 
     public async Task<Seedling> MakeASeedling(Seedling seedling)
     {
@@ -69,15 +73,26 @@ internal class SeedlingsService(
         await _seedlingsInfo.UpdateAsync(info);
     }
 
-    public void InvertAutoSave()
+    public async Task MarkSeedlingInfosDeadAsync(Seedling seedling, IReadOnlyList<SeedlingInfo> infos, string? deathNote)
     {
-        _plants.AutoSaveChanges = !_plants.AutoSaveChanges;
-        _sort.AutoSaveChanges = !_sort.AutoSaveChanges;
-        _seedlings.AutoSaveChanges = !_seedlings.AutoSaveChanges;
-        _culture.AutoSaveChanges = !_culture.AutoSaveChanges;
-        _producer.AutoSaveChanges = !_producer.AutoSaveChanges;
-        _seedlingsInfo.AutoSaveChanges = !_seedlingsInfo.AutoSaveChanges;
-        _replantings.AutoSaveChanges = !_replantings.AutoSaveChanges;
-        _treatments.AutoSaveChanges = !_treatments.AutoSaveChanges;
+        // Накапливаем правки записей всходов без промежуточных сохранений…
+        _seedlingsInfo.AutoSaveChanges = false;
+        try
+        {
+            foreach (var info in infos)
+            {
+                info.IsDead = true;
+                info.DeathNote = deathNote;
+                await _seedlingsInfo.UpdateAsync(info);
+            }
+        }
+        finally
+        {
+            _seedlingsInfo.AutoSaveChanges = true;
+        }
+
+        // …и сбрасываем их одним SaveChanges вместе с самой рассадой
+        // (репозитории делят общий DbContext).
+        await _seedlings.UpdateAsync(seedling);
     }
 }

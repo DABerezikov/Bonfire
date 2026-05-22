@@ -9,15 +9,15 @@ using System.Windows.Input;
 using Bonfire.Data;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
+using Bonfire.Models.Mappers;
 using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.ViewModels;
 
-public class SeedsViewModel : ViewModel
+public class SeedsViewModel : SourceSelectionViewModel
 {
     private readonly ISeedsService _seedsService;
     private readonly IUserDialog _userDialog;
@@ -206,40 +206,20 @@ public class SeedsViewModel : ViewModel
         set => Set(ref field, value);
     } = "0";
 
-    // Источник семян (радио-кнопки)
+    // Источник семян (радио-кнопки) — общая часть в SourceSelectionViewModel
 
-    private string _seedSource = string.Empty;
     internal string SeedSource
     {
-        get => _seedSource;
-        set => SetSeedSource(value);
+        get => SourceValue;
+        set => SourceValue = value;
     }
 
-    private void SetSeedSource(string value)
-    {
-        if (_seedSource == value) return;
-        _seedSource = value;
-        OnPropertyChanged(nameof(IsSold));
-        OnPropertyChanged(nameof(IsDonated));
-        OnPropertyChanged(nameof(IsCollected));
-    }
-
-    public bool IsSold
-    {
-        get => _seedSource == "Куплено";
-        set { if (value) SetSeedSource("Куплено"); }
-    }
-
-    public bool IsDonated
-    {
-        get => _seedSource == "Подарено";
-        set { if (value) SetSeedSource("Подарено"); }
-    }
+    protected override void OnSourceChanged() => OnPropertyChanged(nameof(IsCollected));
 
     public bool IsCollected
     {
-        get => _seedSource == "Собрано";
-        set { if (value) { SetSeedSource("Собрано"); AddProducer = "Свои семена"; } }
+        get => SourceValue == PlantSources.Collected;
+        set { if (value) { SourceValue = PlantSources.Collected; AddProducer = Producers.Own; } }
     }
 
     // Примечание
@@ -256,7 +236,7 @@ public class SeedsViewModel : ViewModel
     {
         get;
         set => Set(ref field, value);
-    } = ["Граммы", "Штуки"];
+    } = [Units.GramsOption, Units.PiecesOption];
 
     public string AddSize
     {
@@ -360,7 +340,7 @@ public class SeedsViewModel : ViewModel
             if (Set(ref field, value))
             {
                 ProducerListView?.Refresh();
-                if (field == "Свои семена")
+                if (field == Producers.Own)
                     IsCollected = true;
             }
         }
@@ -370,27 +350,30 @@ public class SeedsViewModel : ViewModel
 
     private async Task LoadSeed()
     {
-        _seedsView.Source = _seedsService.Seeds.AsEnumerable()
-            .Select(CreateSeedsFromViewModel).SortSeeds();
-        Seeds = new ObservableCollection<Seed>(await _seedsService.Seeds.ToArrayAsync());
+        var seeds = await _seedsService.GetAllSeedsAsync();
+        _seedsView.Source = seeds.Select(SeedMapper.ToViewModel).SortSeeds();
+        Seeds = new ObservableCollection<Seed>(seeds);
         OnPropertyChanged(nameof(SeedsView));
     }
 
+    // Списки культур/сортов/производителей строятся из уже загруженной коллекции Seeds.
     private void LoadListCulture()
     {
-        var listCultureQuery = _seedsService.Seeds
-            .Select(seeds => seeds.Plant.PlantCulture.Name)
+        var listCulture = Seeds!
+            .Select(s => s.Plant.PlantCulture.Name)
             .Distinct()
             .OrderBy(s => s);
-        var addListCulture = _seedsService.Seeds
-            .Select(seeds => new CultureFromViewModel
+
+        var addListCulture = Seeds!
+            .Select(s => new CultureFromViewModel
             {
-                Id = seeds.Plant.PlantCulture.Id,
-                Name = seeds.Plant.PlantCulture.Name
-            }).AsEnumerable()
+                Id = s.Plant.PlantCulture.Id,
+                Name = s.Plant.PlantCulture.Name
+            })
             .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
-        ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
+
+        ListCulture.AddRange(listCulture);
         AddCultureList.AddRange(addListCulture.ToList());
         _cultureListView.Source = AddCultureList;
         OnPropertyChanged(nameof(CultureListView));
@@ -398,12 +381,12 @@ public class SeedsViewModel : ViewModel
 
     private void LoadListSort()
     {
-        var addListSort = _seedsService.Seeds
-            .Select(seeds => new SortFromSeedsViewModel
+        var addListSort = Seeds!
+            .Select(s => new SortFromSeedsViewModel
             {
-                Id = seeds.Plant.PlantSort.Id,
-                Name = seeds.Plant.PlantSort.Name
-            }).AsEnumerable()
+                Id = s.Plant.PlantSort.Id,
+                Name = s.Plant.PlantSort.Name
+            })
             .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
         AddSortList.AddRange(addListSort.ToList());
@@ -413,12 +396,12 @@ public class SeedsViewModel : ViewModel
 
     private void LoadListProducer()
     {
-        var addListProducer = _seedsService.Seeds
-            .Select(seeds => new ProducerFromViewModel
+        var addListProducer = Seeds!
+            .Select(s => new ProducerFromViewModel
             {
-                Id = seeds.Plant.PlantSort.Producer.Id,
-                Name = seeds.Plant.PlantSort.Producer.Name
-            }).AsEnumerable()
+                Id = s.Plant.PlantSort.Producer.Id,
+                Name = s.Plant.PlantSort.Producer.Name
+            })
             .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
         AddProducerList.AddRange(addListProducer.ToList());
@@ -454,7 +437,7 @@ public class SeedsViewModel : ViewModel
 
     private void UpdateCollectionViewSource(int id = -1)
     {
-        var newCollection = Seeds!.Select(CreateSeedsFromViewModel).SortSeeds();
+        var newCollection = Seeds!.Select(SeedMapper.ToViewModel).SortSeeds();
         var collection = newCollection.ToArray();
         _seedsView.Source = collection;
         if (id != -1)
@@ -466,55 +449,10 @@ public class SeedsViewModel : ViewModel
         OnPropertyChanged(nameof(ListCulture));
     }
 
-    private SeedsFromViewModel CreateSeedsFromViewModel(Seed seed) => new()
-    {
-        Id = seed.Id,
-        Culture = seed.Plant.PlantCulture.Name,
-        Sort = seed.Plant.PlantSort.Name,
-        Producer = seed.Plant.PlantSort.Producer.Name,
-        ExpirationDate = seed.SeedsInfo.ExpirationDate,
-        QuantityPack = seed.SeedsInfo.QuantityPack,
-        WeightPack = seed.SeedsInfo.WeightPack,
-        AmountSeedsQuantity = seed.SeedsInfo.AmountSeeds,
-        AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight
-    };
-
     private void CopySeedToEditItem(Seed? seedFrom, Seed seedTo)
     {
         if (seedFrom == null) return;
-
-        seedTo.Id = seedFrom.Id;
-        seedTo.SeedsInfoId = seedFrom.SeedsInfoId;
-
-        seedTo.Plant.Id = seedFrom.Plant.Id;
-        seedTo.Plant.PlantCulture.Id = seedFrom.Plant.PlantCulture.Id;
-        seedTo.Plant.PlantCulture.Name = seedFrom.Plant.PlantCulture.Name;
-        seedTo.Plant.PlantCulture.Class = seedFrom.Plant.PlantCulture.Class;
-        seedTo.Plant.PlantSort.Id = seedFrom.Plant.PlantSort.Id;
-        seedTo.Plant.PlantSort.Name = seedFrom.Plant.PlantSort.Name;
-        seedTo.Plant.PlantSort.Description = seedFrom.Plant.PlantSort.Description;
-        seedTo.Plant.PlantSort.MinGerminationTime = seedFrom.Plant.PlantSort.MinGerminationTime;
-        seedTo.Plant.PlantSort.MaxGerminationTime = seedFrom.Plant.PlantSort.MaxGerminationTime;
-        seedTo.Plant.PlantSort.AgeOfSeedlings = seedFrom.Plant.PlantSort.AgeOfSeedlings;
-        seedTo.Plant.PlantSort.GrowingSeason = seedFrom.Plant.PlantSort.GrowingSeason;
-        seedTo.Plant.PlantSort.LandingPattern = seedFrom.Plant.PlantSort.LandingPattern;
-        seedTo.Plant.PlantSort.PlantHeight = seedFrom.Plant.PlantSort.PlantHeight;
-        seedTo.Plant.PlantSort.PlantColor = seedFrom.Plant.PlantSort.PlantColor;
-        seedTo.Plant.PlantSort.Producer.Id = seedFrom.Plant.PlantSort.Producer.Id;
-        seedTo.Plant.PlantSort.Producer.Name = seedFrom.Plant.PlantSort.Producer.Name;
-
-        seedTo.SeedsInfo.Id = seedFrom.SeedsInfo.Id;
-        seedTo.SeedsInfo.WeightPack = seedFrom.SeedsInfo.WeightPack;
-        seedTo.SeedsInfo.QuantityPack = seedFrom.SeedsInfo.QuantityPack;
-        seedTo.SeedsInfo.PurchaseDate = seedFrom.SeedsInfo.PurchaseDate;
-        seedTo.SeedsInfo.ExpirationDate = seedFrom.SeedsInfo.ExpirationDate;
-        seedTo.SeedsInfo.CostPack = seedFrom.SeedsInfo.CostPack;
-        seedTo.SeedsInfo.DisposeComment = seedFrom.SeedsInfo.DisposeComment;
-        seedTo.SeedsInfo.AmountSeeds = seedFrom.SeedsInfo.AmountSeeds;
-        seedTo.SeedsInfo.AmountSeedsWeight = seedFrom.SeedsInfo.AmountSeedsWeight;
-        seedTo.SeedsInfo.SeedSource = seedFrom.SeedsInfo.SeedSource;
-        seedTo.SeedsInfo.Note = seedFrom.SeedsInfo.Note;
-
+        SeedMapper.CopyInto(seedFrom, seedTo);
         OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
     }
@@ -621,7 +559,7 @@ public class SeedsViewModel : ViewModel
             ? Seeds!.Where(seeds => seeds.Plant.PlantCulture.Class == p.ToString())
             : Seeds!;
 
-        _seedsView.Source = filteredSeeds.Select(CreateSeedsFromViewModel).SortSeeds().ToArray();
+        _seedsView.Source = filteredSeeds.Select(SeedMapper.ToViewModel).SortSeeds().ToArray();
         OnPropertyChanged(nameof(SeedsView));
     }
 

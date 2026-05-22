@@ -8,20 +8,23 @@ using System.Windows.Data;
 using System.Windows.Input;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
+using Bonfire.Models.Mappers;
 using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.ViewModels;
 
-public class SeedlingsViewModel : ViewModel
+public class SeedlingsViewModel : SourceSelectionViewModel
 {
     private readonly ISeedlingsService _seedlingsService;
     private readonly ISeedsService _seedsService;
     private readonly IUserDialog _userDialog;
     private readonly IReportService _reportService;
+
+    // Кэш загруженных семян: источник для списков и для выбора при создании рассады.
+    private List<Seed> _seeds = [];
 
     public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IReportService reportService)
     {
@@ -87,7 +90,7 @@ public class SeedlingsViewModel : ViewModel
     private async Task RefreshSeedlingsAsync()
     {
         Seedlings = new ObservableCollection<Seedling>(
-            await _seedlingsService.Seedlings.ToArrayAsync());
+            await _seedlingsService.GetAllSeedlingsAsync());
         UpdateCollectionViewSource();
     }
 
@@ -191,40 +194,20 @@ public class SeedlingsViewModel : ViewModel
         set => Set(ref field, value);
     } = ["-Выбрать все-"];
 
-    // Источник рассады (радио-кнопки)
+    // Источник рассады (радио-кнопки) — общая часть в SourceSelectionViewModel
 
-    private string _seedlingSource = string.Empty;
     internal string SeedlingSource
     {
-        get => _seedlingSource;
-        set => SetSeedlingSource(value);
+        get => SourceValue;
+        set => SourceValue = value;
     }
 
-    private void SetSeedlingSource(string value)
-    {
-        if (_seedlingSource == value) return;
-        _seedlingSource = value;
-        OnPropertyChanged(nameof(IsSold));
-        OnPropertyChanged(nameof(IsDonated));
-        OnPropertyChanged(nameof(IsSeeds));
-    }
-
-    public bool IsSold
-    {
-        get => _seedlingSource == "Куплено";
-        set { if (value) SetSeedlingSource("Куплено"); }
-    }
-
-    public bool IsDonated
-    {
-        get => _seedlingSource == "Подарено";
-        set { if (value) SetSeedlingSource("Подарено"); }
-    }
+    protected override void OnSourceChanged() => OnPropertyChanged(nameof(IsSeeds));
 
     public bool IsSeeds
     {
-        get => _seedlingSource == "Из семян";
-        set { if (value) SetSeedlingSource("Из семян"); }
+        get => SourceValue == PlantSources.FromSeeds;
+        set { if (value) SourceValue = PlantSources.FromSeeds; }
     }
 
     // Единица измерения
@@ -295,7 +278,7 @@ public class SeedlingsViewModel : ViewModel
         {
             if (!Set(ref field, value)) return;
             if (value is null) return;
-            CurrentSeed = _seedsService.Seeds.First(s => s.Id == CurrentPlant!.Id);
+            CurrentSeed = _seeds.First(s => s.Id == CurrentPlant!.Id);
         }
     }
 
@@ -309,7 +292,7 @@ public class SeedlingsViewModel : ViewModel
             Plantable = CurrentSeed!.SeedsInfo.AmountSeedsWeight > 0.0
                 ? CurrentSeed.SeedsInfo.AmountSeedsWeight
                 : CurrentSeed.SeedsInfo.AmountSeeds;
-            AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? "гр." : "шт.";
+            AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? Units.GramsAbbr : Units.PiecesAbbr;
         }
     }
 
@@ -504,8 +487,9 @@ public class SeedlingsViewModel : ViewModel
 
     private async Task LoadSeedling()
     {
-        Seedlings = new ObservableCollection<Seedling>(await _seedlingsService.Seedlings.ToArrayAsync().ConfigureAwait(false));
-        _seedlingsView.Source = _seedlingsService.Seedlings.AsEnumerable()
+        var seedlings = await _seedlingsService.GetAllSeedlingsAsync();
+        Seedlings = new ObservableCollection<Seedling>(seedlings);
+        _seedlingsView.Source = seedlings
             .Select(CreateSeedlingFromViewModel)
             .SortSeedlings();
         OnPropertyChanged(nameof(SeedlingsView));
@@ -513,18 +497,18 @@ public class SeedlingsViewModel : ViewModel
 
     private void LoadListCulture()
     {
-        var listCultureQuery = _seedlingsService.Seedlings
-            .Select(seedlings => seedlings.Plant.PlantCulture.Name)
+        var listCulture = Seedlings!
+            .Select(s => s.Plant.PlantCulture.Name)
             .Distinct()
             .OrderBy(s => s);
-        ListCulture.AddRange(listCultureQuery.ToListAsync().Result);
-        var addListCulture = _seedsService.Seeds
-            .Select(seeds => new CultureFromViewModel
+        ListCulture.AddRange(listCulture);
+
+        var addListCulture = _seeds
+            .Select(s => new CultureFromViewModel
             {
-                Id = seeds.Plant.PlantCulture.Id,
-                Name = seeds.Plant.PlantCulture.Name
+                Id = s.Plant.PlantCulture.Id,
+                Name = s.Plant.PlantCulture.Name
             })
-            .AsEnumerable()
             .Distinct(s => s!.Name)
             .OrderBy(s => s.Name);
         AddCultureList.AddRange(addListCulture.ToList());
@@ -532,34 +516,35 @@ public class SeedlingsViewModel : ViewModel
         OnPropertyChanged(nameof(CultureListView));
     }
 
+    // Списки сортов/растений строятся из кэша семян (только с ненулевым остатком).
     private void LoadListPlant()
     {
-        var addListPlant = _seedsService.Seeds
+        var plants = _seeds
             .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
-            .Select(seeds => new PlantFromViewModel
+            .Select(s => new PlantFromViewModel
             {
-                Id = seeds.Id,
-                Culture = seeds.Plant.PlantCulture.Name,
-                Sort = seeds.Plant.PlantSort.Name,
-                Producer = seeds.Plant.PlantSort.Producer.Name,
-                ExpirationDate = seeds.SeedsInfo.ExpirationDate
-            }).AsEnumerable()
+                Id = s.Id,
+                Culture = s.Plant.PlantCulture.Name,
+                Sort = s.Plant.PlantSort.Name,
+                Producer = s.Plant.PlantSort.Producer.Name,
+                ExpirationDate = s.SeedsInfo.ExpirationDate
+            })
             .OrderBy(s => s.Culture);
-        AddPlantList.AddRange(addListPlant.ToList());
+        AddPlantList.AddRange(plants.ToList());
         _plantListView.Source = AddPlantList;
         OnPropertyChanged(nameof(PlantListView));
     }
 
     private void LoadListSort()
     {
-        var addListSort = _seedsService.Seeds
+        var addListSort = _seeds
             .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
-            .Select(seeds => new SortFromSeedlingsViewModel
+            .Select(s => new SortFromSeedlingsViewModel
             {
-                Id = seeds.Plant.PlantSort.Id,
-                Sort = seeds.Plant.PlantSort.Name,
-                Culture = seeds.Plant.PlantCulture.Name
-            }).AsEnumerable()
+                Id = s.Plant.PlantSort.Id,
+                Sort = s.Plant.PlantSort.Name,
+                Culture = s.Plant.PlantCulture.Name
+            })
             .Distinct(s => s!.Sort + "|" + s.Culture)
             .OrderBy(s => s.Sort);
         AddSortList.AddRange(addListSort.ToList());
@@ -576,7 +561,7 @@ public class SeedlingsViewModel : ViewModel
         && AddSort != string.Empty
         && SeedlingSource != string.Empty;
 
-    private Plant GetPlant() => _seedsService.Seeds.First(s => s.Id == CurrentPlant!.Id).Plant;
+    private Plant GetPlant() => _seeds.First(s => s.Id == CurrentPlant!.Id).Plant;
 
     private void ClearFieldSeedlingView()
     {
@@ -666,31 +651,7 @@ public class SeedlingsViewModel : ViewModel
     private void CopySeedlingToEditItem(Seedling? seedlingFrom, Seedling seedlingTo)
     {
         if (seedlingFrom == null) return;
-
-        seedlingTo.Id = seedlingFrom.Id;
-        seedlingTo.Weight = seedlingFrom.Weight;
-        seedlingTo.Quantity = seedlingFrom.Quantity;
-        seedlingTo.SeedId = seedlingFrom.SeedId;
-
-        seedlingTo.Plant.Id = seedlingFrom.Plant.Id;
-        seedlingTo.Plant.PlantCulture.Id = seedlingFrom.Plant.PlantCulture.Id;
-        seedlingTo.Plant.PlantCulture.Name = seedlingFrom.Plant.PlantCulture.Name;
-        seedlingTo.Plant.PlantCulture.Class = seedlingFrom.Plant.PlantCulture.Class;
-        seedlingTo.Plant.PlantSort.Id = seedlingFrom.Plant.PlantSort.Id;
-        seedlingTo.Plant.PlantSort.Name = seedlingFrom.Plant.PlantSort.Name;
-        seedlingTo.Plant.PlantSort.Description = seedlingFrom.Plant.PlantSort.Description;
-        seedlingTo.Plant.PlantSort.MinGerminationTime = seedlingFrom.Plant.PlantSort.MinGerminationTime;
-        seedlingTo.Plant.PlantSort.MaxGerminationTime = seedlingFrom.Plant.PlantSort.MaxGerminationTime;
-        seedlingTo.Plant.PlantSort.AgeOfSeedlings = seedlingFrom.Plant.PlantSort.AgeOfSeedlings;
-        seedlingTo.Plant.PlantSort.GrowingSeason = seedlingFrom.Plant.PlantSort.GrowingSeason;
-        seedlingTo.Plant.PlantSort.LandingPattern = seedlingFrom.Plant.PlantSort.LandingPattern;
-        seedlingTo.Plant.PlantSort.PlantHeight = seedlingFrom.Plant.PlantSort.PlantHeight;
-        seedlingTo.Plant.PlantSort.PlantColor = seedlingFrom.Plant.PlantSort.PlantColor;
-        seedlingTo.Plant.PlantSort.Producer.Id = seedlingFrom.Plant.PlantSort.Producer.Id;
-        seedlingTo.Plant.PlantSort.Producer.Name = seedlingFrom.Plant.PlantSort.Producer.Name;
-
-        seedlingTo.SeedlingInfos = seedlingFrom.SeedlingInfos;
-
+        SeedlingMapper.CopyInto(seedlingFrom, seedlingTo);
         OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
     }
@@ -738,6 +699,7 @@ public class SeedlingsViewModel : ViewModel
     private async Task OnLoadDataCommandExecuted()
     {
         if (Seedlings != null) return;
+        _seeds = (await _seedsService.GetAllSeedsAsync()).ToList();
         await LoadSeedling();
         LoadListCulture();
         LoadListPlant();
@@ -790,11 +752,11 @@ public class SeedlingsViewModel : ViewModel
 
         switch (AddSize)
         {
-            case "гр.":
+            case Units.GramsAbbr:
                 seedling.Weight = AddQuantity;
                 CurrentSeed.SeedsInfo.AmountSeedsWeight -= AddQuantity;
                 break;
-            case "шт.":
+            case Units.PiecesAbbr:
                 seedling.Quantity = AddQuantity;
                 CurrentSeed.SeedsInfo.AmountSeeds -= AddQuantity;
                 break;
@@ -928,24 +890,14 @@ public class SeedlingsViewModel : ViewModel
 
     private async Task OnDeathSeedlingCommandExecuted()
     {
-        _seedlingsService.InvertAutoSave();
-
         var toMark = SelectedItem!.SeedlingInfos
             .Where(i => i.GerminationDate.HasValue && i.IsDead != true)
             .OrderByDescending(i => i.SeedlingNumber)
             .Take(DeadNumbers)
             .ToList();
 
-        for (var i = 0; i < toMark.Count; i++)
-        {
-            toMark[i].IsDead    = true;
-            toMark[i].DeathNote = DeathNote;
-            if (i == toMark.Count - 1)
-                _seedlingsService.InvertAutoSave();
-            await _seedlingsService.UpdateSeedlingInfo(toMark[i]);
-        }
+        await _seedlingsService.MarkSeedlingInfosDeadAsync(SelectedItem, toMark, DeathNote);
 
-        await _seedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
         UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
         DeathNote = string.Empty;
         DeadNumbers = 0;

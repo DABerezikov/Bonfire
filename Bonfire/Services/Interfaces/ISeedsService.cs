@@ -8,8 +8,8 @@ namespace Bonfire.Services.Interfaces;
 
 public interface ISeedsService
 {
-    IQueryable<Seed> Seeds { get; }
-
+    Task<IReadOnlyList<Seed>> GetAllSeedsAsync();
+    Task<Seed?> GetSeedAsync(int id);
     Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest request, IReadOnlyList<Seed> existingSeeds);
     Task<Seed> UpdateSeed(Seed seed);
     Task<Seed> DeleteSeed(Seed seed);

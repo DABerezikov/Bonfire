@@ -6,6 +6,7 @@ using Bonfire.Models;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
@@ -18,13 +19,15 @@ internal class SeedsService(
     IRepository<SeedsInfo> info)
     : ISeedsService
 {
-    public IQueryable<Seed> Seeds => seeds.Items;
+    public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync() => await seeds.Items.ToListAsync();
+
+    public async Task<Seed?> GetSeedAsync(int id) => await seeds.GetAsync(id);
 
     public async Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest r, IReadOnlyList<Seed> existingSeeds)
     {
         var plant = ResolveOrCreatePlant(r, existingSeeds);
-        var quantity = r.SizeUnit != "Граммы" ? r.QuantityInPack : 0;
-        var weight   = r.SizeUnit == "Граммы"  ? r.QuantityInPack : 0;
+        var quantity = r.SizeUnit != Units.GramsOption ? r.QuantityInPack : 0;
+        var weight   = r.SizeUnit == Units.GramsOption  ? r.QuantityInPack : 0;
 
         // Обновление существующего пакета семян
         if (ExistsProducer(r, existingSeeds))
@@ -37,7 +40,7 @@ internal class SeedsService(
 
             if (existing != null)
             {
-                if (r.SizeUnit != "Граммы")
+                if (r.SizeUnit != Units.GramsOption)
                     existing.SeedsInfo.AmountSeeds += quantity * r.PackCount;
                 else
                     existing.SeedsInfo.AmountSeedsWeight += weight * r.PackCount;
@@ -61,7 +64,7 @@ internal class SeedsService(
             CostPack = r.CostPack
         };
 
-        if (r.SizeUnit != "Граммы")
+        if (r.SizeUnit != Units.GramsOption)
         {
             seedsInfo.QuantityPack = quantity;
             seedsInfo.AmountSeeds  = quantity * r.PackCount;
@@ -78,7 +81,7 @@ internal class SeedsService(
 
     public async Task ReturnSeedsFromSeedling(int seedId, double quantity, double? weight)
     {
-        var seed = Seeds.First(s => s.Id == seedId);
+        var seed = await seeds.Items.FirstAsync(s => s.Id == seedId);
         seed.SeedsInfo.AmountSeeds       += quantity;
         seed.SeedsInfo.AmountSeedsWeight += weight;
         await seeds.UpdateAsync(seed);

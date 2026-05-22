@@ -8,7 +8,7 @@ public class SeedsViewModelTests
 
     private SeedsViewModel CreateVm()
     {
-        _seedsService.Seeds.Returns(Enumerable.Empty<Seed>().AsQueryable());
+        _seedsService.GetAllSeedsAsync().Returns(new List<Seed>());
         return new SeedsViewModel(_seedsService, _userDialog, _reportService);
     }
 

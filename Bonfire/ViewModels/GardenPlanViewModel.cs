@@ -6,13 +6,13 @@ using System.Windows.Input;
 using Bonfire.Infrastructure;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
+using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
 using BonfireDB.Entities.GardenPlanning.States;
-using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.ViewModels;
 
@@ -22,14 +22,17 @@ public class GardenPlanViewModel : ViewModel
     private readonly IUserDialog _userDialog;
     private readonly ISeedlingsService _seedlingsService;
     private readonly ISeedsService _seedsService;
+    private readonly IPlantingService _plantingService;
 
     public GardenPlanViewModel(IGardenService gardenService, IUserDialog userDialog,
-        ISeedlingsService seedlingsService, ISeedsService seedsService)
+        ISeedlingsService seedlingsService, ISeedsService seedsService,
+        IPlantingService plantingService)
     {
         _gardenService    = gardenService;
         _userDialog       = userDialog;
         _seedlingsService = seedlingsService;
         _seedsService     = seedsService;
+        _plantingService  = plantingService;
     }
 
     public bool IsActive { get; set; }
@@ -48,7 +51,7 @@ public class GardenPlanViewModel : ViewModel
         set
         {
             if (Set(ref field, value))
-                LoadGardens();
+                _ = LoadGardensAsync();
         }
     }
 
@@ -227,7 +230,7 @@ public class GardenPlanViewModel : ViewModel
 
     /// <summary>Единица измерения выбранного источника: «г.» или «шт.»</summary>
     public string PlantingAmountUnit =>
-        SelectedPlantSource?.IsWeightBased == true ? "г." : "шт.";
+        SelectedPlantSource?.IsWeightBased == true ? Units.GramAbbr : Units.PiecesAbbr;
 
     // ─────────────────────────────────────
     //  Загрузка данных
@@ -238,9 +241,7 @@ public class GardenPlanViewModel : ViewModel
 
     private async Task LoadDataAsync()
     {
-        var planList = await _gardenService.Plans
-            .OrderByDescending(p => p.Year)
-            .ToListAsync();
+        var planList = await _gardenService.GetPlansOrderedByYearDescAsync();
 
         Plans = new ObservableCollection<GardenPlan>(planList);
         SelectedPlan = Plans.FirstOrDefault();
@@ -251,11 +252,9 @@ public class GardenPlanViewModel : ViewModel
     private async Task LoadPlantLabelsAsync()
     {
         // ── Рассада: штучная (Quantity > 0) и граммовая (Weight > 0) ────────
-        var seedlingEntities = await _seedlingsService.Seedlings
-            .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
-            .Include(s => s.Plant).ThenInclude(p => p.PlantSort)
+        var seedlingEntities = (await _seedlingsService.GetAllSeedlingsAsync())
             .Where(s => s.Quantity > 0 || s.Weight > 0)
-            .ToListAsync();
+            .ToList();
 
         AvailableSeedlingItems = new ObservableCollection<PlantSourceItem>(
             seedlingEntities
@@ -278,12 +277,9 @@ public class GardenPlanViewModel : ViewModel
             .OrderBy(i => i.PlantName));
 
         // ── Семена: штучные (AmountSeeds > 0) и граммовые (AmountSeedsWeight > 0) ──
-        var seedEntities = await _seedsService.Seeds
-            .Include(s => s.SeedsInfo)
-            .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
-            .Include(s => s.Plant).ThenInclude(p => p.PlantSort)
+        var seedEntities = (await _seedsService.GetAllSeedsAsync())
             .Where(s => s.SeedsInfo.AmountSeeds > 0 || s.SeedsInfo.AmountSeedsWeight > 0)
-            .ToListAsync();
+            .ToList();
 
         AvailableSeedItems = new ObservableCollection<PlantSourceItem>(
             seedEntities
@@ -316,17 +312,14 @@ public class GardenPlanViewModel : ViewModel
         AvailablePlantLabels = new ObservableCollection<string>(planLabels);
     }
 
-    private void LoadGardens()
+    private async Task LoadGardensAsync()
     {
         if (SelectedPlan is null) { Gardens.Clear(); return; }
 
-        var gardenVms = _gardenService.Gardens
-            .Where(g => g.GardenPlanId == SelectedPlan.Id)
-            .AsEnumerable()
-            .Select(MapGarden)
-            .ToList();
+        var gardens = await _gardenService.GetGardensByPlanAsync(SelectedPlan.Id);
 
-        Gardens = new ObservableCollection<GardenFromViewModel>(gardenVms);
+        Gardens = new ObservableCollection<GardenFromViewModel>(
+            gardens.Select(GardenPlanMapper.MapGarden));
         SelectedGarden = Gardens.FirstOrDefault();
     }
 
@@ -375,7 +368,7 @@ public class GardenPlanViewModel : ViewModel
         if (SelectedPlan is null) return;
         var garden = await _gardenService.CreateGardenAsync(
             SelectedPlan.Id, "Новый участок", 20, 15, scale: 40);
-        var vm = MapGarden(garden);
+        var vm = GardenPlanMapper.MapGarden(garden);
         Gardens.Add(vm);
         SelectedGarden = vm;
     }
@@ -391,8 +384,7 @@ public class GardenPlanViewModel : ViewModel
                 $"Удалить участок «{SelectedGarden.Name}»? Все элементы и посадки будут удалены.",
                 "Удаление участка")) return;
 
-        var entity = await _gardenService.Gardens
-            .FirstOrDefaultAsync(g => g.Id == SelectedGarden.Id);
+        var entity = await _gardenService.GetGardenByIdAsync(SelectedGarden.Id);
         if (entity is null) return;
 
         await _gardenService.DeleteGardenAsync(entity);
@@ -435,8 +427,7 @@ public class GardenPlanViewModel : ViewModel
             return;
         }
 
-        var entity = await _gardenService.Gardens
-            .FirstOrDefaultAsync(g => g.Id == SelectedGarden.Id);
+        var entity = await _gardenService.GetGardenByIdAsync(SelectedGarden.Id);
         if (entity is null) return;
 
         entity.Name          = SelectedGarden.Name;
@@ -554,7 +545,7 @@ public class GardenPlanViewModel : ViewModel
         // DisplayWidth/DisplayHeight уже 120/80 по умолчанию в GardenElement
 
         var saved = await _gardenService.AddElementAsync(element);
-        var vm = MapElement(saved, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+        var vm = GardenPlanMapper.MapElement(saved, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
         vm.ContainerElements   = SelectedGarden.Elements;    // ссылка на коллекцию до Add()
         vm.ContainerGreenhouses = SelectedGarden.Greenhouses;
         SelectedGarden.Elements.Add(vm);
@@ -572,7 +563,7 @@ public class GardenPlanViewModel : ViewModel
             SelectedGarden.Id,
             $"Теплица {SelectedGarden.Greenhouses.Count + 1}",
             widthMeters: 6, heightMeters: 3, scale: 40);
-        var vm = MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+        var vm = GardenPlanMapper.MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
         SelectedGarden.Greenhouses.Add(vm);
     }
 
@@ -587,9 +578,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task DeleteElementAsync()
     {
         if (SelectedElement is null || SelectedGarden is null) return;
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Elements)
-            .FirstOrDefaultAsync(e => e.Id == SelectedElement.Id);
+        var entity = await _gardenService.GetElementByIdAsync(SelectedElement.Id);
         if (entity is null) return;
 
         await _gardenService.DeleteElementAsync(entity);
@@ -606,9 +595,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (vm is null) return;
         vm.IsLocked = !vm.IsLocked;
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Elements)
-            .FirstOrDefaultAsync(e => e.Id == vm.Id);
+        var entity = await _gardenService.GetElementByIdAsync(vm.Id);
         if (entity is null) return;
         entity.IsLocked = vm.IsLocked;
         await _gardenService.UpdateElementAsync(entity);
@@ -623,9 +610,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (vm is null) return;
         vm.IsLocked = !vm.IsLocked;
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Greenhouses)
-            .FirstOrDefaultAsync(gh => gh.Id == vm.Id);
+        var entity = await _gardenService.GetGreenhouseByIdAsync(vm.Id);
         if (entity is null) return;
         entity.IsLocked = vm.IsLocked;
         await _gardenService.UpdateGreenhouseAsync(entity);
@@ -638,9 +623,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task SaveElementPositionAsync()
     {
         if (SelectedElement is null) return;
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Elements)
-            .FirstOrDefaultAsync(e => e.Id == SelectedElement.Id);
+        var entity = await _gardenService.GetElementByIdAsync(SelectedElement.Id);
         if (entity is null) return;
 
         entity.X = SelectedElement.X;
@@ -667,9 +650,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task SaveGreenhousePositionAsync(GreenhouseFromViewModel? vm)
     {
         if (vm is null) return;
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Greenhouses)
-            .FirstOrDefaultAsync(gh => gh.Id == vm.Id);
+        var entity = await _gardenService.GetGreenhouseByIdAsync(vm.Id);
         if (entity is null) return;
 
         entity.X = vm.X;
@@ -701,9 +682,7 @@ public class GardenPlanViewModel : ViewModel
         var currentState = GardenElementState.From(SelectedElement.StateTypeName);
         if (!currentState.CanTransitionTo(newState)) return;
 
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Elements)
-            .FirstOrDefaultAsync(e => e.Id == SelectedElement.Id);
+        var entity = await _gardenService.GetElementByIdAsync(SelectedElement.Id);
         if (entity is null) return;
 
         await _gardenService.ChangeElementStateAsync(entity, newState);
@@ -741,10 +720,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task RebuildGridAsync()
     {
         if (EditingGridElement is null) return;
-        var entity = await _gardenService.Gardens
-            .SelectMany(g => g.Elements)
-            .Include(e => e.PlantingSpots)
-            .FirstOrDefaultAsync(e => e.Id == EditingGridElement.Id);
+        var entity = await _gardenService.GetElementByIdAsync(EditingGridElement.Id);
         if (entity is null) return;
 
         await _gardenService.RebuildGridAsync(entity, EditingGridElement.GridRows, EditingGridElement.GridColumns);
@@ -794,14 +770,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task PlantSpotAsync(PlantingSpotFromViewModel? spotVm)
     {
         if (spotVm is null || SelectedPlantSource is null) return;
-        var entity = await LoadSpotEntityAsync(spotVm.Id);
-        if (entity is null) return;
-
-        var newState = new PlantedSpotState();
-        if (!entity.State.CanTransitionTo(newState)) return;
-
         var source = SelectedPlantSource;
-        int? savedInfoId = null;
 
         // Полный адрес посадки: план / участок / элемент
         var plantPlace = string.Join(" / ", new[]
@@ -811,94 +780,30 @@ public class GardenPlanViewModel : ViewModel
             EditingGridElement?.Name
         }.Where(s => !string.IsNullOrEmpty(s)));
 
-        if (source.Kind == PlantSourceKind.Seedling)
+        var result = await _plantingService.PlantAsync(new PlantRequest(
+            SpotId:        spotVm.Id,
+            Kind:          source.Kind,
+            EntityId:      source.EntityId,
+            IsWeightBased: source.IsWeightBased,
+            Amount:        PlantingAmount,
+            PlantedDate:   NewPlantingDate,
+            PlantName:     source.PlantName,
+            PlantPlace:    string.IsNullOrEmpty(plantPlace) ? null : plantPlace));
+
+        if (!result.Success) return;
+
+        // Списываем остаток в пикере и убираем позицию, если исчерпана
+        source.AvailableQty -= PlantingAmount;
+        if (source.AvailableQty <= 0)
         {
-            // ── Из рассады: списать из партии, добавить SeedlingInfo к рассаде ──
-            var seedling = await _seedlingsService.Seedlings
-                .FirstOrDefaultAsync(s => s.Id == source.EntityId);
-            if (seedling is null) return;
-
-            var newInfo = new SeedlingInfo
-            {
-                LandingDate    = NewPlantingDate,
-                SeedlingSource = "Из семян",
-                PlantPlace     = plantPlace
-            };
-            seedling.SeedlingInfos.Add(newInfo);
-            var info = await _seedlingsService.AddSeedlingInfo(newInfo);
-            savedInfoId = info.Id;
-
-            // Списываем указанное количество шт. или г.
-            var deduct = PlantingAmount;
-            if (source.IsWeightBased)
-                seedling.Weight = Math.Max(0, seedling.Weight - deduct);
-            else
-                seedling.Quantity = Math.Max(0, seedling.Quantity - (int)Math.Round(deduct));
-            await _seedlingsService.UpdateSeedling(seedling);
-
-            source.AvailableQty -= deduct;
-            if (source.AvailableQty <= 0)
+            if (source.Kind == PlantSourceKind.Seedling)
                 AvailableSeedlingItems.Remove(source);
-        }
-        else
-        {
-            // ── Из семян: создать рассаду через MakeASeedling, списать семя ──
-            var seed = await _seedsService.Seeds
-                .Include(s => s.SeedsInfo)
-                .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
-                .Include(s => s.Plant).ThenInclude(p => p.PlantSort)
-                .FirstOrDefaultAsync(s => s.Id == source.EntityId);
-            if (seed is null) return;
-
-            var deduct      = PlantingAmount;
-            var moonPhase   = _seedlingsService.Lunar.GetMoonPhase(NewPlantingDate);
-            var newSeedlingInfo = new SeedlingInfo
-            {
-                LandingDate    = NewPlantingDate,
-                LunarPhase     = moonPhase,
-                SeedlingNumber = 0,
-                SeedlingSource = "Из семян",
-                PlantPlace     = plantPlace
-            };
-            var newSeedling = new Seedling
-            {
-                Plant          = seed.Plant,
-                SeedId         = seed.Id,
-                LandingDate    = NewPlantingDate,
-                LunarPhase     = moonPhase,
-                SeedlingSource = "Из семян",
-                PlantPlace     = plantPlace,
-                SeedlingInfos  = [newSeedlingInfo]
-            };
-            if (source.IsWeightBased)
-                newSeedling.Weight = deduct;
             else
-                newSeedling.Quantity = (int)Math.Round(deduct);
-
-            var saved = await _seedlingsService.MakeASeedling(newSeedling);
-            savedInfoId = saved.SeedlingInfos[0].Id;
-
-            // Списываем указанное количество шт. или г.
-            if (source.IsWeightBased)
-                seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - deduct);
-            else
-                seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(deduct));
-            await _seedsService.UpdateSeed(seed);
-
-            source.AvailableQty -= deduct;
-            if (source.AvailableQty <= 0)
                 AvailableSeedItems.Remove(source);
         }
 
-        // ── Зафиксировать посадку в ячейке ──────────────────────────────────
-        await _gardenService.ChangeSpotStateAsync(
-            entity, newState,
-            plantLabel:    source.PlantName,
-            plantedDate:   NewPlantingDate,
-            seedlingInfoId: savedInfoId);
-
-        spotVm.SeedlingInfoId = savedInfoId;
-        UpdateSpotVm(spotVm, newState, NewPlantingDate, source.PlantName);
+        spotVm.SeedlingInfoId = result.SeedlingInfoId;
+        UpdateSpotVm(spotVm, new PlantedSpotState(), NewPlantingDate, source.PlantName);
 
         SelectedPlantSource = null;   // сброс пикера и количества после посадки
     }
@@ -944,129 +849,18 @@ public class GardenPlanViewModel : ViewModel
     }
 
     private async Task<PlantingSpot?> LoadSpotEntityAsync(int spotId)
-        => await _gardenService.Gardens
-            .SelectMany(g => g.Elements)
-            .SelectMany(e => e.PlantingSpots)
-            .FirstOrDefaultAsync(s => s.Id == spotId);
+        => await _gardenService.GetSpotAsync(spotId);
 
     // ─────────────────────────────────────
     //  Вспомогательные методы маппинга
     // ─────────────────────────────────────
-
-    private static GardenFromViewModel MapGarden(Garden g)
-    {
-        var elements = new ObservableCollection<GardenElementFromViewModel>(
-            g.Elements.Select(e => MapElement(e, g.CanvasWidth, g.CanvasHeight)));
-
-        var greenhouses = new ObservableCollection<GreenhouseFromViewModel>(
-            g.Greenhouses.Select(gh => MapGreenhouse(gh, g.CanvasWidth, g.CanvasHeight)));
-
-        // Каждый элемент получает ссылки на коллекции братских объектов
-        // для проверки коллизий в code-behind во время drag/resize.
-        foreach (var el in elements)
-        {
-            el.ContainerElements   = elements;
-            el.ContainerGreenhouses = greenhouses;
-        }
-
-        return new GardenFromViewModel
-        {
-            Id = g.Id,
-            Name = g.Name,
-            WidthMeters = g.WidthMeters,
-            HeightMeters = g.HeightMeters,
-            CanvasWidth = g.CanvasWidth,
-            CanvasHeight = g.CanvasHeight,
-            Address = g.Address,
-            Note = g.Note,
-            Elements = elements,
-            Greenhouses = greenhouses
-        };
-    }
-
-    private static GardenElementFromViewModel MapElement(GardenElement e,
-        double containerW = 0, double containerH = 0)
-    {
-        var state = e.State;
-        return new GardenElementFromViewModel
-        {
-            Id = e.Id,
-            Name = e.Name,
-            ElementType = e.GetType().Name,
-            ContainerCanvasWidth  = containerW,
-            ContainerCanvasHeight = containerH,
-            X = e.X,
-            Y = e.Y,
-            Width = e.DisplayWidth,
-            Height = e.DisplayHeight,
-            Rotation = e.Rotation,
-            IsLocked = e.IsLocked,
-            StateTypeName = e.StateTypeName,
-            StateDisplayName = state.DisplayName,
-            StateColor = state.StatusColor,
-            CanAddPlanting = state.CanAddPlanting,
-            CanModifyGrid = state.CanModifyGrid,
-            GridRows = e.GridRows,
-            GridColumns = e.GridColumns,
-            SoilType = e.SoilType,
-            Note = e.Note,
-            Orientation = (e as Bed)?.Orientation,
-            CoverMaterial = (e as ColdFrame)?.CoverMaterial,
-            Shape = (e as FlowerBed)?.Shape,
-            PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(
-                e.PlantingSpots.OrderBy(s => s.Row).ThenBy(s => s.Column).Select(MapSpot))
-        };
-    }
-
-    private static GreenhouseFromViewModel MapGreenhouse(Greenhouse gh,
-        double containerW = 0, double containerH = 0)
-    {
-        var state = gh.State;
-        return new GreenhouseFromViewModel
-        {
-            Id = gh.Id,
-            Name = gh.Name,
-            ContainerCanvasWidth  = containerW,
-            ContainerCanvasHeight = containerH,
-            X = gh.X,
-            Y = gh.Y,
-            DisplayWidth = gh.DisplayWidth,
-            DisplayHeight = gh.DisplayHeight,
-            Rotation = gh.Rotation,
-            WidthMeters = gh.WidthMeters,
-            HeightMeters = gh.HeightMeters,
-            InnerCanvasWidth = gh.CanvasWidth,
-            InnerCanvasHeight = gh.CanvasHeight,
-            IsLocked = gh.IsLocked,
-            StateTypeName = gh.StateTypeName,
-            StateDisplayName = state.DisplayName,
-            StateColor = state.StatusColor,
-            Material = gh.Material,
-            Note = gh.Note,
-            InnerElements = new ObservableCollection<GardenElementFromViewModel>(
-                gh.Elements.Select(e => MapElement(e, gh.CanvasWidth, gh.CanvasHeight)))
-        };
-    }
-
-    private static PlantingSpotFromViewModel MapSpot(PlantingSpot s)
-        => new()
-        {
-            Id           = s.Id,
-            Row          = s.Row,
-            Column       = s.Column,
-            StateTypeName = s.StateTypeName,   // computed props (CellColor, CanGoTo* …) рассчитаются сами
-            SeedlingInfoId = s.SeedlingInfoId,
-            PlantedDate  = s.PlantedDate,
-            PlantLabel   = s.Note,             // Note хранит «что посажено»
-            Note         = s.Note
-        };
 
     private static void RebuildSpotsVm(GardenElementFromViewModel vm, GardenElement entity)
     {
         vm.GridRows = entity.GridRows;
         vm.GridColumns = entity.GridColumns;
         vm.PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(
-            entity.PlantingSpots.OrderBy(s => s.Row).ThenBy(s => s.Column).Select(MapSpot));
+            entity.PlantingSpots.OrderBy(s => s.Row).ThenBy(s => s.Column).Select(GardenPlanMapper.MapSpot));
     }
 
     /// <summary>

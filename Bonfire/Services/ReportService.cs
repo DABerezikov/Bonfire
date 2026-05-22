@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using Bonfire.Models;
 using Bonfire.Services.Interfaces;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -146,8 +147,8 @@ internal class ReportService(IUserDialog userDialog) : IReportService
         sheet.Cells[1, 1].Value = "Сорт";
         sheet.Cells[1, 2].Value = "Фирма";
         sheet.Cells[1, 3].Value = "Годен до";
-        sheet.Cells[1, 4].Value = "Граммы";
-        sheet.Cells[1, 5].Value = "Штуки";
+        sheet.Cells[1, 4].Value = Units.GramsOption;
+        sheet.Cells[1, 5].Value = Units.PiecesOption;
         sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;
     }
 
@@ -156,8 +157,8 @@ internal class ReportService(IUserDialog userDialog) : IReportService
         sheet.Cells[1, 1].Value = "Сорт";
         sheet.Cells[1, 2].Value = "Производитель";
         sheet.Cells[1, 3].Value = "Дата посева";
-        sheet.Cells[1, 4].Value = "г.";
-        sheet.Cells[1, 5].Value = "шт.";
+        sheet.Cells[1, 4].Value = Units.GramAbbr;
+        sheet.Cells[1, 5].Value = Units.PiecesAbbr;
         sheet.Cells[1, 6].Value = "Взошло";
         sheet.Cells[1, 7].Value = "Остаток";
         sheet.Cells[1, 1, 1, 7].Style.Font.Bold = true;

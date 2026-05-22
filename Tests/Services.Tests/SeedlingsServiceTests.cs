@@ -159,30 +159,50 @@ public class SeedlingsServiceTests
         await _replantings.DidNotReceive().AddAsync(existingReplant);
     }
 
-    // ── InvertAutoSave ────────────────────────────────────────────────────────
+    // ── MarkSeedlingInfosDeadAsync ────────────────────────────────────────────
 
     [Fact]
-    public void InvertAutoSave_TogglesAllEightRepositories()
+    public async Task MarkSeedlingInfosDeadAsync_SetsIsDeadAndNoteOnEachInfo()
     {
-        _plants.AutoSaveChanges.Returns(true);
-        _sort.AutoSaveChanges.Returns(true);
-        _seedlings.AutoSaveChanges.Returns(true);
-        _culture.AutoSaveChanges.Returns(true);
-        _producer.AutoSaveChanges.Returns(true);
-        _seedlingsInfo.AutoSaveChanges.Returns(true);
-        _replantings.AutoSaveChanges.Returns(true);
-        _treatments.AutoSaveChanges.Returns(true);
+        var info1 = new SeedlingInfo { Id = 1 };
+        var info2 = new SeedlingInfo { Id = 2 };
+        var seedling = new Seedling { Id = 1 };
 
         var service = CreateService();
-        service.InvertAutoSave();
+        await service.MarkSeedlingInfosDeadAsync(seedling, [info1, info2], "погибли");
 
-        _plants.Received(1).AutoSaveChanges = false;
-        _sort.Received(1).AutoSaveChanges = false;
-        _seedlings.Received(1).AutoSaveChanges = false;
-        _culture.Received(1).AutoSaveChanges = false;
-        _producer.Received(1).AutoSaveChanges = false;
-        _seedlingsInfo.Received(1).AutoSaveChanges = false;
-        _replantings.Received(1).AutoSaveChanges = false;
-        _treatments.Received(1).AutoSaveChanges = false;
+        Assert.True(info1.IsDead);
+        Assert.True(info2.IsDead);
+        Assert.Equal("погибли", info1.DeathNote);
+        Assert.Equal("погибли", info2.DeathNote);
+    }
+
+    [Fact]
+    public async Task MarkSeedlingInfosDeadAsync_BatchesInfoUpdatesThenSavesViaSeedling()
+    {
+        var info1 = new SeedlingInfo { Id = 1 };
+        var info2 = new SeedlingInfo { Id = 2 };
+        var seedling = new Seedling { Id = 1 };
+
+        var service = CreateService();
+        await service.MarkSeedlingInfosDeadAsync(seedling, [info1, info2], null);
+
+        // Каждая запись обновлена, и финальное сохранение идёт через рассаду.
+        await _seedlingsInfo.Received(1).UpdateAsync(info1);
+        await _seedlingsInfo.Received(1).UpdateAsync(info2);
+        await _seedlings.Received(1).UpdateAsync(seedling);
+    }
+
+    [Fact]
+    public async Task MarkSeedlingInfosDeadAsync_DisablesThenReenablesInfoAutoSave()
+    {
+        var seedling = new Seedling { Id = 1 };
+
+        var service = CreateService();
+        await service.MarkSeedlingInfosDeadAsync(seedling, [new SeedlingInfo { Id = 1 }], null);
+
+        // Автосохранение записей всходов выключается на время накопления и снова включается.
+        _seedlingsInfo.Received().AutoSaveChanges = false;
+        _seedlingsInfo.Received().AutoSaveChanges = true;
     }
 }
