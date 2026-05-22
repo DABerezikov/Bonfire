@@ -1,14 +1,14 @@
-using Bonfire.Services.Interfaces;
 using BonfireDB;
 using BonfireDB.Context;
+using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Services.Tests;
 
-// Интеграционные тесты GardenService на реальном EF (InMemory) + реальных репозиториях.
-// Проверяют read-методы, перенесённые из ViewModel в сервис (задача 1.2).
+// Интеграционные тесты GardenService на реальном EF (InMemory) + UoW.
+// Проверяют read-методы, перенесённые из ViewModel в сервис, на коротком контексте.
 public class GardenServiceIntegrationTests : IDisposable
 {
     private readonly ServiceProvider _sp;
@@ -16,8 +16,10 @@ public class GardenServiceIntegrationTests : IDisposable
 
     public GardenServiceIntegrationTests()
     {
+        // Фиксированное имя БД: все области (scopes) UoW делят один InMemory-стор.
+        var dbName = Guid.NewGuid().ToString();
         var services = new ServiceCollection();
-        services.AddDbContext<DbBonfire>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddDbContext<DbBonfire>(o => o.UseInMemoryDatabase(dbName));
         services.AddRepositoriesInDb();
         _sp = services.BuildServiceProvider();
         _db = _sp.GetRequiredService<DbBonfire>();
@@ -25,12 +27,7 @@ public class GardenServiceIntegrationTests : IDisposable
 
     public void Dispose() => _sp.Dispose();
 
-    private GardenService CreateService() => new(
-        _sp.GetRequiredService<IRepository<GardenPlan>>(),
-        _sp.GetRequiredService<IRepository<Garden>>(),
-        _sp.GetRequiredService<IRepository<Greenhouse>>(),
-        _sp.GetRequiredService<IRepository<GardenElement>>(),
-        _sp.GetRequiredService<IRepository<PlantingSpot>>());
+    private GardenService CreateService() => new(_sp.GetRequiredService<IUnitOfWorkFactory>());
 
     private async Task<(int planId, int gardenId, int bedId)> SeedAsync(int year = 2026)
     {

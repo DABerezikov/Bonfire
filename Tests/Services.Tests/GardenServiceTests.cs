@@ -11,9 +11,18 @@ public class GardenServiceTests
     private readonly IRepository<Greenhouse>    _greenhouses = Substitute.For<IRepository<Greenhouse>>();
     private readonly IRepository<GardenElement> _elements    = Substitute.For<IRepository<GardenElement>>();
     private readonly IRepository<PlantingSpot>  _spots       = Substitute.For<IRepository<PlantingSpot>>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
-    private GardenService CreateService() =>
-        new(_plans, _gardens, _greenhouses, _elements, _spots);
+    public GardenServiceTests()
+    {
+        _uow.Repository<GardenPlan>().Returns(_plans);
+        _uow.Repository<Garden>().Returns(_gardens);
+        _uow.Repository<Greenhouse>().Returns(_greenhouses);
+        _uow.Repository<GardenElement>().Returns(_elements);
+        _uow.Repository<PlantingSpot>().Returns(_spots);
+    }
+
+    private GardenService CreateService() => new(_uow.ToFactory());
 
     // ── CreatePlanAsync ───────────────────────────────────────────────────────
 

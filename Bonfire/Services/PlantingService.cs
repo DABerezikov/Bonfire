@@ -3,47 +3,53 @@ using System.Threading.Tasks;
 using Bonfire.Models;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
+using BonfireDB.Entities.Base;
+using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
+using MoonCalendar;
 
 namespace Bonfire.Services;
 
-internal class PlantingService(
-    IGardenService gardenService,
-    ISeedlingsService seedlingsService,
-    ISeedsService seedsService)
-    : IPlantingService
+// Бизнес-операция «посадить в ячейку» выполняется в ОДНОМ Unit of Work:
+// загрузка ячейки/рассады/семени, списание инвентаря, создание записи о рассаде
+// и перевод ячейки — всё в одном контексте и одним SaveChanges (атомарно).
+internal class PlantingService(IUnitOfWorkFactory uowFactory, MoonPhase lunar) : IPlantingService
 {
-    // Примечание: операция состоит из нескольких сохранений (рассада/семена + ячейка),
-    // каждое из которых коммитится отдельно. Истинная атомарность появится после
-    // внедрения Unit of Work (см. задачу 1.1).
     public async Task<PlantResult> PlantAsync(PlantRequest request)
     {
-        var spot = await gardenService.GetSpotAsync(request.SpotId);
+        await using var uow = uowFactory.Create();
+
+        var spot = await uow.Repository<PlantingSpot>().GetAsync(request.SpotId);
         if (spot is null) return new PlantResult(false, null);
 
         var newState = new PlantedSpotState();
         if (!spot.State.CanTransitionTo(newState)) return new PlantResult(false, null);
 
-        int? savedInfoId = request.Kind == PlantSourceKind.Seedling
-            ? await PlantFromSeedlingAsync(request)
-            : await PlantFromSeedAsync(request);
+        var info = request.Kind == PlantSourceKind.Seedling
+            ? await PlantFromSeedlingAsync(uow, request)
+            : await PlantFromSeedAsync(uow, request);
 
-        if (savedInfoId is null) return new PlantResult(false, null);
+        if (info is null) return new PlantResult(false, null);
 
-        await gardenService.ChangeSpotStateAsync(
-            spot, newState,
-            plantLabel:     request.PlantName,
-            plantedDate:    request.PlantedDate,
-            seedlingInfoId: savedInfoId);
+        // Перевод ячейки: метка, дата и привязка к записи о рассаде (через навигацию,
+        // чтобы FK SeedlingInfoId проставился после генерации ключа записи).
+        spot.TransitionTo(newState);
+        spot.Note        = request.PlantName;
+        spot.PlantedDate = request.PlantedDate;
+        spot.SeedlingInfo = info;
 
-        return new PlantResult(true, savedInfoId);
+        await uow.SaveChangesAsync();
+        return new PlantResult(true, info.Id);
     }
 
     // Высадка из готовой партии рассады: добавляем запись о высадке и списываем из остатка.
-    private async Task<int?> PlantFromSeedlingAsync(PlantRequest request)
+    private static async Task<SeedlingInfo?> PlantFromSeedlingAsync(IUnitOfWork uow, PlantRequest request)
     {
-        var seedling = await seedlingsService.GetSeedlingAsync(request.EntityId);
+        var seedling = await uow.Repository<Seedling>().GetAsync(request.EntityId);
         if (seedling is null) return null;
+
+        var available = request.IsWeightBased ? seedling.Weight : seedling.Quantity;
+        if (available <= 0) return null;
 
         var newInfo = new SeedlingInfo
         {
@@ -51,25 +57,38 @@ internal class PlantingService(
             SeedlingSource = PlantSources.FromSeeds,
             PlantPlace     = request.PlantPlace
         };
+        // Рассада отслеживается этим UoW — добавление в коллекцию проставит FK.
         seedling.SeedlingInfos.Add(newInfo);
-        var info = await seedlingsService.AddSeedlingInfo(newInfo);
+        await uow.Repository<SeedlingInfo>().AddAsync(newInfo);
+
+        var actualAmount = request.IsWeightBased
+            ? Math.Min(request.Amount, seedling.Weight)
+            : Math.Min(request.Amount, (double)seedling.Quantity);
 
         if (request.IsWeightBased)
-            seedling.Weight = Math.Max(0, seedling.Weight - request.Amount);
+            seedling.Weight = Math.Max(0, seedling.Weight - actualAmount);
         else
-            seedling.Quantity = Math.Max(0, seedling.Quantity - (int)Math.Round(request.Amount));
-        await seedlingsService.UpdateSeedling(seedling);
+            seedling.Quantity = Math.Max(0, seedling.Quantity - (int)Math.Round(actualAmount));
 
-        return info.Id;
+        return newInfo;
     }
 
     // Прямой посев семян: создаём новую рассаду из семени и списываем из пакета.
-    private async Task<int?> PlantFromSeedAsync(PlantRequest request)
+    private async Task<SeedlingInfo?> PlantFromSeedAsync(IUnitOfWork uow, PlantRequest request)
     {
-        var seed = await seedsService.GetSeedAsync(request.EntityId);
+        var seed = await uow.Repository<Seed>().GetAsync(request.EntityId);
         if (seed is null) return null;
 
-        var moonPhase = seedlingsService.Lunar.GetMoonPhase(request.PlantedDate);
+        var available = request.IsWeightBased
+            ? (seed.SeedsInfo.AmountSeedsWeight ?? 0)
+            : seed.SeedsInfo.AmountSeeds;
+        if (available <= 0) return null;
+
+        var actualAmount = request.IsWeightBased
+            ? Math.Min(request.Amount, available)
+            : Math.Min(request.Amount, (double)available);
+
+        var moonPhase = lunar.GetMoonPhase(request.PlantedDate);
         var newSeedlingInfo = new SeedlingInfo
         {
             LandingDate    = request.PlantedDate,
@@ -89,18 +108,18 @@ internal class PlantingService(
             SeedlingInfos  = [newSeedlingInfo]
         };
         if (request.IsWeightBased)
-            newSeedling.Weight = request.Amount;
+            newSeedling.Weight = actualAmount;
         else
-            newSeedling.Quantity = (int)Math.Round(request.Amount);
+            newSeedling.Quantity = (int)Math.Round(actualAmount);
 
-        var saved = await seedlingsService.MakeASeedling(newSeedling);
+        // Attach графа: новая рассада и запись → Added, существующее растение → Unchanged.
+        await uow.Repository<Seedling>().AddAsync(newSeedling);
 
         if (request.IsWeightBased)
-            seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - request.Amount);
+            seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - actualAmount);
         else
-            seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(request.Amount));
-        await seedsService.UpdateSeed(seed);
+            seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(actualAmount));
 
-        return saved.SeedlingInfos[0].Id;
+        return newSeedlingInfo;
     }
 }

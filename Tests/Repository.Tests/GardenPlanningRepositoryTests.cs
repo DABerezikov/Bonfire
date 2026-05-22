@@ -26,6 +26,7 @@ public class GardenPlanningRepositoryTests : IDisposable
         var planRepo = PlanRepo();
         var plan = new GardenPlan { Name = planName, Year = year };
         await planRepo.AddAsync(plan);
+        await _db.SaveChangesAsync();
 
         var garden = new Garden
         {
@@ -51,6 +52,7 @@ public class GardenPlanningRepositoryTests : IDisposable
         var plan = new GardenPlan { Name = "Огород 2026", Year = 2026 };
 
         await repo.AddAsync(plan);
+        await _db.SaveChangesAsync();
 
         var retrieved = await repo.GetAsync(plan.Id);
         Assert.NotNull(retrieved);
@@ -67,6 +69,7 @@ public class GardenPlanningRepositoryTests : IDisposable
 
         await repo.AddAsync(plan1);
         await repo.AddAsync(plan2);
+        await _db.SaveChangesAsync();
 
         var retrieved = await repo.GetAsync(plan2.Id);
         Assert.NotNull(retrieved);

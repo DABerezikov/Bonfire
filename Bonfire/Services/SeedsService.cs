@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,18 +10,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(
-    IRepository<Plant> plants,
-    IRepository<Seed> seeds,
-    IRepository<PlantSort> sort,
-    IRepository<PlantCulture> culture,
-    IRepository<Producer> producer,
-    IRepository<SeedsInfo> info)
-    : ISeedsService
+internal class SeedsService(IUnitOfWorkFactory uowFactory) : ISeedsService
 {
-    public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync() => await seeds.Items.ToListAsync();
+    public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync()
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Seed>().Items.ToListAsync();
+    }
 
-    public async Task<Seed?> GetSeedAsync(int id) => await seeds.GetAsync(id);
+    public async Task<Seed?> GetSeedAsync(int id)
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Seed>().GetAsync(id);
+    }
 
     public async Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest r, IReadOnlyList<Seed> existingSeeds)
     {
@@ -75,16 +76,22 @@ internal class SeedsService(
             seedsInfo.AmountSeedsWeight = weight * r.PackCount;
         }
 
-        var newSeed = await MakeASeed(plant, seedsInfo);
+        // Граф нового семени строится несколькими Add в рамках ОДНОГО UoW.
+        await using var uow = uowFactory.Create();
+        var newSeed = await MakeASeed(uow, plant, seedsInfo);
+        await uow.SaveChangesAsync();
         return (newSeed, true);
     }
 
     public async Task ReturnSeedsFromSeedling(int seedId, double quantity, double? weight)
     {
+        await using var uow = uowFactory.Create();
+        var seeds = uow.Repository<Seed>();
         var seed = await seeds.Items.FirstAsync(s => s.Id == seedId);
         seed.SeedsInfo.AmountSeeds       += quantity;
         seed.SeedsInfo.AmountSeedsWeight += weight;
         await seeds.UpdateAsync(seed);
+        await uow.SaveChangesAsync();
     }
 
     private static bool ExistsProducer(AddSeedRequest r, IReadOnlyList<Seed> existing) =>
@@ -126,62 +133,65 @@ internal class SeedsService(
         return new Plant { PlantCulture = plantCulture, PlantSort = plantSort };
     }
 
-    internal async Task<Seed> MakeASeed(Plant plant, SeedsInfo seedsInfo)
+    // Строит граф нового семени в рамках переданного UoW (без SaveChanges — его делает вызывающий).
+    internal async Task<Seed> MakeASeed(IUnitOfWork uow, Plant plant, SeedsInfo seedsInfo)
     {
         if (plant.Id == 0)
         {
             if (plant.PlantCulture.Id == 0)
-                plant.PlantCulture = await culture.AddAsync(plant.PlantCulture).ConfigureAwait(false);
+                plant.PlantCulture = await uow.Repository<PlantCulture>().AddAsync(plant.PlantCulture).ConfigureAwait(false);
             if (plant.PlantSort.Producer.Id == 0)
-                plant.PlantSort.Producer = await producer.AddAsync(plant.PlantSort.Producer).ConfigureAwait(false);
+                plant.PlantSort.Producer = await uow.Repository<Producer>().AddAsync(plant.PlantSort.Producer).ConfigureAwait(false);
             if (plant.PlantSort.Id == 0)
-                plant.PlantSort = await sort.AddAsync(plant.PlantSort).ConfigureAwait(false);
-            plant = await plants.AddAsync(plant);
+                plant.PlantSort = await uow.Repository<PlantSort>().AddAsync(plant.PlantSort).ConfigureAwait(false);
+            plant = await uow.Repository<Plant>().AddAsync(plant);
         }
 
         if (seedsInfo.Id == 0)
-            seedsInfo = await info.AddAsync(seedsInfo);
+            seedsInfo = await uow.Repository<SeedsInfo>().AddAsync(seedsInfo);
 
         var seed = new Seed { Plant = plant, SeedsInfo = seedsInfo };
         seed.SeedsInfo.Seed = seed;
-        return await seeds.AddAsync(seed);
+        return await uow.Repository<Seed>().AddAsync(seed);
     }
 
     public async Task<Seed> UpdateSeed(Seed seed)
     {
-        await seeds.UpdateAsync(seed);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Seed>().UpdateAsync(seed);
+        await uow.SaveChangesAsync();
         return seed;
     }
-        
+
     public async Task<Seed> DeleteSeed(Seed seed)
     {
-            
-        await seeds.RemoveAsync(seed.Id);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Seed>().RemoveAsync(seed.Id);
+        await uow.SaveChangesAsync();
         return seed;
-
     }
 
     public async Task<PlantSort> UpdateSort(PlantSort sort1)
     {
-
-        await sort.UpdateAsync(sort1);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<PlantSort>().UpdateAsync(sort1);
+        await uow.SaveChangesAsync();
         return sort1;
-
     }
 
     public async Task<PlantCulture> UpdateCulture(PlantCulture culture1)
     {
-
-        await culture.UpdateAsync(culture1);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<PlantCulture>().UpdateAsync(culture1);
+        await uow.SaveChangesAsync();
         return culture1;
-
     }
 
     public async Task<Producer> UpdateProducer(Producer producer1)
     {
-
-        await producer.UpdateAsync(producer1);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Producer>().UpdateAsync(producer1);
+        await uow.SaveChangesAsync();
         return producer1;
-
     }
 }

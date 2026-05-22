@@ -9,90 +9,82 @@ using MoonCalendar;
 
 namespace Bonfire.Services;
 
-internal class SeedlingsService(
-    IRepository<Plant> plants,
-    IRepository<Seedling> seedlings,
-    IRepository<PlantSort> sort,
-    IRepository<PlantCulture> culture,
-    IRepository<Producer> producer,
-    IRepository<SeedlingInfo> seedlingsInfo,
-    IRepository<Replanting> replantings,
-    IRepository<Treatment> treatments,
-    MoonPhase lunar)
-    : ISeedlingsService
+internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar) : ISeedlingsService
 {
-    private readonly IRepository<Plant> _plants = plants;
-    private readonly IRepository<Seedling> _seedlings = seedlings;
-    private readonly IRepository<PlantSort> _sort = sort;
-    private readonly IRepository<PlantCulture> _culture = culture;
-    private readonly IRepository<Producer> _producer = producer;
-    private readonly IRepository<SeedlingInfo> _seedlingsInfo = seedlingsInfo;
-    private readonly IRepository<Replanting> _replantings = replantings;
-    private readonly IRepository<Treatment> _treatments = treatments;
-
     public MoonPhase Lunar { get; } = lunar;
 
-    public async Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync() => await _seedlings.Items.ToListAsync();
+    public async Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync()
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Seedling>().Items.ToListAsync();
+    }
 
-    public async Task<Seedling?> GetSeedlingAsync(int id) => await _seedlings.GetAsync(id);
+    public async Task<Seedling?> GetSeedlingAsync(int id)
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Seedling>().GetAsync(id);
+    }
 
     public async Task<Seedling> MakeASeedling(Seedling seedling)
     {
-        var info = seedling.SeedlingInfos;
-        foreach (var seedlingInfo in info)
-            await _seedlingsInfo.AddAsync(seedlingInfo);
-        return await _seedlings.AddAsync(seedling);
+        await using var uow = uowFactory.Create();
+        // Attach всего графа: новая рассада и её записи (Id == 0) → Added,
+        // существующее растение (Id != 0) → Unchanged. Связь «рассада → запись»
+        // расставляет FK по навигации, поэтому отдельный Add записей не нужен.
+        await uow.Repository<Seedling>().AddAsync(seedling);
+        await uow.SaveChangesAsync();
+        return seedling;
     }
 
     public async Task<Seedling> UpdateSeedling(Seedling seedling)
     {
-        await _seedlings.UpdateAsync(seedling);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Seedling>().UpdateAsync(seedling);
+        await uow.SaveChangesAsync();
         return seedling;
     }
 
     public async Task<Seedling> DeleteSeedling(Seedling seedling)
     {
-        await _seedlings.RemoveAsync(seedling.Id);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Seedling>().RemoveAsync(seedling.Id);
+        await uow.SaveChangesAsync();
         return seedling;
     }
 
     public async Task<SeedlingInfo> AddSeedlingInfo(SeedlingInfo info)
     {
-        return await _seedlingsInfo.AddAsync(info);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<SeedlingInfo>().AddAsync(info);
+        await uow.SaveChangesAsync();
+        return info;
     }
 
     public async Task UpdateSeedlingInfo(SeedlingInfo info)
     {
-        if (!(info.Replants?.Count > 0))
-        {
-            await _seedlingsInfo.UpdateAsync(info);
-            return;
-        }
-        foreach (var replant in info.Replants!.Where(replant => replant.Id == 0))
-            await _replantings.AddAsync(replant);
-        await _seedlingsInfo.UpdateAsync(info);
+        await using var uow = uowFactory.Create();
+        // Update(graph) сам добавит новые пересадки (Id == 0 → Added) и расставит FK,
+        // но добавляем их явно, чтобы порядок и состояние были предсказуемы.
+        if (info.Replants?.Count > 0)
+            foreach (var replant in info.Replants.Where(r => r.Id == 0))
+                await uow.Repository<Replanting>().AddAsync(replant);
+        await uow.Repository<SeedlingInfo>().UpdateAsync(info);
+        await uow.SaveChangesAsync();
     }
 
     public async Task MarkSeedlingInfosDeadAsync(Seedling seedling, IReadOnlyList<SeedlingInfo> infos, string? deathNote)
     {
-        // Накапливаем правки записей всходов без промежуточных сохранений…
-        _seedlingsInfo.AutoSaveChanges = false;
-        try
+        await using var uow = uowFactory.Create();
+        var infoRepo = uow.Repository<SeedlingInfo>();
+        foreach (var info in infos)
         {
-            foreach (var info in infos)
-            {
-                info.IsDead = true;
-                info.DeathNote = deathNote;
-                await _seedlingsInfo.UpdateAsync(info);
-            }
+            info.IsDead = true;
+            info.DeathNote = deathNote;
+            await infoRepo.UpdateAsync(info);
         }
-        finally
-        {
-            _seedlingsInfo.AutoSaveChanges = true;
-        }
-
-        // …и сбрасываем их одним SaveChanges вместе с самой рассадой
-        // (репозитории делят общий DbContext).
-        await _seedlings.UpdateAsync(seedling);
+        // Все правки записей всходов и сама рассада сохраняются одним SaveChanges
+        // в общем DbContext этого UoW — атомарно.
+        await uow.Repository<Seedling>().UpdateAsync(seedling);
+        await uow.SaveChangesAsync();
     }
 }

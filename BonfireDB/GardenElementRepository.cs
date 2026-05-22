@@ -6,12 +6,10 @@ using Microsoft.EntityFrameworkCore;
 namespace BonfireDB;
 
 // GardenElement — абстрактный: не удовлетворяет ограничению new() у DbRepository<T>.
-// Реализуем IRepository<GardenElement> напрямую.
+// Реализуем IRepository<GardenElement> напрямую. Сохранение — за Unit of Work.
 class GardenElementRepository(DbBonfire db) : IRepository<GardenElement>
 {
     private readonly DbSet<GardenElement> _set = db.GardenElements;
-
-    public bool AutoSaveChanges { get; set; } = true;
 
     public IQueryable<GardenElement> Items => _set
         .Include(e => e.Plot)
@@ -25,36 +23,30 @@ class GardenElementRepository(DbBonfire db) : IRepository<GardenElement>
 
     public GardenElement Add(GardenElement item)
     {
-        db.Entry(item).State = EntityState.Added;
-        if (AutoSaveChanges) db.SaveChanges();
+        if (item is null) throw new ArgumentNullException(nameof(item));
+        db.Attach(item);
         return item;
     }
 
-    public async Task<GardenElement> AddAsync(GardenElement item, CancellationToken cancel = default)
-    {
-        db.Entry(item).State = EntityState.Added;
-        if (AutoSaveChanges) await db.SaveChangesAsync(cancel);
-        return item;
-    }
+    public Task<GardenElement> AddAsync(GardenElement item, CancellationToken cancel = default)
+        => Task.FromResult(Add(item));
 
     public void Update(GardenElement item)
     {
-        db.Entry(item).State = EntityState.Modified;
-        if (AutoSaveChanges) db.SaveChanges();
+        if (item is null) throw new ArgumentNullException(nameof(item));
+        db.Update(item);
     }
 
-    public async Task UpdateAsync(GardenElement item, CancellationToken cancel = default)
+    public Task UpdateAsync(GardenElement item, CancellationToken cancel = default)
     {
-        db.Entry(item).State = EntityState.Modified;
-        if (AutoSaveChanges) await db.SaveChangesAsync(cancel);
+        Update(item);
+        return Task.CompletedTask;
     }
 
     public void Remove(int id)
     {
-        var item = _set.Local.FirstOrDefault(e => e.Id == id)
-                   ?? _set.Find(id);
+        var item = _set.Local.FirstOrDefault(e => e.Id == id) ?? _set.Find(id);
         if (item is not null) db.Remove(item);
-        if (AutoSaveChanges) db.SaveChanges();
     }
 
     public async Task RemoveAsync(int id, CancellationToken cancel = default)
@@ -62,6 +54,5 @@ class GardenElementRepository(DbBonfire db) : IRepository<GardenElement>
         var item = _set.Local.FirstOrDefault(e => e.Id == id)
                    ?? await _set.FindAsync([id], cancel);
         if (item is not null) db.Remove(item);
-        if (AutoSaveChanges) await db.SaveChangesAsync(cancel);
     }
 }

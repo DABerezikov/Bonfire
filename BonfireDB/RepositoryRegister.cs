@@ -8,6 +8,8 @@ namespace BonfireDB;
 public static class RepositoryRegister
 {
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
+        // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
+        .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddScoped<IRepository<Plant>, PlantRepository>()
         .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
         .AddScoped<IRepository<PlantSort>, PlantSortRepository>()
