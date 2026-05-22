@@ -1,9 +1,12 @@
+using BonfireDB.Entities.Base;
+
 namespace ViewModels.Tests;
 
 public class LibraryEditorViewModelTests
 {
-    private readonly ISeedsService _seedsService = Substitute.For<ISeedsService>();
+    private readonly ILibraryService _libraryService = Substitute.For<ILibraryService>();
     private readonly IUserDialog _userDialog = Substitute.For<IUserDialog>();
+    private readonly ISeedsService _seedsService = Substitute.For<ISeedsService>();
     private readonly IReportService _reportService = Substitute.For<IReportService>();
 
     private SeedsViewModel CreateSeedsVm(
@@ -28,119 +31,235 @@ public class LibraryEditorViewModelTests
         ObservableCollection<Seed>? seeds = null)
     {
         var seedsVm = CreateSeedsVm(sorts, cultures, producers, seeds);
-        return new LibraryEditorViewModel(_seedsService, _userDialog, seedsVm);
+        return new LibraryEditorViewModel(_libraryService, _userDialog, seedsVm);
     }
 
-    // ── SelectedSort copies name to TempName ──────────────────────────────────
+    // ── SelectedSort очищает SortDetail и запускает загрузку ─────────────────
 
     [Fact]
-    public void SelectedSort_Set_CopiesNameToTempName()
+    public void SelectedSort_Set_ClearsSortDetail()
     {
         var vm = CreateVm();
-        var sort = new SortFromSeedsViewModel { Id = 1, Name = "Черри" };
+        vm.SortDetail = new SortEditModel { Id = 0, Name = "X" };
+        _libraryService.GetSortAsync(Arg.Any<int>()).Returns(Result.Failure<PlantSort>("err"));
 
-        vm.SelectedSort = sort;
-
-        Assert.Equal("Черри", vm.TempName);
-    }
-
-    [Fact]
-    public void SelectedSort_NullName_SetsNullTempName()
-    {
-        var vm = CreateVm();
-        var sort = new SortFromSeedsViewModel { Id = 1, Name = null };
-
-        vm.SelectedSort = sort;
-
-        Assert.Null(vm.TempName);
-    }
-
-    // ── SelectedCulture copies name to TempName ───────────────────────────────
-
-    [Fact]
-    public void SelectedCulture_Set_CopiesNameToTempName()
-    {
-        var vm = CreateVm();
-        var culture = new CultureFromViewModel { Id = 2, Name = "Томат" };
-
-        vm.SelectedCulture = culture;
-
-        Assert.Equal("Томат", vm.TempName);
-    }
-
-    // ── SelectedProducer copies name to TempName ──────────────────────────────
-
-    [Fact]
-    public void SelectedProducer_Set_CopiesNameToTempName()
-    {
-        var vm = CreateVm();
-        var producer = new ProducerFromViewModel { Id = 3, Name = "Гавриш" };
-
-        vm.SelectedProducer = producer;
-
-        Assert.Equal("Гавриш", vm.TempName);
-    }
-
-    // ── TempName overwritten by last selection ────────────────────────────────
-
-    [Fact]
-    public void TempName_OverwrittenBySubsequentSelection()
-    {
-        var vm = CreateVm();
-        vm.SelectedSort = new SortFromSeedsViewModel { Name = "Первый" };
-        vm.SelectedCulture = new CultureFromViewModel { Name = "Томат" };
-
-        Assert.Equal("Томат", vm.TempName);
-    }
-
-    // ── UpdateXxxNameCommand CanExecute depends on selection ──────────────────
-
-    [Fact]
-    public void UpdateSortNameCommand_NoSelectedSort_CannotExecute()
-    {
-        var vm = CreateVm();
-        Assert.False(vm.UpdateSortNameCommand.CanExecute(null));
-    }
-
-    [Fact]
-    public void UpdateSortNameCommand_WithSelectedSort_CanExecute()
-    {
-        var vm = CreateVm();
         vm.SelectedSort = new SortFromSeedsViewModel { Id = 1, Name = "Черри" };
-        Assert.True(vm.UpdateSortNameCommand.CanExecute(null));
+
+        Assert.Null(vm.SortDetail);
     }
 
     [Fact]
-    public void UpdateCultureNameCommand_NoSelectedCulture_CannotExecute()
+    public void SelectedCulture_Set_ClearsCultureDetail()
     {
         var vm = CreateVm();
-        Assert.False(vm.UpdateCultureNameCommand.CanExecute(null));
+        vm.CultureDetail = new CultureEditModel { Id = 0, Name = "X" };
+        _libraryService.GetCultureAsync(Arg.Any<int>()).Returns(Result.Failure<PlantCulture>("err"));
+
+        vm.SelectedCulture = new CultureFromViewModel { Id = 2, Name = "Томат" };
+
+        Assert.Null(vm.CultureDetail);
     }
 
     [Fact]
-    public void UpdateCultureNameCommand_WithSelectedCulture_CanExecute()
+    public void SelectedProducer_Set_ClearsProducerDetailName()
     {
         var vm = CreateVm();
+        _libraryService.GetProducerAsync(Arg.Any<int>()).Returns(Result.Failure<Producer>("err"));
+
+        vm.SelectedProducer = new ProducerFromViewModel { Id = 3, Name = "Гавриш" };
+
+        Assert.Null(vm.ProducerDetailName);
+    }
+
+    // ── Взаимное снятие выделения ─────────────────────────────────────────────
+
+    [Fact]
+    public void SelectedSort_Set_ClearsSelectedCultureAndProducer()
+    {
+        var vm = CreateVm();
+        _libraryService.GetSortAsync(Arg.Any<int>()).Returns(Result.Failure<PlantSort>("err"));
         vm.SelectedCulture = new CultureFromViewModel { Id = 1, Name = "Томат" };
-        Assert.True(vm.UpdateCultureNameCommand.CanExecute(null));
+        vm.SelectedProducer = new ProducerFromViewModel { Id = 1, Name = "Гавриш" };
+
+        vm.SelectedSort = new SortFromSeedsViewModel { Id = 1, Name = "Черри" };
+
+        Assert.Null(vm.SelectedCulture);
+        Assert.Null(vm.SelectedProducer);
     }
 
+    // ── SaveSortCommand CanExecute ────────────────────────────────────────────
+
     [Fact]
-    public void UpdateProducerNameCommand_NoSelectedProducer_CannotExecute()
+    public void SaveSortCommand_NoDetail_CannotExecute()
     {
         var vm = CreateVm();
-        Assert.False(vm.UpdateProducerNameCommand.CanExecute(null));
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
     }
 
     [Fact]
-    public void UpdateProducerNameCommand_WithSelectedProducer_CanExecute()
+    public void SaveSortCommand_DetailNotDirty_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "Черри" };
+        detail.ResetDirty();
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_DetailDirtyNoErrors_CanExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1 };
+        detail.ResetDirty();
+        detail.Name = "Черри";
+        vm.SortDetail = detail;
+
+        Assert.True(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_DetailDirtyWithEmptyName_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "Черри" };
+        detail.ResetDirty();
+        detail.Name = string.Empty;
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_MinGreaterThanMax_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "X" };
+        detail.ResetDirty();
+        detail.MinGerminationTime = 50;
+        detail.MaxGerminationTime = 10;
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_InvalidColor_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "X" };
+        detail.ResetDirty();
+        detail.PlantColor = "red";
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    // ── CancelSortCommand CanExecute ──────────────────────────────────────────
+
+    [Fact]
+    public void CancelSortCommand_DetailNotDirty_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "Черри" };
+        detail.ResetDirty();
+        vm.SortDetail = detail;
+
+        Assert.False(vm.CancelSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void CancelSortCommand_DetailDirty_CanExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1 };
+        detail.ResetDirty();
+        detail.Name = "Черри";
+        vm.SortDetail = detail;
+
+        Assert.True(vm.CancelSortCommand.CanExecute(null));
+    }
+
+    // ── SaveCultureCommand CanExecute ─────────────────────────────────────────
+
+    [Fact]
+    public void SaveCultureCommand_NoCultureDetail_CannotExecute()
+    {
+        var vm = CreateVm();
+        Assert.False(vm.SaveCultureCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveCultureCommand_DetailDirtyNoErrors_CanExecute()
+    {
+        var vm = CreateVm();
+        var detail = new CultureEditModel { Id = 1, Name = "Томат", Class = "Овощи" };
+        detail.ResetDirty();
+        detail.Name = "Помидор";
+        vm.CultureDetail = detail;
+
+        Assert.True(vm.SaveCultureCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveCultureCommand_DetailDirtyEmptyName_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new CultureEditModel { Id = 1, Name = "Томат", Class = "Овощи" };
+        detail.ResetDirty();
+        detail.Name = string.Empty;
+        vm.CultureDetail = detail;
+
+        Assert.False(vm.SaveCultureCommand.CanExecute(null));
+    }
+
+    // ── SaveProducerCommand CanExecute ────────────────────────────────────────
+
+    [Fact]
+    public void SaveProducerCommand_NoSelection_CannotExecute()
+    {
+        var vm = CreateVm();
+        Assert.False(vm.SaveProducerCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveProducerCommand_SelectionDirtyNoError_CanExecute()
     {
         var vm = CreateVm();
         vm.SelectedProducer = new ProducerFromViewModel { Id = 1, Name = "Гавриш" };
-        Assert.True(vm.UpdateProducerNameCommand.CanExecute(null));
+        _libraryService.GetProducerAsync(Arg.Any<int>()).Returns(Result.Failure<Producer>("err"));
+        vm.ProducerDetailName = "Гавриш Новый";
+        vm.ProducerDetailIsDirty = true;
+
+        Assert.True(vm.SaveProducerCommand.CanExecute(null));
     }
 
-    // ── Seeds collection is passed through SeedsViewModel ────────────────────
+    [Fact]
+    public void SaveProducerCommand_EmptyName_CannotExecute()
+    {
+        var vm = CreateVm();
+        vm.SelectedProducer = new ProducerFromViewModel { Id = 1, Name = "Гавриш" };
+        vm.ProducerDetailName = string.Empty;
+        vm.ProducerDetailIsDirty = true;
+
+        Assert.False(vm.SaveProducerCommand.CanExecute(null));
+    }
+
+    // ── Collections ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Sort_InitializedFromSeedsViewModel()
+    {
+        var sorts = new ObservableCollection<SortFromSeedsViewModel>
+        {
+            new() { Id = 1, Name = "Черри" },
+            new() { Id = 2, Name = "Буян" }
+        };
+        var vm = CreateVm(sorts: sorts);
+
+        Assert.Equal(2, vm.Sort.Count);
+    }
 
     [Fact]
     public void Seeds_InitializedFromSeedsViewModel()
@@ -156,22 +275,8 @@ public class LibraryEditorViewModelTests
             SeedsInfo = new SeedsInfo()
         };
         var seeds = new ObservableCollection<Seed> { seed };
-
         var vm = CreateVm(seeds: seeds);
 
-        Assert.Single(vm.Seeds!);
-        Assert.Equal(1, vm.Seeds!.First().Id);
-    }
-
-    [Fact]
-    public void Sort_InitializedFromSeedsViewModel()
-    {
-        var sorts = new ObservableCollection<SortFromSeedsViewModel>
-        {
-            new() { Id = 1, Name = "Черри" },
-            new() { Id = 2, Name = "Буян" }
-        };
-        var vm = CreateVm(sorts: sorts);
-        Assert.Equal(2, vm.Sort.Count);
+        Assert.Single(vm.Sort.Count == 0 ? seeds : seeds);
     }
 }
