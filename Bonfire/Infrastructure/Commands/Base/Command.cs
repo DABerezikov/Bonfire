@@ -31,7 +31,14 @@ internal abstract class Command : ICommand
     void ICommand.Execute(object parameter)
     {
         if (!((ICommand)this).CanExecute(parameter)) return;
-        Execute(parameter);
+        try
+        {
+            Execute(parameter);
+        }
+        catch (Exception ex)
+        {
+            CommandExceptionHandler.Report(ex);
+        }
     }
 
     protected virtual bool CanExecute(object p) => true;

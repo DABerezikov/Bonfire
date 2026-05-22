@@ -38,6 +38,12 @@ internal abstract class CommandAsync : ICommand
             Executable = false;
             await ExecuteAsync(parameter);
         }
+        catch (Exception ex)
+        {
+            // async void не даёт вызывающему коду перехватить исключение —
+            // иначе любая ошибка команды роняет приложение. Передаём в общий обработчик.
+            CommandExceptionHandler.Report(ex);
+        }
         finally
         {
             // Сбрасываем блокировку всегда — и при успехе, и при ошибке.
