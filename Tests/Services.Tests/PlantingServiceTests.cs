@@ -126,36 +126,114 @@ public class PlantingServiceTests : IDisposable
     // ── Посадка из рассады ────────────────────────────────────────────────────
 
     [Fact]
-    public async Task PlantAsync_FromSeedling_ReducesSourceQuantity()
+    public async Task PlantAsync_FromGerminatedSeedling_ReducesSourceAndCreatesPlantedBatch()
     {
         var spotId = await SeedSpotAsync();
-        var seedlingId = await SeedSeedlingAsync(quantity: 10);
+        var seedlingId = await SeedSeedlingAsync(germinated: 3); // 3 взошедших живых
 
-        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 3));
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2));
 
         Assert.True(result.Success);
         Assert.NotNull(result.SeedlingInfoId);
 
-        var seedling = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
-        Assert.Equal(7, seedling.Quantity); // 10 − 3 = 7
+        // Источник: высажено 2 → Осталось = 3 − 2 = 1.
+        var source = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
+        Assert.Equal(2, source.PlantedOut);
+
+        // Отдельная «высаженная партия» — новая Seedling с количеством 2, привязанная к грядке.
+        var batch = await _fx.QueryAsync(db => db.Seedlings.FirstOrDefaultAsync(s => s.Id != seedlingId));
+        Assert.NotNull(batch);
+        Assert.Equal(2, batch!.Quantity);
+        Assert.Equal("План / Участок / Грядка", batch.PlantPlace);
+        Assert.True(batch.IsPlantedInBed); // партия помечена как уже в грядке
+        Assert.Equal(2, await _fx.QueryAsync(db => db.Seedlings.CountAsync())); // источник + партия
+        Assert.Equal(1, await _fx.QueryAsync(db => db.Plants.CountAsync()));     // растение не продублировано
 
         var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
         Assert.Equal(nameof(PlantedSpotState), spot.StateTypeName);
         Assert.Equal(result.SeedlingInfoId, spot.SeedlingInfoId);
         Assert.Equal("Огурец Кураж", spot.Note);
+
+        var info = await _fx.QueryAsync(db => db.SeedlingInfos.FirstAsync(i => i.Id == result.SeedlingInfoId));
+        Assert.Equal("План / Участок / Грядка", info.PlantPlace);
     }
 
     [Fact]
-    public async Task PlantAsync_FromSeedling_DeductsWeight()
+    public async Task PlantAsync_FromSeedling_NotGerminated_ReturnsFailure()
     {
         var spotId = await SeedSpotAsync();
-        var seedlingId = await SeedSeedlingAsync(quantity: 0, weight: 10.0);
+        var seedlingId = await SeedSeedlingAsync(quantity: 10, germinated: 0); // посеяно, но не взошло
 
-        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, weight: true, amount: 3));
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 3));
+
+        Assert.False(result.Success);
+        var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
+        Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
+    }
+
+    [Fact]
+    public async Task PlantAsync_FromSeedling_AmountExceedsGerminated_ClampsToAvailable()
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(germinated: 2); // только 2 взошедших
+
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 5));
 
         Assert.True(result.Success);
         var seedling = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
-        Assert.Equal(7.0, seedling.Weight); // 10.0 − 3.0 = 7.0
+        Assert.Equal(2, seedling.PlantedOut); // не больше доступных 2
+    }
+
+    [Fact]
+    public async Task PlantAsync_FromWeightSownSeedling_PlantsByGerminatedCountNotWeight()
+    {
+        var spotId = await SeedSpotAsync();
+        // Рассада посеяна по весу (3 г), но взошло 4 ростка — сажаем штучно.
+        var seedlingId = await SeedSeedlingAsync(quantity: 0, weight: 3.0, germinated: 4);
+
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2));
+
+        Assert.True(result.Success);
+        var source = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
+        Assert.Equal(2, source.PlantedOut);  // высажено 2 из 4 взошедших
+        Assert.Equal(3.0, source.Weight);    // вес источника не списывается
+        var batch = await _fx.QueryAsync(db => db.Seedlings.FirstOrDefaultAsync(s => s.Id != seedlingId));
+        Assert.Equal(2, batch!.Quantity);    // партия штучная
+    }
+
+    [Fact]
+    public async Task PlantAsync_PlantedBatchWithGermination_NotRePlantable()
+    {
+        // Высаживаем из взошедшей рассады → создаётся партия в грядке.
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(germinated: 3);
+        var first = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2));
+        Assert.True(first.Success);
+
+        // На партии регистрируем всход (рост в грядке) — но повторно сажать её нельзя.
+        var batchId = await _fx.QueryAsync(async db =>
+        {
+            var batch = await db.Seedlings.Include(s => s.SeedlingInfos).FirstAsync(s => s.Id != seedlingId);
+            batch.SeedlingInfos.Add(new SeedlingInfo { GerminationDate = DateTime.Today, SeedlingNumber = 1 });
+            await db.SaveChangesAsync();
+            return batch.Id;
+        });
+
+        var spot2 = await SeedSpotAsync();
+        var result = await CreateService().PlantAsync(SeedlingRequest(spot2, batchId, amount: 1));
+
+        Assert.False(result.Success); // партия уже в грядке — не доступна к посадке
+    }
+
+    [Fact]
+    public async Task PlantAsync_WeightSownSeedling_NotGerminated_NotAvailable()
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(quantity: 0, weight: 3.0, germinated: 0); // посеяно по весу, не взошло
+
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 1));
+
+        Assert.False(result.Success); // без всходов рассада к высадке недоступна
     }
 
     // ── Посадка из семян ──────────────────────────────────────────────────────

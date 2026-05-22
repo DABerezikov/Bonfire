@@ -632,6 +632,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             Producer       = seedling.Plant.PlantSort.Producer.Name,
             Weight         = seedling.Weight,
             Quantity       = seedling.Quantity,
+            PlantedOut     = seedling.PlantedOut,
             LandingData    = landingDate,
             IsDead         = metaInfo?.IsDead ?? false,
             ReplantingData = metaInfo?.Replants?.FirstOrDefault()?.ReplantingDate,

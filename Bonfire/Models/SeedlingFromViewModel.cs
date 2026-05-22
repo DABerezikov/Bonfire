@@ -53,5 +53,9 @@ public class SeedlingFromViewModel
 
     public int CountGerminate => SeedlingInfos != null && SeedlingInfos.Count != 0 ? SeedlingInfos.Count : 0;
 
-    public int? Balance => SeedlingInfos == null ? null : CountGerminate - SeedlingInfos.Count(s => s.IsDead == true);
+    /// <summary>Сколько взошедших ростков уже высажено в грядки.</summary>
+    public int PlantedOut { get; set; }
+
+    // Осталось = взошедшие живые − высаженные в грядки.
+    public int? Balance => SeedlingInfos == null ? null : CountGerminate - SeedlingInfos.Count(s => s.IsDead == true) - PlantedOut;
 }

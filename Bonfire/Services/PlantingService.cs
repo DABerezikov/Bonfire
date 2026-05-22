@@ -42,84 +42,82 @@ internal class PlantingService(IUnitOfWorkFactory uowFactory, MoonPhase lunar) :
         return new PlantResult(true, info.Id);
     }
 
-    // Высадка из готовой партии рассады: добавляем запись о высадке и списываем из остатка.
-    private static async Task<SeedlingInfo?> PlantFromSeedlingAsync(IUnitOfWork uow, PlantRequest request)
+    // Высадка взошедшей рассады: списываем из доступного у источника и создаём
+    // отдельную «высаженную партию» (новую Seedling в грядке) — отдельной строкой.
+    // Из рассады сажают ВЗОШЕДШИЕ живые ростки штучно (вес рассады не при чём).
+    // Доступно = взошедшие живые − уже высаженные; нельзя высадить больше доступного.
+    private async Task<SeedlingInfo?> PlantFromSeedlingAsync(IUnitOfWork uow, PlantRequest request)
     {
-        var seedling = await uow.Repository<Seedling>().GetAsync(request.EntityId);
-        if (seedling is null) return null;
+        var source = await uow.Repository<Seedling>().GetAsync(request.EntityId);
+        if (source is null) return null;
+        if (source.IsPlantedInBed) return null; // уже в грядке — повторно не сажаем (только пересадка)
 
-        var available = request.IsWeightBased ? seedling.Weight : seedling.Quantity;
-        if (available <= 0) return null;
+        var available = SeedlingAvailability.Available(source);
+        if (available <= 0) return null; // взошедшей живой рассады для высадки нет
 
-        var newInfo = new SeedlingInfo
-        {
-            LandingDate    = request.PlantedDate,
-            SeedlingSource = PlantSources.FromSeeds,
-            PlantPlace     = request.PlantPlace
-        };
-        // Рассада отслеживается этим UoW — добавление в коллекцию проставит FK.
-        seedling.SeedlingInfos.Add(newInfo);
-        await uow.Repository<SeedlingInfo>().AddAsync(newInfo);
+        var amount = Math.Min(request.Amount, available);
 
-        var actualAmount = request.IsWeightBased
-            ? Math.Min(request.Amount, seedling.Weight)
-            : Math.Min(request.Amount, (double)seedling.Quantity);
+        // Источнику засчитываем высаженные ростки (Quantity/Weight/посеяно не трогаем).
+        source.PlantedOut += (int)Math.Round(amount);
 
-        if (request.IsWeightBased)
-            seedling.Weight = Math.Max(0, seedling.Weight - actualAmount);
-        else
-            seedling.Quantity = Math.Max(0, seedling.Quantity - (int)Math.Round(actualAmount));
-
-        return newInfo;
+        // Высаженная партия — штучная (ростки), даже если рассада посеяна по весу.
+        return CreatePlantedBatch(uow, source.Plant, source.SeedId, amount, weightBased: false,
+            request.PlantedDate, request.PlantPlace);
     }
 
-    // Прямой посев семян: создаём новую рассаду из семени и списываем из пакета.
+    // Прямой посев семян: списываем из пакета и создаём новую рассаду в грядке.
+    // Нельзя посеять больше, чем есть семян.
     private async Task<SeedlingInfo?> PlantFromSeedAsync(IUnitOfWork uow, PlantRequest request)
     {
         var seed = await uow.Repository<Seed>().GetAsync(request.EntityId);
         if (seed is null) return null;
 
-        var available = request.IsWeightBased
-            ? (seed.SeedsInfo.AmountSeedsWeight ?? 0)
-            : seed.SeedsInfo.AmountSeeds;
-        if (available <= 0) return null;
+        var available = request.IsWeightBased ? (seed.SeedsInfo.AmountSeedsWeight ?? 0) : seed.SeedsInfo.AmountSeeds;
+        if (available <= 0) return null; // семян нет
 
-        var actualAmount = request.IsWeightBased
-            ? Math.Min(request.Amount, available)
-            : Math.Min(request.Amount, (double)available);
+        var amount = Math.Min(request.Amount, available);
 
-        var moonPhase = lunar.GetMoonPhase(request.PlantedDate);
-        var newSeedlingInfo = new SeedlingInfo
+        if (request.IsWeightBased)
+            seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - amount);
+        else
+            seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(amount));
+
+        return CreatePlantedBatch(uow, seed.Plant, seed.Id, amount, request.IsWeightBased,
+            request.PlantedDate, request.PlantPlace);
+    }
+
+    // Создаёт отдельную «высаженную партию» в грядке: новую Seedling с количеством =
+    // высажено и привязкой к месту. plant/seedId берутся у источника (рассада или семя).
+    // Attach графа: новая партия и её запись → Added, существующее растение → Unchanged.
+    private SeedlingInfo CreatePlantedBatch(IUnitOfWork uow, Plant plant, int seedId, double amount,
+        bool weightBased, DateTime plantedDate, string? plantPlace)
+    {
+        var moonPhase = lunar.GetMoonPhase(plantedDate);
+        var info = new SeedlingInfo
         {
-            LandingDate    = request.PlantedDate,
+            LandingDate    = plantedDate,
             LunarPhase     = moonPhase,
             SeedlingNumber = 0,
             SeedlingSource = PlantSources.FromSeeds,
-            PlantPlace     = request.PlantPlace
+            PlantPlace     = plantPlace
         };
-        var newSeedling = new Seedling
+        var batch = new Seedling
         {
-            Plant          = seed.Plant,
-            SeedId         = seed.Id,
-            LandingDate    = request.PlantedDate,
+            Plant          = plant,
+            SeedId         = seedId,
+            LandingDate    = plantedDate,
             LunarPhase     = moonPhase,
             SeedlingSource = PlantSources.FromSeeds,
-            PlantPlace     = request.PlantPlace,
-            SeedlingInfos  = [newSeedlingInfo]
+            PlantPlace     = plantPlace,
+            IsPlantedInBed = true, // партия уже в грядке — не доступна к повторной посадке
+            SeedlingInfos  = [info]
         };
-        if (request.IsWeightBased)
-            newSeedling.Weight = actualAmount;
+        if (weightBased)
+            batch.Weight = amount;
         else
-            newSeedling.Quantity = (int)Math.Round(actualAmount);
+            batch.Quantity = (int)Math.Round(amount);
 
-        // Attach графа: новая рассада и запись → Added, существующее растение → Unchanged.
-        await uow.Repository<Seedling>().AddAsync(newSeedling);
-
-        if (request.IsWeightBased)
-            seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - actualAmount);
-        else
-            seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(actualAmount));
-
-        return newSeedlingInfo;
+        uow.Repository<Seedling>().Add(batch);
+        return info;
     }
 }
