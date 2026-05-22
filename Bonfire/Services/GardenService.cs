@@ -12,53 +12,72 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(
-    IRepository<GardenPlan> plans,
-    IRepository<Garden> gardens,
-    IRepository<Greenhouse> greenhouses,
-    IRepository<GardenElement> elements,
-    IRepository<PlantingSpot> spots)
-    : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
 {
     // --- Чтение ---
 
     public async Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync()
-        => await plans.Items.OrderByDescending(p => p.Year).ToListAsync();
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<GardenPlan>().Items.OrderByDescending(p => p.Year).ToListAsync();
+    }
 
     public async Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId)
-        => await gardens.Items.Where(g => g.GardenPlanId == planId).ToListAsync();
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Garden>().Items.Where(g => g.GardenPlanId == planId).ToListAsync();
+    }
 
     public async Task<Garden?> GetGardenByIdAsync(int id)
-        => await gardens.Items.FirstOrDefaultAsync(g => g.Id == id);
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Garden>().Items.FirstOrDefaultAsync(g => g.Id == id);
+    }
 
     public async Task<GardenElement?> GetElementByIdAsync(int id)
-        => await elements.Items.FirstOrDefaultAsync(e => e.Id == id);
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<GardenElement>().Items.FirstOrDefaultAsync(e => e.Id == id);
+    }
 
     public async Task<Greenhouse?> GetGreenhouseByIdAsync(int id)
-        => await greenhouses.Items.FirstOrDefaultAsync(g => g.Id == id);
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Greenhouse>().Items.FirstOrDefaultAsync(g => g.Id == id);
+    }
 
     // --- Планы ---
 
     public async Task<GardenPlan> CreatePlanAsync(string name, int year, string? description = null)
     {
+        await using var uow = uowFactory.Create();
         var plan = new GardenPlan { Name = name, Year = year, Description = description };
-        return await plans.AddAsync(plan);
+        await uow.Repository<GardenPlan>().AddAsync(plan);
+        await uow.SaveChangesAsync();
+        return plan;
     }
 
     public async Task<GardenPlan> UpdatePlanAsync(GardenPlan plan)
     {
-        await plans.UpdateAsync(plan);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<GardenPlan>().UpdateAsync(plan);
+        await uow.SaveChangesAsync();
         return plan;
     }
 
-    public async Task DeletePlanAsync(GardenPlan plan) =>
-        await plans.RemoveAsync(plan.Id);
+    public async Task DeletePlanAsync(GardenPlan plan)
+    {
+        await using var uow = uowFactory.Create();
+        await uow.Repository<GardenPlan>().RemoveAsync(plan.Id);
+        await uow.SaveChangesAsync();
+    }
 
     // --- Участки ---
 
     public async Task<Garden> CreateGardenAsync(int planId, string name,
         double widthMeters, double heightMeters, double scale = 40)
     {
+        await using var uow = uowFactory.Create();
         var garden = new Garden
         {
             GardenPlanId = planId,
@@ -68,23 +87,32 @@ internal class GardenService(
             CanvasWidth = widthMeters * scale,
             CanvasHeight = heightMeters * scale
         };
-        return await gardens.AddAsync(garden);
+        await uow.Repository<Garden>().AddAsync(garden);
+        await uow.SaveChangesAsync();
+        return garden;
     }
 
     public async Task<Garden> UpdateGardenAsync(Garden garden)
     {
-        await gardens.UpdateAsync(garden);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Garden>().UpdateAsync(garden);
+        await uow.SaveChangesAsync();
         return garden;
     }
 
-    public async Task DeleteGardenAsync(Garden garden) =>
-        await gardens.RemoveAsync(garden.Id);
+    public async Task DeleteGardenAsync(Garden garden)
+    {
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Garden>().RemoveAsync(garden.Id);
+        await uow.SaveChangesAsync();
+    }
 
     // --- Теплицы ---
 
     public async Task<Greenhouse> AddGreenhouseAsync(int parentPlotId, string name,
         double widthMeters, double heightMeters, double scale = 40)
     {
+        await using var uow = uowFactory.Create();
         var gh = new Greenhouse
         {
             ParentPlotId = parentPlotId,
@@ -96,60 +124,85 @@ internal class GardenService(
             DisplayWidth = widthMeters * scale,
             DisplayHeight = heightMeters * scale
         };
-        return await greenhouses.AddAsync(gh);
+        await uow.Repository<Greenhouse>().AddAsync(gh);
+        await uow.SaveChangesAsync();
+        return gh;
     }
 
     public async Task<Greenhouse> UpdateGreenhouseAsync(Greenhouse greenhouse)
     {
-        await greenhouses.UpdateAsync(greenhouse);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Greenhouse>().UpdateAsync(greenhouse);
+        await uow.SaveChangesAsync();
         return greenhouse;
     }
 
-    public async Task DeleteGreenhouseAsync(Greenhouse greenhouse) =>
-        await greenhouses.RemoveAsync(greenhouse.Id);
+    public async Task DeleteGreenhouseAsync(Greenhouse greenhouse)
+    {
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Greenhouse>().RemoveAsync(greenhouse.Id);
+        await uow.SaveChangesAsync();
+    }
 
     // --- Элементы ---
 
     public async Task<TElement> AddElementAsync<TElement>(TElement element)
         where TElement : GardenElement
     {
-        return (TElement)await elements.AddAsync(element);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<GardenElement>().AddAsync(element);
+        await uow.SaveChangesAsync();
+        return element;
     }
 
     public async Task<GardenElement> UpdateElementAsync(GardenElement element)
     {
-        await elements.UpdateAsync(element);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<GardenElement>().UpdateAsync(element);
+        await uow.SaveChangesAsync();
         return element;
     }
 
-    public async Task DeleteElementAsync(GardenElement element) =>
-        await elements.RemoveAsync(element.Id);
+    public async Task DeleteElementAsync(GardenElement element)
+    {
+        await using var uow = uowFactory.Create();
+        await uow.Repository<GardenElement>().RemoveAsync(element.Id);
+        await uow.SaveChangesAsync();
+    }
 
     // --- Переходы состояний ---
 
     public async Task ChangeElementStateAsync(GardenElement element, GardenElementState newState)
     {
         element.TransitionTo(newState);
-        await elements.UpdateAsync(element);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<GardenElement>().UpdateAsync(element);
+        await uow.SaveChangesAsync();
     }
 
     public async Task ChangeGreenhouseStateAsync(Greenhouse greenhouse, GardenElementState newState)
     {
         greenhouse.TransitionTo(newState);
-        await greenhouses.UpdateAsync(greenhouse);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<Greenhouse>().UpdateAsync(greenhouse);
+        await uow.SaveChangesAsync();
     }
 
     // --- Посадки ---
 
     public async Task<PlantingSpot?> GetSpotAsync(int spotId)
-        => await gardens.Items
+    {
+        await using var uow = uowFactory.Create();
+        return await uow.Repository<Garden>().Items
             .SelectMany(g => g.Elements)
             .SelectMany(e => e.PlantingSpots)
             .FirstOrDefaultAsync(s => s.Id == spotId);
+    }
 
     public async Task<PlantingSpot> PlantSeedlingAsync(int elementId, int row, int col,
         SeedlingInfo seedlingInfo, DateTime plantedDate)
     {
+        await using var uow = uowFactory.Create();
         var spot = new PlantingSpot
         {
             GardenElementId = elementId,
@@ -159,7 +212,9 @@ internal class GardenService(
             PlantedDate = plantedDate
         };
         spot.TransitionTo(new PlantedSpotState());
-        return await spots.AddAsync(spot);
+        await uow.Repository<PlantingSpot>().AddAsync(spot);
+        await uow.SaveChangesAsync();
+        return spot;
     }
 
     public async Task ClearSpotAsync(PlantingSpot spot)
@@ -168,12 +223,16 @@ internal class GardenService(
         spot.PlantedDate = null;
         spot.HarvestDate = null;
         spot.StateTypeName = nameof(EmptySpotState);
-        await spots.UpdateAsync(spot);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<PlantingSpot>().UpdateAsync(spot);
+        await uow.SaveChangesAsync();
     }
 
     public async Task<PlantingSpot> UpdateSpotAsync(PlantingSpot spot)
     {
-        await spots.UpdateAsync(spot);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<PlantingSpot>().UpdateAsync(spot);
+        await uow.SaveChangesAsync();
         return spot;
     }
 
@@ -184,7 +243,9 @@ internal class GardenService(
         if (plantLabel is not null)     spot.Note          = plantLabel;
         if (plantedDate.HasValue)       spot.PlantedDate   = plantedDate;
         if (seedlingInfoId.HasValue)    spot.SeedlingInfoId = seedlingInfoId;
-        await spots.UpdateAsync(spot);
+        await using var uow = uowFactory.Create();
+        await uow.Repository<PlantingSpot>().UpdateAsync(spot);
+        await uow.SaveChangesAsync();
     }
 
     // --- Перестройка сетки ---
@@ -194,6 +255,9 @@ internal class GardenService(
         if (!element.State.CanModifyGrid)
             throw new InvalidOperationException(
                 $"В состоянии «{element.State.DisplayName}» изменение сетки запрещено");
+
+        await using var uow = uowFactory.Create();
+        var spots = uow.Repository<PlantingSpot>();
 
         // Удалить ячейки, выходящие за новые границы
         var toRemove = element.PlantingSpots
@@ -205,7 +269,7 @@ internal class GardenService(
             await spots.RemoveAsync(spot.Id);
         }
 
-        // Создать недостающие ячейки (те, которых ещё нет в сетке)
+        // Создать недостающие ячейки (FK GardenElementId задаётся явно)
         for (var r = 0; r < rows; r++)
         {
             for (var c = 0; c < cols; c++)
@@ -218,15 +282,15 @@ internal class GardenService(
                         Row = r,
                         Column = c
                     };
+                    element.PlantingSpots.Add(newSpot);
                     await spots.AddAsync(newSpot);
-                    // EF auto-fixup уже добавил newSpot в element.PlantingSpots
-                    // (через relationship fixup при db.Entry().State = Added)
                 }
             }
         }
 
         element.GridRows = rows;
         element.GridColumns = cols;
-        await elements.UpdateAsync(element);
+        await uow.Repository<GardenElement>().UpdateAsync(element);
+        await uow.SaveChangesAsync();
     }
 }

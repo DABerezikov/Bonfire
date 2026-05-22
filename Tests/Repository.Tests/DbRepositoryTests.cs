@@ -1,5 +1,7 @@
 namespace Repository.Tests;
 
+// Репозиторий только отслеживает сущности; сохранение — за вызывающим (UoW).
+// Поэтому тесты добавляют/меняют через репозиторий и затем явно вызывают SaveChanges.
 public class DbRepositoryTests : IDisposable
 {
     private readonly DbBonfire _db;
@@ -26,12 +28,24 @@ public class DbRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Add_ValidItem_PersistsToDb()
+    public void Add_DoesNotPersistUntilSaveChanges()
     {
         var repo = CreateRepo();
-        var producer = new Producer { Name = "Гавриш" };
+        repo.Add(new Producer { Name = "Гавриш" });
 
-        repo.Add(producer);
+        // Отслежено как Added, но в БД ещё нет — сохранение делает вызывающий.
+        Assert.Equal(0, _db.Producers.Count());
+
+        _db.SaveChanges();
+        Assert.Equal(1, _db.Producers.Count());
+    }
+
+    [Fact]
+    public void Add_ThenSave_PersistsToDb()
+    {
+        var repo = CreateRepo();
+        repo.Add(new Producer { Name = "Гавриш" });
+        _db.SaveChanges();
 
         Assert.Equal(1, _db.Producers.Count());
         Assert.Equal("Гавриш", _db.Producers.First().Name);
@@ -47,12 +61,11 @@ public class DbRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task AddAsync_ValidItem_PersistsToDb()
+    public async Task AddAsync_ThenSave_PersistsToDb()
     {
         var repo = CreateRepo();
-        var producer = new Producer { Name = "Аэлита" };
-
-        await repo.AddAsync(producer);
+        await repo.AddAsync(new Producer { Name = "Аэлита" });
+        await _db.SaveChangesAsync();
 
         Assert.Equal(1, _db.Producers.Count());
     }
@@ -67,14 +80,16 @@ public class DbRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Update_ExistingItem_UpdatesInDb()
+    public void Update_ExistingItem_ThenSave_UpdatesInDb()
     {
         var repo = CreateRepo();
         var producer = new Producer { Name = "Старое" };
         repo.Add(producer);
+        _db.SaveChanges();
 
         producer.Name = "Новое";
         repo.Update(producer);
+        _db.SaveChanges();
 
         Assert.Equal("Новое", _db.Producers.First().Name);
     }
@@ -91,36 +106,44 @@ public class DbRepositoryTests : IDisposable
     // ── Remove ────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Remove_ExistingItem_RemovesFromDb()
+    public void Remove_ExistingItem_ThenSave_RemovesFromDb()
     {
         var repo = CreateRepo();
         var producer = new Producer { Name = "Удалить" };
         repo.Add(producer);
+        _db.SaveChanges();
         var id = producer.Id;
 
         repo.Remove(id);
+        _db.SaveChanges();
 
         Assert.Equal(0, _db.Producers.Count());
     }
 
     [Fact]
-    public void Remove_NonExistentId_ThrowsConcurrencyException()
+    public void Remove_NonExistentId_OnSave_ThrowsConcurrencyException()
     {
         var repo = CreateRepo();
-        Assert.Throws<DbUpdateConcurrencyException>(() => repo.Remove(9999));
+        Assert.Throws<DbUpdateConcurrencyException>(() =>
+        {
+            repo.Remove(9999);
+            _db.SaveChanges();
+        });
     }
 
     // ── RemoveAsync ───────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task RemoveAsync_ExistingItem_RemovesFromDb()
+    public async Task RemoveAsync_ExistingItem_ThenSave_RemovesFromDb()
     {
         var repo = CreateRepo();
         var producer = new Producer { Name = "Удалить" };
         await repo.AddAsync(producer);
+        await _db.SaveChangesAsync();
         var id = producer.Id;
 
         await repo.RemoveAsync(id);
+        await _db.SaveChangesAsync();
 
         Assert.Equal(0, _db.Producers.Count());
     }
@@ -133,6 +156,7 @@ public class DbRepositoryTests : IDisposable
         var repo = CreateRepo();
         var producer = new Producer { Name = "Найти" };
         repo.Add(producer);
+        _db.SaveChanges();
 
         var result = repo.Get(producer.Id);
 
@@ -154,6 +178,7 @@ public class DbRepositoryTests : IDisposable
         var repo = CreateRepo();
         var producer = new Producer { Name = "Найти Async" };
         await repo.AddAsync(producer);
+        await _db.SaveChangesAsync();
 
         var result = await repo.GetAsync(producer.Id);
 
@@ -169,32 +194,15 @@ public class DbRepositoryTests : IDisposable
         Assert.Null(result);
     }
 
-    // ── AutoSaveChanges ───────────────────────────────────────────────────────
+    // ── Items ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void AutoSaveChanges_False_DoesNotPersistImmediately()
-    {
-        var repo = CreateRepo();
-        repo.AutoSaveChanges = false;
-
-        var producer = new Producer { Name = "Не сохранять" };
-        repo.Add(producer);
-
-        // изменения отслеживаются EF, но SaveChanges не вызван
-        // в InMemory-БД Added-записи доступны через ChangeTracker
-        var tracked = _db.ChangeTracker.Entries<Producer>()
-            .Any(e => e.State == EntityState.Added);
-        Assert.True(tracked);
-        // но через прямой запрос их нет (не saved)
-        Assert.Equal(0, _db.Producers.AsNoTracking().Count());
-    }
-
-    [Fact]
-    public void Items_ReturnsQueryable()
+    public void Items_AfterSave_ReturnsQueryable()
     {
         var repo = CreateRepo();
         repo.Add(new Producer { Name = "Первый" });
         repo.Add(new Producer { Name = "Второй" });
+        _db.SaveChanges();
 
         Assert.Equal(2, repo.Items.Count());
     }

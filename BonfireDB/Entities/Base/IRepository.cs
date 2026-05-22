@@ -1,9 +1,11 @@
-﻿namespace BonfireDB.Entities.Base;
+namespace BonfireDB.Entities.Base;
 
+// Репозиторий только отслеживает сущности в DbContext своего Unit of Work.
+// Add/Update/Remove НЕ сохраняют — единственный SaveChanges делает IUnitOfWork.
+// Поэтому контекст живёт коротко (одна операция), а не всё время работы приложения.
 public interface IRepository<T> where T : class, IEntity
 {
     IQueryable<T> Items { get; }
-    bool AutoSaveChanges { get; set; }
     T? Get(int id);
     Task<T?> GetAsync(int id, CancellationToken cancel = default);
     T Add(T item);

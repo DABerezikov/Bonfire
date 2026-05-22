@@ -72,9 +72,20 @@ public class SeedsViewModel : SourceSelectionViewModel
         get;
         set
         {
-            Set(ref field, value);
+            if (!Set(ref field, value)) return;
+            // Семена могли быть списаны в планировщике огорода (другой контекст) —
+            // перечитываем из БД при активации вкладки, чтобы остаток был актуален.
+            if (value && Seeds != null)
+                _ = RefreshSeedsAsync();
             CommandManager.InvalidateRequerySuggested();
         }
+    }
+
+    private async Task RefreshSeedsAsync()
+    {
+        var seeds = await _seedsService.GetAllSeedsAsync();
+        Seeds = new ObservableCollection<Seed>(seeds);
+        UpdateCollectionViewSource();
     }
 
     // Фильтрация главного списка

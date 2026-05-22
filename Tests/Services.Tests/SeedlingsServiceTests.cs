@@ -1,80 +1,61 @@
+using BonfireDB.Entities.Base;
 using MoonCalendar;
 
 namespace Services.Tests;
 
 public class SeedlingsServiceTests
 {
-    private readonly IRepository<Plant> _plants = Substitute.For<IRepository<Plant>>();
     private readonly IRepository<Seedling> _seedlings = Substitute.For<IRepository<Seedling>>();
-    private readonly IRepository<PlantSort> _sort = Substitute.For<IRepository<PlantSort>>();
-    private readonly IRepository<PlantCulture> _culture = Substitute.For<IRepository<PlantCulture>>();
-    private readonly IRepository<Producer> _producer = Substitute.For<IRepository<Producer>>();
     private readonly IRepository<SeedlingInfo> _seedlingsInfo = Substitute.For<IRepository<SeedlingInfo>>();
     private readonly IRepository<Replanting> _replantings = Substitute.For<IRepository<Replanting>>();
-    private readonly IRepository<Treatment> _treatments = Substitute.For<IRepository<Treatment>>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly MoonPhase _lunar = new();
 
-    private SeedlingsService CreateService() =>
-        new(_plants, _seedlings, _sort, _culture, _producer,
-            _seedlingsInfo, _replantings, _treatments, _lunar);
-
-    // ── MakeASeedling ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task MakeASeedling_AddsEachSeedlingInfoThenSeedling()
+    public SeedlingsServiceTests()
     {
-        var info1 = new SeedlingInfo { Id = 0 };
-        var info2 = new SeedlingInfo { Id = 0 };
-        var seedling = new Seedling
-        {
-            Id = 0,
-            SeedlingInfos = [info1, info2]
-        };
-        _seedlings.AddAsync(seedling).Returns(seedling);
-
-        var service = CreateService();
-        await service.MakeASeedling(seedling);
-
-        await _seedlingsInfo.Received(1).AddAsync(info1);
-        await _seedlingsInfo.Received(1).AddAsync(info2);
-        await _seedlings.Received(1).AddAsync(seedling);
+        _uow.Repository<Seedling>().Returns(_seedlings);
+        _uow.Repository<SeedlingInfo>().Returns(_seedlingsInfo);
+        _uow.Repository<Replanting>().Returns(_replantings);
     }
 
+    private SeedlingsService CreateService() => new(_uow.ToFactory(), _lunar);
+
+    // ── MakeASeedling — Attach всего графа одним вызовом, единый SaveChanges ───
+
     [Fact]
-    public async Task MakeASeedling_EmptySeedlingInfos_OnlyAddsSeedling()
+    public async Task MakeASeedling_AddsSeedlingGraphAndSavesOnce()
     {
-        var seedling = new Seedling { Id = 0, SeedlingInfos = [] };
+        var seedling = new Seedling { Id = 0, SeedlingInfos = [new SeedlingInfo { Id = 0 }] };
         _seedlings.AddAsync(seedling).Returns(seedling);
 
-        var service = CreateService();
-        await service.MakeASeedling(seedling);
+        var result = await CreateService().MakeASeedling(seedling);
 
-        await _seedlingsInfo.DidNotReceive().AddAsync(Arg.Any<SeedlingInfo>());
+        Assert.Same(seedling, result);
         await _seedlings.Received(1).AddAsync(seedling);
+        await _uow.Received(1).SaveChangesAsync();
     }
 
     // ── UpdateSeedling ────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateSeedling_CallsRepositoryUpdateAsync()
+    public async Task UpdateSeedling_CallsRepositoryUpdate()
     {
         var seedling = new Seedling { Id = 1 };
-        var service = CreateService();
 
-        await service.UpdateSeedling(seedling);
+        await CreateService().UpdateSeedling(seedling);
 
         await _seedlings.Received(1).UpdateAsync(seedling);
+        await _uow.Received(1).SaveChangesAsync();
     }
 
     // ── DeleteSeedling ────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task DeleteSeedling_CallsRepositoryRemoveAsync()
+    public async Task DeleteSeedling_CallsRepositoryRemove()
     {
         var seedling = new Seedling { Id = 4 };
-        var service = CreateService();
 
-        await service.DeleteSeedling(seedling);
+        await CreateService().DeleteSeedling(seedling);
 
         await _seedlings.Received(1).RemoveAsync(4);
     }
@@ -82,28 +63,25 @@ public class SeedlingsServiceTests
     // ── AddSeedlingInfo ───────────────────────────────────────────────────────
 
     [Fact]
-    public async Task AddSeedlingInfo_CallsRepositoryAddAsync()
+    public async Task AddSeedlingInfo_CallsRepositoryAdd()
     {
         var info = new SeedlingInfo { Id = 0 };
-        var added = new SeedlingInfo { Id = 1 };
-        _seedlingsInfo.AddAsync(info).Returns(added);
+        _seedlingsInfo.AddAsync(info).Returns(info);
 
-        var service = CreateService();
-        var result = await service.AddSeedlingInfo(info);
+        var result = await CreateService().AddSeedlingInfo(info);
 
-        Assert.Equal(added, result);
+        Assert.Same(info, result);
         await _seedlingsInfo.Received(1).AddAsync(info);
     }
 
     // ── UpdateSeedlingInfo ────────────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateSeedlingInfo_NoReplants_OnlyCallsUpdateAsync()
+    public async Task UpdateSeedlingInfo_NoReplants_OnlyUpdates()
     {
         var info = new SeedlingInfo { Id = 1, Replants = [] };
-        var service = CreateService();
 
-        await service.UpdateSeedlingInfo(info);
+        await CreateService().UpdateSeedlingInfo(info);
 
         await _replantings.DidNotReceive().AddAsync(Arg.Any<Replanting>());
         await _seedlingsInfo.Received().UpdateAsync(info);
@@ -113,14 +91,9 @@ public class SeedlingsServiceTests
     public async Task UpdateSeedlingInfo_WithNewReplant_AddsReplant()
     {
         var newReplant = new Replanting { Id = 0, ReplantingDate = DateTime.Today };
-        var info = new SeedlingInfo
-        {
-            Id = 1,
-            Replants = [newReplant]
-        };
-        var service = CreateService();
+        var info = new SeedlingInfo { Id = 1, Replants = [newReplant] };
 
-        await service.UpdateSeedlingInfo(info);
+        await CreateService().UpdateSeedlingInfo(info);
 
         await _replantings.Received(1).AddAsync(newReplant);
     }
@@ -129,14 +102,9 @@ public class SeedlingsServiceTests
     public async Task UpdateSeedlingInfo_WithExistingReplant_SkipsAdd()
     {
         var existingReplant = new Replanting { Id = 5, ReplantingDate = DateTime.Today };
-        var info = new SeedlingInfo
-        {
-            Id = 1,
-            Replants = [existingReplant]
-        };
-        var service = CreateService();
+        var info = new SeedlingInfo { Id = 1, Replants = [existingReplant] };
 
-        await service.UpdateSeedlingInfo(info);
+        await CreateService().UpdateSeedlingInfo(info);
 
         await _replantings.DidNotReceive().AddAsync(Arg.Any<Replanting>());
     }
@@ -146,14 +114,9 @@ public class SeedlingsServiceTests
     {
         var newReplant = new Replanting { Id = 0 };
         var existingReplant = new Replanting { Id = 3 };
-        var info = new SeedlingInfo
-        {
-            Id = 1,
-            Replants = [existingReplant, newReplant]
-        };
-        var service = CreateService();
+        var info = new SeedlingInfo { Id = 1, Replants = [existingReplant, newReplant] };
 
-        await service.UpdateSeedlingInfo(info);
+        await CreateService().UpdateSeedlingInfo(info);
 
         await _replantings.Received(1).AddAsync(newReplant);
         await _replantings.DidNotReceive().AddAsync(existingReplant);
@@ -168,8 +131,7 @@ public class SeedlingsServiceTests
         var info2 = new SeedlingInfo { Id = 2 };
         var seedling = new Seedling { Id = 1 };
 
-        var service = CreateService();
-        await service.MarkSeedlingInfosDeadAsync(seedling, [info1, info2], "погибли");
+        await CreateService().MarkSeedlingInfosDeadAsync(seedling, [info1, info2], "погибли");
 
         Assert.True(info1.IsDead);
         Assert.True(info2.IsDead);
@@ -178,31 +140,17 @@ public class SeedlingsServiceTests
     }
 
     [Fact]
-    public async Task MarkSeedlingInfosDeadAsync_BatchesInfoUpdatesThenSavesViaSeedling()
+    public async Task MarkSeedlingInfosDeadAsync_UpdatesInfosAndSeedlingThenSavesOnce()
     {
         var info1 = new SeedlingInfo { Id = 1 };
         var info2 = new SeedlingInfo { Id = 2 };
         var seedling = new Seedling { Id = 1 };
 
-        var service = CreateService();
-        await service.MarkSeedlingInfosDeadAsync(seedling, [info1, info2], null);
+        await CreateService().MarkSeedlingInfosDeadAsync(seedling, [info1, info2], null);
 
-        // Каждая запись обновлена, и финальное сохранение идёт через рассаду.
         await _seedlingsInfo.Received(1).UpdateAsync(info1);
         await _seedlingsInfo.Received(1).UpdateAsync(info2);
         await _seedlings.Received(1).UpdateAsync(seedling);
-    }
-
-    [Fact]
-    public async Task MarkSeedlingInfosDeadAsync_DisablesThenReenablesInfoAutoSave()
-    {
-        var seedling = new Seedling { Id = 1 };
-
-        var service = CreateService();
-        await service.MarkSeedlingInfosDeadAsync(seedling, [new SeedlingInfo { Id = 1 }], null);
-
-        // Автосохранение записей всходов выключается на время накопления и снова включается.
-        _seedlingsInfo.Received().AutoSaveChanges = false;
-        _seedlingsInfo.Received().AutoSaveChanges = true;
+        await _uow.Received(1).SaveChangesAsync();
     }
 }

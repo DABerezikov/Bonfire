@@ -35,7 +35,18 @@ public class GardenPlanViewModel : ViewModel
         _plantingService  = plantingService;
     }
 
-    public bool IsActive { get; set; }
+    public bool IsActive
+    {
+        get;
+        set
+        {
+            field = value;
+            // Семена/рассада могли измениться на других вкладках — при возврате
+            // на планировщик обновляем пикеры посадки (без сброса выбора плана/участка).
+            if (value && Plans.Count > 0)
+                _ = LoadPlantLabelsAsync();
+        }
+    }
 
     // --- Планы ---
 
@@ -221,11 +232,18 @@ public class GardenPlanViewModel : ViewModel
         }
     }
 
-    /// <summary>Сколько посадить/списать при нажатии «Посадить».</summary>
+    /// <summary>Сколько посадить/списать. Зажимается по доступному остатку источника,
+    /// чтобы нельзя было посадить больше, чем есть в рассаде/семенах.</summary>
     public double PlantingAmount
     {
         get;
-        set => Set(ref field, value > 0 ? value : 1);
+        set
+        {
+            var max = SelectedPlantSource?.AvailableQty ?? double.MaxValue;
+            var clamped = value > 0 ? value : 1;
+            if (clamped > max) clamped = max;
+            Set(ref field, clamped);
+        }
     } = 1;
 
     /// <summary>Единица измерения выбранного источника: «г.» или «шт.»</summary>
@@ -251,29 +269,28 @@ public class GardenPlanViewModel : ViewModel
 
     private async Task LoadPlantLabelsAsync()
     {
-        // ── Рассада: штучная (Quantity > 0) и граммовая (Weight > 0) ────────
-        var seedlingEntities = (await _seedlingsService.GetAllSeedlingsAsync())
-            .Where(s => s.Quantity > 0 || s.Weight > 0)
-            .ToList();
+        // ── Рассада: из рассады сажают ВЗОШЕДШИЕ живые ростки штучно. ───────
+        // Доступно = взошедшие живые − уже высаженные (вес рассады не при чём).
+        var allSeedlings = await _seedlingsService.GetAllSeedlingsAsync();
 
         AvailableSeedlingItems = new ObservableCollection<PlantSourceItem>(
-            seedlingEntities
+            allSeedlings
+            .Where(s => !s.IsPlantedInBed) // уже высаженные в грядку партии повторно не сажаем
             .Select(s =>
             {
-                var name        = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
-                var weightBased = s.Quantity <= 0 && s.Weight > 0;
-                var qty         = weightBased ? s.Weight : s.Quantity;
-                var qtyLabel    = weightBased ? $"{qty:F1} г." : $"{(int)qty} шт.";
+                var name = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
+                var qty  = Bonfire.Services.SeedlingAvailability.Available(s);
                 return new PlantSourceItem
                 {
                     Kind          = PlantSourceKind.Seedling,
                     EntityId      = s.Id,
                     PlantName     = name,
-                    Label         = $"{name} ({qtyLabel})",
-                    IsWeightBased = weightBased,
+                    Label         = $"{name} ({qty} шт.)",
+                    IsWeightBased = false,
                     AvailableQty  = qty
                 };
             })
+            .Where(i => i.AvailableQty > 0)
             .OrderBy(i => i.PlantName));
 
         // ── Семена: штучные (AmountSeeds > 0) и граммовые (AmountSeedsWeight > 0) ──
@@ -302,7 +319,7 @@ public class GardenPlanViewModel : ViewModel
             .OrderBy(i => i.PlantName));
 
         // ── Метки для планирования (без количества, для свободного ввода) ───
-        var planLabels = seedlingEntities
+        var planLabels = allSeedlings
             .Select(s => $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}")
             .Concat(seedEntities.Select(s => $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}"))
             .Distinct()

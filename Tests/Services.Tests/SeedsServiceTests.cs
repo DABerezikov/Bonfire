@@ -8,9 +8,19 @@ public class SeedsServiceTests
     private readonly IRepository<PlantCulture> _culture = Substitute.For<IRepository<PlantCulture>>();
     private readonly IRepository<Producer> _producer = Substitute.For<IRepository<Producer>>();
     private readonly IRepository<SeedsInfo> _info = Substitute.For<IRepository<SeedsInfo>>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
-    private SeedsService CreateService() =>
-        new(_plants, _seeds, _sort, _culture, _producer, _info);
+    public SeedsServiceTests()
+    {
+        _uow.Repository<Plant>().Returns(_plants);
+        _uow.Repository<Seed>().Returns(_seeds);
+        _uow.Repository<PlantSort>().Returns(_sort);
+        _uow.Repository<PlantCulture>().Returns(_culture);
+        _uow.Repository<Producer>().Returns(_producer);
+        _uow.Repository<SeedsInfo>().Returns(_info);
+    }
+
+    private SeedsService CreateService() => new(_uow.ToFactory());
 
     // ── MakeASeed — plant.Id == 0 (новый) ────────────────────────────────────
 
@@ -30,7 +40,7 @@ public class SeedsServiceTests
         _plants.AddAsync(Arg.Any<Plant>()).Returns(plant);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _culture.Received(1).AddAsync(culture);
     }
@@ -47,7 +57,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Any<Seed>()).Returns(returnedSeed);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _culture.DidNotReceive().AddAsync(Arg.Any<PlantCulture>());
     }
@@ -72,7 +82,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Any<Seed>()).Returns(returnedSeed);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _producer.Received(1).AddAsync(producer);
     }
@@ -94,7 +104,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Any<Seed>()).Returns(returnedSeed);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _sort.Received(1).AddAsync(sort);
     }
@@ -113,7 +123,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Any<Seed>()).Returns(returnedSeed);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _plants.Received(1).AddAsync(plant);
     }
@@ -132,7 +142,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Any<Seed>()).Returns(returnedSeed);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _plants.DidNotReceive().AddAsync(Arg.Any<Plant>());
     }
@@ -154,7 +164,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Any<Seed>()).Returns(returnedSeed);
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         await _info.Received(1).AddAsync(seedsInfo);
     }
@@ -174,7 +184,7 @@ public class SeedsServiceTests
         _seeds.AddAsync(Arg.Do<Seed>(s => capturedSeed = s)).Returns(c => c.Arg<Seed>());
 
         var service = CreateService();
-        await service.MakeASeed(plant, seedsInfo);
+        await service.MakeASeed(_uow, plant, seedsInfo);
 
         Assert.NotNull(capturedSeed);
         Assert.Same(capturedSeed, capturedSeed!.SeedsInfo.Seed);
