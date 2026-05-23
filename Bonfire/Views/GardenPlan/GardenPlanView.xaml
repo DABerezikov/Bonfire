@@ -213,11 +213,11 @@
 
                         <TextBlock Text="Размер (в метрах)" Style="{StaticResource LabelStyle}"/>
                         <UniformGrid Columns="4" Margin="0,2,0,10">
-                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
-                                         StringFormat={}{0:F1}}"/>
-                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
+                                         StringFormat={}{0:F1}}"/>
+                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
                                          StringFormat={}{0:F1}}"/>
                         </UniformGrid>
 
@@ -810,11 +810,11 @@
 
                                         <TextBlock Text="Размер внутри (в метрах)" Style="{StaticResource LabelStyle}"/>
                                         <UniformGrid Columns="4" Margin="0,2,0,10">
-                                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
-                                                         StringFormat={}{0:F1}}"/>
-                                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
+                                                         StringFormat={}{0:F1}}"/>
+                                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
                                                          StringFormat={}{0:F1}}"/>
                                         </UniformGrid>
 
