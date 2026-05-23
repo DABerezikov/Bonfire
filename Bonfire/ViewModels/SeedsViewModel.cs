@@ -446,7 +446,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         AddNote = string.Empty;
     }
 
-    private void UpdateCollectionViewSource(int id = -1)
+    internal void UpdateCollectionViewSource(int id = -1)
     {
         var newCollection = Seeds!.Select(SeedMapper.ToViewModel).SortSeeds();
         var collection = newCollection.ToArray();
