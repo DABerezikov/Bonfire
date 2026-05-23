@@ -125,24 +125,24 @@
                     <TextBlock Grid.Row="1" Grid.Column="6" Text="Возраст рассады, дн.:" VerticalAlignment="Center" Margin="0,3,6,3"/>
                     <TextBox Grid.Row="1" Grid.Column="7" Margin="0,3"
                              Text="{Binding SortDetail.AgeOfSeedlings, UpdateSourceTrigger=PropertyChanged,
-                                    TargetNullValue='', ValidatesOnExceptions=True}"/>
+                                    TargetNullValue='', ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"/>
 
                     <!-- Строка 2: Вегет. период, Схема посадки, Высота -->
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Вегет. период, дн.:" VerticalAlignment="Center" Margin="0,3,6,3"/>
                     <TextBox Grid.Row="2" Grid.Column="1" Margin="0,3"
                              Text="{Binding SortDetail.GrowingSeason, UpdateSourceTrigger=PropertyChanged,
-                                    TargetNullValue='', ValidatesOnExceptions=True}"/>
+                                    TargetNullValue='', ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"/>
                     <TextBlock Grid.Row="2" Grid.Column="3" Text="Схема посадки, см:" VerticalAlignment="Center" Margin="0,3,6,3"/>
                     <TextBox Grid.Row="2" Grid.Column="4" Margin="0,3"
                              Text="{Binding SortDetail.LandingPattern, UpdateSourceTrigger=PropertyChanged,
-                                    TargetNullValue='', ValidatesOnExceptions=True}"/>
+                                    TargetNullValue='', ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"/>
                     <TextBlock Grid.Row="2" Grid.Column="6" Text="Высота растения, см:" VerticalAlignment="Center" Margin="0,3,6,3"/>
                     <TextBox Grid.Row="2" Grid.Column="7" Margin="0,3"
                              Text="{Binding SortDetail.PlantHeight, UpdateSourceTrigger=PropertyChanged,
-                                    TargetNullValue='', ValidatesOnExceptions=True}"/>
+                                    TargetNullValue='', ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"/>
 
                     <!-- Строка 3: Цвет, кнопки -->
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Цвет (#RRGGBB):" VerticalAlignment="Center" Margin="0,3,6,3"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Цвет:" VerticalAlignment="Center" Margin="0,3,6,3"/>
                     <TextBox Grid.Row="3" Grid.Column="1" Margin="0,3"
                              Text="{Binding SortDetail.PlantColor, UpdateSourceTrigger=PropertyChanged}"/>
                     <StackPanel Grid.Row="3" Grid.Column="6" Grid.ColumnSpan="2"
