@@ -328,18 +328,18 @@
                         <TextBlock Text="Позиция и размер (метры)" Style="{StaticResource LabelStyle}"/>
                         <UniformGrid Columns="4" Margin="0,2,0,4">
                             <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged,
+                            <TextBox Text="{Binding X, UpdateSourceTrigger=LostFocus,
                                          Converter={StaticResource PxToMeters}}"/>
                             <TextBlock Text="Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                            <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged,
+                            <TextBox Text="{Binding Y, UpdateSourceTrigger=LostFocus,
                                          Converter={StaticResource PxToMeters}}"/>
                         </UniformGrid>
                         <UniformGrid Columns="4" Margin="0,0,0,10">
                             <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged,
+                            <TextBox Text="{Binding Height, UpdateSourceTrigger=LostFocus,
                                          Converter={StaticResource PxToMeters}}"/>
                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
+                            <TextBox Text="{Binding Width, UpdateSourceTrigger=LostFocus,
                                          Converter={StaticResource PxToMeters}}"/>
                         </UniformGrid>
 
