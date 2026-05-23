@@ -167,6 +167,8 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
     // --- Элементы внутри теплицы ---
     public ObservableCollection<GardenElementFromViewModel> InnerElements { get; set; } = [];
 
+    public double AreaSquareMeters => Math.Round(_widthMeters * _heightMeters, 1);
+
     public static string TypeFill => "#F3E5F5";
     public static string TypeColor => "#7B1FA2";
     public static string TypeLabel => "Теплица";

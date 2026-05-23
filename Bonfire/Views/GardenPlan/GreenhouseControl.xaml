@@ -20,6 +20,31 @@
         </Style>
     </UserControl.Style>
 
+    <UserControl.ToolTip>
+        <StackPanel>
+            <TextBlock FontWeight="SemiBold" Text="{Binding Name}"/>
+            <TextBlock Foreground="#757575">
+                <Run Text="{Binding TypeLabel, Mode=OneWay}"/>
+                <Run Text="·"/>
+                <Run Text="{Binding StateDisplayName, Mode=OneWay}"/>
+            </TextBlock>
+            <TextBlock Margin="0,2,0,0">
+                <Run Text="Д"/>
+                <Run Text="{Binding WidthMeters,  Mode=OneWay, StringFormat={}{0:F2}}"/>
+                <Run Text="м  Ш"/>
+                <Run Text="{Binding HeightMeters, Mode=OneWay, StringFormat={}{0:F2}}"/>
+                <Run Text="м  ("/>
+                <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
+                <Run Text="м²)"/>
+            </TextBlock>
+            <TextBlock Foreground="#9E9E9E" Margin="0,4,0,0" FontSize="10">
+                <Run Text="Двойной клик — открыть теплицу"/>
+                <LineBreak/>
+                <Run Text="Правый клик — контекстное меню"/>
+            </TextBlock>
+        </StackPanel>
+    </UserControl.ToolTip>
+
     <!--
         Tag содержит GardenPlanViewModel (прокинут из DataTemplate в GardenPlanView).
         Используем его для привязки команд вместо навигации по дереву.
