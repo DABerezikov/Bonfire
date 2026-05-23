@@ -471,7 +471,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedPlan is null) return;
         var garden = await _gardenService.CreateGardenAsync(
-            SelectedPlan.Id, "Новый участок", 20, 15, scale: 150);
+            SelectedPlan.Id, "Новый участок", 20, 15, scale: CanvasConstants.PixelsPerMeter);
         var vm = GardenPlanMapper.MapGarden(garden);
         Gardens.Add(vm);
         SelectedGarden = vm;
@@ -504,7 +504,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        const double scale = 150;
+        double scale = CanvasConstants.PixelsPerMeter;
         double newCanvasW = SelectedGarden.WidthMeters * scale;
         double newCanvasH = SelectedGarden.HeightMeters * scale;
 
@@ -654,7 +654,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGreenhouse is null) return;
 
-        const double scale = 150;
+        double scale = CanvasConstants.PixelsPerMeter;
         double newInnerW = SelectedGreenhouse.WidthMeters * scale;
         double newInnerH = SelectedGreenhouse.HeightMeters * scale;
 
@@ -710,18 +710,19 @@ public class GardenPlanViewModel : ViewModel
         var canvasW = ActiveCanvasWidth;
         var canvasH = ActiveCanvasHeight;
 
-        // Масштаб 150 пкс/м: физические размеры по умолчанию для каждого типа.
-        //   Грядка:         Д 2.0 × Ш 0.9 м  = 300 × 135 пкс
-        //   Парник:         Д 1.2 × Ш 0.8 м  = 180 × 120 пкс
-        //   Цветник:        Д 0.6 × Ш 0.6 м  =  90 ×  90 пкс  → при 100% = 90px читаемо ✓
-        //   Открытый грунт: Д 2.0 × Ш 2.0 м  = 300 × 300 пкс
+        // Физические размеры по умолчанию для каждого типа (в пикселях = метры × ppm).
+        //   Грядка:         2.0 × 0.9 м
+        //   Парник:         1.2 × 0.8 м
+        //   Цветник:        0.6 × 0.6 м
+        //   Открытый грунт: 2.0 × 2.0 м
+        double ppm = CanvasConstants.PixelsPerMeter;
         (double defaultW, double defaultH) = SelectedElementType switch
         {
-            "Bed"            => (2.0 * 150, 0.9 * 150),
-            "ColdFrame"      => (1.2 * 150, 0.8 * 150),
-            "FlowerBed"      => (0.6 * 150, 0.6 * 150),
-            "OpenGroundArea" => (2.0 * 150, 2.0 * 150),
-            _                => (150.0, 150.0)
+            "Bed"            => (2.0 * ppm, 0.9 * ppm),
+            "ColdFrame"      => (1.2 * ppm, 0.8 * ppm),
+            "FlowerBed"      => (0.6 * ppm, 0.6 * ppm),
+            "OpenGroundArea" => (2.0 * ppm, 2.0 * ppm),
+            _                => (ppm, ppm)
         };
 
         var spot = CollisionHelper.FindFreeSpot(
@@ -776,8 +777,8 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        const double ghScale = 150;
-        const double ghW = 6 * ghScale, ghH = 3 * ghScale; // 6×3 м = 900×450 пкс
+        double ghScale = CanvasConstants.PixelsPerMeter;
+        double ghW = 6 * ghScale, ghH = 3 * ghScale; // 6×3 м
 
         var spot = CollisionHelper.FindFreeSpot(
             SelectedGarden.Elements, SelectedGarden.Greenhouses, exclude: null,

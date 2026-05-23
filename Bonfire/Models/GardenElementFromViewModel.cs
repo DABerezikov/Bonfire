@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Bonfire.Infrastructure;
 using BonfireDB.Entities.GardenPlanning.States;
 
 namespace Bonfire.Models;
@@ -73,23 +74,33 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
 
     public double Rotation { get; set; }
 
-    // Масштаб 150 пкс/м → 1 м² = 22500 пкс²
-    public double AreaSquareMeters => Math.Round(_width * _height / 22500.0, 1);
+    // Масштаб CanvasConstants.PixelsPerMeter пкс/м
+    public double AreaSquareMeters => Math.Round(_width * _height
+        / (CanvasConstants.PixelsPerMeter * CanvasConstants.PixelsPerMeter), 1);
 
     // Размеры в метрах
-    public double WidthMeters  => Math.Round(_width  / 150.0, 2);
-    public double HeightMeters => Math.Round(_height / 150.0, 2);
+    public double WidthMeters  => Math.Round(_width  / CanvasConstants.PixelsPerMeter, 2);
+    public double HeightMeters => Math.Round(_height / CanvasConstants.PixelsPerMeter, 2);
 
     // Текущий масштаб холста — обновляется из VM при зуме
     private double _canvasZoom = 1.0;
     public double CanvasZoom
     {
         get => _canvasZoom;
-        set { _canvasZoom = value; OnPropertyChanged(nameof(IsCompact)); }
+        set
+        {
+            _canvasZoom = value;
+            OnPropertyChanged(nameof(IsCompact));
+            OnPropertyChanged(nameof(AdaptiveFontSize));
+        }
     }
 
     // Компактный режим: отображаемый размер < 64 пкс по меньшей стороне
     public bool IsCompact => Math.Min(_width, _height) * _canvasZoom < 64;
+
+    // Адаптивный шрифт: при уменьшении зума шрифт растёт, чтобы текст оставался читаемым.
+    // Базовый размер 11px; результирующий видимый размер ≈ 11px при любом зуме (зажат 9–16).
+    public double AdaptiveFontSize => Math.Round(Math.Clamp(11.0 / _canvasZoom, 9.0, 16.0), 1);
 
     // --- Блокировка ---
     private bool _isLocked;
