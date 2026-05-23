@@ -54,7 +54,10 @@ public partial class GardenElementControl : UserControl
     private void OnMoveDragCompleted(object sender, DragCompletedEventArgs e)
     {
         if (DataContext is not GardenElementFromViewModel vm) return;
-        if (CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, vm.Width, vm.Height, vm))
+        bool wasColliding = CollisionHelper.CollidesWithSiblings(_preDragX, _preDragY, vm.Width, vm.Height, vm);
+        bool isColliding  = CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, vm.Width, vm.Height, vm);
+        // Откатываем только если старт был чистым, а новая позиция — нет
+        if (isColliding && !wasColliding)
         {
             vm.X = _preDragX;
             vm.Y = _preDragY;
@@ -103,7 +106,9 @@ public partial class GardenElementControl : UserControl
     private void OnResizeDragCompleted(object sender, DragCompletedEventArgs e)
     {
         if (DataContext is not GardenElementFromViewModel vm) return;
-        if (CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, vm.Width, vm.Height, vm))
+        bool wasColliding = CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, _preDragW, _preDragH, vm);
+        bool isColliding  = CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, vm.Width, vm.Height, vm);
+        if (isColliding && !wasColliding)
         {
             vm.Width  = _preDragW;
             vm.Height = _preDragH;
