@@ -709,18 +709,10 @@ public class GardenPlanViewModel : ViewModel
         var canvasW = ActiveCanvasWidth;
         var canvasH = ActiveCanvasHeight;
 
-        // Размеры по умолчанию в пикселях (масштаб 40 пкс/м), Д=Width(горизонталь), Ш=Height(вертикаль):
-        //   Грядка        Д 2.0 × Ш 0.9 м = 80 × 36 пкс
-        //   Парник        Д 1.2 × Ш 0.8 м = 48 × 32 пкс
-        //   Цветник       Д 0.6 × Ш 0.6 м = 24 × 24 пкс
-        //   Открытый грунт Д 2.0 × Ш 2.0 м = 80 × 80 пкс
-        (double defaultW, double defaultH) = SelectedElementType switch
-        {
-            "FlowerBed"      => (24.0, 24.0),
-            "ColdFrame"      => (48.0, 32.0),
-            "OpenGroundArea" => (80.0, 80.0),
-            _                => (80.0, 36.0)   // Bed
-        };
+        // Все типы стартуют с 80×80 пкс (2×2 м при масштабе 40 пкс/м).
+        // 80 пкс × 3.33 зум = 267 пкс на экране — читаемо без дополнительной нормализации.
+        // Фактический размер (0.6 м для цветника, 0.9 м для грядки и т.д.) задаётся через ресайз.
+        const double defaultW = 80.0, defaultH = 80.0;
 
         var spot = CollisionHelper.FindFreeSpot(
             activeElements, activeGreenhouses, exclude: null,
