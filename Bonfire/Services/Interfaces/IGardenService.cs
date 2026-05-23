@@ -24,13 +24,13 @@ public interface IGardenService
 
     // --- Участки огорода ---
     Task<Garden> CreateGardenAsync(int planId, string name,
-        double widthMeters, double heightMeters, double scale = 40);
+        double widthMeters, double heightMeters, double scale = 150);
     Task<Garden> UpdateGardenAsync(Garden garden);
     Task DeleteGardenAsync(Garden garden);
 
     // --- Теплицы (наследники GardenPlot) ---
     Task<Greenhouse> AddGreenhouseAsync(int parentPlotId, string name,
-        double widthMeters, double heightMeters, double scale = 40,
+        double widthMeters, double heightMeters, double scale = 150,
         double x = 0, double y = 0);
     Task<Greenhouse> UpdateGreenhouseAsync(Greenhouse greenhouse);
     Task DeleteGreenhouseAsync(Greenhouse greenhouse);

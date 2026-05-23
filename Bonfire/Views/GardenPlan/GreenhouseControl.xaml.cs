@@ -47,7 +47,7 @@ public partial class GreenhouseControl : UserControl
     {
         if (DataContext is not GreenhouseFromViewModel vm || vm.IsLocked) return;
 
-        const double snap = 4; // 0.1 м = 4 пкс
+        const double snap = 15; // 0.1 м = 15 пкс
         double scale = GetCanvasScale(this);
         double maxX = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.DisplayWidth  : double.MaxValue;
         double maxY = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.DisplayHeight : double.MaxValue;
@@ -64,8 +64,8 @@ public partial class GreenhouseControl : UserControl
         double maxW = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.X : double.MaxValue;
         double maxH = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Y : double.MaxValue;
 
-        vm.DisplayWidth  = Math.Round(Math.Max(80, Math.Min(vm.DisplayWidth  + e.HorizontalChange / scale, maxW)));
-        vm.DisplayHeight = Math.Round(Math.Max(60, Math.Min(vm.DisplayHeight + e.VerticalChange   / scale, maxH)));
+        vm.DisplayWidth  = Math.Round(Math.Max(150, Math.Min(vm.DisplayWidth  + e.HorizontalChange / scale, maxW)));
+        vm.DisplayHeight = Math.Round(Math.Max(150, Math.Min(vm.DisplayHeight + e.VerticalChange   / scale, maxH)));
     }
 
     private static double GetCanvasScale(UIElement element)

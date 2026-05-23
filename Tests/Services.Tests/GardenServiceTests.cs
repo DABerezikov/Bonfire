@@ -87,8 +87,8 @@ public class GardenServiceTests
         await svc.CreateGardenAsync(1, "Участок", 10, 5);
 
         Assert.NotNull(captured);
-        Assert.Equal(10 * 40, captured!.CanvasWidth);
-        Assert.Equal(5  * 40, captured.CanvasHeight);
+        Assert.Equal(10 * 150, captured!.CanvasWidth);
+        Assert.Equal(5  * 150, captured.CanvasHeight);
     }
 
     [Fact]
@@ -140,8 +140,8 @@ public class GardenServiceTests
         await svc.AddGreenhouseAsync(1, "Теплица", 5, 3);
 
         Assert.NotNull(captured);
-        Assert.Equal(5 * 40, captured!.DisplayWidth);
-        Assert.Equal(3 * 40, captured.DisplayHeight);
+        Assert.Equal(5 * 150, captured!.DisplayWidth);
+        Assert.Equal(3 * 150, captured.DisplayHeight);
     }
 
     [Fact]
@@ -154,8 +154,8 @@ public class GardenServiceTests
         await svc.AddGreenhouseAsync(1, "Теплица", 5, 3);
 
         Assert.NotNull(captured);
-        Assert.Equal(5 * 40, captured!.CanvasWidth);
-        Assert.Equal(3 * 40, captured.CanvasHeight);
+        Assert.Equal(5 * 150, captured!.CanvasWidth);
+        Assert.Equal(3 * 150, captured.CanvasHeight);
     }
 
     // ── ChangeElementStateAsync ───────────────────────────────────────────────

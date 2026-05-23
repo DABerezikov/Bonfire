@@ -39,7 +39,7 @@ public partial class GardenElementControl : UserControl
     {
         if (DataContext is not GardenElementFromViewModel vm || vm.IsLocked) return;
 
-        const double snap = 4; // 0.1 м = 4 пкс
+        const double snap = 15; // 0.1 м = 15 пкс
         double scale = GetCanvasScale(this);
         double maxX = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.Width  : double.MaxValue;
         double maxY = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Height : double.MaxValue;
@@ -73,8 +73,8 @@ public partial class GardenElementControl : UserControl
         double maxW = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.X : double.MaxValue;
         double maxH = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Y : double.MaxValue;
 
-        vm.Width  = Math.Round(Math.Max(20, Math.Min(vm.Width  + e.HorizontalChange / scale, maxW)));
-        vm.Height = Math.Round(Math.Max(20, Math.Min(vm.Height + e.VerticalChange   / scale, maxH)));
+        vm.Width  = Math.Round(Math.Max(15, Math.Min(vm.Width  + e.HorizontalChange / scale, maxW)));
+        vm.Height = Math.Round(Math.Max(15, Math.Min(vm.Height + e.VerticalChange   / scale, maxH)));
     }
 
     // Масштаб Viewbox: Thumb.DragDelta возвращает дельту в координатах окна.

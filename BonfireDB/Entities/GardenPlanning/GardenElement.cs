@@ -14,8 +14,8 @@ public abstract class GardenElement : NamedEntity
     // --- Позиция и отображение на холсте ---
     public double X { get; set; }
     public double Y { get; set; }
-    public double DisplayWidth { get; set; } = 80;   // Д 2.0 м по умолчанию (грядка)
-    public double DisplayHeight { get; set; } = 36;  // Ш 0.9 м по умолчанию (грядка)
+    public double DisplayWidth { get; set; } = 300;  // Д 2.0 м (150 пкс/м × 2)
+    public double DisplayHeight { get; set; } = 135; // Ш 0.9 м (150 пкс/м × 0.9)
     public double Rotation { get; set; }
 
     // --- Реальная площадь (пересчитывается при ресайзе) ---

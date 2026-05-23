@@ -5,14 +5,14 @@ using System.Windows.Data;
 namespace Bonfire.Infrastructure.Converters;
 
 /// <summary>
-/// Двусторонний конвертер пиксели ↔ метры (масштаб 40 пкс/м).
-/// Convert: double пкс → string метры с шагом 0.05 м.
+/// Двусторонний конвертер пиксели ↔ метры (масштаб 150 пкс/м).
+/// Convert: double пкс → string метры.
 /// ConvertBack: string метры → double пкс (округлено до целого).
 /// </summary>
 [ValueConversion(typeof(double), typeof(string))]
 public class PxToMetersConverter : IValueConverter
 {
-    private const double Scale = 40.0;
+    private const double Scale = 150.0;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

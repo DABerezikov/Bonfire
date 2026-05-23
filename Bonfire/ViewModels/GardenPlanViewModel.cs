@@ -127,7 +127,8 @@ public class GardenPlanViewModel : ViewModel
             .Select(e => Math.Min(e.Width, e.Height))
             .Concat(SelectedGarden.Greenhouses.Select(gh => Math.Min(gh.DisplayWidth, gh.DisplayHeight)));
         double smallest = sizes.DefaultIfEmpty(targetPx).Min();
-        GardenZoom = Math.Min(smallest > 0 ? targetPx / smallest : 1.0, 4.0);
+        // Не уменьшаем ниже 100%: при масштабе 150 пкс/м элементы уже читаемы на 1.0
+        GardenZoom = Math.Max(1.0, Math.Min(smallest > 0 ? targetPx / smallest : 1.0, 4.0));
     }
 
     // --- Выбранный элемент на холсте ---
@@ -470,7 +471,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedPlan is null) return;
         var garden = await _gardenService.CreateGardenAsync(
-            SelectedPlan.Id, "Новый участок", 20, 15, scale: 40);
+            SelectedPlan.Id, "Новый участок", 20, 15, scale: 150);
         var vm = GardenPlanMapper.MapGarden(garden);
         Gardens.Add(vm);
         SelectedGarden = vm;
@@ -503,7 +504,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        const double scale = 40;
+        const double scale = 150;
         double newCanvasW = SelectedGarden.WidthMeters * scale;
         double newCanvasH = SelectedGarden.HeightMeters * scale;
 
@@ -653,7 +654,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGreenhouse is null) return;
 
-        const double scale = 40;
+        const double scale = 150;
         double newInnerW = SelectedGreenhouse.WidthMeters * scale;
         double newInnerH = SelectedGreenhouse.HeightMeters * scale;
 
@@ -709,10 +710,19 @@ public class GardenPlanViewModel : ViewModel
         var canvasW = ActiveCanvasWidth;
         var canvasH = ActiveCanvasHeight;
 
-        // Все типы стартуют с 80×80 пкс (2×2 м при масштабе 40 пкс/м).
-        // 80 пкс × 3.33 зум = 267 пкс на экране — читаемо без дополнительной нормализации.
-        // Фактический размер (0.6 м для цветника, 0.9 м для грядки и т.д.) задаётся через ресайз.
-        const double defaultW = 80.0, defaultH = 80.0;
+        // Масштаб 150 пкс/м: физические размеры по умолчанию для каждого типа.
+        //   Грядка:         Д 2.0 × Ш 0.9 м  = 300 × 135 пкс
+        //   Парник:         Д 1.2 × Ш 0.8 м  = 180 × 120 пкс
+        //   Цветник:        Д 0.6 × Ш 0.6 м  =  90 ×  90 пкс  → при 100% = 90px читаемо ✓
+        //   Открытый грунт: Д 2.0 × Ш 2.0 м  = 300 × 300 пкс
+        (double defaultW, double defaultH) = SelectedElementType switch
+        {
+            "Bed"            => (2.0 * 150, 0.9 * 150),
+            "ColdFrame"      => (1.2 * 150, 0.8 * 150),
+            "FlowerBed"      => (0.6 * 150, 0.6 * 150),
+            "OpenGroundArea" => (2.0 * 150, 2.0 * 150),
+            _                => (150.0, 150.0)
+        };
 
         var spot = CollisionHelper.FindFreeSpot(
             activeElements, activeGreenhouses, exclude: null,
@@ -766,8 +776,8 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        const double scale = 40;
-        const double ghW = 6 * scale, ghH = 3 * scale; // 6×3 м по умолчанию
+        const double ghScale = 150;
+        const double ghW = 6 * ghScale, ghH = 3 * ghScale; // 6×3 м = 900×450 пкс
 
         var spot = CollisionHelper.FindFreeSpot(
             SelectedGarden.Elements, SelectedGarden.Greenhouses, exclude: null,
@@ -785,7 +795,7 @@ public class GardenPlanViewModel : ViewModel
         var gh = await _gardenService.AddGreenhouseAsync(
             SelectedGarden.Id,
             $"Теплица {SelectedGarden.Greenhouses.Count + 1}",
-            widthMeters: 6, heightMeters: 3, scale: scale,
+            widthMeters: 6, heightMeters: 3, scale: ghScale,
             x: spot.Value.x, y: spot.Value.y);
         var vm = GardenPlanMapper.MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
         vm.ContainerElements    = SelectedGarden.Elements;

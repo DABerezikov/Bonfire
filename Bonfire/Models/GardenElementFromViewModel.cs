@@ -73,12 +73,12 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
 
     public double Rotation { get; set; }
 
-    // Масштаб 40 пкс/м → 1 м² = 1600 пкс²
-    public double AreaSquareMeters => Math.Round(_width * _height / 1600.0, 1);
+    // Масштаб 150 пкс/м → 1 м² = 22500 пкс²
+    public double AreaSquareMeters => Math.Round(_width * _height / 22500.0, 1);
 
-    // Размеры в метрах (для tooltip в компактном режиме)
-    public double WidthMeters  => Math.Round(_width  / 40.0, 2);
-    public double HeightMeters => Math.Round(_height / 40.0, 2);
+    // Размеры в метрах
+    public double WidthMeters  => Math.Round(_width  / 150.0, 2);
+    public double HeightMeters => Math.Round(_height / 150.0, 2);
 
     // Текущий масштаб холста — обновляется из VM при зуме
     private double _canvasZoom = 1.0;

@@ -75,7 +75,7 @@ internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
     // --- Участки ---
 
     public async Task<Garden> CreateGardenAsync(int planId, string name,
-        double widthMeters, double heightMeters, double scale = 40)
+        double widthMeters, double heightMeters, double scale = 150)
     {
         await using var uow = uowFactory.Create();
         var garden = new Garden
@@ -110,7 +110,7 @@ internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
     // --- Теплицы ---
 
     public async Task<Greenhouse> AddGreenhouseAsync(int parentPlotId, string name,
-        double widthMeters, double heightMeters, double scale = 40,
+        double widthMeters, double heightMeters, double scale = 150,
         double x = 0, double y = 0)
     {
         await using var uow = uowFactory.Create();
