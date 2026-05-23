@@ -62,7 +62,7 @@
                                TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Top"
-                           FontSize="{Binding AdaptiveFontSize}"
+                           FontSize="{Binding AdaptiveFontSizeSmall}"
                            Foreground="#9C27B0">
                     <Run Text="{Binding WidthMeters, StringFormat={}{0:F0}}"/>
                     <Run Text="×"/>
@@ -75,12 +75,12 @@
                         Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
                         CornerRadius="3" Padding="3,1" HorizontalAlignment="Left" Margin="0,4,0,0">
                     <TextBlock Text="{Binding StateDisplayName}" Foreground="White"
-                               FontSize="{Binding AdaptiveFontSize}"/>
+                               FontSize="{Binding AdaptiveFontSizeTiny}"/>
                 </Border>
 
                 <!-- Подсказка двойного клика -->
                 <TextBlock DockPanel.Dock="Bottom" Text="[двойной клик — открыть]"
-                           FontSize="{Binding AdaptiveFontSize}"
+                           FontSize="{Binding AdaptiveFontSizeTiny}"
                            Foreground="#9E9E9E" Margin="0,2,0,0"/>
             </DockPanel>
         </Border>

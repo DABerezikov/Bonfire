@@ -79,13 +79,19 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
     public double CanvasZoom
     {
         get => _canvasZoom;
-        set { _canvasZoom = value; OnPropertyChanged(nameof(AdaptiveFontSize)); }
+        set
+        {
+            _canvasZoom = value;
+            OnPropertyChanged(nameof(AdaptiveFontSize));
+            OnPropertyChanged(nameof(AdaptiveFontSizeSmall));
+            OnPropertyChanged(nameof(AdaptiveFontSizeTiny));
+        }
     }
 
-    // Адаптивный шрифт: при zoom < 100% растёт с запасом +25%.
-    public double AdaptiveFontSize => _canvasZoom >= 1.0
-        ? 11.0
-        : Math.Round(Math.Min(13.75 / _canvasZoom, 20.0), 1);
+    // Адаптивные шрифты: буфер компенсации растёт с уменьшением базового размера
+    public double AdaptiveFontSize      => CanvasConstants.AdaptiveFont(11.0, _canvasZoom);
+    public double AdaptiveFontSizeSmall => CanvasConstants.AdaptiveFont(10.0, _canvasZoom);
+    public double AdaptiveFontSizeTiny  => CanvasConstants.AdaptiveFont( 9.0, _canvasZoom);
 
     // --- Блокировка ---
     private bool _isLocked;

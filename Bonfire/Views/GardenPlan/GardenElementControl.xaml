@@ -144,7 +144,7 @@
                            FontSize="{Binding AdaptiveFontSize}"
                            TextTrimming="CharacterEllipsis"/>
                 <TextBlock DockPanel.Dock="Top" Text="{Binding TypeLabel}"
-                           FontSize="{Binding AdaptiveFontSize}"
+                           FontSize="{Binding AdaptiveFontSizeSmall}"
                            Foreground="#757575"/>
 
                 <!-- Статус-бейдж -->
@@ -152,11 +152,13 @@
                         Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
                         CornerRadius="3" Padding="3,1" HorizontalAlignment="Left" Margin="0,4,0,0">
                     <TextBlock Text="{Binding StateDisplayName}"
-                               Foreground="White" FontSize="9"/>
+                               Foreground="White" FontSize="{Binding AdaptiveFontSizeTiny}"/>
                 </Border>
 
                 <!-- Площадь -->
-                <TextBlock DockPanel.Dock="Bottom" FontSize="10" Foreground="#9E9E9E" Margin="0,2,0,0">
+                <TextBlock DockPanel.Dock="Bottom"
+                           FontSize="{Binding AdaptiveFontSizeSmall}"
+                           Foreground="#9E9E9E" Margin="0,2,0,0">
                     <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
                     <Run Text=" м²"/>
                 </TextBlock>

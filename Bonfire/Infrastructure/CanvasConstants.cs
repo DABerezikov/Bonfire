@@ -23,4 +23,18 @@ public static class CanvasConstants
     /// </summary>
     public static readonly double CompactThreshold =
         Math.Round(90.0 * (SystemParameters.PrimaryScreenWidth / 1920.0));
+
+    /// <summary>
+    /// Адаптивный размер шрифта при zoom &lt; 1.0.
+    /// Чем меньше базовый размер — тем больший буфер компенсации:
+    ///   base=11 → +22.5%,  base=10 → +25%,  base=9 → +27.5%,  base=8 → +30%.
+    /// Формула буфера: factor = 1.25 + (10 − base) × 0.025
+    /// При zoom ≥ 1.0 возвращает basePx без изменений.
+    /// </summary>
+    public static double AdaptiveFont(double basePx, double zoom)
+    {
+        if (zoom >= 1.0) return basePx;
+        double factor = 1.25 + (10.0 - basePx) * 0.025;
+        return Math.Round(Math.Min(basePx * factor / zoom, basePx * 2.0), 1);
+    }
 }
