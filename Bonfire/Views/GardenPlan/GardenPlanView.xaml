@@ -252,7 +252,7 @@
                             <Run Text="{Binding CanvasWidth, StringFormat={}{0:F0}}"/>
                             <Run Text=" × "/>
                             <Run Text="{Binding CanvasHeight, StringFormat={}{0:F0}}"/>
-                            <Run Text=" пкс (масштаб 40 пкс/м)"/>
+                            <Run Text=" пкс (масштаб 150 пкс/м)"/>
                         </TextBlock>
 
                         <TextBlock Text="Адрес" Style="{StaticResource LabelStyle}"/>
@@ -849,7 +849,7 @@
                                             <Run Text="{Binding InnerCanvasWidth, StringFormat={}{0:F0}}"/>
                                             <Run Text=" × "/>
                                             <Run Text="{Binding InnerCanvasHeight, StringFormat={}{0:F0}}"/>
-                                            <Run Text=" пкс"/>
+                                            <Run Text=" пкс (масштаб 150 пкс/м)"/>
                                         </TextBlock>
 
                                         <Button HorizontalAlignment="Stretch" Margin="0,0,0,10"
