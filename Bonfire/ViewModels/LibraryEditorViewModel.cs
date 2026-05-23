@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -86,11 +87,9 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         get;
         set
         {
-            if (Set(ref field, value))
-            {
-                ProducerDetailIsDirty = value != _originalProducerName;
-                OnPropertyChanged(nameof(ProducerDetailHasError));
-            }
+            if (!Set(ref field, value)) return;
+            ProducerDetailIsDirty = value != _originalProducerName;
+            OnPropertyChanged(nameof(ProducerDetailHasError));
         }
     }
 
@@ -173,6 +172,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
 
     // Команды — Сорт
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveSortCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
@@ -189,17 +189,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
             {
                 _userDialog.Error($"Не удалось сохранить: {ex.Message}");
             }
-        }, () => SortDetail != null && !SortDetail.HasErrors && SortDetail.IsDirty);
+        }, () => SortDetail is { HasErrors: false, IsDirty: true });
 
+    [field: AllowNull, MaybeNull]
     public ICommand CancelSortCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
             if (SelectedSort != null)
                 await LoadSortDetailAsync(SelectedSort.Id);
-        }, () => SortDetail != null && SortDetail.IsDirty);
+        }, () => SortDetail is { IsDirty: true });
 
     // Команды — Культура
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveCultureCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
@@ -216,17 +218,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
             {
                 _userDialog.Error($"Не удалось сохранить: {ex.Message}");
             }
-        }, () => CultureDetail != null && !CultureDetail.HasErrors && CultureDetail.IsDirty);
+        }, () => CultureDetail is { HasErrors: false, IsDirty: true });
 
+    [field: AllowNull, MaybeNull]
     public ICommand CancelCultureCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
             if (SelectedCulture != null)
                 await LoadCultureDetailAsync(SelectedCulture.Id);
-        }, () => CultureDetail != null && CultureDetail.IsDirty);
+        }, () => CultureDetail is { IsDirty: true });
 
     // Команды — Производитель
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveProducerCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
@@ -247,6 +251,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
             }
         }, () => SelectedProducer != null && !ProducerDetailHasError && ProducerDetailIsDirty);
 
+    [field: AllowNull, MaybeNull]
     public ICommand CancelProducerCommand => field
         ??= new LambdaCommandAsync(async () =>
         {

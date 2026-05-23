@@ -621,7 +621,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
                 GerminationData = info.GerminationDate,
                 QuenchingDate = info.QuenchingDate,
                 IsDead        = info.IsDead,
-                IsQuarantine  = info.QuarantineStartDate != null && info.QuarantineStopDate == null
+                IsQuarantine  = info is { QuarantineStartDate: not null, QuarantineStopDate: null }
             });
 
         return new SeedlingFromViewModel
@@ -887,7 +887,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     public ICommand DeathSeedlingCommand => field
         ??= new LambdaCommandAsync(OnDeathSeedlingCommandExecuted,
-            () => SelectedItem != null && SelectedItem.SeedlingInfos.Count > 1);
+            () => SelectedItem is { SeedlingInfos.Count: > 1 });
 
     private async Task OnDeathSeedlingCommandExecuted()
     {

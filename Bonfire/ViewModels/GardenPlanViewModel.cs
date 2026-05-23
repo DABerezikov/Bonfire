@@ -396,7 +396,7 @@ public class GardenPlanViewModel : ViewModel
             .Select(s =>
             {
                 var name        = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
-                var weightBased = s.SeedsInfo.AmountSeeds <= 0 && s.SeedsInfo.AmountSeedsWeight > 0;
+                var weightBased = s.SeedsInfo is { AmountSeeds: <= 0, AmountSeedsWeight: > 0 };
                 var qty         = weightBased ? (s.SeedsInfo.AmountSeedsWeight ?? 0) : s.SeedsInfo.AmountSeeds;
                 var qtyLabel    = weightBased ? $"{qty:F1} г." : $"{(int)qty} шт.";
                 return new PlantSourceItem
