@@ -95,7 +95,10 @@ public class GardenPlanViewModel : ViewModel
         set
         {
             if (Set(ref field, value))
+            {
                 OnPropertyChanged(nameof(GardenPropertiesPanel));
+                OnPropertyChanged(nameof(GreenhousePropertiesPanel));
+            }
         }
     }
 
@@ -111,8 +114,48 @@ public class GardenPlanViewModel : ViewModel
     public GreenhouseFromViewModel? SelectedGreenhouse
     {
         get;
-        set => Set(ref field, value);
+        set
+        {
+            if (Set(ref field, value))
+            {
+                SelectedElement = null;
+                OnPropertyChanged(nameof(GreenhousePropertiesPanel));
+                OnPropertyChanged(nameof(IsEditingGreenhouse));
+            }
+        }
     }
+
+    /// <summary>True, когда открыт оверлей теплицы.</summary>
+    public bool IsEditingGreenhouse => SelectedGreenhouse is not null;
+
+    /// <summary>
+    /// Возвращает SelectedGreenhouse, когда не выбран ни один элемент —
+    /// используется для отображения панели свойств теплицы в оверлее.
+    /// </summary>
+    public GreenhouseFromViewModel? GreenhousePropertiesPanel =>
+        SelectedGreenhouse is not null && SelectedElement is null ? SelectedGreenhouse : null;
+
+    // --- Абстракция «активный контейнер» ---
+    // При редактировании теплицы операции работают с её внутренним пространством.
+
+    private int ActiveContainerId =>
+        SelectedGreenhouse?.Id ?? SelectedGarden?.Id ?? 0;
+
+    private System.Collections.ObjectModel.ObservableCollection<GardenElementFromViewModel> ActiveElements =>
+        SelectedGreenhouse?.InnerElements ?? SelectedGarden?.Elements
+        ?? new System.Collections.ObjectModel.ObservableCollection<GardenElementFromViewModel>();
+
+    private double ActiveCanvasWidth =>
+        SelectedGreenhouse?.InnerCanvasWidth ?? SelectedGarden?.CanvasWidth ?? 0;
+
+    private double ActiveCanvasHeight =>
+        SelectedGreenhouse?.InnerCanvasHeight ?? SelectedGarden?.CanvasHeight ?? 0;
+
+    private System.Collections.ObjectModel.ObservableCollection<GreenhouseFromViewModel> ActiveGreenhouses =>
+        SelectedGreenhouse is null
+            ? (SelectedGarden?.Greenhouses
+               ?? new System.Collections.ObjectModel.ObservableCollection<GreenhouseFromViewModel>())
+            : new System.Collections.ObjectModel.ObservableCollection<GreenhouseFromViewModel>();
 
     // --- Тип добавляемого элемента ---
 
@@ -517,6 +560,95 @@ public class GardenPlanViewModel : ViewModel
     public ICommand CloseGreenhouseCommand => field
         ??= new LambdaCommand(() => SelectedGreenhouse = null);
 
+    public ICommand ChangeGreenhouseStateCommand => field
+        ??= new LambdaCommandAsync(
+            async p => await ChangeGreenhouseStateAsync(p as string),
+            _ => SelectedGreenhouse is not null);
+
+    private async Task ChangeGreenhouseStateAsync(string? stateTypeName)
+    {
+        if (SelectedGreenhouse is null || stateTypeName is null) return;
+
+        var newState = GardenElementState.From(stateTypeName);
+        var currentState = GardenElementState.From(SelectedGreenhouse.StateTypeName);
+        if (!currentState.CanTransitionTo(newState)) return;
+
+        var entity = await _gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
+        if (entity is null) return;
+
+        await _gardenService.ChangeGreenhouseStateAsync(entity, newState);
+
+        SelectedGreenhouse.StateTypeName    = newState.GetType().Name;
+        SelectedGreenhouse.StateDisplayName = newState.DisplayName;
+        SelectedGreenhouse.StateColor       = newState.StatusColor;
+    }
+
+    public ICommand DeleteGreenhouseCommand => field
+        ??= new LambdaCommandAsync(DeleteGreenhouseAsync,
+            () => SelectedGreenhouse is not null);
+
+    private async Task DeleteGreenhouseAsync()
+    {
+        if (SelectedGreenhouse is null || SelectedGarden is null) return;
+        if (!_userDialog.YesNoQuestion(
+                $"Удалить теплицу «{SelectedGreenhouse.Name}»? Все элементы и посадки будут удалены.",
+                "Удаление теплицы")) return;
+
+        var entity = await _gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
+        if (entity is null) return;
+
+        await _gardenService.DeleteGreenhouseAsync(entity);
+        SelectedGarden.Greenhouses.Remove(SelectedGreenhouse);
+        SelectedGreenhouse = null;
+    }
+
+    public ICommand SaveGreenhouseSizeCommand => field
+        ??= new LambdaCommandAsync(SaveGreenhouseSizeAsync,
+            () => SelectedGreenhouse is not null);
+
+    private async Task SaveGreenhouseSizeAsync()
+    {
+        if (SelectedGreenhouse is null) return;
+
+        const double scale = 40;
+        double newInnerW = SelectedGreenhouse.WidthMeters * scale;
+        double newInnerH = SelectedGreenhouse.HeightMeters * scale;
+
+        var blockedElement = SelectedGreenhouse.InnerElements
+            .FirstOrDefault(el => el.X + el.Width > newInnerW || el.Y + el.Height > newInnerH);
+        if (blockedElement is not null)
+        {
+            _userDialog.Warning(
+                $"Нельзя уменьшить теплицу: элемент «{blockedElement.Name}» " +
+                $"(правый/нижний край {blockedElement.X + blockedElement.Width:F0}×{blockedElement.Y + blockedElement.Height:F0} пкс) " +
+                $"выходит за новые границы {newInnerW:F0}×{newInnerH:F0} пкс.",
+                "Изменение размера теплицы");
+            return;
+        }
+
+        var entity = await _gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
+        if (entity is null) return;
+
+        entity.Name         = SelectedGreenhouse.Name;
+        entity.WidthMeters  = SelectedGreenhouse.WidthMeters;
+        entity.HeightMeters = SelectedGreenhouse.HeightMeters;
+        entity.CanvasWidth  = newInnerW;
+        entity.CanvasHeight = newInnerH;
+        entity.Note         = SelectedGreenhouse.Note;
+        entity.Material     = SelectedGreenhouse.Material;
+
+        await _gardenService.UpdateGreenhouseAsync(entity);
+
+        SelectedGreenhouse.InnerCanvasWidth  = newInnerW;
+        SelectedGreenhouse.InnerCanvasHeight = newInnerH;
+
+        foreach (var el in SelectedGreenhouse.InnerElements)
+        {
+            el.ContainerCanvasWidth  = newInnerW;
+            el.ContainerCanvasHeight = newInnerH;
+        }
+    }
+
     // ─────────────────────────────────────
     //  Добавление элементов
     // ─────────────────────────────────────
@@ -529,20 +661,34 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        // Размеры нового элемента по умолчанию (совпадают с GardenElement.DisplayWidth/Height)
-        const double defaultW = 120, defaultH = 80;
+        var activeElements    = ActiveElements;
+        var activeGreenhouses = ActiveGreenhouses;
+        var canvasW = ActiveCanvasWidth;
+        var canvasH = ActiveCanvasHeight;
 
-        // Ищем первое свободное место с учётом элементов и теплиц
+        // Размеры по умолчанию в пикселях (масштаб 40 пкс/м):
+        //   Грядка 0.9 × 2 м = 36 × 80 пкс
+        //   Парник  1.2 × 0.8 м = 48 × 32 пкс
+        //   Цветник 0.6 × 0.6 м = 24 × 24 пкс
+        //   Открытый грунт 2 × 2 м = 80 × 80 пкс
+        (double defaultW, double defaultH) = SelectedElementType switch
+        {
+            "FlowerBed"      => (24.0, 24.0),
+            "ColdFrame"      => (48.0, 32.0),
+            "OpenGroundArea" => (80.0, 80.0),
+            _                => (36.0, 80.0)   // Bed
+        };
+
         var spot = CollisionHelper.FindFreeSpot(
-            SelectedGarden.Elements, SelectedGarden.Greenhouses, exclude: null,
-            defaultW, defaultH,
-            SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+            activeElements, activeGreenhouses, exclude: null,
+            defaultW, defaultH, canvasW, canvasH);
 
         if (spot is null)
         {
+            var containerName = SelectedGreenhouse?.Name ?? SelectedGarden.Name;
             _userDialog.Warning(
-                $"На участке «{SelectedGarden.Name}» нет свободного места для нового элемента.\n" +
-                "Увеличьте размер участка или уберите лишние элементы.",
+                $"В «{containerName}» нет свободного места для нового элемента.\n" +
+                "Увеличьте размер или уберите лишние элементы.",
                 "Добавление элемента");
             return;
         }
@@ -555,17 +701,18 @@ public class GardenPlanViewModel : ViewModel
             _                => new Bed()
         };
 
-        element.PlotId = SelectedGarden.Id;
-        element.Name = GetDefaultName(SelectedElementType, SelectedGarden.Elements.Count + 1);
-        element.X = spot.Value.x;
-        element.Y = spot.Value.y;
-        // DisplayWidth/DisplayHeight уже 120/80 по умолчанию в GardenElement
+        element.PlotId        = ActiveContainerId;
+        element.Name          = GetDefaultName(SelectedElementType, activeElements.Count + 1);
+        element.X             = spot.Value.x;
+        element.Y             = spot.Value.y;
+        element.DisplayWidth  = defaultW;
+        element.DisplayHeight = defaultH;
 
         var saved = await _gardenService.AddElementAsync(element);
-        var vm = GardenPlanMapper.MapElement(saved, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
-        vm.ContainerElements   = SelectedGarden.Elements;    // ссылка на коллекцию до Add()
-        vm.ContainerGreenhouses = SelectedGarden.Greenhouses;
-        SelectedGarden.Elements.Add(vm);
+        var vm = GardenPlanMapper.MapElement(saved, canvasW, canvasH);
+        vm.ContainerElements    = activeElements;
+        vm.ContainerGreenhouses = activeGreenhouses;
+        activeElements.Add(vm);
         SelectedElement = vm;
     }
 
@@ -576,10 +723,28 @@ public class GardenPlanViewModel : ViewModel
     private async Task AddGreenhouseAsync()
     {
         if (SelectedGarden is null) return;
+
+        const double scale = 40;
+        const double ghW = 6 * scale, ghH = 3 * scale; // 6×3 м по умолчанию
+
+        var spot = CollisionHelper.FindFreeSpot(
+            SelectedGarden.Elements, SelectedGarden.Greenhouses, exclude: null,
+            ghW, ghH, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+
+        if (spot is null)
+        {
+            _userDialog.Warning(
+                $"На участке «{SelectedGarden.Name}» нет свободного места для теплицы 6×3 м.\n" +
+                "Увеличьте участок или уберите лишние элементы.",
+                "Добавление теплицы");
+            return;
+        }
+
         var gh = await _gardenService.AddGreenhouseAsync(
             SelectedGarden.Id,
             $"Теплица {SelectedGarden.Greenhouses.Count + 1}",
-            widthMeters: 6, heightMeters: 3, scale: 40);
+            widthMeters: 6, heightMeters: 3, scale: scale,
+            x: spot.Value.x, y: spot.Value.y);
         var vm = GardenPlanMapper.MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
         SelectedGarden.Greenhouses.Add(vm);
     }
@@ -599,7 +764,7 @@ public class GardenPlanViewModel : ViewModel
         if (entity is null) return;
 
         await _gardenService.DeleteElementAsync(entity);
-        SelectedGarden.Elements.Remove(SelectedElement);
+        ActiveElements.Remove(SelectedElement);
         SelectedElement = null;
     }
 
@@ -789,11 +954,12 @@ public class GardenPlanViewModel : ViewModel
         if (spotVm is null || SelectedPlantSource is null) return;
         var source = SelectedPlantSource;
 
-        // Полный адрес посадки: план / участок / элемент
+        // Полный адрес посадки: план / участок / теплица (если есть) / элемент
         var plantPlace = string.Join(" / ", new[]
         {
             SelectedPlan?.Name,
             SelectedGarden?.Name,
+            SelectedGreenhouse?.Name,
             EditingGridElement?.Name
         }.Where(s => !string.IsNullOrEmpty(s)));
 

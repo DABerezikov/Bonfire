@@ -119,6 +119,7 @@
                             Width="{Binding SelectedGarden.CanvasWidth}"
                             Height="{Binding SelectedGarden.CanvasHeight}"
                             Background="Transparent"
+                            ClipToBounds="True"
                             Focusable="True" FocusVisualStyle="{x:Null}"
                             MouseLeftButtonDown="GardenCanvas_MouseLeftButtonDown">
                         <!--
@@ -323,19 +324,23 @@
 
                         <Separator Margin="0,4,0,10"/>
 
-                        <!-- Позиция -->
-                        <TextBlock Text="Позиция (пиксели)" Style="{StaticResource LabelStyle}"/>
+                        <!-- Позиция и размер в метрах -->
+                        <TextBlock Text="Позиция и размер (метры)" Style="{StaticResource LabelStyle}"/>
                         <UniformGrid Columns="4" Margin="0,2,0,4">
                             <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource PxToMeters}}"/>
                             <TextBlock Text="Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                            <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource PxToMeters}}"/>
                         </UniformGrid>
                         <UniformGrid Columns="4" Margin="0,0,0,10">
                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource PxToMeters}}"/>
                             <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                            <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource PxToMeters}}"/>
                         </UniformGrid>
 
                         <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
@@ -592,19 +597,14 @@
             <Border Background="White" CornerRadius="8" Padding="16"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20">
                 <DockPanel>
+
                     <!-- Заголовок теплицы -->
-                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
                         <StackPanel Orientation="Horizontal">
                             <fa5:ImageAwesome Icon="Solid_Home" Height="16" Margin="0,0,8,0" Foreground="#7B1FA2"/>
                             <TextBlock FontSize="16" FontWeight="Bold" VerticalAlignment="Center">
                                 <Run Text="Теплица: "/>
                                 <Run Text="{Binding SelectedGreenhouse.Name}" Foreground="#7B1FA2"/>
-                            </TextBlock>
-                            <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#757575">
-                                <Run Text="{Binding SelectedGreenhouse.WidthMeters, StringFormat={}{0:F1}}"/>
-                                <Run Text=" × "/>
-                                <Run Text="{Binding SelectedGreenhouse.HeightMeters, StringFormat={}{0:F1}}"/>
-                                <Run Text=" м"/>
                             </TextBlock>
                         </StackPanel>
                         <Button Content="✕ Закрыть теплицу" HorizontalAlignment="Right"
@@ -612,34 +612,293 @@
                                 Command="{Binding CloseGreenhouseCommand}"/>
                     </Grid>
 
-                    <!-- Canvas внутри теплицы — Viewbox масштабирует под доступную площадь оверлея -->
-                    <Viewbox Stretch="Uniform">
-                        <Border Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
-                                Height="{Binding SelectedGreenhouse.InnerCanvasHeight}"
-                                Background="#FDF3FF" BorderBrush="#CE93D8" BorderThickness="2">
-                            <Canvas Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
-                                    Height="{Binding SelectedGreenhouse.InnerCanvasHeight}">
-                                <ItemsControl ItemsSource="{Binding SelectedGreenhouse.InnerElements}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemContainerStyle>
-                                        <Style>
-                                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                            <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
-                                        </Style>
-                                    </ItemsControl.ItemContainerStyle>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
-                                            <gp:GardenElementControl
-                                                Tag="{Binding DataContext,
-                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Canvas>
+                    <!-- Тулбар: тип элемента + добавить -->
+                    <Border DockPanel.Dock="Top" Background="#F5F5F5" BorderBrush="#E0E0E0"
+                            BorderThickness="0,0,0,1" Padding="8,6" Margin="0,0,0,8">
+                        <WrapPanel Orientation="Horizontal">
+                            <TextBlock Text="Тип:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Width="140" SelectedValue="{Binding SelectedElementType}"
+                                      SelectedValuePath="Tag" VerticalAlignment="Center">
+                                <ComboBoxItem Content="Грядка"           Tag="Bed"/>
+                                <ComboBoxItem Content="Парник"           Tag="ColdFrame"/>
+                                <ComboBoxItem Content="Цветник"          Tag="FlowerBed"/>
+                                <ComboBoxItem Content="Открытый грунт"   Tag="OpenGroundArea"/>
+                            </ComboBox>
+                            <Button Height="28" Padding="10,0" Margin="8,0,0,0"
+                                    ToolTip="Добавить элемент в теплицу"
+                                    Command="{Binding AddElementCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <fa5:ImageAwesome Icon="Solid_Plus" Height="11" Margin="0,0,5,0" Foreground="#388E3C"/>
+                                    <TextBlock Text="Добавить"/>
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+                    </Border>
+
+                    <!-- Основная область: холст + панель свойств -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="280"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Внутренний Canvas теплицы -->
+                        <Viewbox Grid.Column="0" Stretch="Uniform" Margin="0,0,8,0">
+                            <Border Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
+                                    Height="{Binding SelectedGreenhouse.InnerCanvasHeight}"
+                                    Background="#FDF3FF" BorderBrush="#CE93D8" BorderThickness="2">
+                                <Canvas x:Name="GreenhouseCanvas"
+                                        Width="{Binding SelectedGreenhouse.InnerCanvasWidth}"
+                                        Height="{Binding SelectedGreenhouse.InnerCanvasHeight}"
+                                        Background="Transparent"
+                                        ClipToBounds="True"
+                                        Focusable="True" FocusVisualStyle="{x:Null}"
+                                        MouseLeftButtonDown="GreenhouseCanvas_MouseLeftButtonDown">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="MouseLeftButtonDown">
+                                            <i:InvokeCommandAction Command="{Binding DeselectElementCommand}"/>
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                    <ItemsControl ItemsSource="{Binding SelectedGreenhouse.InnerElements}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style>
+                                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                                <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
+                                                <gp:GardenElementControl
+                                                    Tag="{Binding DataContext,
+                                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Canvas>
+                            </Border>
+                        </Viewbox>
+
+                        <!-- Боковая панель свойств теплицы -->
+                        <Border Grid.Column="1" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0" Background="White">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="12">
+
+                                    <!-- Панель выбранного inner-элемента -->
+                                    <StackPanel DataContext="{Binding SelectedElement}"
+                                                Visibility="{Binding DataContext.SelectedElement,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                                    Converter={StaticResource NullToVisibilityConverter}}">
+
+                                        <Border Background="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}"
+                                                CornerRadius="4" Padding="8,4" Margin="0,0,0,10">
+                                            <TextBlock Text="{Binding TypeLabel}" Foreground="White"
+                                                       FontWeight="Bold" FontSize="14"/>
+                                        </Border>
+
+                                        <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                                        <TextBlock Text="Состояние" Style="{StaticResource LabelStyle}"/>
+                                        <Border Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
+                                                CornerRadius="3" Padding="6,3" Margin="0,2,0,4" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding StateDisplayName}" Foreground="White" FontWeight="SemiBold"/>
+                                        </Border>
+
+                                        <TextBlock Text="Перевести в состояние:" Style="{StaticResource LabelStyle}" Margin="0,6,0,2"/>
+                                        <WrapPanel Margin="0,0,0,10">
+                                            <Button Content="Запланирована" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToPlanned}"
+                                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="PlannedState"/>
+                                            <Button Content="Подготовлена" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToPrepared}"
+                                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="PreparedState"/>
+                                            <Button Content="Активна" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToActive}"
+                                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="ActiveState"/>
+                                            <Button Content="Под паром" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToFallow}"
+                                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="FallowState"/>
+                                            <Button Content="Зимовка" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToResting}"
+                                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="RestingState"/>
+                                            <Button Content="В архив" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToArchived}"
+                                                    Command="{Binding DataContext.ChangeElementStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="ArchivedState"/>
+                                        </WrapPanel>
+
+                                        <Separator Margin="0,4,0,10"/>
+
+                                        <TextBlock Text="Почва" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding SoilType, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                                        <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                                 TextWrapping="Wrap" MinHeight="50" AcceptsReturn="True" Margin="0,2,0,10"/>
+
+                                        <Separator Margin="0,4,0,10"/>
+
+                                        <TextBlock Text="Позиция и размер (метры)" Style="{StaticResource LabelStyle}"/>
+                                        <UniformGrid Columns="4" Margin="0,2,0,4">
+                                            <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBlock Text="Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource PxToMeters}}"/>
+                                        </UniformGrid>
+                                        <UniformGrid Columns="4" Margin="0,0,0,10">
+                                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource PxToMeters}}"/>
+                                        </UniformGrid>
+
+                                        <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                                Command="{Binding DataContext.SaveElementPositionCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
+                                        <Separator Margin="0,6,0,10"/>
+
+                                        <Button HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                                Command="{Binding DataContext.OpenPlantingGridCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <fa5:ImageAwesome Icon="Solid_ThLarge" Height="12" Margin="0,0,6,0" Foreground="#1976D2"/>
+                                                <TextBlock Text="Схема посадок"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button HorizontalAlignment="Stretch" Foreground="#C62828" BorderBrush="#C62828"
+                                                Command="{Binding DataContext.DeleteElementCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <fa5:ImageAwesome Icon="Solid_Trash" Height="12" Margin="0,0,6,0" Foreground="#C62828"/>
+                                                <TextBlock Text="Удалить элемент"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- Панель теплицы (элемент не выбран) -->
+                                    <StackPanel DataContext="{Binding GreenhousePropertiesPanel}"
+                                                Visibility="{Binding DataContext.GreenhousePropertiesPanel,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                                    Converter={StaticResource NullToVisibilityConverter}}">
+
+                                        <Border Background="#7B1FA2" CornerRadius="4" Padding="8,4" Margin="0,0,0,10">
+                                            <TextBlock Text="Теплица" Foreground="White" FontWeight="Bold" FontSize="14"/>
+                                        </Border>
+
+                                        <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                                        <TextBlock Text="Размер внутри (в метрах)" Style="{StaticResource LabelStyle}"/>
+                                        <UniformGrid Columns="4" Margin="0,2,0,10">
+                                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
+                                                         StringFormat={}{0:F1}}"/>
+                                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
+                                                         StringFormat={}{0:F1}}"/>
+                                        </UniformGrid>
+
+                                        <TextBlock Foreground="#757575" FontSize="11" Margin="0,0,0,10">
+                                            <Run Text="Холст: "/>
+                                            <Run Text="{Binding InnerCanvasWidth, StringFormat={}{0:F0}}"/>
+                                            <Run Text=" × "/>
+                                            <Run Text="{Binding InnerCanvasHeight, StringFormat={}{0:F0}}"/>
+                                            <Run Text=" пкс"/>
+                                        </TextBlock>
+
+                                        <Button HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                                Command="{Binding DataContext.SaveGreenhouseSizeCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <fa5:ImageAwesome Icon="Solid_Save" Height="12" Margin="0,0,6,0" Foreground="#7B1FA2"/>
+                                                <TextBlock Text="Сохранить размер и название"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <TextBlock Text="Материал" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Material, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+
+                                        <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                                 TextWrapping="Wrap" MinHeight="40" AcceptsReturn="True" Margin="0,2,0,10"/>
+
+                                        <Separator Margin="0,4,0,10"/>
+
+                                        <TextBlock Text="Состояние" Style="{StaticResource LabelStyle}"/>
+                                        <Border Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
+                                                CornerRadius="3" Padding="6,3" Margin="0,2,0,6" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding StateDisplayName}" Foreground="White" FontWeight="SemiBold"/>
+                                        </Border>
+
+                                        <TextBlock Text="Перевести в состояние:" Style="{StaticResource LabelStyle}" Margin="0,0,0,2"/>
+                                        <WrapPanel Margin="0,0,0,12">
+                                            <Button Content="Запланирована" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToPlanned}"
+                                                    Command="{Binding DataContext.ChangeGreenhouseStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="PlannedState"/>
+                                            <Button Content="Подготовлена" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToPrepared}"
+                                                    Command="{Binding DataContext.ChangeGreenhouseStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="PreparedState"/>
+                                            <Button Content="Активна" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToActive}"
+                                                    Command="{Binding DataContext.ChangeGreenhouseStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="ActiveState"/>
+                                            <Button Content="Под паром" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToFallow}"
+                                                    Command="{Binding DataContext.ChangeGreenhouseStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="FallowState"/>
+                                            <Button Content="Зимовка" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToResting}"
+                                                    Command="{Binding DataContext.ChangeGreenhouseStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="RestingState"/>
+                                            <Button Content="В архив" Margin="0,2,4,2" FontSize="11"
+                                                    IsEnabled="{Binding CanGoToArchived}"
+                                                    Command="{Binding DataContext.ChangeGreenhouseStateCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="ArchivedState"/>
+                                        </WrapPanel>
+
+                                        <Button HorizontalAlignment="Stretch" Foreground="#C62828" BorderBrush="#C62828"
+                                                Command="{Binding DataContext.DeleteGreenhouseCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <fa5:ImageAwesome Icon="Solid_Trash" Height="12" Margin="0,0,6,0" Foreground="#C62828"/>
+                                                <TextBlock Text="Удалить теплицу"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                    </StackPanel>
+
+                                </StackPanel>
+                            </ScrollViewer>
                         </Border>
-                    </Viewbox>
+                    </Grid>
                 </DockPanel>
             </Border>
         </Grid>

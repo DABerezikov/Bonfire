@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Bonfire.Infrastructure;
 using Bonfire.Models;
 
@@ -38,11 +39,13 @@ public partial class GardenElementControl : UserControl
     {
         if (DataContext is not GardenElementFromViewModel vm || vm.IsLocked) return;
 
+        const double snap = 4; // 0.1 м = 4 пкс
+        double scale = GetCanvasScale(this);
         double maxX = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.Width  : double.MaxValue;
         double maxY = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Height : double.MaxValue;
 
-        vm.X = Math.Max(0, Math.Min(vm.X + e.HorizontalChange, maxX));
-        vm.Y = Math.Max(0, Math.Min(vm.Y + e.VerticalChange,   maxY));
+        vm.X = Math.Round(Math.Max(0, Math.Min(vm.X + e.HorizontalChange / scale, maxX)) / snap) * snap;
+        vm.Y = Math.Round(Math.Max(0, Math.Min(vm.Y + e.VerticalChange   / scale, maxY)) / snap) * snap;
     }
 
     // Отпускание после перемещения: проверяем коллизию, при необходимости откатываем.
@@ -63,11 +66,37 @@ public partial class GardenElementControl : UserControl
     {
         if (DataContext is not GardenElementFromViewModel vm || vm.IsLocked) return;
 
+        double scale = GetCanvasScale(this);
         double maxW = vm.ContainerCanvasWidth  > 0 ? vm.ContainerCanvasWidth  - vm.X : double.MaxValue;
         double maxH = vm.ContainerCanvasHeight > 0 ? vm.ContainerCanvasHeight - vm.Y : double.MaxValue;
 
-        vm.Width  = Math.Max(60, Math.Min(vm.Width  + e.HorizontalChange, maxW));
-        vm.Height = Math.Max(40, Math.Min(vm.Height + e.VerticalChange,   maxH));
+        vm.Width  = Math.Round(Math.Max(20, Math.Min(vm.Width  + e.HorizontalChange / scale, maxW)));
+        vm.Height = Math.Round(Math.Max(20, Math.Min(vm.Height + e.VerticalChange   / scale, maxH)));
+    }
+
+    // Масштаб Viewbox: Thumb.DragDelta возвращает дельту в координатах окна.
+    // Делим на scale чтобы получить дельту в пикселях Canvas.
+    private static double GetCanvasScale(UIElement element)
+    {
+        try
+        {
+            DependencyObject current = element;
+            while (true)
+            {
+                var parent = VisualTreeHelper.GetParent(current);
+                if (parent is null) return 1.0;
+                if (parent is Canvas canvas)
+                {
+                    var window = Window.GetWindow(canvas);
+                    if (window is null) return 1.0;
+                    var t = canvas.TransformToAncestor(window);
+                    var v = t.Transform(new Point(1, 0));
+                    return v.X > 0 ? v.X : 1.0;
+                }
+                current = parent;
+            }
+        }
+        catch { return 1.0; }
     }
 
     // Отпускание после ресайза: проверяем коллизию, откатываем размер если нужно.

@@ -30,7 +30,8 @@ public interface IGardenService
 
     // --- Теплицы (наследники GardenPlot) ---
     Task<Greenhouse> AddGreenhouseAsync(int parentPlotId, string name,
-        double widthMeters, double heightMeters, double scale = 40);
+        double widthMeters, double heightMeters, double scale = 40,
+        double x = 0, double y = 0);
     Task<Greenhouse> UpdateGreenhouseAsync(Greenhouse greenhouse);
     Task DeleteGreenhouseAsync(Greenhouse greenhouse);
 

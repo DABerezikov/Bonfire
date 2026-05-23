@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using BonfireDB.Entities.GardenPlanning.States;
 
 namespace Bonfire.Models;
 
@@ -43,10 +44,33 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
     public double Rotation { get; set; }
 
     // --- Внутренние размеры (собственный Canvas) ---
-    public double WidthMeters { get; set; }
-    public double HeightMeters { get; set; }
-    public double InnerCanvasWidth { get; set; }
-    public double InnerCanvasHeight { get; set; }
+    private double _widthMeters;
+    public double WidthMeters
+    {
+        get => _widthMeters;
+        set { _widthMeters = value; OnPropertyChanged(); }
+    }
+
+    private double _heightMeters;
+    public double HeightMeters
+    {
+        get => _heightMeters;
+        set { _heightMeters = value; OnPropertyChanged(); }
+    }
+
+    private double _innerCanvasWidth;
+    public double InnerCanvasWidth
+    {
+        get => _innerCanvasWidth;
+        set { _innerCanvasWidth = value; OnPropertyChanged(); }
+    }
+
+    private double _innerCanvasHeight;
+    public double InnerCanvasHeight
+    {
+        get => _innerCanvasHeight;
+        set { _innerCanvasHeight = value; OnPropertyChanged(); }
+    }
 
     // --- Блокировка ---
     private bool _isLocked;
@@ -65,9 +89,52 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
     }
 
     // --- Состояние ---
-    public string StateTypeName { get; set; } = "PlannedState";
-    public string StateDisplayName { get; set; } = "Запланирована";
-    public string StateColor { get; set; } = "#9E9E9E";
+
+    private string _stateTypeName = "PlannedState";
+    /// <summary>
+    /// При изменении автоматически пересчитываются DisplayName, Color и CanGoTo*
+    /// (по образцу GardenElementFromViewModel).
+    /// </summary>
+    public string StateTypeName
+    {
+        get => _stateTypeName;
+        set
+        {
+            if (_stateTypeName == value) return;
+            _stateTypeName = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(StateDisplayName));
+            OnPropertyChanged(nameof(StateColor));
+            OnPropertyChanged(nameof(CanGoToPlanned));
+            OnPropertyChanged(nameof(CanGoToPrepared));
+            OnPropertyChanged(nameof(CanGoToActive));
+            OnPropertyChanged(nameof(CanGoToFallow));
+            OnPropertyChanged(nameof(CanGoToResting));
+            OnPropertyChanged(nameof(CanGoToArchived));
+        }
+    }
+
+    private string _stateDisplayName = "Запланирована";
+    public string StateDisplayName
+    {
+        get => _stateDisplayName;
+        set { _stateDisplayName = value; OnPropertyChanged(); }
+    }
+
+    private string _stateColor = "#9E9E9E";
+    public string StateColor
+    {
+        get => _stateColor;
+        set { _stateColor = value; OnPropertyChanged(); }
+    }
+
+    // --- Допустимые переходы (для IsEnabled кнопок) ---
+    public bool CanGoToPlanned  => GardenElementState.From(_stateTypeName).CanTransitionTo(new PlannedState());
+    public bool CanGoToPrepared => GardenElementState.From(_stateTypeName).CanTransitionTo(new PreparedState());
+    public bool CanGoToActive   => GardenElementState.From(_stateTypeName).CanTransitionTo(new ActiveState());
+    public bool CanGoToFallow   => GardenElementState.From(_stateTypeName).CanTransitionTo(new FallowState());
+    public bool CanGoToResting  => GardenElementState.From(_stateTypeName).CanTransitionTo(new RestingState());
+    public bool CanGoToArchived => GardenElementState.From(_stateTypeName).CanTransitionTo(new ArchivedState());
 
     public string? Material { get; set; }
     public string? Note { get; set; }

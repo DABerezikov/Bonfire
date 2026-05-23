@@ -110,7 +110,8 @@ internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
     // --- Теплицы ---
 
     public async Task<Greenhouse> AddGreenhouseAsync(int parentPlotId, string name,
-        double widthMeters, double heightMeters, double scale = 40)
+        double widthMeters, double heightMeters, double scale = 40,
+        double x = 0, double y = 0)
     {
         await using var uow = uowFactory.Create();
         var gh = new Greenhouse
@@ -122,7 +123,9 @@ internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
             CanvasWidth = widthMeters * scale,
             CanvasHeight = heightMeters * scale,
             DisplayWidth = widthMeters * scale,
-            DisplayHeight = heightMeters * scale
+            DisplayHeight = heightMeters * scale,
+            X = x,
+            Y = y
         };
         await uow.Repository<Greenhouse>().AddAsync(gh);
         await uow.SaveChangesAsync();
@@ -193,9 +196,7 @@ internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
     public async Task<PlantingSpot?> GetSpotAsync(int spotId)
     {
         await using var uow = uowFactory.Create();
-        return await uow.Repository<Garden>().Items
-            .SelectMany(g => g.Elements)
-            .SelectMany(e => e.PlantingSpots)
+        return await uow.Repository<PlantingSpot>().Items
             .FirstOrDefaultAsync(s => s.Id == spotId);
     }
 

@@ -79,6 +79,16 @@ internal static class GardenPlanMapper
         double containerW = 0, double containerH = 0)
     {
         var state = gh.State;
+        var innerElements = new ObservableCollection<GardenElementFromViewModel>(
+            gh.Elements.Select(e => MapElement(e, gh.CanvasWidth, gh.CanvasHeight)));
+
+        // Проставляем ссылки для проверки коллизий при drag/resize (как в MapGarden)
+        foreach (var el in innerElements)
+        {
+            el.ContainerElements    = innerElements;
+            el.ContainerGreenhouses = [];
+        }
+
         return new GreenhouseFromViewModel
         {
             Id = gh.Id,
@@ -100,8 +110,7 @@ internal static class GardenPlanMapper
             StateColor = state.StatusColor,
             Material = gh.Material,
             Note = gh.Note,
-            InnerElements = new ObservableCollection<GardenElementFromViewModel>(
-                gh.Elements.Select(e => MapElement(e, gh.CanvasWidth, gh.CanvasHeight)))
+            InnerElements = innerElements
         };
     }
 

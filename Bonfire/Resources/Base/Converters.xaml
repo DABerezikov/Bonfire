@@ -7,5 +7,6 @@
     <conv:StringToBrushConverter           x:Key="StringToBrushConverter"/>
     <BooleanToVisibilityConverter          x:Key="BoolToVisibility"/>
     <conv:NotBoolToVisibilityConverter     x:Key="NotBoolToVisibility"/>
+    <conv:PxToMetersConverter              x:Key="PxToMeters"/>
 
 </ResourceDictionary>

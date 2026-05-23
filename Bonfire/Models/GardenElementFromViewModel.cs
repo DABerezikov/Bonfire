@@ -57,7 +57,7 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
     private double _y;
     public double Y { get => _y; set { _y = value; OnPropertyChanged(); } }
 
-    private double _width = 120;
+    private double _width = 36;
     public double Width
     {
         get => _width;
