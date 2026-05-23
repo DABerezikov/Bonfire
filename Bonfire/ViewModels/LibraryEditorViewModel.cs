@@ -232,10 +232,12 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var result = await _libraryService.UpdateProducerAsync(SelectedProducer!.Id, ProducerDetailName!);
+                var producerId = SelectedProducer!.Id;
+                var savedName = ProducerDetailName!;
+                var result = await _libraryService.UpdateProducerAsync(producerId, savedName);
                 if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
                 SyncAfterProducerUpdate(result.Value!);
-                _originalProducerName = ProducerDetailName;
+                _originalProducerName = savedName;
                 ProducerDetailIsDirty = false;
                 _userDialog.Information("Сохранено");
             }
