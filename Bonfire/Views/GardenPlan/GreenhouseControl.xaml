@@ -74,12 +74,14 @@
                 <Border DockPanel.Dock="Bottom"
                         Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
                         CornerRadius="3" Padding="3,1" HorizontalAlignment="Left" Margin="0,4,0,0">
-                    <TextBlock Text="{Binding StateDisplayName}" Foreground="White" FontSize="9"/>
+                    <TextBlock Text="{Binding StateDisplayName}" Foreground="White"
+                               FontSize="{Binding AdaptiveFontSize}"/>
                 </Border>
 
                 <!-- Подсказка двойного клика -->
                 <TextBlock DockPanel.Dock="Bottom" Text="[двойной клик — открыть]"
-                           FontSize="9" Foreground="#9E9E9E" Margin="0,2,0,0"/>
+                           FontSize="{Binding AdaptiveFontSize}"
+                           Foreground="#9E9E9E" Margin="0,2,0,0"/>
             </DockPanel>
         </Border>
 
