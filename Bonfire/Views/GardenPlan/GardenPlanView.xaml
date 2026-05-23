@@ -216,7 +216,7 @@
                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
                                          StringFormat={}{0:F1}}"/>
-                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="8,0,4,0"/>
                             <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
                                          StringFormat={}{0:F1}}"/>
                         </UniformGrid>
@@ -335,11 +335,11 @@
                                          Converter={StaticResource PxToMeters}}"/>
                         </UniformGrid>
                         <UniformGrid Columns="4" Margin="0,0,0,10">
-                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
-                                         Converter={StaticResource PxToMeters}}"/>
-                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource PxToMeters}}"/>
+                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
                                          Converter={StaticResource PxToMeters}}"/>
                         </UniformGrid>
 
@@ -762,11 +762,11 @@
                                                          Converter={StaticResource PxToMeters}}"/>
                                         </UniformGrid>
                                         <UniformGrid Columns="4" Margin="0,0,0,10">
-                                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
-                                                         Converter={StaticResource PxToMeters}}"/>
-                                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged,
                                                          Converter={StaticResource PxToMeters}}"/>
                                         </UniformGrid>
 
@@ -813,7 +813,7 @@
                                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
                                                          StringFormat={}{0:F1}}"/>
-                                            <TextBlock Text="В" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                            <TextBlock Text="Д" VerticalAlignment="Center" Margin="8,0,4,0"/>
                                             <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
                                                          StringFormat={}{0:F1}}"/>
                                         </UniformGrid>
