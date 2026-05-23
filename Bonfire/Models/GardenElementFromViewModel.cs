@@ -98,9 +98,11 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
     // Компактный режим: отображаемый размер < 64 пкс по меньшей стороне
     public bool IsCompact => Math.Min(_width, _height) * _canvasZoom < 64;
 
-    // Адаптивный шрифт: при уменьшении зума шрифт растёт, чтобы текст оставался читаемым.
-    // Базовый размер 11px; результирующий видимый размер ≈ 11px при любом зуме (зажат 9–16).
-    public double AdaptiveFontSize => Math.Round(Math.Clamp(11.0 / _canvasZoom, 9.0, 16.0), 1);
+    // Адаптивный шрифт: при zoom < 100% шрифт растёт, компенсируя уменьшение элемента.
+    // При zoom >= 100% — фиксированные 11px (не уменьшаем при увеличении).
+    public double AdaptiveFontSize => _canvasZoom >= 1.0
+        ? 11.0
+        : Math.Round(Math.Min(11.0 / _canvasZoom, 16.0), 1);
 
     // --- Блокировка ---
     private bool _isLocked;
