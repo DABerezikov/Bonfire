@@ -61,20 +61,35 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
     public double Width
     {
         get => _width;
-        set { _width = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); }
+        set { _width = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); OnPropertyChanged(nameof(IsCompact)); OnPropertyChanged(nameof(WidthMeters)); }
     }
 
     private double _height = 80;
     public double Height
     {
         get => _height;
-        set { _height = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); }
+        set { _height = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); OnPropertyChanged(nameof(IsCompact)); OnPropertyChanged(nameof(HeightMeters)); }
     }
 
     public double Rotation { get; set; }
 
     // Масштаб 40 пкс/м → 1 м² = 1600 пкс²
     public double AreaSquareMeters => Math.Round(_width * _height / 1600.0, 1);
+
+    // Размеры в метрах (для tooltip в компактном режиме)
+    public double WidthMeters  => Math.Round(_width  / 40.0, 2);
+    public double HeightMeters => Math.Round(_height / 40.0, 2);
+
+    // Текущий масштаб холста — обновляется из VM при зуме
+    private double _canvasZoom = 1.0;
+    public double CanvasZoom
+    {
+        get => _canvasZoom;
+        set { _canvasZoom = value; OnPropertyChanged(nameof(IsCompact)); }
+    }
+
+    // Компактный режим: отображаемый размер < 64 пкс по меньшей стороне
+    public bool IsCompact => Math.Min(_width, _height) * _canvasZoom < 64;
 
     // --- Блокировка ---
     private bool _isLocked;

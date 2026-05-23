@@ -23,11 +23,28 @@
     </UserControl.Style>
 
     <UserControl.ToolTip>
-        <TextBlock>
-            <Run Text="Двойной клик — схема посадок"/>
-            <LineBreak/>
-            <Run Text="Правый клик — контекстное меню"/>
-        </TextBlock>
+        <StackPanel>
+            <TextBlock FontWeight="SemiBold" Text="{Binding Name}"/>
+            <TextBlock Foreground="#757575">
+                <Run Text="{Binding TypeLabel, Mode=OneWay}"/>
+                <Run Text="·"/>
+                <Run Text="{Binding StateDisplayName, Mode=OneWay}"/>
+            </TextBlock>
+            <TextBlock Margin="0,2,0,0">
+                <Run Text="Д"/>
+                <Run Text="{Binding WidthMeters,  Mode=OneWay, StringFormat={}{0:F2}}"/>
+                <Run Text="м  Ш"/>
+                <Run Text="{Binding HeightMeters, Mode=OneWay, StringFormat={}{0:F2}}"/>
+                <Run Text="м  ("/>
+                <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
+                <Run Text="м²)"/>
+            </TextBlock>
+            <TextBlock Foreground="#9E9E9E" Margin="0,4,0,0" FontSize="10">
+                <Run Text="Двойной клик — схема посадок"/>
+                <LineBreak/>
+                <Run Text="Правый клик — контекстное меню"/>
+            </TextBlock>
+        </StackPanel>
     </UserControl.ToolTip>
 
     <UserControl.Resources>
@@ -74,8 +91,34 @@
     </i:Interaction.Triggers>
 
     <Grid>
-        <!-- Основной блок элемента -->
-        <Border Background="{Binding TypeFill, Converter={StaticResource StringToBrushConverter}}"
+        <!-- Компактный блок (отображается при малом масштабе) -->
+        <Border Visibility="{Binding IsCompact, Converter={StaticResource BoolToVisibility}}"
+                Background="{Binding TypeFill, Converter={StaticResource StringToBrushConverter}}"
+                CornerRadius="3">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="BorderThickness" Value="3"/>
+                            <Setter Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#1976D2" BlurRadius="8" ShadowDepth="0"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <!-- Точка состояния по центру -->
+            <Ellipse Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Fill="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"/>
+        </Border>
+
+        <!-- Основной блок элемента (скрывается в компактном режиме) -->
+        <Border Visibility="{Binding IsCompact, Converter={StaticResource NotBoolToVisibility}}"
+                Background="{Binding TypeFill, Converter={StaticResource StringToBrushConverter}}"
                 CornerRadius="4" Padding="6,4">
             <Border.Style>
                 <Style TargetType="Border">

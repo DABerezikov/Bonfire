@@ -106,79 +106,105 @@
                        Visibility="{Binding SelectedGarden,
                            Converter={StaticResource NotNullToVisibilityConverter}}"/>
 
-            <!-- Сам участок — Viewbox масштабирует холст под доступную площадь -->
-            <Viewbox Stretch="Uniform" Margin="16"
-                     Visibility="{Binding SelectedGarden,
-                         Converter={StaticResource NullToVisibilityConverter}}">
+            <!-- Участок с зумом и прокруткой -->
+            <Grid Visibility="{Binding SelectedGarden, Converter={StaticResource NullToVisibilityConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <Border Width="{Binding SelectedGarden.CanvasWidth}"
-                        Height="{Binding SelectedGarden.CanvasHeight}"
-                        Background="#FAFDF7" BorderBrush="#A5D6A7" BorderThickness="2">
-
-                    <Canvas x:Name="GardenCanvas"
-                            Width="{Binding SelectedGarden.CanvasWidth}"
-                            Height="{Binding SelectedGarden.CanvasHeight}"
-                            Background="Transparent"
-                            ClipToBounds="True"
-                            Focusable="True" FocusVisualStyle="{x:Null}"
-                            MouseLeftButtonDown="GardenCanvas_MouseLeftButtonDown">
-                        <!--
-                            Background="Transparent" — чтобы Canvas получал клики на пустом месте.
-                            Клики по элементам НЕ доходят сюда: Thumb.OnMouseLeftButtonDown
-                            ставит e.Handled = true, и событие не всплывает выше.
-                            GardenCanvas_MouseLeftButtonDown в code-behind берёт фокус + снимает выделение.
-                        -->
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="MouseLeftButtonDown">
-                                <i:InvokeCommandAction Command="{Binding DeselectElementCommand}"/>
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-
-                        <!-- Теплицы -->
-                        <ItemsControl ItemsSource="{Binding SelectedGarden.Greenhouses}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style>
-                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                    <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type m:GreenhouseFromViewModel}">
-                                    <!-- Tag передаёт GardenPlanViewModel для команд внутри GreenhouseControl -->
-                                    <gp:GreenhouseControl
-                                        Tag="{Binding DataContext,
-                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Элементы (грядки, парники, цветники, открытый грунт) -->
-                        <ItemsControl ItemsSource="{Binding SelectedGarden.Elements}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style>
-                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                                    <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
-                                    <!-- Tag передаёт GardenPlanViewModel в ContextMenu и триггеры элемента -->
-                                    <gp:GardenElementControl
-                                        Tag="{Binding DataContext,
-                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                    </Canvas>
+                <!-- Панель управления масштабом -->
+                <Border Grid.Row="0" Background="#F5F5F5"
+                        BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="6,3">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="−" Width="22" Height="22" FontSize="14"
+                                ToolTip="Уменьшить масштаб (Ctrl+−)"
+                                Command="{Binding ZoomOutCommand}"
+                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                        <TextBlock Text="{Binding GardenZoomPercent}"
+                                   VerticalAlignment="Center" Margin="6,0"
+                                   MinWidth="44" TextAlignment="Center" FontSize="12"/>
+                        <Button Content="+" Width="22" Height="22" FontSize="14"
+                                ToolTip="Увеличить масштаб (Ctrl++)"
+                                Command="{Binding ZoomInCommand}"
+                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                        <Button Content="⊞" Width="22" Height="22" Margin="4,0,0,0" FontSize="12"
+                                ToolTip="Сбросить к начальному масштабу"
+                                Command="{Binding ResetZoomCommand}"
+                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                    </StackPanel>
                 </Border>
-            </Viewbox>
+
+                <!-- Прокручиваемый холст с масштабом -->
+                <ScrollViewer Grid.Row="1" x:Name="GardenScrollViewer"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              PreviewMouseWheel="GardenScrollViewer_PreviewMouseWheel">
+                    <Border Width="{Binding SelectedGarden.CanvasWidth}"
+                            Height="{Binding SelectedGarden.CanvasHeight}"
+                            Background="#FAFDF7" BorderBrush="#A5D6A7" BorderThickness="2"
+                            Margin="16">
+                        <Border.LayoutTransform>
+                            <ScaleTransform ScaleX="{Binding GardenZoom}" ScaleY="{Binding GardenZoom}"/>
+                        </Border.LayoutTransform>
+
+                        <Canvas x:Name="GardenCanvas"
+                                Width="{Binding SelectedGarden.CanvasWidth}"
+                                Height="{Binding SelectedGarden.CanvasHeight}"
+                                Background="Transparent"
+                                ClipToBounds="True"
+                                Focusable="True" FocusVisualStyle="{x:Null}"
+                                MouseLeftButtonDown="GardenCanvas_MouseLeftButtonDown">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                    <i:InvokeCommandAction Command="{Binding DeselectElementCommand}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+
+                            <!-- Теплицы -->
+                            <ItemsControl ItemsSource="{Binding SelectedGarden.Greenhouses}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style>
+                                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                        <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type m:GreenhouseFromViewModel}">
+                                        <gp:GreenhouseControl
+                                            Tag="{Binding DataContext,
+                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Элементы (грядки, парники, цветники, открытый грунт) -->
+                            <ItemsControl ItemsSource="{Binding SelectedGarden.Elements}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style>
+                                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                        <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type m:GardenElementFromViewModel}">
+                                        <gp:GardenElementControl
+                                            Tag="{Binding DataContext,
+                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                        </Canvas>
+                    </Border>
+                </ScrollViewer>
+            </Grid>
         </Grid>
 
         <!-- ═══ БОКОВАЯ ПАНЕЛЬ редактора ═══ -->

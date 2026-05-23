@@ -83,8 +83,51 @@ public class GardenPlanViewModel : ViewModel
             {
                 SelectedElement = null;
                 OnPropertyChanged(nameof(GardenPropertiesPanel));
+                if (value is not null) RecalculateInitialZoom();
             }
         }
+    }
+
+    // ─── Масштаб холста ───
+
+    private double _gardenZoom = 1.0;
+    public double GardenZoom
+    {
+        get => _gardenZoom;
+        set
+        {
+            _gardenZoom = Math.Max(0.1, Math.Min(5.0, Math.Round(value, 2)));
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(GardenZoomPercent));
+            UpdateElementZoom();
+        }
+    }
+
+    public string GardenZoomPercent => $"{_gardenZoom * 100:F0}%";
+
+    public ICommand ZoomInCommand    => field ??= new LambdaCommand(() => GardenZoom += 0.1);
+    public ICommand ZoomOutCommand   => field ??= new LambdaCommand(() => GardenZoom -= 0.1);
+    public ICommand ResetZoomCommand => field ??= new LambdaCommand(RecalculateInitialZoom);
+
+    private void UpdateElementZoom()
+    {
+        if (SelectedGarden is null) return;
+        foreach (var el in SelectedGarden.Elements)
+            el.CanvasZoom = _gardenZoom;
+        foreach (var gh in SelectedGarden.Greenhouses)
+            foreach (var el in gh.InnerElements)
+                el.CanvasZoom = _gardenZoom;
+    }
+
+    public void RecalculateInitialZoom()
+    {
+        if (SelectedGarden is null) { GardenZoom = 1.0; return; }
+        const double targetPx = 80.0;
+        var sizes = SelectedGarden.Elements
+            .Select(e => Math.Min(e.Width, e.Height))
+            .Concat(SelectedGarden.Greenhouses.Select(gh => Math.Min(gh.DisplayWidth, gh.DisplayHeight)));
+        double smallest = sizes.DefaultIfEmpty(targetPx).Min();
+        GardenZoom = Math.Min(smallest > 0 ? targetPx / smallest : 1.0, 4.0);
     }
 
     // --- Выбранный элемент на холсте ---

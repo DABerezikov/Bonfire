@@ -9,11 +9,17 @@ public partial class GardenPlanView : UserControl
     public GardenPlanView()
     {
         InitializeComponent();
-        // PreviewKeyDown — туннелирующее событие: срабатывает при фокусе в любом дочернем элементе.
-        // Фокус сам View получает в двух случаях:
-        //   1. Клик по пустому холсту → GardenCanvas_MouseLeftButtonDown
-        //   2. Начало drag на элементе → GardenElementControl.OnDragStarted вызывает Focus()
         PreviewKeyDown += OnPreviewKeyDown;
+    }
+
+    private void GardenScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+        {
+            if (DataContext is GardenPlanViewModel vm)
+                vm.GardenZoom += e.Delta > 0 ? 0.1 : -0.1;
+            e.Handled = true;
+        }
     }
 
     /// <summary>Клик по пустому месту холста участка — взять фокус для Escape.</summary>
