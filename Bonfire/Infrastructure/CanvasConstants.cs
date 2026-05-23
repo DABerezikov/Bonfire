@@ -15,4 +15,12 @@ public static class CanvasConstants
     /// </summary>
     public static readonly double PixelsPerMeter =
         Math.Round(150.0 * (SystemParameters.PrimaryScreenWidth / 1920.0));
+
+    /// <summary>
+    /// Порог компактного режима элемента: если отображаемая сторона (px × zoom) меньше
+    /// этого значения — показывается только цветная точка вместо текста.
+    /// Базовое значение 90 пкс откалибровано под 1920 DIPs.
+    /// </summary>
+    public static readonly double CompactThreshold =
+        Math.Round(90.0 * (SystemParameters.PrimaryScreenWidth / 1920.0));
 }
