@@ -597,6 +597,18 @@ public class GardenPlanViewModel : ViewModel
                 SelectedElementType = type;
         });
 
+    public ICommand SelectGreenhouseCommand => field
+        ??= new LambdaCommand(p =>
+        {
+            if (p is GreenhouseFromViewModel gh)
+            {
+                if (SelectedGreenhouse is not null)
+                    SelectedGreenhouse.IsSelected = false;
+                SelectedGreenhouse = gh;
+                gh.IsSelected = true;
+            }
+        });
+
     public ICommand OpenGreenhouseCommand => field
         ??= new LambdaCommand(p =>
         {

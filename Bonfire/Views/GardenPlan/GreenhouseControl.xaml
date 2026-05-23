@@ -57,6 +57,13 @@
                     RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}"/>
         </i:EventTrigger>
+        <!-- Правый клик — выделить теплицу -->
+        <i:EventTrigger EventName="MouseRightButtonDown">
+            <i:InvokeCommandAction
+                Command="{Binding Tag.SelectGreenhouseCommand,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}"/>
+        </i:EventTrigger>
     </i:Interaction.Triggers>
 
     <Grid>
@@ -167,4 +174,55 @@
             </i:Interaction.Triggers>
         </Thumb>
     </Grid>
+
+    <UserControl.ContextMenu>
+        <!--
+            PlacementTarget = GreenhouseControl.
+            PlacementTarget.Tag = GardenPlanViewModel.
+            PlacementTarget.DataContext = GreenhouseFromViewModel.
+        -->
+        <ContextMenu>
+            <MenuItem Header="Открыть теплицу"
+                      Command="{Binding PlacementTarget.Tag.OpenGreenhouseCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <Separator/>
+            <MenuItem Header="Запланирована"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPlanned,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="PlannedState"/>
+            <MenuItem Header="Подготовлена"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPrepared,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="PreparedState"/>
+            <MenuItem Header="Активна"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToActive,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="ActiveState"/>
+            <MenuItem Header="Под паром"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToFallow,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="FallowState"/>
+            <MenuItem Header="Зимовка"
+                      IsEnabled="{Binding PlacementTarget.DataContext.CanGoToResting,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="RestingState"/>
+            <Separator/>
+            <MenuItem Header="Удалить"
+                      Command="{Binding PlacementTarget.Tag.DeleteGreenhouseCommand,
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Foreground="Red"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
 </UserControl>
