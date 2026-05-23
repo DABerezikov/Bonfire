@@ -1,12 +1,10 @@
 using System.ComponentModel;
-using System.Text.RegularExpressions;
 using Bonfire.ViewModels.Base;
 
 namespace Bonfire.Models;
 
 public class SortEditModel : ViewModel, IDataErrorInfo
 {
-    private static readonly Regex HexColorRegex = new(@"^#[0-9A-Fa-f]{6}$", RegexOptions.Compiled);
     private bool _dirty;
 
     public int Id { get; init; }
@@ -26,13 +24,27 @@ public class SortEditModel : ViewModel, IDataErrorInfo
     public int? MinGerminationTime
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value))
+            {
+                SetDirty();
+                OnPropertyChanged(nameof(MaxGerminationTime));
+            }
+        }
     }
 
     public int? MaxGerminationTime
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value))
+            {
+                SetDirty();
+                OnPropertyChanged(nameof(MinGerminationTime));
+            }
+        }
     }
 
     public int? AgeOfSeedlings
@@ -71,8 +83,7 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         string.IsNullOrWhiteSpace(Name)
         || MinGerminationTime < 0
         || MaxGerminationTime < 0
-        || (MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime)
-        || (!string.IsNullOrEmpty(PlantColor) && !HexColorRegex.IsMatch(PlantColor));
+        || (MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime);
 
     public string Error => string.Empty;
 
@@ -86,8 +97,6 @@ public class SortEditModel : ViewModel, IDataErrorInfo
             => "Значение должно быть ≥ 0",
         nameof(MinGerminationTime) when MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime
             => "Минимум не может быть больше максимума",
-        nameof(PlantColor) when !string.IsNullOrEmpty(PlantColor) && !HexColorRegex.IsMatch(PlantColor)
-            => "Формат: #RRGGBB",
         _ => string.Empty
     };
 

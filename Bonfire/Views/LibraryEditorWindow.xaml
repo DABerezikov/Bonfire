@@ -144,7 +144,7 @@
                     <!-- Строка 3: Цвет, кнопки -->
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Цвет (#RRGGBB):" VerticalAlignment="Center" Margin="0,3,6,3"/>
                     <TextBox Grid.Row="3" Grid.Column="1" Margin="0,3"
-                             Text="{Binding SortDetail.PlantColor, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                             Text="{Binding SortDetail.PlantColor, UpdateSourceTrigger=PropertyChanged}"/>
                     <StackPanel Grid.Row="3" Grid.Column="6" Grid.ColumnSpan="2"
                                 Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3">
                         <Button Content="Сохранить" Command="{Binding SaveSortCommand}" MinWidth="90" Margin="0,0,8,0"/>
