@@ -178,10 +178,11 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var result = await _libraryService.UpdateSortAsync(SortDetail!);
+                var detail = SortDetail!;
+                var result = await _libraryService.UpdateSortAsync(detail);
                 if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
                 SyncAfterSortUpdate(result.Value!);
-                SortDetail!.ResetDirty();
+                detail.ResetDirty();
                 _userDialog.Information("Сохранено");
             }
             catch (Exception ex)
@@ -204,10 +205,11 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var result = await _libraryService.UpdateCultureAsync(CultureDetail!);
+                var detail = CultureDetail!;
+                var result = await _libraryService.UpdateCultureAsync(detail);
                 if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
                 SyncAfterCultureUpdate(result.Value!);
-                CultureDetail!.ResetDirty();
+                detail.ResetDirty();
                 _userDialog.Information("Сохранено");
             }
             catch (Exception ex)
