@@ -617,8 +617,8 @@
 
         <!-- ═══ OVERLAY: Внутреннее пространство теплицы ═══ -->
         <Grid Grid.Row="1" Grid.ColumnSpan="2" Panel.ZIndex="90"
-              Visibility="{Binding SelectedGreenhouse,
-                  Converter={StaticResource NullToVisibilityConverter}}">
+              Visibility="{Binding IsEditingGreenhouse,
+                  Converter={StaticResource BoolToVisibility}}">
             <Rectangle Fill="#CC000000"/>
             <Border Background="White" CornerRadius="8" Padding="16"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20">

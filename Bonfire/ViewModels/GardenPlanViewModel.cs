@@ -167,13 +167,16 @@ public class GardenPlanViewModel : ViewModel
             {
                 SelectedElement = null;
                 OnPropertyChanged(nameof(GreenhousePropertiesPanel));
-                OnPropertyChanged(nameof(IsEditingGreenhouse));
             }
         }
     }
 
-    /// <summary>True, когда открыт оверлей теплицы.</summary>
-    public bool IsEditingGreenhouse => SelectedGreenhouse is not null;
+    /// <summary>True, когда открыт оверлей внутреннего пространства теплицы.</summary>
+    public bool IsEditingGreenhouse
+    {
+        get;
+        private set { Set(ref field, value); }
+    }
 
     /// <summary>
     /// Возвращает SelectedGreenhouse, когда не выбран ни один элемент —
@@ -597,6 +600,7 @@ public class GardenPlanViewModel : ViewModel
                 SelectedElementType = type;
         });
 
+    // Выделяет теплицу (подсветка + панель свойств) без открытия оверлея.
     public ICommand SelectGreenhouseCommand => field
         ??= new LambdaCommand(p =>
         {
@@ -606,18 +610,32 @@ public class GardenPlanViewModel : ViewModel
                     SelectedGreenhouse.IsSelected = false;
                 SelectedGreenhouse = gh;
                 gh.IsSelected = true;
+                // IsEditingGreenhouse остаётся false — оверлей не открывается
             }
         });
 
+    // Открывает оверлей внутреннего пространства теплицы (двойной клик).
     public ICommand OpenGreenhouseCommand => field
         ??= new LambdaCommand(p =>
         {
             if (p is GreenhouseFromViewModel gh)
+            {
+                if (SelectedGreenhouse is not null)
+                    SelectedGreenhouse.IsSelected = false;
                 SelectedGreenhouse = gh;
+                gh.IsSelected = true;
+                IsEditingGreenhouse = true;
+            }
         });
 
     public ICommand CloseGreenhouseCommand => field
-        ??= new LambdaCommand(() => SelectedGreenhouse = null);
+        ??= new LambdaCommand(() =>
+        {
+            IsEditingGreenhouse = false;
+            if (SelectedGreenhouse is not null)
+                SelectedGreenhouse.IsSelected = false;
+            SelectedGreenhouse = null;
+        });
 
     public ICommand ChangeGreenhouseStateCommand => field
         ??= new LambdaCommandAsync(
