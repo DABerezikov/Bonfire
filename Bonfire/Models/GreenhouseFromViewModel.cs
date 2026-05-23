@@ -139,6 +139,10 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
     public string? Material { get; set; }
     public string? Note { get; set; }
 
+    // --- Братские объекты на родительском Canvas (для проверки коллизий при drag) ---
+    public ObservableCollection<GardenElementFromViewModel>? ContainerElements   { get; set; }
+    public ObservableCollection<GreenhouseFromViewModel>?    ContainerGreenhouses { get; set; }
+
     // --- Элементы внутри теплицы ---
     public ObservableCollection<GardenElementFromViewModel> InnerElements { get; set; } = [];
 

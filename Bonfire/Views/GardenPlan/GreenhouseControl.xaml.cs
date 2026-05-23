@@ -3,15 +3,44 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using Bonfire.Infrastructure;
 using Bonfire.Models;
 
 namespace Bonfire.Views.GardenPlan;
 
 public partial class GreenhouseControl : UserControl
 {
+    private double _preDragX, _preDragY;
+    private double _preDragW, _preDragH;
+
     public GreenhouseControl()
     {
         InitializeComponent();
+    }
+
+    private void DragThumb_DragStarted(object sender, DragStartedEventArgs e)
+    {
+        if (DataContext is GreenhouseFromViewModel vm)
+        {
+            _preDragX = vm.X;           _preDragY = vm.Y;
+            _preDragW = vm.DisplayWidth; _preDragH = vm.DisplayHeight;
+        }
+    }
+
+    private void DragThumb_DragCompleted(object sender, DragCompletedEventArgs e)
+    {
+        if (DataContext is not GreenhouseFromViewModel vm) return;
+        bool wasColliding = CollisionHelper.CollidesWithSiblings(_preDragX, _preDragY, vm.DisplayWidth, vm.DisplayHeight, vm);
+        bool isColliding  = CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, vm.DisplayWidth, vm.DisplayHeight, vm);
+        if (isColliding && !wasColliding) { vm.X = _preDragX; vm.Y = _preDragY; }
+    }
+
+    private void ResizeThumb_DragCompleted(object sender, DragCompletedEventArgs e)
+    {
+        if (DataContext is not GreenhouseFromViewModel vm) return;
+        bool wasColliding = CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, _preDragW, _preDragH, vm);
+        bool isColliding  = CollisionHelper.CollidesWithSiblings(vm.X, vm.Y, vm.DisplayWidth, vm.DisplayHeight, vm);
+        if (isColliding && !wasColliding) { vm.DisplayWidth = _preDragW; vm.DisplayHeight = _preDragH; }
     }
 
     private void DragThumb_DragDelta(object sender, DragDeltaEventArgs e)

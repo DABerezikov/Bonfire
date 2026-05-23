@@ -98,7 +98,10 @@
 
         <!-- Перемещение -->
         <Thumb Cursor="SizeAll" Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}"
-               Opacity="0" Panel.ZIndex="10" DragDelta="DragThumb_DragDelta">
+               Opacity="0" Panel.ZIndex="10"
+               DragStarted="DragThumb_DragStarted"
+               DragDelta="DragThumb_DragDelta"
+               DragCompleted="DragThumb_DragCompleted">
             <i:Interaction.Triggers>
                 <!-- После отпускания — сохранить позицию в БД -->
                 <i:EventTrigger EventName="DragCompleted">
@@ -115,7 +118,9 @@
                HorizontalAlignment="Right" VerticalAlignment="Bottom"
                Panel.ZIndex="11"
                Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"
-               DragDelta="ResizeThumb_DragDelta">
+               DragStarted="DragThumb_DragStarted"
+               DragDelta="ResizeThumb_DragDelta"
+               DragCompleted="ResizeThumb_DragCompleted">
             <Thumb.Template>
                 <ControlTemplate TargetType="Thumb">
                     <Rectangle Fill="#7B1FA2" Width="10" Height="10" RadiusX="2" RadiusY="2"/>

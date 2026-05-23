@@ -746,6 +746,8 @@ public class GardenPlanViewModel : ViewModel
             widthMeters: 6, heightMeters: 3, scale: scale,
             x: spot.Value.x, y: spot.Value.y);
         var vm = GardenPlanMapper.MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+        vm.ContainerElements    = SelectedGarden.Elements;
+        vm.ContainerGreenhouses = SelectedGarden.Greenhouses;
         SelectedGarden.Greenhouses.Add(vm);
     }
 

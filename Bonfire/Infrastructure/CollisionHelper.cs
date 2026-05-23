@@ -50,6 +50,22 @@ internal static class CollisionHelper
         return false;
     }
 
+    /// <summary>Проверяет пересечение теплицы с братскими объектами на том же Canvas.</summary>
+    public static bool CollidesWithSiblings(
+        double x, double y, double w, double h,
+        GreenhouseFromViewModel vm)
+    {
+        if (vm.ContainerElements is not null
+            && CollidesWithAny(x, y, w, h, vm.ContainerElements))
+            return true;
+        if (vm.ContainerGreenhouses is not null
+            && vm.ContainerGreenhouses
+                .Where(gh => gh != vm)
+                .Any(gh => Overlaps(x, y, w, h, gh.X, gh.Y, gh.DisplayWidth, gh.DisplayHeight)))
+            return true;
+        return false;
+    }
+
     /// <summary>
     /// Ищет первое свободное место для прямоугольника (w × h) на холсте.
     /// Теплицы учитываются наравне с элементами.

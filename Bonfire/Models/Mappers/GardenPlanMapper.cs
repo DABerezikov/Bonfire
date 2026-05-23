@@ -18,12 +18,17 @@ internal static class GardenPlanMapper
         var greenhouses = new ObservableCollection<GreenhouseFromViewModel>(
             g.Greenhouses.Select(gh => MapGreenhouse(gh, g.CanvasWidth, g.CanvasHeight)));
 
-        // Каждый элемент получает ссылки на коллекции братских объектов
+        // Каждый объект получает ссылки на коллекции братских объектов
         // для проверки коллизий в code-behind во время drag/resize.
         foreach (var el in elements)
         {
-            el.ContainerElements   = elements;
+            el.ContainerElements    = elements;
             el.ContainerGreenhouses = greenhouses;
+        }
+        foreach (var gh in greenhouses)
+        {
+            gh.ContainerElements    = elements;
+            gh.ContainerGreenhouses = greenhouses;
         }
 
         return new GardenFromViewModel
