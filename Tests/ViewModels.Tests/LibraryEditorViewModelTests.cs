@@ -145,12 +145,60 @@ public class LibraryEditorViewModelTests
     }
 
     [Fact]
-    public void SaveSortCommand_InvalidColor_CannotExecute()
+    public void SaveSortCommand_PlantColorArbitraryString_CanExecute()
     {
         var vm = CreateVm();
         var detail = new SortEditModel { Id = 1, Name = "X" };
         detail.ResetDirty();
-        detail.PlantColor = "red";
+        detail.PlantColor = "красный";
+        vm.SortDetail = detail;
+
+        Assert.True(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_NegativeAgeOfSeedlings_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "X" };
+        detail.ResetDirty();
+        detail.AgeOfSeedlings = -1;
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_NegativeGrowingSeason_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "X" };
+        detail.ResetDirty();
+        detail.GrowingSeason = -1;
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_NegativeLandingPattern_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "X" };
+        detail.ResetDirty();
+        detail.LandingPattern = -1;
+        vm.SortDetail = detail;
+
+        Assert.False(vm.SaveSortCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void SaveSortCommand_NegativePlantHeight_CannotExecute()
+    {
+        var vm = CreateVm();
+        var detail = new SortEditModel { Id = 1, Name = "X" };
+        detail.ResetDirty();
+        detail.PlantHeight = -1;
         vm.SortDetail = detail;
 
         Assert.False(vm.SaveSortCommand.CanExecute(null));
