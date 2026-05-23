@@ -92,9 +92,11 @@ public partial class GardenElementControl : UserControl
                 {
                     var window = Window.GetWindow(canvas);
                     if (window is null) return 1.0;
-                    var t = canvas.TransformToAncestor(window);
-                    var v = t.Transform(new Point(1, 0));
-                    return v.X > 0 ? v.X : 1.0;
+                    var t      = canvas.TransformToAncestor(window);
+                    var origin = t.Transform(new Point(0, 0));
+                    var unitX  = t.Transform(new Point(1, 0));
+                    var scale  = unitX.X - origin.X;
+                    return scale > 0 ? scale : 1.0;
                 }
                 current = parent;
             }
