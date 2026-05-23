@@ -115,8 +115,11 @@ public class GardenPlanViewModel : ViewModel
         foreach (var el in SelectedGarden.Elements)
             el.CanvasZoom = _gardenZoom;
         foreach (var gh in SelectedGarden.Greenhouses)
+        {
+            gh.CanvasZoom = _gardenZoom;
             foreach (var el in gh.InnerElements)
                 el.CanvasZoom = _gardenZoom;
+        }
     }
 
     public void RecalculateInitialZoom()
@@ -801,6 +804,7 @@ public class GardenPlanViewModel : ViewModel
         var vm = GardenPlanMapper.MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
         vm.ContainerElements    = SelectedGarden.Elements;
         vm.ContainerGreenhouses = SelectedGarden.Greenhouses;
+        vm.CanvasZoom           = _gardenZoom;
         SelectedGarden.Greenhouses.Add(vm);
     }
 

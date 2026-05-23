@@ -1,6 +1,8 @@
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Bonfire.Infrastructure;
 using BonfireDB.Entities.GardenPlanning.States;
 
 namespace Bonfire.Models;
@@ -71,6 +73,19 @@ public class GreenhouseFromViewModel : INotifyPropertyChanged
         get => _innerCanvasHeight;
         set { _innerCanvasHeight = value; OnPropertyChanged(); }
     }
+
+    // --- Масштаб холста (синхронизируется из VM) ---
+    private double _canvasZoom = 1.0;
+    public double CanvasZoom
+    {
+        get => _canvasZoom;
+        set { _canvasZoom = value; OnPropertyChanged(nameof(AdaptiveFontSize)); }
+    }
+
+    // Адаптивный шрифт: при zoom < 100% растёт с запасом +25%.
+    public double AdaptiveFontSize => _canvasZoom >= 1.0
+        ? 11.0
+        : Math.Round(Math.Min(13.75 / _canvasZoom, 20.0), 1);
 
     // --- Блокировка ---
     private bool _isLocked;
