@@ -123,21 +123,16 @@
         <Thumb x:Name="DragThumb" Cursor="SizeAll"
                Width="{Binding Width}" Height="{Binding Height}"
                Opacity="0" Panel.ZIndex="10"
+               DragStarted="OnDragStarted"
+               DragDelta="OnDragDelta"
                DragCompleted="OnMoveDragCompleted">
             <i:Interaction.Triggers>
-                <!-- DragStarted = MouseLeftButtonDown на Thumb → выделяем и берём фокус -->
+                <!-- DragStarted: выделяем элемент командой VM -->
                 <i:EventTrigger EventName="DragStarted">
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SelectElementCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                         CommandParameter="{Binding}"/>
-                    <i:CallMethodAction
-                        TargetObject="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        MethodName="OnDragStarted"/>
-                </i:EventTrigger>
-                <i:EventTrigger EventName="DragDelta">
-                    <i:CallMethodAction TargetObject="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        MethodName="OnDragDelta"/>
                 </i:EventTrigger>
                 <i:EventTrigger EventName="DragCompleted">
                     <i:InvokeCommandAction
@@ -168,18 +163,16 @@
                HorizontalAlignment="Right" VerticalAlignment="Bottom"
                Cursor="SizeNWSE" Panel.ZIndex="11"
                Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"
+               DragStarted="OnDragStarted"
                DragDelta="ResizeThumb_DragDelta"
                DragCompleted="OnResizeDragCompleted">
             <i:Interaction.Triggers>
-                <!-- DragStarted = MouseLeftButtonDown на Thumb → выделяем и берём фокус -->
+                <!-- DragStarted: выделяем элемент командой VM -->
                 <i:EventTrigger EventName="DragStarted">
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SelectElementCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                         CommandParameter="{Binding}"/>
-                    <i:CallMethodAction
-                        TargetObject="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        MethodName="OnDragStarted"/>
                 </i:EventTrigger>
                 <!-- После отпускания — сохранить новый размер в БД -->
                 <i:EventTrigger EventName="DragCompleted">
