@@ -756,6 +756,13 @@ public class GardenPlanViewModel : ViewModel
         vm.ContainerElements    = activeElements;
         vm.ContainerGreenhouses = activeGreenhouses;
         activeElements.Add(vm);
+        // Если новый элемент меньше текущего минимума — пересчитываем зум
+        // чтобы он сразу был читаем; иначе просто синхронизируем CanvasZoom.
+        double minSide = Math.Min(defaultW, defaultH);
+        if (minSide * _gardenZoom < 64)
+            RecalculateInitialZoom();
+        else
+            vm.CanvasZoom = _gardenZoom;
         SelectedElement = vm;
     }
 
