@@ -162,7 +162,7 @@ public class GardenPlanViewModel(
     public bool IsEditingGreenhouse
     {
         get;
-        private set { Set(ref field, value); }
+        private set => Set(ref field, value);
     }
 
     /// <summary>
@@ -303,12 +303,10 @@ public class GardenPlanViewModel(
         get;
         set
         {
-            if (Set(ref field, value))
-            {
-                PlantingAmount = 1;
-                OnPropertyChanged(nameof(PlantingAmountUnit));
-                CommandManager.InvalidateRequerySuggested();
-            }
+            if (!Set(ref field, value)) return;
+            PlantingAmount = 1;
+            OnPropertyChanged(nameof(PlantingAmountUnit));
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
