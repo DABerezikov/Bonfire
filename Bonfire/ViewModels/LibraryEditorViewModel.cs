@@ -169,7 +169,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
 
         _seedsViewModel.UpdateCollectionViewSource();
     }
-
+    
     // Команды — Сорт
 
     [field: AllowNull, MaybeNull]

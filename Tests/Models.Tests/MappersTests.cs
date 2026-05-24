@@ -173,12 +173,12 @@ public class MappersTests
             X = 10, Y = 20, DisplayWidth = 120, DisplayHeight = 80,
             StateTypeName = nameof(BonfireDB.Entities.GardenPlanning.States.PlannedState),
             GridRows = 2, GridColumns = 2, Orientation = "СЮ",
-            PlantingSpots = new List<PlantingSpot>
-            {
+            PlantingSpots =
+            [
                 new() { Row = 1, Column = 0 },
                 new() { Row = 0, Column = 1 },
                 new() { Row = 0, Column = 0 }
-            }
+            ]
         };
 
         var dto = GardenPlanMapper.MapElement(bed, containerW: 800, containerH: 600);
@@ -203,11 +203,15 @@ public class MappersTests
         var garden = new Garden
         {
             Id = 1, Name = "Участок", CanvasWidth = 800, CanvasHeight = 600,
-            Elements = new List<GardenElement>
-            {
-                new Bed { Id = 1, Name = "Грядка", StateTypeName = nameof(BonfireDB.Entities.GardenPlanning.States.PlannedState) }
-            },
-            Greenhouses = new List<Greenhouse>()
+            Elements =
+            [
+                new Bed
+                {
+                    Id = 1, Name = "Грядка",
+                    StateTypeName = nameof(BonfireDB.Entities.GardenPlanning.States.PlannedState)
+                }
+            ],
+            Greenhouses = []
         };
 
         var dto = GardenPlanMapper.MapGarden(garden);

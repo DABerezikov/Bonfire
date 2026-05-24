@@ -261,7 +261,7 @@ public class GardenServiceTests
         var bed = new Bed
         {
             StateTypeName = "PlannedState",
-            PlantingSpots = new List<PlantingSpot> { spot0, spot1, spot2 }
+            PlantingSpots = [spot0, spot1, spot2]
         };
 
         var svc = CreateService();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -9,32 +10,20 @@ using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
 using BonfireDB.Entities.GardenPlanning.States;
 
 namespace Bonfire.ViewModels;
 
-public class GardenPlanViewModel : ViewModel
+public class GardenPlanViewModel(
+    IGardenService gardenService,
+    IUserDialog userDialog,
+    ISeedlingsService seedlingsService,
+    ISeedsService seedsService,
+    IPlantingService plantingService)
+    : ViewModel
 {
-    private readonly IGardenService _gardenService;
-    private readonly IUserDialog _userDialog;
-    private readonly ISeedlingsService _seedlingsService;
-    private readonly ISeedsService _seedsService;
-    private readonly IPlantingService _plantingService;
-
-    public GardenPlanViewModel(IGardenService gardenService, IUserDialog userDialog,
-        ISeedlingsService seedlingsService, ISeedsService seedsService,
-        IPlantingService plantingService)
-    {
-        _gardenService    = gardenService;
-        _userDialog       = userDialog;
-        _seedlingsService = seedlingsService;
-        _seedsService     = seedsService;
-        _plantingService  = plantingService;
-    }
-
     public bool IsActive
     {
         get;
@@ -79,12 +68,10 @@ public class GardenPlanViewModel : ViewModel
         get;
         set
         {
-            if (Set(ref field, value))
-            {
-                SelectedElement = null;
-                OnPropertyChanged(nameof(GardenPropertiesPanel));
-                if (value is not null) RecalculateInitialZoom();
-            }
+            if (!Set(ref field, value)) return;
+            SelectedElement = null;
+            OnPropertyChanged(nameof(GardenPropertiesPanel));
+            if (value is not null) RecalculateInitialZoom();
         }
     }
 
@@ -105,8 +92,12 @@ public class GardenPlanViewModel : ViewModel
 
     public string GardenZoomPercent => $"{_gardenZoom * 100:F0}%";
 
+    [field: AllowNull, MaybeNull]
     public ICommand ZoomInCommand    => field ??= new LambdaCommand(() => GardenZoom += 0.1);
+
+    [field: AllowNull, MaybeNull]
     public ICommand ZoomOutCommand   => field ??= new LambdaCommand(() => GardenZoom -= 0.1);
+    [field: AllowNull, MaybeNull]
     public ICommand ResetZoomCommand => field ??= new LambdaCommand(RecalculateInitialZoom);
 
     private void UpdateElementZoom()
@@ -129,7 +120,7 @@ public class GardenPlanViewModel : ViewModel
         var sizes = SelectedGarden.Elements
             .Select(e => Math.Min(e.Width, e.Height))
             .Concat(SelectedGarden.Greenhouses.Select(gh => Math.Min(gh.DisplayWidth, gh.DisplayHeight)));
-        double smallest = sizes.DefaultIfEmpty(targetPx).Min();
+        var smallest = sizes.DefaultIfEmpty(targetPx).Min();
         // Не уменьшаем ниже 100%: при масштабе 150 пкс/м элементы уже читаемы на 1.0
         GardenZoom = Math.Max(1.0, Math.Min(smallest > 0 ? targetPx / smallest : 1.0, 4.0));
     }
@@ -141,11 +132,9 @@ public class GardenPlanViewModel : ViewModel
         get;
         set
         {
-            if (Set(ref field, value))
-            {
-                OnPropertyChanged(nameof(GardenPropertiesPanel));
-                OnPropertyChanged(nameof(GreenhousePropertiesPanel));
-            }
+            if (!Set(ref field, value)) return;
+            OnPropertyChanged(nameof(GardenPropertiesPanel));
+            OnPropertyChanged(nameof(GreenhousePropertiesPanel));
         }
     }
 
@@ -163,11 +152,9 @@ public class GardenPlanViewModel : ViewModel
         get;
         set
         {
-            if (Set(ref field, value))
-            {
-                SelectedElement = null;
-                OnPropertyChanged(nameof(GreenhousePropertiesPanel));
-            }
+            if (!Set(ref field, value)) return;
+            SelectedElement = null;
+            OnPropertyChanged(nameof(GreenhousePropertiesPanel));
         }
     }
 
@@ -191,9 +178,9 @@ public class GardenPlanViewModel : ViewModel
     private int ActiveContainerId =>
         SelectedGreenhouse?.Id ?? SelectedGarden?.Id ?? 0;
 
-    private System.Collections.ObjectModel.ObservableCollection<GardenElementFromViewModel> ActiveElements =>
+    private ObservableCollection<GardenElementFromViewModel> ActiveElements =>
         SelectedGreenhouse?.InnerElements ?? SelectedGarden?.Elements
-        ?? new System.Collections.ObjectModel.ObservableCollection<GardenElementFromViewModel>();
+        ?? [];
 
     private double ActiveCanvasWidth =>
         SelectedGreenhouse?.InnerCanvasWidth ?? SelectedGarden?.CanvasWidth ?? 0;
@@ -201,11 +188,11 @@ public class GardenPlanViewModel : ViewModel
     private double ActiveCanvasHeight =>
         SelectedGreenhouse?.InnerCanvasHeight ?? SelectedGarden?.CanvasHeight ?? 0;
 
-    private System.Collections.ObjectModel.ObservableCollection<GreenhouseFromViewModel> ActiveGreenhouses =>
+    private ObservableCollection<GreenhouseFromViewModel> ActiveGreenhouses =>
         SelectedGreenhouse is null
             ? (SelectedGarden?.Greenhouses
-               ?? new System.Collections.ObjectModel.ObservableCollection<GreenhouseFromViewModel>())
-            : new System.Collections.ObjectModel.ObservableCollection<GreenhouseFromViewModel>();
+               ?? [])
+            : [];
 
     // --- Тип добавляемого элемента ---
 
@@ -320,7 +307,7 @@ public class GardenPlanViewModel : ViewModel
             {
                 PlantingAmount = 1;
                 OnPropertyChanged(nameof(PlantingAmountUnit));
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                CommandManager.InvalidateRequerySuggested();
             }
         }
     }
@@ -347,12 +334,13 @@ public class GardenPlanViewModel : ViewModel
     //  Загрузка данных
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand LoadDataCommand => field
         ??= new LambdaCommandAsync(LoadDataAsync);
 
     private async Task LoadDataAsync()
     {
-        var planList = await _gardenService.GetPlansOrderedByYearDescAsync();
+        var planList = await gardenService.GetPlansOrderedByYearDescAsync();
 
         Plans = new ObservableCollection<GardenPlan>(planList);
         SelectedPlan = Plans.FirstOrDefault();
@@ -364,7 +352,7 @@ public class GardenPlanViewModel : ViewModel
     {
         // ── Рассада: из рассады сажают ВЗОШЕДШИЕ живые ростки штучно. ───────
         // Доступно = взошедшие живые − уже высаженные (вес рассады не при чём).
-        var allSeedlings = await _seedlingsService.GetAllSeedlingsAsync();
+        var allSeedlings = await seedlingsService.GetAllSeedlingsAsync();
 
         AvailableSeedlingItems = new ObservableCollection<PlantSourceItem>(
             allSeedlings
@@ -372,7 +360,7 @@ public class GardenPlanViewModel : ViewModel
             .Select(s =>
             {
                 var name = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
-                var qty  = Bonfire.Services.SeedlingAvailability.Available(s);
+                var qty  = Services.SeedlingAvailability.Available(s);
                 return new PlantSourceItem
                 {
                     Kind          = PlantSourceKind.Seedling,
@@ -387,7 +375,7 @@ public class GardenPlanViewModel : ViewModel
             .OrderBy(i => i.PlantName));
 
         // ── Семена: штучные (AmountSeeds > 0) и граммовые (AmountSeedsWeight > 0) ──
-        var seedEntities = (await _seedsService.GetAllSeedsAsync())
+        var seedEntities = (await seedsService.GetAllSeedsAsync())
             .Where(s => s.SeedsInfo.AmountSeeds > 0 || s.SeedsInfo.AmountSeedsWeight > 0)
             .ToList();
 
@@ -426,7 +414,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedPlan is null) { Gardens.Clear(); return; }
 
-        var gardens = await _gardenService.GetGardensByPlanAsync(SelectedPlan.Id);
+        var gardens = await gardenService.GetGardensByPlanAsync(SelectedPlan.Id);
 
         Gardens = new ObservableCollection<GardenFromViewModel>(
             gardens.Select(GardenPlanMapper.MapGarden));
@@ -437,6 +425,7 @@ public class GardenPlanViewModel : ViewModel
     //  Управление планами
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand CreatePlanCommand => field
         ??= new LambdaCommandAsync(CreatePlanAsync);
 
@@ -444,11 +433,12 @@ public class GardenPlanViewModel : ViewModel
     {
         var year = DateTime.Now.Year;
         var name = $"План {year}";
-        var plan = await _gardenService.CreatePlanAsync(name, year);
+        var plan = await gardenService.CreatePlanAsync(name, year);
         Plans.Insert(0, plan);
         SelectedPlan = plan;
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand DeletePlanCommand => field
         ??= new LambdaCommandAsync(DeletePlanAsync,
             () => SelectedPlan is not null);
@@ -456,11 +446,11 @@ public class GardenPlanViewModel : ViewModel
     private async Task DeletePlanAsync()
     {
         if (SelectedPlan is null) return;
-        if (!_userDialog.YesNoQuestion(
+        if (!userDialog.YesNoQuestion(
                 $"Удалить план «{SelectedPlan.Name}»? Все участки и элементы будут удалены.",
                 "Удаление плана")) return;
 
-        await _gardenService.DeletePlanAsync(SelectedPlan);
+        await gardenService.DeletePlanAsync(SelectedPlan);
         Plans.Remove(SelectedPlan);
         SelectedPlan = Plans.FirstOrDefault();
     }
@@ -469,6 +459,7 @@ public class GardenPlanViewModel : ViewModel
     //  Управление участком
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand CreateGardenCommand => field
         ??= new LambdaCommandAsync(CreateGardenAsync,
             () => SelectedPlan is not null);
@@ -476,13 +467,14 @@ public class GardenPlanViewModel : ViewModel
     private async Task CreateGardenAsync()
     {
         if (SelectedPlan is null) return;
-        var garden = await _gardenService.CreateGardenAsync(
+        var garden = await gardenService.CreateGardenAsync(
             SelectedPlan.Id, "Новый участок", 20, 15, scale: CanvasConstants.PixelsPerMeter);
         var vm = GardenPlanMapper.MapGarden(garden);
         Gardens.Add(vm);
         SelectedGarden = vm;
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand DeleteGardenCommand => field
         ??= new LambdaCommandAsync(DeleteGardenAsync,
             () => SelectedGarden is not null);
@@ -490,18 +482,19 @@ public class GardenPlanViewModel : ViewModel
     private async Task DeleteGardenAsync()
     {
         if (SelectedGarden is null) return;
-        if (!_userDialog.YesNoQuestion(
+        if (!userDialog.YesNoQuestion(
                 $"Удалить участок «{SelectedGarden.Name}»? Все элементы и посадки будут удалены.",
                 "Удаление участка")) return;
 
-        var entity = await _gardenService.GetGardenByIdAsync(SelectedGarden.Id);
+        var entity = await gardenService.GetGardenByIdAsync(SelectedGarden.Id);
         if (entity is null) return;
 
-        await _gardenService.DeleteGardenAsync(entity);
+        await gardenService.DeleteGardenAsync(entity);
         Gardens.Remove(SelectedGarden);
         SelectedGarden = Gardens.FirstOrDefault();
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveGardenSizeCommand => field
         ??= new LambdaCommandAsync(SaveGardenSizeAsync,
             () => SelectedGarden is not null);
@@ -510,16 +503,16 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        double scale = CanvasConstants.PixelsPerMeter;
-        double newCanvasW = SelectedGarden.WidthMeters * scale;
-        double newCanvasH = SelectedGarden.HeightMeters * scale;
+        var scale = CanvasConstants.PixelsPerMeter;
+        var newCanvasW = SelectedGarden.WidthMeters * scale;
+        var newCanvasH = SelectedGarden.HeightMeters * scale;
 
         // Проверяем, что ни один элемент не выходит за новые границы
         var blockedElement = SelectedGarden.Elements
             .FirstOrDefault(el => el.X + el.Width > newCanvasW || el.Y + el.Height > newCanvasH);
         if (blockedElement is not null)
         {
-            _userDialog.Warning(
+            userDialog.Warning(
                 $"Нельзя уменьшить участок: элемент «{blockedElement.Name}» " +
                 $"(правый/нижний край {blockedElement.X + blockedElement.Width:F0}×{blockedElement.Y + blockedElement.Height:F0} пкс) " +
                 $"выходит за новые границы {newCanvasW:F0}×{newCanvasH:F0} пкс.",
@@ -531,13 +524,13 @@ public class GardenPlanViewModel : ViewModel
             .FirstOrDefault(gh => gh.X + gh.DisplayWidth > newCanvasW || gh.Y + gh.DisplayHeight > newCanvasH);
         if (blockedGh is not null)
         {
-            _userDialog.Warning(
+            userDialog.Warning(
                 $"Нельзя уменьшить участок: теплица «{blockedGh.Name}» выходит за новые границы.",
                 "Изменение размера участка");
             return;
         }
 
-        var entity = await _gardenService.GetGardenByIdAsync(SelectedGarden.Id);
+        var entity = await gardenService.GetGardenByIdAsync(SelectedGarden.Id);
         if (entity is null) return;
 
         entity.Name          = SelectedGarden.Name;
@@ -548,7 +541,7 @@ public class GardenPlanViewModel : ViewModel
         entity.Address       = SelectedGarden.Address;
         entity.Note          = SelectedGarden.Note;
 
-        await _gardenService.UpdateGardenAsync(entity);
+        await gardenService.UpdateGardenAsync(entity);
 
         SelectedGarden.CanvasWidth  = newCanvasW;
         SelectedGarden.CanvasHeight = newCanvasH;
@@ -570,29 +563,29 @@ public class GardenPlanViewModel : ViewModel
     //  Выделение и навигация
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand SelectElementCommand => field
         ??= new LambdaCommand(p =>
         {
-            if (p is GardenElementFromViewModel vm)
-            {
-                if (SelectedElement is not null)
-                    SelectedElement.IsSelected = false;
-                SelectedElement = vm;
-                vm.IsSelected = true;
-            }
+            if (p is not GardenElementFromViewModel vm) return;
+
+            SelectedElement?.IsSelected = false;
+            SelectedElement = vm;
+            vm.IsSelected = true;
         });
 
     /// <summary>
     /// Снимает выделение с элемента. Вызывается при клике по пустому месту холста или нажатии Escape.
     /// </summary>
+    [field: AllowNull, MaybeNull]
     public ICommand DeselectElementCommand => field
         ??= new LambdaCommand(() =>
         {
-            if (SelectedElement is not null)
-                SelectedElement.IsSelected = false;
+            SelectedElement?.IsSelected = false;
             SelectedElement = null;
         });
 
+    [field: AllowNull, MaybeNull]
     public ICommand SetElementTypeCommand => field
         ??= new LambdaCommand(p =>
         {
@@ -601,42 +594,40 @@ public class GardenPlanViewModel : ViewModel
         });
 
     // Выделяет теплицу (подсветка + панель свойств) без открытия оверлея.
+    [field: AllowNull, MaybeNull]
     public ICommand SelectGreenhouseCommand => field
         ??= new LambdaCommand(p =>
         {
-            if (p is GreenhouseFromViewModel gh)
-            {
-                if (SelectedGreenhouse is not null)
-                    SelectedGreenhouse.IsSelected = false;
-                SelectedGreenhouse = gh;
-                gh.IsSelected = true;
-                // IsEditingGreenhouse остаётся false — оверлей не открывается
-            }
+            if (p is not GreenhouseFromViewModel gh) return;
+
+            SelectedGreenhouse?.IsSelected = false;
+            SelectedGreenhouse = gh;
+            gh.IsSelected = true;
+            // IsEditingGreenhouse остаётся false — оверлей не открывается
         });
 
     // Открывает оверлей внутреннего пространства теплицы (двойной клик).
+    [field: AllowNull, MaybeNull]
     public ICommand OpenGreenhouseCommand => field
         ??= new LambdaCommand(p =>
         {
-            if (p is GreenhouseFromViewModel gh)
-            {
-                if (SelectedGreenhouse is not null)
-                    SelectedGreenhouse.IsSelected = false;
-                SelectedGreenhouse = gh;
-                gh.IsSelected = true;
-                IsEditingGreenhouse = true;
-            }
+            if (p is not GreenhouseFromViewModel gh) return;
+            SelectedGreenhouse?.IsSelected = false;
+            SelectedGreenhouse = gh;
+            gh.IsSelected = true;
+            IsEditingGreenhouse = true;
         });
 
+    [field: AllowNull, MaybeNull]
     public ICommand CloseGreenhouseCommand => field
         ??= new LambdaCommand(() =>
         {
             IsEditingGreenhouse = false;
-            if (SelectedGreenhouse is not null)
-                SelectedGreenhouse.IsSelected = false;
+            SelectedGreenhouse?.IsSelected = false;
             SelectedGreenhouse = null;
         });
 
+    [field: AllowNull, MaybeNull]
     public ICommand ChangeGreenhouseStateCommand => field
         ??= new LambdaCommandAsync(
             async p => await ChangeGreenhouseStateAsync(p as string),
@@ -650,16 +641,17 @@ public class GardenPlanViewModel : ViewModel
         var currentState = GardenElementState.From(SelectedGreenhouse.StateTypeName);
         if (!currentState.CanTransitionTo(newState)) return;
 
-        var entity = await _gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
+        var entity = await gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
         if (entity is null) return;
 
-        await _gardenService.ChangeGreenhouseStateAsync(entity, newState);
+        await gardenService.ChangeGreenhouseStateAsync(entity, newState);
 
         SelectedGreenhouse.StateTypeName    = newState.GetType().Name;
         SelectedGreenhouse.StateDisplayName = newState.DisplayName;
         SelectedGreenhouse.StateColor       = newState.StatusColor;
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand DeleteGreenhouseCommand => field
         ??= new LambdaCommandAsync(DeleteGreenhouseAsync,
             () => SelectedGreenhouse is not null);
@@ -667,18 +659,19 @@ public class GardenPlanViewModel : ViewModel
     private async Task DeleteGreenhouseAsync()
     {
         if (SelectedGreenhouse is null || SelectedGarden is null) return;
-        if (!_userDialog.YesNoQuestion(
+        if (!userDialog.YesNoQuestion(
                 $"Удалить теплицу «{SelectedGreenhouse.Name}»? Все элементы и посадки будут удалены.",
                 "Удаление теплицы")) return;
 
-        var entity = await _gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
+        var entity = await gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
         if (entity is null) return;
 
-        await _gardenService.DeleteGreenhouseAsync(entity);
+        await gardenService.DeleteGreenhouseAsync(entity);
         SelectedGarden.Greenhouses.Remove(SelectedGreenhouse);
         SelectedGreenhouse = null;
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveGreenhouseSizeCommand => field
         ??= new LambdaCommandAsync(SaveGreenhouseSizeAsync,
             () => SelectedGreenhouse is not null);
@@ -687,15 +680,15 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGreenhouse is null) return;
 
-        double scale = CanvasConstants.PixelsPerMeter;
-        double newInnerW = SelectedGreenhouse.WidthMeters * scale;
-        double newInnerH = SelectedGreenhouse.HeightMeters * scale;
+        var scale = CanvasConstants.PixelsPerMeter;
+        var newInnerW = SelectedGreenhouse.WidthMeters * scale;
+        var newInnerH = SelectedGreenhouse.HeightMeters * scale;
 
         var blockedElement = SelectedGreenhouse.InnerElements
             .FirstOrDefault(el => el.X + el.Width > newInnerW || el.Y + el.Height > newInnerH);
         if (blockedElement is not null)
         {
-            _userDialog.Warning(
+            userDialog.Warning(
                 $"Нельзя уменьшить теплицу: элемент «{blockedElement.Name}» " +
                 $"(правый/нижний край {blockedElement.X + blockedElement.Width:F0}×{blockedElement.Y + blockedElement.Height:F0} пкс) " +
                 $"выходит за новые границы {newInnerW:F0}×{newInnerH:F0} пкс.",
@@ -703,7 +696,7 @@ public class GardenPlanViewModel : ViewModel
             return;
         }
 
-        var entity = await _gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
+        var entity = await gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
         if (entity is null) return;
 
         entity.Name         = SelectedGreenhouse.Name;
@@ -714,7 +707,7 @@ public class GardenPlanViewModel : ViewModel
         entity.Note         = SelectedGreenhouse.Note;
         entity.Material     = SelectedGreenhouse.Material;
 
-        await _gardenService.UpdateGreenhouseAsync(entity);
+        await gardenService.UpdateGreenhouseAsync(entity);
 
         SelectedGreenhouse.InnerCanvasWidth  = newInnerW;
         SelectedGreenhouse.InnerCanvasHeight = newInnerH;
@@ -730,6 +723,7 @@ public class GardenPlanViewModel : ViewModel
     //  Добавление элементов
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand AddElementCommand => field
         ??= new LambdaCommandAsync(AddElementAsync,
             () => SelectedGarden is not null);
@@ -748,8 +742,8 @@ public class GardenPlanViewModel : ViewModel
         //   Парник:         1.2 × 0.8 м
         //   Цветник:        0.6 × 0.6 м
         //   Открытый грунт: 2.0 × 2.0 м
-        double ppm = CanvasConstants.PixelsPerMeter;
-        (double defaultW, double defaultH) = SelectedElementType switch
+        var ppm = CanvasConstants.PixelsPerMeter;
+        var (defaultW, defaultH) = SelectedElementType switch
         {
             "Bed"            => (2.0 * ppm, 0.9 * ppm),
             "ColdFrame"      => (1.2 * ppm, 0.8 * ppm),
@@ -765,7 +759,7 @@ public class GardenPlanViewModel : ViewModel
         if (spot is null)
         {
             var containerName = SelectedGreenhouse?.Name ?? SelectedGarden.Name;
-            _userDialog.Warning(
+            userDialog.Warning(
                 $"В «{containerName}» нет свободного места для нового элемента.\n" +
                 "Увеличьте размер или уберите лишние элементы.",
                 "Добавление элемента");
@@ -787,14 +781,14 @@ public class GardenPlanViewModel : ViewModel
         element.DisplayWidth  = defaultW;
         element.DisplayHeight = defaultH;
 
-        var saved = await _gardenService.AddElementAsync(element);
+        var saved = await gardenService.AddElementAsync(element);
         var vm = GardenPlanMapper.MapElement(saved, canvasW, canvasH);
         vm.ContainerElements    = activeElements;
         vm.ContainerGreenhouses = activeGreenhouses;
         activeElements.Add(vm);
         // Если новый элемент меньше текущего минимума — пересчитываем зум
         // чтобы он сразу был читаем; иначе просто синхронизируем CanvasZoom.
-        double minSide = Math.Min(defaultW, defaultH);
+        var minSide = Math.Min(defaultW, defaultH);
         if (minSide * _gardenZoom < 64)
             RecalculateInitialZoom();
         else
@@ -802,6 +796,7 @@ public class GardenPlanViewModel : ViewModel
         SelectedElement = vm;
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand AddGreenhouseCommand => field
         ??= new LambdaCommandAsync(AddGreenhouseAsync,
             () => SelectedGarden is not null);
@@ -810,7 +805,7 @@ public class GardenPlanViewModel : ViewModel
     {
         if (SelectedGarden is null) return;
 
-        double ghScale = CanvasConstants.PixelsPerMeter;
+        var ghScale = CanvasConstants.PixelsPerMeter;
         double ghW = 6 * ghScale, ghH = 3 * ghScale; // 6×3 м
 
         var spot = CollisionHelper.FindFreeSpot(
@@ -819,14 +814,14 @@ public class GardenPlanViewModel : ViewModel
 
         if (spot is null)
         {
-            _userDialog.Warning(
+            userDialog.Warning(
                 $"На участке «{SelectedGarden.Name}» нет свободного места для теплицы 6×3 м.\n" +
                 "Увеличьте участок или уберите лишние элементы.",
                 "Добавление теплицы");
             return;
         }
 
-        var gh = await _gardenService.AddGreenhouseAsync(
+        var gh = await gardenService.AddGreenhouseAsync(
             SelectedGarden.Id,
             $"Теплица {SelectedGarden.Greenhouses.Count + 1}",
             widthMeters: 6, heightMeters: 3, scale: ghScale,
@@ -842,6 +837,7 @@ public class GardenPlanViewModel : ViewModel
     //  Удаление / перемещение элементов
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand DeleteElementCommand => field
         ??= new LambdaCommandAsync(DeleteElementAsync,
             () => SelectedElement is not null);
@@ -849,14 +845,15 @@ public class GardenPlanViewModel : ViewModel
     private async Task DeleteElementAsync()
     {
         if (SelectedElement is null || SelectedGarden is null) return;
-        var entity = await _gardenService.GetElementByIdAsync(SelectedElement.Id);
+        var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
         if (entity is null) return;
 
-        await _gardenService.DeleteElementAsync(entity);
+        await gardenService.DeleteElementAsync(entity);
         ActiveElements.Remove(SelectedElement);
         SelectedElement = null;
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand ToggleLockElementCommand => field
         ??= new LambdaCommandAsync(
             async p => await ToggleLockElementAsync(p as GardenElementFromViewModel),
@@ -866,12 +863,13 @@ public class GardenPlanViewModel : ViewModel
     {
         if (vm is null) return;
         vm.IsLocked = !vm.IsLocked;
-        var entity = await _gardenService.GetElementByIdAsync(vm.Id);
+        var entity = await gardenService.GetElementByIdAsync(vm.Id);
         if (entity is null) return;
         entity.IsLocked = vm.IsLocked;
-        await _gardenService.UpdateElementAsync(entity);
+        await gardenService.UpdateElementAsync(entity);
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand ToggleLockGreenhouseCommand => field
         ??= new LambdaCommandAsync(
             async p => await ToggleLockGreenhouseAsync(p as GreenhouseFromViewModel),
@@ -881,12 +879,13 @@ public class GardenPlanViewModel : ViewModel
     {
         if (vm is null) return;
         vm.IsLocked = !vm.IsLocked;
-        var entity = await _gardenService.GetGreenhouseByIdAsync(vm.Id);
+        var entity = await gardenService.GetGreenhouseByIdAsync(vm.Id);
         if (entity is null) return;
         entity.IsLocked = vm.IsLocked;
-        await _gardenService.UpdateGreenhouseAsync(entity);
+        await gardenService.UpdateGreenhouseAsync(entity);
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveElementPositionCommand => field
         ??= new LambdaCommandAsync(SaveElementPositionAsync,
             () => SelectedElement is not null);
@@ -894,7 +893,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task SaveElementPositionAsync()
     {
         if (SelectedElement is null) return;
-        var entity = await _gardenService.GetElementByIdAsync(SelectedElement.Id);
+        var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
         if (entity is null) return;
 
         entity.X = SelectedElement.X;
@@ -905,14 +904,21 @@ public class GardenPlanViewModel : ViewModel
         entity.Name = SelectedElement.Name;
         entity.Note = SelectedElement.Note;
         entity.SoilType = SelectedElement.SoilType;
-        if (entity is Bed bed)
-            bed.Orientation = SelectedElement.Orientation;
-        if (entity is ColdFrame cf)
-            cf.CoverMaterial = SelectedElement.CoverMaterial;
 
-        await _gardenService.UpdateElementAsync(entity);
+        switch (entity)
+        {
+            case Bed bed:
+                bed.Orientation = SelectedElement.Orientation;
+                break;
+            case ColdFrame cf:
+                cf.CoverMaterial = SelectedElement.CoverMaterial;
+                break;
+        }
+
+        await gardenService.UpdateElementAsync(entity);
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand SaveGreenhousePositionCommand => field
         ??= new LambdaCommandAsync(
             async p => await SaveGreenhousePositionAsync(p as GreenhouseFromViewModel),
@@ -921,7 +927,7 @@ public class GardenPlanViewModel : ViewModel
     private async Task SaveGreenhousePositionAsync(GreenhouseFromViewModel? vm)
     {
         if (vm is null) return;
-        var entity = await _gardenService.GetGreenhouseByIdAsync(vm.Id);
+        var entity = await gardenService.GetGreenhouseByIdAsync(vm.Id);
         if (entity is null) return;
 
         entity.X = vm.X;
@@ -931,13 +937,14 @@ public class GardenPlanViewModel : ViewModel
         entity.Name = vm.Name;
         entity.Note = vm.Note;
 
-        await _gardenService.UpdateGreenhouseAsync(entity);
+        await gardenService.UpdateGreenhouseAsync(entity);
     }
 
     // ─────────────────────────────────────
     //  Переходы состояний
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand ChangeElementStateCommand => field
         ??= new LambdaCommandAsync(
             async p => await ChangeElementStateAsync(p as string),
@@ -953,10 +960,10 @@ public class GardenPlanViewModel : ViewModel
         var currentState = GardenElementState.From(SelectedElement.StateTypeName);
         if (!currentState.CanTransitionTo(newState)) return;
 
-        var entity = await _gardenService.GetElementByIdAsync(SelectedElement.Id);
+        var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
         if (entity is null) return;
 
-        await _gardenService.ChangeElementStateAsync(entity, newState);
+        await gardenService.ChangeElementStateAsync(entity, newState);
 
         SelectedElement.StateTypeName = newState.GetType().Name;
         SelectedElement.StateDisplayName = newState.DisplayName;
@@ -969,6 +976,7 @@ public class GardenPlanViewModel : ViewModel
     //  Сетка посадок
     // ─────────────────────────────────────
 
+    [field: AllowNull, MaybeNull]
     public ICommand OpenPlantingGridCommand => field
         ??= new LambdaCommand(() =>
         {
@@ -977,6 +985,7 @@ public class GardenPlanViewModel : ViewModel
             IsGridOpen         = SelectedElement is not null;
         }, () => SelectedElement is not null);
 
+    [field: AllowNull, MaybeNull]
     public ICommand CloseGridCommand => field
         ??= new LambdaCommand(() =>
         {
@@ -984,6 +993,7 @@ public class GardenPlanViewModel : ViewModel
             SelectedSpot = null;
         });
 
+    [field: AllowNull, MaybeNull]
     public ICommand RebuildGridCommand => field
         ??= new LambdaCommandAsync(RebuildGridAsync,
             () => EditingGridElement?.CanModifyGrid == true);
@@ -991,10 +1001,10 @@ public class GardenPlanViewModel : ViewModel
     private async Task RebuildGridAsync()
     {
         if (EditingGridElement is null) return;
-        var entity = await _gardenService.GetElementByIdAsync(EditingGridElement.Id);
+        var entity = await gardenService.GetElementByIdAsync(EditingGridElement.Id);
         if (entity is null) return;
 
-        await _gardenService.RebuildGridAsync(entity, EditingGridElement.GridRows, EditingGridElement.GridColumns);
+        await gardenService.RebuildGridAsync(entity, EditingGridElement.GridRows, EditingGridElement.GridColumns);
 
         SelectedSpot = null;
         RebuildSpotsVm(EditingGridElement, entity);
@@ -1002,6 +1012,7 @@ public class GardenPlanViewModel : ViewModel
 
     // --- Выделение ячейки ---
 
+    [field: AllowNull, MaybeNull]
     public ICommand SelectSpotCommand => field
         ??= new LambdaCommand(p =>
         {
@@ -1014,6 +1025,7 @@ public class GardenPlanViewModel : ViewModel
 
     // --- Переходы состояния ячейки ---
 
+    [field: AllowNull, MaybeNull]
     public ICommand ReserveSpotCommand => field
         ??= new LambdaCommandAsync(
             async p => await PlanSpotReserveAsync(p as PlantingSpotFromViewModel),
@@ -1029,10 +1041,11 @@ public class GardenPlanViewModel : ViewModel
 
         // Сохраняем метку растения в Note — инвентарь НЕ расходуется
         var label = string.IsNullOrWhiteSpace(PlanPickerLabel) ? null : PlanPickerLabel.Trim();
-        await _gardenService.ChangeSpotStateAsync(entity, newState, plantLabel: label);
+        await gardenService.ChangeSpotStateAsync(entity, newState, plantLabel: label);
         UpdateSpotVm(spotVm, newState, plantLabel: label);
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand PlantSpotCommand => field
         ??= new LambdaCommandAsync(
             async p => await PlantSpotAsync(p as PlantingSpotFromViewModel),
@@ -1052,7 +1065,7 @@ public class GardenPlanViewModel : ViewModel
             EditingGridElement?.Name
         }.Where(s => !string.IsNullOrEmpty(s)));
 
-        var result = await _plantingService.PlantAsync(new PlantRequest(
+        var result = await plantingService.PlantAsync(new PlantRequest(
             SpotId:        spotVm.Id,
             Kind:          source.Kind,
             EntityId:      source.EntityId,
@@ -1080,16 +1093,19 @@ public class GardenPlanViewModel : ViewModel
         SelectedPlantSource = null;   // сброс пикера и количества после посадки
     }
 
+    [field: AllowNull, MaybeNull]
     public ICommand HarvestSpotCommand => field
         ??= new LambdaCommandAsync(
             async p => await ChangeSpotAsync(p as PlantingSpotFromViewModel, new HarvestedSpotState()),
             _ => true);
 
+    [field: AllowNull, MaybeNull]
     public ICommand MarkDeadSpotCommand => field
         ??= new LambdaCommandAsync(
             async p => await ChangeSpotAsync(p as PlantingSpotFromViewModel, new DeadSpotState()),
             _ => true);
 
+    [field: AllowNull, MaybeNull]
     public ICommand ClearSpotCommand => field
         ??= new LambdaCommandAsync(
             async p => await ClearSpotAsync(p as PlantingSpotFromViewModel),
@@ -1102,7 +1118,7 @@ public class GardenPlanViewModel : ViewModel
         if (entity is null) return;
         if (!entity.State.CanTransitionTo(newState)) return;
 
-        await _gardenService.ChangeSpotStateAsync(entity, newState);
+        await gardenService.ChangeSpotStateAsync(entity, newState);
         UpdateSpotVm(spotVm, newState);
     }
 
@@ -1112,7 +1128,7 @@ public class GardenPlanViewModel : ViewModel
         var entity = await LoadSpotEntityAsync(spotVm.Id);
         if (entity is null) return;
 
-        await _gardenService.ClearSpotAsync(entity);
+        await gardenService.ClearSpotAsync(entity);
 
         var emptyState = new EmptySpotState();
         spotVm.StateTypeName = emptyState.GetType().Name;
@@ -1121,7 +1137,7 @@ public class GardenPlanViewModel : ViewModel
     }
 
     private async Task<PlantingSpot?> LoadSpotEntityAsync(int spotId)
-        => await _gardenService.GetSpotAsync(spotId);
+        => await gardenService.GetSpotAsync(spotId);
 
     // ─────────────────────────────────────
     //  Вспомогательные методы маппинга
