@@ -1,4 +1,5 @@
 using System;
+using Bonfire.Domain.Functional;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;

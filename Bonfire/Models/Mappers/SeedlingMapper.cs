@@ -1,4 +1,5 @@
 using BonfireDB.Entities;
+using System.Linq;
 
 namespace Bonfire.Models.Mappers;
 
@@ -15,6 +16,12 @@ internal static class SeedlingMapper
         to.Weight = from.Weight;
         to.Quantity = from.Quantity;
         to.SeedId = from.SeedId;
+        to.PlantedOut = from.PlantedOut;
+        to.IsPlantedInBed = from.IsPlantedInBed;
+        to.LandingDate = from.LandingDate;
+        to.LunarPhase = from.LunarPhase;
+        to.SeedlingSource = from.SeedlingSource;
+        to.PlantPlace = from.PlantPlace;
 
         to.Plant.Id = from.Plant.Id;
         to.Plant.PlantCulture.Id = from.Plant.PlantCulture.Id;
@@ -41,6 +48,36 @@ internal static class SeedlingMapper
         to.Plant.PlantSort.Producer.Id = from.Plant.PlantSort.Producer.Id;
         to.Plant.PlantSort.Producer.Name = from.Plant.PlantSort.Producer.Name;
 
-        to.SeedlingInfos = from.SeedlingInfos;
+        to.SeedlingInfos = from.SeedlingInfos.Select(CopyInfo).ToList();
+    }
+
+    private static SeedlingInfo CopyInfo(SeedlingInfo source)
+    {
+        var copy = new SeedlingInfo
+        {
+            Id = source.Id, SeedlingNumber = source.SeedlingNumber,
+            MotherPlantId = source.MotherPlantId, LandingDate = source.LandingDate,
+            LunarPhase = source.LunarPhase, PlantPlace = source.PlantPlace,
+            GerminationDate = source.GerminationDate,
+            QuarantineStartDate = source.QuarantineStartDate,
+            QuarantineStopDate = source.QuarantineStopDate,
+            QuarantineCause = source.QuarantineCause, QuarantineNote = source.QuarantineNote,
+            SeedlingSource = source.SeedlingSource, Note = source.Note,
+            QuenchingDate = source.QuenchingDate, DeathNote = source.DeathNote,
+            IsDead = source.IsDead
+        };
+        copy.Replants = source.Replants?.Select(item => new Replanting
+        {
+            Id = item.Id, ReplantingDate = item.ReplantingDate,
+            PotVolume = item.PotVolume, ReplantingNote = item.ReplantingNote,
+            SeedlingInfo = copy
+        }).ToList();
+        copy.Treatments = source.Treatments?.Select(item => new Treatment
+        {
+            Id = item.Id, TreatmentDate = item.TreatmentDate,
+            Product = item.Product, TreatmentMethod = item.TreatmentMethod,
+            SeedlingInfo = copy
+        }).ToList();
+        return copy;
     }
 }

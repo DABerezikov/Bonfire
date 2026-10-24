@@ -2,12 +2,15 @@
 using System.Threading.Tasks;
 using BonfireDB.Entities;
 using MoonCalendar;
+using Bonfire.Domain.Functional;
+using Bonfire.Models;
 
 namespace Bonfire.Services.Interfaces;
 
 public interface ISeedlingsService
 {
     MoonPhase Lunar { get; }
+    Task<Result<SowingReceipt>> SowAsync(SowingRequest request);
     Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync();
     Task<Seedling?> GetSeedlingAsync(int id);
     Task<Seedling> MakeASeedling(Seedling seedling);

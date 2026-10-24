@@ -1,5 +1,7 @@
 using System.Windows.Input;
 
+using Bonfire.Domain.Functional;
+
 namespace ViewModels.Tests;
 
 public class LibraryWorkflowTests

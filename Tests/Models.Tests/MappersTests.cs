@@ -159,7 +159,8 @@ public class MappersTests
         Assert.Equal("Огурец", to.Plant.PlantCulture.Name);
         Assert.Equal("Кураж", to.Plant.PlantSort.Name);
         Assert.Equal("Аэлита", to.Plant.PlantSort.Producer.Name);
-        Assert.Same(infos, to.SeedlingInfos);
+        Assert.NotSame(infos, to.SeedlingInfos);
+        Assert.Equal(infos.Select(info => info.Id), to.SeedlingInfos.Select(info => info.Id));
     }
 
     // ── GardenPlanMapper.MapSpot ──────────────────────────────────────────────

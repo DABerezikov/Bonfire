@@ -1,4 +1,6 @@
 using MoonCalendar;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 
 namespace ViewModels.Tests;
 
@@ -58,8 +60,15 @@ public class SeedlingsWorkflowTests
         _seeds.GetAllSeedsAsync().Returns(new[] { seed });
         _service.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
         _service.Lunar.Returns(new MoonPhase());
-        _service.MakeASeedling(Arg.Any<Seedling>()).Returns(c => { var saved = c.Arg<Seedling>(); saved.Id = 2; return saved; });
-        _seeds.UpdateSeed(Arg.Any<Seed>()).Returns(c => c.Arg<Seed>());
+        var saved = Batch(2);
+        saved.Quantity = grams ? 0 : 2;
+        saved.Weight = grams ? 0.5 : 0;
+        saved.PlantPlace = "Подоконник";
+        saved.SeedlingInfos[0].SeedlingSource = PlantSources.FromSeeds;
+        var refreshedSeed = SeedsWorkflowTests.Seed(1);
+        refreshedSeed.SeedsInfo.AmountSeeds = grams ? 0 : 8;
+        refreshedSeed.SeedsInfo.AmountSeedsWeight = grams ? 1 : seed.SeedsInfo.AmountSeedsWeight;
+        _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(saved, refreshedSeed)));
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         vm.AddCulture = "Томат";
@@ -79,6 +88,62 @@ public class SeedlingsWorkflowTests
         Assert.Equal(grams ? 0 : 8, seed.SeedsInfo.AmountSeeds);
         if (grams) Assert.Equal(1, seed.SeedsInfo.AmountSeedsWeight);
         Assert.Null(vm.CurrentSeed);
+        _service.Received(1).SowAsync(Arg.Is<SowingRequest>(request =>
+            request.SeedId == 1 && request.Amount == (grams ? 0.5 : 2)
+            && request.Unit == (grams ? SeedUnit.Grams : SeedUnit.Pieces)
+            && request.Place == "Подоконник"));
+        _ = _seeds.DidNotReceive().UpdateSeed(Arg.Any<Seed>());
+    }
+
+    [Fact]
+    public async Task CreateSeedling_RejectedSowing_PreservesStockAndEditor()
+    {
+        var vm = CreateVm();
+        var seed = (await _seeds.GetAllSeedsAsync()).Single();
+        vm.AddCulture = "Томат";
+        vm.CurrentPlant = vm.AddPlantList[0];
+        vm.AddProducer = $"Фирма 1 {seed.SeedsInfo.ExpirationDate.Year}";
+        vm.SeedlingSource = PlantSources.FromSeeds;
+        vm.PlantingDate = new DateTime(2026, 3, 1);
+        vm.AddQuantity = 2;
+        _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Failure<SowingReceipt>("Остаток изменился"));
+
+        vm.AddOrCorrectSeedlingCommand.Execute(null);
+
+        Assert.Equal(10, seed.SeedsInfo.AmountSeeds);
+        Assert.Empty(vm.Seedlings!);
+        Assert.Same(seed, vm.CurrentSeed);
+        Assert.Equal(2, vm.AddQuantity);
+        _dialog.Received(1).Warning("Остаток изменился", Arg.Any<string>());
+        _ = _seeds.DidNotReceive().UpdateSeed(Arg.Any<Seed>());
+    }
+
+    [Fact]
+    public async Task CreateSeedling_PendingSowing_DoesNotMutateInventoryBeforeSuccess()
+    {
+        var vm = CreateVm();
+        var seed = (await _seeds.GetAllSeedsAsync()).Single();
+        vm.AddCulture = "Томат";
+        vm.CurrentPlant = vm.AddPlantList[0];
+        vm.AddProducer = $"Фирма 1 {seed.SeedsInfo.ExpirationDate.Year}";
+        vm.SeedlingSource = PlantSources.FromSeeds;
+        vm.PlantingDate = new DateTime(2026, 3, 1);
+        vm.AddQuantity = 2;
+        var pending = new TaskCompletionSource<Result<SowingReceipt>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var command = (Bonfire.Infrastructure.Commands.Base.CommandAsync)vm.AddOrCorrectSeedlingCommand;
+        command.ExecutableChanged += (_, _) => { if (command.Executable) completed.TrySetResult(); };
+        _service.SowAsync(Arg.Any<SowingRequest>()).Returns(pending.Task);
+        vm.AddOrCorrectSeedlingCommand.Execute(null);
+
+        Assert.Equal(10, seed.SeedsInfo.AmountSeeds);
+        Assert.Empty(vm.Seedlings!);
+        Assert.False(vm.AddOrCorrectSeedlingCommand.CanExecute(null));
+
+        pending.SetResult(Result.Failure<SowingReceipt>("Отменено"));
+        await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(vm.AddOrCorrectSeedlingCommand.CanExecute(null));
+        Assert.Equal(10, seed.SeedsInfo.AmountSeeds);
     }
 
     [Theory]

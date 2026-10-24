@@ -1,0 +1,35 @@
+using Bonfire.Domain.Functional;
+
+namespace Bonfire.Domain.Seeds;
+
+public sealed class SeedStock
+{
+    public SeedAmount Available { get; }
+
+    public SeedStock(SeedAmount available)
+    {
+        ArgumentNullException.ThrowIfNull(available);
+        Available = available;
+    }
+
+    public Result<SowingChange> Sow(SeedAmount requested)
+    {
+        ArgumentNullException.ThrowIfNull(requested);
+        return requested.Unit != Available.Unit
+            ? Result.Failure<SowingChange>("Единицы остатка и посева должны совпадать")
+            : requested.Value <= 0
+                ? Result.Failure<SowingChange>("Количество для посева должно быть положительным")
+                : requested.Value > Available.Value
+                    ? Result.Failure<SowingChange>("Недостаточно семян для посева")
+                    : SeedAmount.Create(Available.Value - requested.Value, Available.Unit)
+                        .Bind(remaining => Result.Success(new SowingChange(new SeedStock(remaining), requested)));
+    }
+}
+
+public sealed class SowingChange
+{
+    public SeedStock Remaining { get; }
+    public SeedAmount Sown { get; }
+
+    internal SowingChange(SeedStock remaining, SeedAmount sown) => (Remaining, Sown) = (remaining, sown);
+}

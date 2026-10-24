@@ -1,5 +1,7 @@
 using BonfireDB.Entities.Base;
 
+using Bonfire.Domain.Functional;
+
 namespace ViewModels.Tests;
 
 public class LibraryEditorViewModelTests

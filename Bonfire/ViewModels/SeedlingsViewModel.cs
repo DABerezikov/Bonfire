@@ -13,6 +13,7 @@ using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
+using Bonfire.Domain.Seeds;
 
 namespace Bonfire.ViewModels;
 
@@ -561,8 +562,6 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         && AddSort != string.Empty
         && SeedlingSource != string.Empty;
 
-    private Plant GetPlant() => _seeds.First(s => s.Id == CurrentPlant!.Id).Plant;
-
     private void ClearFieldSeedlingView()
     {
         PlantingDate = DateTime.Now;
@@ -727,48 +726,29 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnAddOrCorrectSeedlingCommandExecuted()
     {
-        var plant = GetPlant();
-        var moonPhase  = _seedlingsService.Lunar.GetMoonPhase(PlantingDate);
-        var plantPlace = string.IsNullOrWhiteSpace(AddPlantPlace) ? null : AddPlantPlace;
-
-        var seedlingInfo = new SeedlingInfo
+        if (CurrentSeed is not { } selectedSeed || Seedlings is not { } seedlings) return;
+        if (AddSize is not (Units.GramsAbbr or Units.PiecesAbbr))
         {
-            LandingDate    = PlantingDate,
-            LunarPhase     = moonPhase,
-            SeedlingNumber = 0,
-            SeedlingSource = SeedlingSource,
-            PlantPlace     = plantPlace
-        };
-
-        var seedling = new Seedling
-        {
-            Plant          = plant,
-            SeedId         = CurrentSeed!.Id,
-            LandingDate    = PlantingDate,
-            LunarPhase     = moonPhase,
-            SeedlingSource = SeedlingSource,
-            PlantPlace     = plantPlace,
-            SeedlingInfos  = [seedlingInfo]
-        };
-
-        switch (AddSize)
-        {
-            case Units.GramsAbbr:
-                seedling.Weight = AddQuantity;
-                CurrentSeed.SeedsInfo.AmountSeedsWeight -= AddQuantity;
-                break;
-            case Units.PiecesAbbr:
-                seedling.Quantity = AddQuantity;
-                CurrentSeed.SeedsInfo.AmountSeeds -= AddQuantity;
-                break;
+            _userDialog.Warning("Выберите единицу семян", "Посев рассады");
+            return;
         }
-
-        seedling = await _seedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
-        Seedlings!.Add(seedling);
-        var seed = await _seedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
-        RemoveItemFromCollection(seed);
-        ClearFieldSeedlingView();
-        UpdateCollectionViewSource(seedling.Id);
+        var unit = AddSize == Units.GramsAbbr ? SeedUnit.Grams : SeedUnit.Pieces;
+        var result = await _seedlingsService.SowAsync(new SowingRequest(
+            selectedSeed.Id, AddQuantity, unit, PlantingDate, SeedlingSource, AddPlantPlace));
+        result.Match(receipt =>
+        {
+            selectedSeed.SeedsInfo.AmountSeeds = receipt.Seed.SeedsInfo.AmountSeeds;
+            selectedSeed.SeedsInfo.AmountSeedsWeight = receipt.Seed.SeedsInfo.AmountSeedsWeight;
+            seedlings.Add(receipt.Batch);
+            RemoveItemFromCollection(selectedSeed);
+            ClearFieldSeedlingView();
+            UpdateCollectionViewSource(receipt.Batch.Id);
+            return true;
+        }, error =>
+        {
+            _userDialog.Warning(error, "Посев рассады");
+            return false;
+        });
     }
 
     private void RemoveItemFromCollection(Seed seed)

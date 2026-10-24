@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Bonfire.Domain.Functional;
 using Bonfire.Models;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;

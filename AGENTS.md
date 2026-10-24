@@ -13,6 +13,7 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 
 - `Bonfire/`: `Views/` — XAML, `ViewModels/` — представление, `Services/` — бизнес-логика, `Models/` — DTO; `Views/Image/`, `Templates/`, `Resources/` — изображения и оформление.
 - `BonfireDB/`: `Context/`, `Entities/`, `Migrations/`; репозитории и UnitOfWork находятся в корне проекта.
+- `Bonfire.Domain/`: независимое функциональное ядро; `Functional/` — общий `Result`, `Seeds/` — количество, остаток и чистая операция посева. Не добавляйте зависимости на WPF/EF/DI.
 - `MoonCalendar/`: расчёты лунного календаря.
 - `Tests/`: пять проектов xUnit.
 

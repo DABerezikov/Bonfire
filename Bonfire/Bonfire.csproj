@@ -52,6 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Bonfire.Domain\Bonfire.Domain.csproj" />
     <ProjectReference Include="..\BonfireDB\BonfireDB.csproj" />
     <ProjectReference Include="..\MoonCalendar\MoonCalendar.csproj" />
   </ItemGroup>

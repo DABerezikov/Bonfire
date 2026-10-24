@@ -1,4 +1,4 @@
-using BonfireDB.Entities.Base;
+using Bonfire.Domain.Functional;
 
 namespace Repository.Tests;
 
@@ -54,10 +54,13 @@ public class ResultBehaviorTests
     }
 
     [Fact]
-    public void From_ErrorDeterminesOutcome_IncludingNullableSuccess()
+    public void From_MissingValue_ReturnsFailureInsteadOfNullableSuccess()
     {
-        Assert.True(Result.From<string>(null!).IsSuccess);
-        Assert.Null(Result.From<string>(null!).ValueOrThrow());
+        Assert.True(Result.From<string>(null!).IsFailure);
         Assert.Equal("ошибка", Result.From(10, "ошибка").Error);
     }
+
+    [Fact]
+    public void Success_NullValue_IsRejected()
+        => Assert.Throws<ArgumentNullException>(() => Result.Success<string>(null!));
 }
