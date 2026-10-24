@@ -12,7 +12,10 @@ public interface ISeedsService
     Task<Seed?> GetSeedAsync(int id);
     Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest request, IReadOnlyList<Seed> existingSeeds);
     Task<Seed> UpdateSeed(Seed seed);
+    Task SaveSeedEditAsync(Seed seed, SortEditModel sort, int producerId);
+    Task<SeedEditorOptions> GetEditorOptionsAsync();
     Task<Seed> DeleteSeed(Seed seed);
+    Task<Seed> DeleteSeedWithReasonAsync(int seedId, string reason);
     Task ReturnSeedsFromSeedling(int seedId, double quantity, double? weight);
     Task<PlantSort> UpdateSort(PlantSort seed);
     Task<PlantCulture> UpdateCulture(PlantCulture culture);

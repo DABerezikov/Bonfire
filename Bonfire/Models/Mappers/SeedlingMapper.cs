@@ -27,6 +27,14 @@ internal static class SeedlingMapper
         to.Plant.PlantSort.MaxGerminationTime = from.Plant.PlantSort.MaxGerminationTime;
         to.Plant.PlantSort.AgeOfSeedlings = from.Plant.PlantSort.AgeOfSeedlings;
         to.Plant.PlantSort.GrowingSeason = from.Plant.PlantSort.GrowingSeason;
+        to.Plant.PlantSort.MaxGrowingSeason = from.Plant.PlantSort.MaxGrowingSeason;
+        to.Plant.PlantSort.Maturity = from.Plant.PlantSort.Maturity;
+        to.Plant.PlantSort.MaxPlantHeight = from.Plant.PlantSort.MaxPlantHeight;
+        to.Plant.PlantSort.MaxAgeOfSeedlings = from.Plant.PlantSort.MaxAgeOfSeedlings;
+        to.Plant.PlantSort.LandingRowSpacing = from.Plant.PlantSort.LandingRowSpacing;
+        to.Plant.PlantSort.MinFruitWeight = from.Plant.PlantSort.MinFruitWeight;
+        to.Plant.PlantSort.MaxFruitWeight = from.Plant.PlantSort.MaxFruitWeight;
+        to.Plant.PlantSort.YieldKg = from.Plant.PlantSort.YieldKg;
         to.Plant.PlantSort.LandingPattern = from.Plant.PlantSort.LandingPattern;
         to.Plant.PlantSort.PlantHeight = from.Plant.PlantSort.PlantHeight;
         to.Plant.PlantSort.PlantColor = from.Plant.PlantSort.PlantColor;

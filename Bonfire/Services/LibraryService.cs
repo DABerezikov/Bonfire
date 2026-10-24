@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
@@ -45,7 +46,22 @@ internal class LibraryService(IUnitOfWorkFactory uowFactory) : ILibraryService
         if (entity is null)
             return Result.Failure<PlantSort>("Сорт не найден (удалён?)");
 
-        LibraryMapper.ApplyTo(model, entity);
+        if (string.IsNullOrWhiteSpace(model.Name))
+            return Result.Failure<PlantSort>("Название не может быть пустым");
+        PlantCulture? culture = null;
+        if (model.CultureId.HasValue)
+        {
+            culture = await uow.Repository<PlantCulture>().GetAsync(model.CultureId.Value);
+            if (culture is null) return Result.Failure<PlantSort>("Культура не найдена");
+        }
+        entity.Name = model.Name.Trim();
+        if (culture is not null)
+        {
+            var plants = await uow.Repository<Plant>().Items
+                .Where(p => p.PlantSort.Id == entity.Id).ToListAsync();
+            foreach (var plant in plants)
+                plant.PlantCulture = culture;
+        }
         try
         {
             await uow.Repository<PlantSort>().UpdateAsync(entity);

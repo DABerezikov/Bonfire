@@ -4,6 +4,8 @@ namespace Bonfire.Services.Interfaces;
 
 public interface IUserDialog
 {
+    /// <summary>Подтверждение удаления с причиной; null означает отмену.</summary>
+    string? RequestDeleteReason(string sortName, string? previousReason = null);
         
     /// <summary>Открыть диалога выбора файла для чтения</summary>
     /// <param name="title">Заголовок диалогового окна</param>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;
+using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
@@ -12,6 +13,51 @@ namespace Bonfire.Services;
 
 internal class SeedsService(IUnitOfWorkFactory uowFactory) : ISeedsService
 {
+    public async Task SaveSeedEditAsync(Seed seed, SortEditModel sort, int producerId)
+    {
+        if (sort.HasErrors || !SeedMapper.IsPackageValid(seed.SeedsInfo))
+            throw new InvalidOperationException("Исправьте ошибки в полях семян и сорта");
+        await using var uow = uowFactory.Create();
+        var saved = await uow.Repository<Seed>().GetAsync(seed.Id)
+            ?? throw new InvalidOperationException("Запись семян удалена");
+        if (saved.Plant.PlantSort.Id != sort.Id)
+            throw new InvalidOperationException("Сорт записи изменён; откройте её повторно");
+        var producer = await uow.Repository<Producer>().GetAsync(producerId)
+            ?? throw new InvalidOperationException("Производитель не найден");
+
+        SeedMapper.CopyPackage(seed.SeedsInfo, saved.SeedsInfo);
+        LibraryMapper.ApplyTo(sort, saved.Plant.PlantSort);
+        saved.Plant.PlantSort.Producer = producer;
+        await RememberOption(uow, "Цвет", sort.PlantColor);
+        await RememberOption(uow, "Созревание", sort.Maturity);
+        // Загруженный граф уже отслеживается. Один SaveChanges атомарно сохраняет все изменения.
+        await uow.SaveChangesAsync();
+    }
+
+    private static async Task RememberOption(IUnitOfWork uow, string category, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        value = value.Trim();
+        var options = uow.Repository<SortOption>();
+        if (!await options.Items.AnyAsync(o => o.Category == category && o.Name == value))
+            await options.AddAsync(new SortOption { Category = category, Name = value });
+    }
+
+    public async Task<SeedEditorOptions> GetEditorOptionsAsync()
+    {
+        await using var uow = uowFactory.Create();
+        var sorts = await uow.Repository<PlantSort>().Items.ToListAsync();
+        var options = await uow.Repository<SortOption>().Items.ToListAsync();
+        var producers = await uow.Repository<Producer>().Items.OrderBy(p => p.Name).ToListAsync();
+        static string[] Values(IEnumerable<string?> values) => values
+            .Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(v => v).ToArray();
+        return new SeedEditorOptions(
+            Values(sorts.Select(s => s.PlantColor).Concat(options.Where(o => o.Category == "Цвет").Select(o => o.Name))),
+            Values(sorts.Select(s => s.Maturity).Concat(options.Where(o => o.Category == "Созревание").Select(o => o.Name))),
+            producers);
+    }
+
     public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync()
     {
         await using var uow = uowFactory.Create();
@@ -167,6 +213,18 @@ internal class SeedsService(IUnitOfWorkFactory uowFactory) : ISeedsService
     {
         await using var uow = uowFactory.Create();
         await uow.Repository<Seed>().RemoveAsync(seed.Id);
+        await uow.SaveChangesAsync();
+        return seed;
+    }
+
+    public async Task<Seed> DeleteSeedWithReasonAsync(int seedId, string reason)
+    {
+        await using var uow = uowFactory.Create();
+        var seeds = uow.Repository<Seed>();
+        var seed = await seeds.GetAsync(seedId) ?? throw new InvalidOperationException("Запись семян удалена");
+        // SeedsInfo — главная запись связи; при удалении Seed остаётся с причиной списания.
+        seed.SeedsInfo.DisposeComment = reason.Trim();
+        await seeds.RemoveAsync(seedId);
         await uow.SaveChangesAsync();
         return seed;
     }

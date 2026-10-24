@@ -13,6 +13,7 @@ public static class RepositoryRegister
         .AddScoped<IRepository<Plant>, PlantRepository>()
         .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
         .AddScoped<IRepository<PlantSort>, PlantSortRepository>()
+        .AddScoped<IRepository<SortOption>, DbRepository<SortOption>>()
         .AddScoped<IRepository<Producer>, DbRepository<Producer>>()
         .AddScoped<IRepository<SeedsInfo>, DbRepository<SeedsInfo>>()
         .AddScoped<IRepository<Seed>, SeedsRepository>()

@@ -134,6 +134,84 @@ public class SeedsViewModelTests
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    [Fact]
+    public void SelectedItem_DirtyPackageAndDiscardRefused_KeepsSelectionAndEdits()
+    {
+        var vm = CreateVm();
+        var first = MakeSeed(1);
+        vm.SelectedItem = first;
+        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
+        vm.SelectedItem = MakeSeed(2);
+        Assert.Same(first, vm.SelectedItem);
+        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
+        Assert.Null(first.SeedsInfo.Note);
+    }
+
+    [Fact]
+    public void SelectedItem_DirtyPackageAndDiscardConfirmed_DiscardsWithoutSaving()
+    {
+        var vm = CreateVm();
+        var first = MakeSeed(1);
+        var second = MakeSeed(2);
+        vm.SelectedItem = first;
+        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        vm.SelectedItem = second;
+        Assert.Same(second, vm.SelectedItem);
+        Assert.Null(vm.EditedItem.SeedsInfo.Note);
+        Assert.Null(first.SeedsInfo.Note);
+        _userDialog.Received(1).YesNoQuestion(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    private static Seed MakeSeed(int id) => new()
+    {
+        Id = id,
+        Plant = new Plant
+        {
+            PlantCulture = new PlantCulture { Name = "Томат" },
+            PlantSort = new PlantSort { Id = 1, Name = "Черри", Producer = new Producer { Id = 1, Name = "Гавриш" } }
+        },
+        SeedsInfo = new SeedsInfo()
+    };
+
+    [Fact]
+    public void DeleteSeedCommand_Confirmed_RemovesCachedRecordReturnedFromAnotherContext()
+    {
+        var vm = CreateVm();
+        var first = MakeSeed(1);
+        vm.Seeds = [first, MakeSeed(2)];
+        vm.SelectedItem = first;
+        _userDialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("Истёк срок");
+        _seedsService.DeleteSeedWithReasonAsync(1, "Истёк срок").Returns(MakeSeed(1));
+
+        vm.DeleteSeedCommand.Execute(null);
+
+        Assert.DoesNotContain(vm.Seeds, s => s.Id == 1);
+        Assert.Contains(vm.Seeds, s => s.Id == 2);
+        Assert.Null(vm.SelectedItem);
+    }
+
+    [Fact]
+    public void UpdateSeedsInfoCommand_ConfirmationRefused_PreservesDraftAndOriginal()
+    {
+        var vm = CreateVm();
+        var seed = MakeSeed(1);
+        vm.SelectedItem = seed;
+        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.SeedSortDetail!.Description = "Общее описание";
+        vm.EditedProducerId = 2;
+        _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
+
+        vm.UpdateSeedsInfoCommand.Execute(null);
+
+        Assert.Null(seed.SeedsInfo.Note);
+        Assert.Null(seed.Plant.PlantSort.Description);
+        Assert.Equal(1, seed.Plant.PlantSort.Producer.Id);
+        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
+        _seedsService.DidNotReceive().SaveSeedEditAsync(Arg.Any<Seed>(), Arg.Any<SortEditModel>(), Arg.Any<int>());
+    }
+
     private static void SetAllVerificationFields(SeedsViewModel vm)
     {
         vm.SeedSource = "Куплено";    // must be first: its setter resets AddProducer

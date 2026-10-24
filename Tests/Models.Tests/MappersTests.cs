@@ -101,6 +101,32 @@ public class MappersTests
     // ── SeedlingMapper.CopyInto ───────────────────────────────────────────────
 
     [Fact]
+    public void SeedlingMapper_CopyInto_PreservesExtendedSharedSortCharacteristics()
+    {
+        var from = new Seedling { Plant = MakeSeed().Plant };
+        from.Plant.PlantSort.MaxGrowingSeason = 120;
+        from.Plant.PlantSort.Maturity = "Среднеспелый";
+        from.Plant.PlantSort.MaxPlantHeight = 180;
+        from.Plant.PlantSort.MaxAgeOfSeedlings = 70;
+        from.Plant.PlantSort.LandingRowSpacing = 50;
+        from.Plant.PlantSort.MinFruitWeight = 15;
+        from.Plant.PlantSort.MaxFruitWeight = 25;
+        from.Plant.PlantSort.YieldKg = 3;
+        var to = new Seedling { Plant = MakeSeed().Plant };
+
+        SeedlingMapper.CopyInto(from, to);
+
+        Assert.Equal(120, to.Plant.PlantSort.MaxGrowingSeason);
+        Assert.Equal("Среднеспелый", to.Plant.PlantSort.Maturity);
+        Assert.Equal(180, to.Plant.PlantSort.MaxPlantHeight);
+        Assert.Equal(70, to.Plant.PlantSort.MaxAgeOfSeedlings);
+        Assert.Equal(50, to.Plant.PlantSort.LandingRowSpacing);
+        Assert.Equal(15, to.Plant.PlantSort.MinFruitWeight);
+        Assert.Equal(25, to.Plant.PlantSort.MaxFruitWeight);
+        Assert.Equal(3, to.Plant.PlantSort.YieldKg);
+    }
+
+    [Fact]
     public void SeedlingMapper_CopyInto_CopiesFieldsAndInfos()
     {
         var infos = new List<SeedlingInfo> { new() { Id = 1 }, new() { Id = 2 } };

@@ -119,6 +119,7 @@ namespace Bonfire.ViewModels
             ??= new LambdaCommand(() =>
             {
                 if (CurrentViewModel is SeedlingsViewModel) return;
+                if (CurrentViewModel is SeedsViewModel && !SeedsViewModel.TryDiscardSeedChanges()) return;
                 SeedsViewModel.IsActive = false;
                 SeedlingsViewModel.IsActive = true;
                 CurrentViewModel = SeedlingsViewModel;
@@ -131,6 +132,7 @@ namespace Bonfire.ViewModels
             ??= new LambdaCommand(() =>
             {
                 if (CurrentViewModel is LibraryEditorViewModel) return;
+                if (CurrentViewModel is SeedsViewModel && !SeedsViewModel.TryDiscardSeedChanges()) return;
                 SeedsViewModel.IsActive = false;
                 SeedlingsViewModel.IsActive = false;
                 CurrentViewModel = LibraryEditorViewModel;
@@ -143,6 +145,7 @@ namespace Bonfire.ViewModels
             ??= new LambdaCommand(() =>
             {
                 if (CurrentViewModel is GardenPlanViewModel) return;
+                if (CurrentViewModel is SeedsViewModel && !SeedsViewModel.TryDiscardSeedChanges()) return;
                 SeedsViewModel.IsActive = false;
                 SeedlingsViewModel.IsActive = false;
                 GardenPlanViewModel.IsActive = true;

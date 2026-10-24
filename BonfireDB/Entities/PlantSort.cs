@@ -1,4 +1,4 @@
-﻿using BonfireDB.Entities.Base;
+using BonfireDB.Entities.Base;
 
 namespace BonfireDB.Entities;
 
@@ -15,12 +15,12 @@ public class PlantSort : NamedEntity
     public Producer Producer { get; set; } = null!;
 
     /// <summary>
-    /// Минимальное время вегетации, дней
+    /// Минимальный срок прорастания, дней
     /// </summary>
     public int? MinGerminationTime { get; set; }
 
     /// <summary>
-    /// Максимальное время вегетации, дней
+    /// Максимальный срок прорастания, дней
     /// </summary>
     public int? MaxGerminationTime { get; set; }
 
@@ -30,9 +30,12 @@ public class PlantSort : NamedEntity
     public int? AgeOfSeedlings { get; set; }
 
     /// <summary>
-    /// Вегетационный период, дней
+    /// Минимальный вегетационный период, дней
     /// </summary>
     public int? GrowingSeason { get; set; }
+
+    /// <summary>Максимальный вегетационный период, дней</summary>
+    public int? MaxGrowingSeason { get; set; }
 
     /// <summary>
     /// Схема посадки, см
@@ -48,6 +51,27 @@ public class PlantSort : NamedEntity
     /// Цвет растения
     /// </summary>
     public string? PlantColor { get; set; }
+
+    /// <summary>Созревание</summary>
+    public string? Maturity { get; set; }
+
+    /// <summary>Максимальный возраст рассады, дней</summary>
+    public int? MaxAgeOfSeedlings { get; set; }
+
+    /// <summary>Максимальная высота, см</summary>
+    public int? MaxPlantHeight { get; set; }
+
+    /// <summary>Расстояние между рядами, см</summary>
+    public int? LandingRowSpacing { get; set; }
+
+    /// <summary>Урожайность, кг</summary>
+    public double? YieldKg { get; set; }
+
+    /// <summary>Минимальная масса плода, г</summary>
+    public double? MinFruitWeight { get; set; }
+
+    /// <summary>Максимальная масса плода, г</summary>
+    public double? MaxFruitWeight { get; set; }
 
     public ICollection<Plant> Plants { get; set; } = [];
 }

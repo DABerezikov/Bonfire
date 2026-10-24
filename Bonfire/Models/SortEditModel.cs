@@ -59,6 +59,12 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         set { if (Set(ref field, value)) SetDirty(); }
     }
 
+    public int? MaxGrowingSeason
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
     public int? LandingPattern
     {
         get;
@@ -77,6 +83,55 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         set { if (Set(ref field, value)) SetDirty(); }
     }
 
+    public string? Maturity
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public int? MaxAgeOfSeedlings
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public int? MaxPlantHeight
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public int? LandingRowSpacing
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public double? YieldKg
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public double? MinFruitWeight
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public double? MaxFruitWeight
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    // Культура меняется только в редакторе библиотек.
+    public int? CultureId
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
     public bool IsDirty => _dirty;
 
     public bool HasErrors =>
@@ -87,7 +142,20 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         || GrowingSeason < 0
         || LandingPattern < 0
         || PlantHeight < 0
+        || HasRangeErrors
         || (MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime);
+
+    private bool HasRangeErrors =>
+        InvalidRange(AgeOfSeedlings, MaxAgeOfSeedlings)
+        || InvalidRange(PlantHeight, MaxPlantHeight)
+        || InvalidRange(MinFruitWeight, MaxFruitWeight)
+        || InvalidRange(GrowingSeason, MaxGrowingSeason)
+        || InvalidRange(YieldKg, null) || LandingRowSpacing < 0;
+
+    private static bool InvalidRange(double? min, double? max) =>
+        (min.HasValue && (!double.IsFinite(min.Value) || min < 0))
+        || (max.HasValue && (!double.IsFinite(max.Value) || max < 0))
+        || (min.HasValue && max.HasValue && min > max);
 
     public string Error => string.Empty;
 
@@ -111,6 +179,16 @@ public class SortEditModel : ViewModel, IDataErrorInfo
             => NegativeError,
         nameof(MinGerminationTime) when MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime
             => "Минимум не может быть больше максимума",
+        nameof(AgeOfSeedlings) or nameof(MaxAgeOfSeedlings) when InvalidRange(AgeOfSeedlings, MaxAgeOfSeedlings)
+            => "Некорректный диапазон возраста рассады",
+        nameof(PlantHeight) or nameof(MaxPlantHeight) when InvalidRange(PlantHeight, MaxPlantHeight)
+            => "Некорректный диапазон высоты",
+        nameof(MinFruitWeight) or nameof(MaxFruitWeight) when InvalidRange(MinFruitWeight, MaxFruitWeight)
+            => "Некорректный диапазон массы плода",
+        nameof(GrowingSeason) or nameof(MaxGrowingSeason) when InvalidRange(GrowingSeason, MaxGrowingSeason)
+            => "Некорректный диапазон вегетации",
+        nameof(YieldKg) when InvalidRange(YieldKg, null) => NegativeError,
+        nameof(LandingRowSpacing) when LandingRowSpacing < 0 => NegativeError,
         _ => string.Empty
     };
 
@@ -120,9 +198,22 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         OnPropertyChanged(nameof(IsDirty));
     }
 
-    private void SetDirty()
+    private void SetDirty([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
     {
         _dirty = true;
+        var pairedProperty = propertyName switch
+        {
+            nameof(GrowingSeason) => nameof(MaxGrowingSeason),
+            nameof(MaxGrowingSeason) => nameof(GrowingSeason),
+            nameof(AgeOfSeedlings) => nameof(MaxAgeOfSeedlings),
+            nameof(MaxAgeOfSeedlings) => nameof(AgeOfSeedlings),
+            nameof(PlantHeight) => nameof(MaxPlantHeight),
+            nameof(MaxPlantHeight) => nameof(PlantHeight),
+            nameof(MinFruitWeight) => nameof(MaxFruitWeight),
+            nameof(MaxFruitWeight) => nameof(MinFruitWeight),
+            _ => null
+        };
+        if (pairedProperty != null) OnPropertyChanged(pairedProperty);
         OnPropertyChanged(nameof(IsDirty));
         OnPropertyChanged(nameof(HasErrors));
     }

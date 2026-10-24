@@ -47,9 +47,9 @@ public class LibraryServiceTests
     // ── UpdateSortAsync ───────────────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateSortAsync_ExistingSort_AppliesAllFields()
+    public async Task UpdateSortAsync_LibraryEdit_ChangesNameAndPreservesCharacteristics()
     {
-        var entity = new PlantSort { Id = 1, Name = "Старый", Producer = new Producer() };
+        var entity = new PlantSort { Id = 1, Name = "Старый", Description = "Сохранённое описание", PlantHeight = 80, Producer = new Producer() };
         _sorts.GetAsync(1).Returns(entity);
 
         var model = new SortEditModel
@@ -70,14 +70,8 @@ public class LibraryServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Новый", entity.Name);
-        Assert.Equal("Описание", entity.Description);
-        Assert.Equal(10, entity.MinGerminationTime);
-        Assert.Equal(20, entity.MaxGerminationTime);
-        Assert.Equal(45, entity.AgeOfSeedlings);
-        Assert.Equal(90, entity.GrowingSeason);
-        Assert.Equal(30, entity.LandingPattern);
-        Assert.Equal(150, entity.PlantHeight);
-        Assert.Equal("#FF0000", entity.PlantColor);
+        Assert.Equal("Сохранённое описание", entity.Description);
+        Assert.Equal(80, entity.PlantHeight);
     }
 
     [Fact]

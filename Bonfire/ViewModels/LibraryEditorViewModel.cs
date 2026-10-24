@@ -132,7 +132,11 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     {
         if (_seedsViewModel.Seeds != null)
             foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantSort.Id == updated.Id))
+            {
                 seed.Plant.PlantSort.Name = updated.Name;
+                var plant = updated.Plants.FirstOrDefault(p => p.Id == seed.Plant.Id);
+                if (plant != null) seed.Plant.PlantCulture = plant.PlantCulture;
+            }
 
         var sortItem = _seedsViewModel.AddSortList.FirstOrDefault(s => s.Id == updated.Id);
         if (sortItem is not null)
@@ -146,7 +150,10 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     {
         if (_seedsViewModel.Seeds != null)
             foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantCulture.Id == updated.Id))
+            {
                 seed.Plant.PlantCulture.Name = updated.Name;
+                seed.Plant.PlantCulture.Class = updated.Class;
+            }
 
         var cultureItem = _seedsViewModel.AddCultureList.FirstOrDefault(c => c.Id == updated.Id);
         if (cultureItem is not null)

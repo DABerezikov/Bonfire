@@ -1,4 +1,5 @@
 using BonfireDB.Entities;
+using System.Linq;
 
 namespace Bonfire.Models.Mappers;
 
@@ -10,14 +11,23 @@ internal static class LibraryMapper
         {
             Id = sort.Id,
             Name = sort.Name,
+            CultureId = sort.Plants.FirstOrDefault()?.PlantCulture.Id,
             Description = sort.Description,
             MinGerminationTime = sort.MinGerminationTime,
             MaxGerminationTime = sort.MaxGerminationTime,
             AgeOfSeedlings = sort.AgeOfSeedlings,
             GrowingSeason = sort.GrowingSeason,
+            MaxGrowingSeason = sort.MaxGrowingSeason,
             LandingPattern = sort.LandingPattern,
             PlantHeight = sort.PlantHeight,
-            PlantColor = sort.PlantColor
+            PlantColor = sort.PlantColor,
+            Maturity = sort.Maturity,
+            MaxAgeOfSeedlings = sort.MaxAgeOfSeedlings,
+            MaxPlantHeight = sort.MaxPlantHeight,
+            LandingRowSpacing = sort.LandingRowSpacing,
+            YieldKg = sort.YieldKg,
+            MinFruitWeight = sort.MinFruitWeight,
+            MaxFruitWeight = sort.MaxFruitWeight
         };
         model.ResetDirty();
         return model;
@@ -43,9 +53,17 @@ internal static class LibraryMapper
         sort.MaxGerminationTime = model.MaxGerminationTime;
         sort.AgeOfSeedlings = model.AgeOfSeedlings;
         sort.GrowingSeason = model.GrowingSeason;
+        sort.MaxGrowingSeason = model.MaxGrowingSeason;
         sort.LandingPattern = model.LandingPattern;
         sort.PlantHeight = model.PlantHeight;
         sort.PlantColor = model.PlantColor;
+        sort.Maturity = model.Maturity;
+        sort.MaxAgeOfSeedlings = model.MaxAgeOfSeedlings;
+        sort.MaxPlantHeight = model.MaxPlantHeight;
+        sort.LandingRowSpacing = model.LandingRowSpacing;
+        sort.YieldKg = model.YieldKg;
+        sort.MinFruitWeight = model.MinFruitWeight;
+        sort.MaxFruitWeight = model.MaxFruitWeight;
     }
 
     public static void ApplyTo(CultureEditModel model, PlantCulture culture)

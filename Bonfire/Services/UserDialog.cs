@@ -4,11 +4,51 @@ using System.IO;
 using System.Windows;
 using System;
 using System.Linq;
+using System.Windows.Controls;
 
 namespace Bonfire.Services;
 
 public class UserDialog : IUserDialog
 {
+    public virtual string? RequestDeleteReason(string sortName, string? previousReason = null)
+    {
+        var dialog = new Window
+        {
+            Title = "Удаление семян", Width = 460, SizeToContent = SizeToContent.Height,
+            ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = CurrentWindow
+        };
+        var panel = new StackPanel { Margin = new Thickness(18) };
+        panel.Children.Add(new TextBlock
+        {
+            Text = $"Удалить запись семян сорта «{sortName}»? Несохранённые изменения будут сброшены.",
+            TextWrapping = TextWrapping.Wrap
+        });
+        panel.Children.Add(new TextBlock { Text = "Причина удаления", Margin = new Thickness(0, 14, 0, 5) });
+        var reason = new TextBox
+        {
+            Text = previousReason ?? string.Empty, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap,
+            Height = 85, VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+        panel.Children.Add(reason);
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 16, 0, 0)
+        };
+        var yes = new Button { Content = "Да, удалить", MinWidth = 100, Padding = new Thickness(8, 4, 8, 4) };
+        yes.Click += (_, _) => dialog.DialogResult = true;
+        buttons.Children.Add(yes);
+        buttons.Children.Add(new Button
+        {
+            Content = "Нет", IsCancel = true, MinWidth = 80,
+            Margin = new Thickness(10, 0, 0, 0), Padding = new Thickness(8, 4, 8, 4)
+        });
+        panel.Children.Add(buttons);
+        dialog.Content = panel;
+        return dialog.ShowDialog() == true ? reason.Text : null;
+    }
+
     /// <summary>Активное окно приложения</summary>
     protected static Window? ActiveWindow =>
         Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);

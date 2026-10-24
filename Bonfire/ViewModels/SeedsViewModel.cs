@@ -22,6 +22,44 @@ public class SeedsViewModel : SourceSelectionViewModel
     private readonly ISeedsService _seedsService;
     private readonly IUserDialog _userDialog;
     private readonly IReportService _reportService;
+    private bool _ignoreDiscard;
+    private bool _isSaving;
+
+    public SortEditModel? SeedSortDetail
+    {
+        get;
+        private set => Set(ref field, value);
+    }
+
+    public int EditedProducerId
+    {
+        get;
+        set => Set(ref field, value);
+    }
+
+    public SeedEditorOptions EditorOptions
+    {
+        get;
+        private set => Set(ref field, value);
+    } = new([], [], []);
+
+    public bool EditorHasBindingErrors { get; set; }
+    public bool CanEditSeedDetails => !_isSaving;
+
+    public bool HasUnsavedSeedChanges => SelectedItem != null &&
+        (EditorHasBindingErrors || SeedSortDetail is { IsDirty: true }
+         || EditedProducerId != SelectedItem.Plant.PlantSort.Producer.Id
+         || !SeedMapper.SamePackage(EditedItem.SeedsInfo, SelectedItem.SeedsInfo));
+
+    public bool TryDiscardSeedChanges()
+    {
+        if (_isSaving) return false;
+        if (HasUnsavedSeedChanges && !_userDialog.YesNoQuestion(
+                "Сбросить несохранённые изменения семян и характеристик сорта?", "Несохранённые изменения"))
+            return false;
+        CopySeedToEditItem(SelectedItem, EditedItem);
+        return true;
+    }
 
     public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog, IReportService reportService)
     {
@@ -98,6 +136,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         get;
         set
         {
+            if (field != value && !TryDiscardSeedChanges()) return;
             if (Set(ref field, value))
             {
                 SelectedItem = null;
@@ -144,6 +183,11 @@ public class SeedsViewModel : SourceSelectionViewModel
         get;
         set
         {
+            if (field?.Id != value?.Id && !_ignoreDiscard && !TryDiscardSeedChanges())
+            {
+                OnPropertyChanged();
+                return;
+            }
             Set(ref field, value);
             SelectedItem = value != null ? Seeds!.First(s => s.Id == value.Id) : null;
         }
@@ -154,8 +198,12 @@ public class SeedsViewModel : SourceSelectionViewModel
         get;
         set
         {
+            if (!ReferenceEquals(field, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
             if (Set(ref field, value))
+            {
                 CopySeedToEditItem(SelectedItem, EditedItem);
+                if (value is null) SeedSortDetail = null;
+            }
         }
     }
 
@@ -464,6 +512,9 @@ public class SeedsViewModel : SourceSelectionViewModel
     {
         if (seedFrom == null) return;
         SeedMapper.CopyInto(seedFrom, seedTo);
+        SeedSortDetail = LibraryMapper.ToEditModel(seedFrom.Plant.PlantSort);
+        EditedProducerId = seedFrom.Plant.PlantSort.Producer.Id;
+        EditorHasBindingErrors = false;
         OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
     }
@@ -550,6 +601,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private async Task OnLoadDataCommandExecuted()
     {
+        EditorOptions = await _seedsService.GetEditorOptionsAsync() ?? new([], [], []);
         if (Seeds != null)
         {
             UpdateCollectionViewSource();
@@ -601,34 +653,60 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите удалить семена сорта - {SelectedItem!.Plant.PlantSort.Name}",
-                "Удаление семян")) return;
-
-        var deleteSeed = await _seedsService.DeleteSeed(SelectedItem).ConfigureAwait(false);
-        Seeds!.Remove(deleteSeed);
-        RemoveOfAddLists(deleteSeed);
-        UpdateCollectionViewSource();
+        if (_isSaving || SelectedItem is null) return;
+        var reason = _userDialog.RequestDeleteReason(SelectedItem.Plant.PlantSort.Name,
+            SelectedItem.SeedsInfo.DisposeComment);
+        if (reason is null) return;
+        SetSaving(true);
+        try
+        {
+            var deleteSeed = await _seedsService.DeleteSeedWithReasonAsync(SelectedItem.Id, reason);
+            var cachedSeed = Seeds!.FirstOrDefault(s => s.Id == deleteSeed.Id);
+            if (cachedSeed != null) Seeds!.Remove(cachedSeed);
+            RemoveOfAddLists(deleteSeed);
+            _ignoreDiscard = true;
+            SelectedItem = null;
+            UpdateCollectionViewSource();
+        }
+        finally { _ignoreDiscard = false; SetSaving(false); }
     }
 
     public ICommand UpdateSeedsInfoCommand => field
-        ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted, () => EditedItem != null);
+        ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted,
+            () => SelectedItem != null && !_isSaving && !EditorHasBindingErrors
+                && SeedSortDetail is { HasErrors: false } && EditedProducerId > 0
+                && SeedMapper.IsPackageValid(EditedItem.SeedsInfo));
 
     private async Task OnUpdateSeedsInfoCommandExecuted()
     {
         if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите изменить информацию о семенах сорта - {EditedItem.Plant.PlantSort.Name}",
+                $"Сохранить изменения упаковки? Характеристики сорта «{EditedItem.Plant.PlantSort.Name}» и выбранный производитель будут изменены у всех записей этого сорта.",
                 "Редактирование семян")) return;
-
-        CopySeedToEditItem(EditedItem, SelectedItem!);
-        if (SelectedItem!.SeedsInfo.AmountSeeds > 0)
-            SelectedItem.SeedsInfo.AmountSeedsWeight = 0;
-        await _seedsService.UpdateSeed(SelectedItem).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedItem.Id);
+        var id = EditedItem.Id;
+        SetSaving(true);
+        try
+        {
+            await _seedsService.SaveSeedEditAsync(EditedItem, SeedSortDetail!, EditedProducerId);
+            _ignoreDiscard = true;
+            await RefreshSeedsAsync();
+            EditorOptions = await _seedsService.GetEditorOptionsAsync();
+            SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
+            AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
+            ListCulture = ["-Выбрать все-"];
+            LoadListCulture(); LoadListSort(); LoadListProducer();
+        }
+        finally { _ignoreDiscard = false; SetSaving(false); }
     }
 
     public ICommand CancelUpdateSeedsInfoCommand => field
-        ??= new LambdaCommandAsync(async () => UpdateCollectionViewSource(SelectedItem?.Id ?? -1));
+        ??= new LambdaCommand(() => { TryDiscardSeedChanges(); });
+
+    private void SetSaving(bool value)
+    {
+        _isSaving = value;
+        OnPropertyChanged(nameof(CanEditSeedDetails));
+        CommandManager.InvalidateRequerySuggested();
+    }
 
     public ICommand CreateSeedsReportCommand => field
         ??= new LambdaCommand(CreateSeedReport, () => Seeds != null && IsActive);

@@ -10,6 +10,7 @@ public class DbBonfire(DbContextOptions<DbBonfire> options) : DbContext(options)
     public DbSet<Plant> Plants { get; set; }
     public DbSet<PlantCulture> PlantsCulture { get; set; }
     public DbSet<PlantSort> PlantsSort { get; set; }
+    public DbSet<SortOption> SortOptions { get; set; }
     public DbSet<SeedsInfo> SeedsInfo { get; set; }
     public DbSet<Seed> Seeds { get; set; }
     public DbSet<Producer> Producers { get; set; }
@@ -33,6 +34,7 @@ public class DbBonfire(DbContextOptions<DbBonfire> options) : DbContext(options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<SortOption>().HasIndex(o => new { o.Category, o.Name }).IsUnique();
 
         // --- TPH: иерархия GardenPlot ---
         modelBuilder.Entity<GardenPlot>()
