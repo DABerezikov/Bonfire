@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,25 +11,25 @@ namespace Bonfire.Data;
 
 internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
 {
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         var timer = Stopwatch.StartNew();
         logger.LogInformation("Инициализация БД...");
         logger.LogInformation("Миграция БД...");
-        await db.Database.MigrateAsync().ConfigureAwait(false);
+        await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
         logger.LogInformation("Миграция БД выполнена за {0} мс", timer.ElapsedMilliseconds);
-        await MigrateSeedlingMetadataAsync().ConfigureAwait(false);
+        await MigrateSeedlingMetadataAsync(cancellationToken).ConfigureAwait(false);
         logger.LogInformation("Инициализация БД выполнена за {0} c", timer.Elapsed.Seconds);
     }
 
     // Копирует метаданные партии из SeedlingInfo[SeedlingNumber=0] в поля Seedling.
     // Однократно выполняется для существующих данных до введения новых полей.
-    private async Task MigrateSeedlingMetadataAsync()
+    private async Task MigrateSeedlingMetadataAsync(CancellationToken cancellationToken)
     {
         var toMigrate = await db.Seedlings
             .Where(s => s.LandingDate == null)
             .Include(s => s.SeedlingInfos)
-            .ToListAsync()
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (toMigrate.Count == 0) return;
@@ -43,7 +44,7 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
             seedling.PlantPlace     = meta.PlantPlace;
         }
 
-        await db.SaveChangesAsync().ConfigureAwait(false);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         logger.LogInformation("Миграция метаданных рассады: перенесено {0} записей", toMigrate.Count);
     }
 }

@@ -31,6 +31,7 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 - `dotnet run --project Bonfire/Bonfire.csproj` — запустить приложение.
 - `dotnet test Bonfire.sln` — выполнить все тесты.
 - `dotnet test Tests/Services.Tests/Services.Tests.csproj` — проверить сервисы.
+- `dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj` — проверить настоящий WPF startup/exit с невидимым окном и новой SQLite в каталоге smoke-проекта; рабочая БД не используется.
 - `git config core.hooksPath .githooks` — подключить pre-commit; предварительно собирайте решение, поскольку хук использует `--no-build`.
 
 Используйте xUnit, NSubstitute и существующие EF InMemory/SQLite fixtures. Имена: `*Tests.cs`, `Method_Scenario_ExpectedBehavior`. Добавляйте регрессионные проверки поведения и сохранения данных. Coverlet доступен; числового порога покрытия нет.
@@ -85,6 +86,8 @@ DTO называйте `*FromViewModel`; маппинг выполняйте в�
 ## База данных
 
 Настройки SQLite находятся в `Bonfire/appsettings.json`; `DbInitializer` применяет миграции при запуске. Создавайте миграции командой `dotnet ef migrations add <Name> --project BonfireDB --startup-project Bonfire`.
+
+`DbInitializer` разрешайте только внутри DI-области. `Program.CreateHostBuilder` — общий composition root со строгой проверкой DI; окно открывается после асинхронной инициализации и запуска host. Закрытие окна ожидает остановку и освобождение host до завершения Dispatcher.
 
 ## Коммиты и pull requests
 

@@ -76,6 +76,15 @@ python Tests/summarize_coverage.py artifacts/coverage-new --output artifacts/cov
 
 ## Риски для следующего этапа
 
+После этапа DI/startup общий гейт составляет 701/701. `ApplicationLifetimeTests`,
+`WindowShutdownTests`, `WindowShutdownWpfTests` и `ApplicationStartupIntegrationTests`
+проверяют порядок, отмену и освобождение. Настоящий WPF smoke запускается отдельно:
+`dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj`. Утилита не является
+шестым xUnit-проектом и не входит в обычный `dotnet test Bonfire.sln`; она создаёт
+отдельную БД в своём `bin/`, использует невидимое окно и проверяет его загрузку,
+закрытие и освобождение host. Это проверка успешного процесса, а не автоматизация
+нативных ошибок, диалогов подтверждения или завершения Windows.
+
 После выделения Application сценарий посева проверяется также в `SowingApplicationTests`;
 явное отсутствие — в `OptionTests`, SQLite-контракт — в `SowingIntegrationTests`.
 Текущий итог после второго этапа: 684/684; показатели покрытия выше относятся к базе

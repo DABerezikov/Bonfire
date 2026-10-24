@@ -12,6 +12,26 @@ namespace Services.Tests;
 public class CompositionBehaviorTests
 {
     [Fact]
+    public void CompositionRoot_StrictScopes_ResolvesInitializerOnlyInsideScope()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Type"] = "SQLite", ["ConnectionStrings:SQLite"] = "Data Source=:memory:"
+        }).Build();
+        using var provider = new ServiceCollection().AddLogging().AddDatabase(configuration)
+            .AddServices().AddViews().BuildServiceProvider(new ServiceProviderOptions
+            { ValidateScopes = true, ValidateOnBuild = true });
+        using var first = provider.CreateScope();
+        using var second = provider.CreateScope();
+        var initializer = first.ServiceProvider.GetRequiredService<DbInitializer>();
+        Assert.Same(initializer, first.ServiceProvider.GetRequiredService<DbInitializer>());
+        Assert.NotSame(initializer, second.ServiceProvider.GetRequiredService<DbInitializer>());
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<DbInitializer>());
+        Assert.NotNull(provider.GetRequiredService<ISowSeeds>());
+        Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
+    }
+
+    [Fact]
     public void CompositionRoot_ResolvesAllScreensAndBusinessServices()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
