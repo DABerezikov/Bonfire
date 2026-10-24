@@ -5,6 +5,7 @@ using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Bonfire.Application.Seedlings;
 
 namespace Services.Tests;
 
@@ -23,6 +24,9 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
         Assert.NotNull(provider.GetRequiredService<ISeedsService>());
         Assert.NotNull(provider.GetRequiredService<ISeedlingsService>());
+        Assert.NotNull(provider.GetRequiredService<ISowSeeds>());
+        Assert.NotNull(provider.GetRequiredService<ISowingSessionFactory>());
+        Assert.NotNull(provider.GetRequiredService<ILunarCalendar>());
         Assert.NotNull(provider.GetRequiredService<IGardenService>());
         Assert.NotNull(provider.GetRequiredService<IPlantingService>());
         Assert.NotNull(provider.GetRequiredService<ILibraryService>());

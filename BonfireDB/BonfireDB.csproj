@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bonfire.Domain\Bonfire.Domain.csproj" />
+    <ProjectReference Include="..\Bonfire.Application\Bonfire.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

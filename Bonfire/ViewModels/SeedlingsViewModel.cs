@@ -14,6 +14,8 @@ using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities;
 using Bonfire.Domain.Seeds;
+using Bonfire.Domain.Functional;
+using Bonfire.Application.Seedlings;
 
 namespace Bonfire.ViewModels;
 
@@ -733,21 +735,23 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             return;
         }
         var unit = AddSize == Units.GramsAbbr ? SeedUnit.Grams : SeedUnit.Pieces;
+        var place = string.IsNullOrWhiteSpace(AddPlantPlace) ? Option.None<string>() : Option.Some(AddPlantPlace);
         var result = await _seedlingsService.SowAsync(new SowingRequest(
-            selectedSeed.Id, AddQuantity, unit, PlantingDate, SeedlingSource, AddPlantPlace));
-        result.Match(receipt =>
+            selectedSeed.Id, AddQuantity, unit, PlantingDate, SeedlingSource, place));
+        await result.Match(async receipt =>
         {
-            selectedSeed.SeedsInfo.AmountSeeds = receipt.Seed.SeedsInfo.AmountSeeds;
-            selectedSeed.SeedsInfo.AmountSeedsWeight = receipt.Seed.SeedsInfo.AmountSeedsWeight;
-            seedlings.Add(receipt.Batch);
+            selectedSeed.SeedsInfo.AmountSeeds = receipt.Saved.RemainingPieces;
+            selectedSeed.SeedsInfo.AmountSeedsWeight = receipt.Saved.RemainingGrams.Match<double?>(weight => weight, () => null);
             RemoveItemFromCollection(selectedSeed);
             ClearFieldSeedlingView();
-            UpdateCollectionViewSource(receipt.Batch.Id);
-            return true;
+            var batch = await _seedlingsService.GetSeedlingAsync(receipt.Saved.BatchId);
+            if (batch is not null) seedlings.Add(batch);
+            else _userDialog.Warning("Посев сохранён, но партия не найдена. Обновите список рассады.", "Посев рассады");
+            UpdateCollectionViewSource(batch?.Id ?? -1);
         }, error =>
         {
             _userDialog.Warning(error, "Посев рассады");
-            return false;
+            return Task.CompletedTask;
         });
     }
 

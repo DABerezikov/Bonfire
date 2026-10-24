@@ -4,6 +4,10 @@ using BonfireDB.Entities.Base;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Bonfire.Application.Seedlings;
+using Bonfire.Infrastructure;
+using BonfireDB.Sowing;
+using MoonCalendar;
 
 namespace Services.Tests;
 
@@ -16,6 +20,12 @@ internal sealed class SqliteUowFixture : IDisposable
     private readonly ServiceProvider _provider;
 
     public IUnitOfWorkFactory Factory { get; }
+
+    public SeedlingsService CreateSeedlingsService()
+    {
+        var lunar = new MoonPhase();
+        return new SeedlingsService(Factory, lunar, new SowSeeds(new DbSowingSessionFactory(Factory), new MoonPhaseCalendar(lunar)));
+    }
 
     public SqliteUowFixture()
     {

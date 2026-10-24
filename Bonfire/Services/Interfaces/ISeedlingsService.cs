@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using BonfireDB.Entities;
 using MoonCalendar;
 using Bonfire.Domain.Functional;
-using Bonfire.Models;
+using Bonfire.Application.Seedlings;
 
 namespace Bonfire.Services.Interfaces;
 

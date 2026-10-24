@@ -18,7 +18,7 @@ public class SeedlingsServiceTests
         _uow.Repository<Replanting>().Returns(_replantings);
     }
 
-    private SeedlingsService CreateService() => new(_uow.ToFactory(), _lunar);
+    private SeedlingsService CreateService() => new(_uow.ToFactory(), _lunar, Substitute.For<Bonfire.Application.Seedlings.ISowSeeds>());
 
     // ── MakeASeedling — Attach всего графа одним вызовом, единый SaveChanges ───
 

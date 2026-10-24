@@ -1,6 +1,8 @@
 ﻿using Bonfire.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using MoonCalendar;
+using Bonfire.Application.Seedlings;
+using Bonfire.Infrastructure;
 
 namespace Bonfire.Services
 {
@@ -9,6 +11,8 @@ namespace Bonfire.Services
         public static IServiceCollection AddServices(this IServiceCollection services) => services
             .AddSingleton<ISeedsService, SeedsService>()
             .AddSingleton<ISeedlingsService, SeedlingsService>()
+            .AddSingleton<ISowSeeds, SowSeeds>()
+            .AddSingleton<ILunarCalendar, MoonPhaseCalendar>()
             .AddSingleton<IUserDialog, UserDialog>()
             .AddSingleton<IReportService, ReportService>()
             .AddSingleton(typeof(MoonPhase))

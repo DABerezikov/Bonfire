@@ -1,6 +1,7 @@
 using MoonCalendar;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
+using Bonfire.Application.Seedlings;
 
 namespace ViewModels.Tests;
 
@@ -68,7 +69,12 @@ public class SeedlingsWorkflowTests
         var refreshedSeed = SeedsWorkflowTests.Seed(1);
         refreshedSeed.SeedsInfo.AmountSeeds = grams ? 0 : 8;
         refreshedSeed.SeedsInfo.AmountSeedsWeight = grams ? 1 : seed.SeedsInfo.AmountSeedsWeight;
-        _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(saved, refreshedSeed)));
+        var details = new SowingDetails(new DateTime(2026, 3, 1), PlantSources.FromSeeds, Option.Some("Подоконник"), "Фаза");
+        var gramsLeft = refreshedSeed.SeedsInfo.AmountSeedsWeight is double weight ? Option.Some(weight) : Option.None<double>();
+        _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(1,
+            SeedAmount.Create(grams ? 0.5 : 2, grams ? SeedUnit.Grams : SeedUnit.Pieces).ValueOrThrow(), details,
+            new SavedSowing(saved.Id, refreshedSeed.SeedsInfo.AmountSeeds, gramsLeft))));
+        _service.GetSeedlingAsync(saved.Id).Returns(saved);
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         vm.AddCulture = "Томат";
@@ -91,7 +97,7 @@ public class SeedlingsWorkflowTests
         _service.Received(1).SowAsync(Arg.Is<SowingRequest>(request =>
             request.SeedId == 1 && request.Amount == (grams ? 0.5 : 2)
             && request.Unit == (grams ? SeedUnit.Grams : SeedUnit.Pieces)
-            && request.Place == "Подоконник"));
+            && request.Place.Match(value => value == "Подоконник", () => false)));
         _ = _seeds.DidNotReceive().UpdateSeed(Arg.Any<Seed>());
     }
 
@@ -144,6 +150,30 @@ public class SeedlingsWorkflowTests
         await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.True(vm.AddOrCorrectSeedlingCommand.CanExecute(null));
         Assert.Equal(10, seed.SeedsInfo.AmountSeeds);
+    }
+
+    [Fact]
+    public void CreateSeedling_SavedBatchNoLongerAvailable_DoesNotLeaveResubmittableEditor()
+    {
+        var vm = CreateVm();
+        vm.AddCulture = "Томат";
+        vm.CurrentPlant = vm.AddPlantList[0];
+        vm.AddProducer = $"Фирма 1 {vm.CurrentSeed!.SeedsInfo.ExpirationDate.Year}";
+        vm.SeedlingSource = PlantSources.FromSeeds;
+        vm.PlantingDate = new DateTime(2026, 3, 1);
+        vm.AddQuantity = 2;
+        var details = new SowingDetails(vm.PlantingDate, PlantSources.FromSeeds, Option.None<string>(), "Фаза");
+        _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(1,
+            SeedAmount.Create(2, SeedUnit.Pieces).ValueOrThrow(), details, new SavedSowing(42, 8, Option.None<double>()))));
+        _service.GetSeedlingAsync(42).Returns((Seedling?)null);
+
+        vm.AddOrCorrectSeedlingCommand.Execute(null);
+
+        Assert.Empty(vm.Seedlings!);
+        Assert.Null(vm.CurrentSeed);
+        Assert.Equal(0, vm.AddQuantity);
+        Assert.False(vm.AddOrCorrectSeedlingCommand.CanExecute(null));
+        _dialog.Received(1).Warning(Arg.Is<string>(message => message.Contains("Посев сохранён")), "Посев рассады");
     }
 
     [Theory]

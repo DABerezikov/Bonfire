@@ -14,10 +14,13 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 - `Bonfire/`: `Views/` — XAML, `ViewModels/` — представление, `Services/` — бизнес-логика, `Models/` — DTO; `Views/Image/`, `Templates/`, `Resources/` — изображения и оформление.
 - `BonfireDB/`: `Context/`, `Entities/`, `Migrations/`; репозитории и UnitOfWork находятся в корне проекта.
 - `Bonfire.Domain/`: независимое функциональное ядро; `Functional/` — общий `Result`, `Seeds/` — количество, остаток и чистая операция посева. Не добавляйте зависимости на WPF/EF/DI.
+- `Bonfire.Application/`: операции приложения и порты хранения/календаря; зависит только от Domain и runtime. `Seedlings/` содержит сценарий посева без EF/WPF-моделей.
 - `MoonCalendar/`: расчёты лунного календаря.
 - `Tests/`: пять проектов xUnit.
 
 Соблюдайте цепочку View → ViewModel → Service → Repository → DbContext → SQLite. Используйте базовый ViewModel, `LambdaCommand`/`LambdaCommandAsync` и существующие DI-регистраторы. Сервисы предоставляйте через интерфейсы и регистрируйте в `ServiceRegister`; репозитории — в `RepositoryRegister`.
+
+Для перенесённого посева сервис делегирует Application, который вызывает Domain и порты; `BonfireDB/Sowing/` реализует порт сохранения. Не возвращайте EF-сущности в контракты Application. Отсутствие в новых контрактах выражайте через `Option`, преобразуя nullable только на внешних границах.
 
 ## Сборка, запуск и тесты
 

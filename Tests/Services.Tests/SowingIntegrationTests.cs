@@ -1,13 +1,14 @@
 using Bonfire.Domain.Seeds;
 using Microsoft.EntityFrameworkCore;
-using MoonCalendar;
+using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Functional;
 
 namespace Services.Tests;
 
 public class SowingIntegrationTests : IDisposable
 {
     private readonly SqliteUowFixture _fixture = new();
-    private SeedlingsService Service => new(_fixture.Factory, new MoonPhase());
+    private SeedlingsService Service => _fixture.CreateSeedlingsService();
     public void Dispose() => _fixture.Dispose();
 
     private Task<int> AddSeedAsync(double pieces = 10, double? grams = 1.5) => _fixture.QueryAsync(async db =>
@@ -27,7 +28,7 @@ public class SowingIntegrationTests : IDisposable
     });
 
     private static SowingRequest Request(int id, SeedUnit unit = SeedUnit.Pieces, double amount = 2)
-        => new(id, amount, unit, new DateTime(2026, 3, 1), PlantSources.FromSeeds, "Окно");
+        => new(id, amount, unit, new DateTime(2026, 3, 1), PlantSources.FromSeeds, Option.Some("Окно"));
 
     [Theory]
     [InlineData(SeedUnit.Pieces, 2, 8, 1.5)]
@@ -44,7 +45,7 @@ public class SowingIntegrationTests : IDisposable
         Assert.Equal(id, batch.SeedId);
         Assert.Equal(unit == SeedUnit.Pieces ? amount : 0, batch.Quantity);
         Assert.Equal(unit == SeedUnit.Grams ? amount : 0, batch.Weight);
-        Assert.Equal(receipt.Batch.Id, batch.Id);
+        Assert.Equal(receipt.Saved.BatchId, batch.Id);
         Assert.Equal("Окно", batch.PlantPlace);
         Assert.Equal(Request(id).Date, batch.LandingDate);
         Assert.Equal(batch.LunarPhase, Assert.Single(batch.SeedlingInfos).LunarPhase);
@@ -78,6 +79,32 @@ public class SowingIntegrationTests : IDisposable
     [Fact]
     public async Task Sow_MissingSeed_ReturnsExplicitFailure()
         => Assert.True((await Service.SowAsync(Request(999))).IsFailure);
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sow_PiecesWithAbsentOrZeroWeight_PreservesWeightMeaning(bool knownZero)
+    {
+        var id = await AddSeedAsync(grams: knownZero ? 0 : null);
+        var result = (await Service.SowAsync(Request(id))).ValueOrThrow();
+        Assert.Equal(knownZero, result.Saved.RemainingGrams is Option<double>.Some);
+        if (knownZero) Assert.Equal(0, result.Saved.RemainingGrams.Match(value => value, () => -1));
+        var persisted = await _fixture.QueryAsync(db => db.SeedsInfo.Select(s => s.AmountSeedsWeight).SingleAsync());
+        Assert.Equal(knownZero ? 0d : (double?)null, persisted);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Sow_AbsentOrBlankPlace_PersistsNullAtStorageBoundary(bool blank)
+    {
+        var id = await AddSeedAsync();
+        var place = blank ? Option.Some("  ") : Option.None<string>();
+        var receipt = (await Service.SowAsync(Request(id) with { Place = place })).ValueOrThrow();
+        Assert.IsType<Option<string>.None>(receipt.Details.Place);
+        Assert.Null(await _fixture.QueryAsync(db => db.Seedlings.Select(s => s.PlantPlace).SingleAsync()));
+        Assert.Null(await _fixture.QueryAsync(db => db.SeedlingInfos.Select(s => s.PlantPlace).SingleAsync()));
+    }
 
     [Theory]
     [InlineData(true)]

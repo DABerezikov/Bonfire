@@ -7,64 +7,16 @@ using BonfireDB.Entities.Base;
 using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
 using Bonfire.Domain.Functional;
-using Bonfire.Models;
-using Bonfire.Domain.Seeds;
-using System;
+using Bonfire.Application.Seedlings;
 
 namespace Bonfire.Services;
 
-internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar) : ISeedlingsService
+internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar, ISowSeeds sowing) : ISeedlingsService
 {
     public MoonPhase Lunar { get; } = lunar;
 
-    public async Task<Result<SowingReceipt>> SowAsync(SowingRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        if (request.Date == default || string.IsNullOrWhiteSpace(request.Source))
-            return Result.Failure<SowingReceipt>("Укажите дату и источник рассады");
-
-        await using var uow = uowFactory.Create();
-        var seed = await uow.Repository<Seed>().GetAsync(request.SeedId);
-        if (seed is null) return Result.Failure<SowingReceipt>("Пакет семян не найден");
-
-        var available = request.Unit switch
-        {
-            SeedUnit.Pieces => SeedAmount.Create(seed.SeedsInfo.AmountSeeds, request.Unit),
-            SeedUnit.Grams when seed.SeedsInfo.AmountSeedsWeight is double weight
-                => SeedAmount.Create(weight, request.Unit),
-            SeedUnit.Grams => Result.Failure<SeedAmount>("Вес остатка семян не указан"),
-            _ => Result.Failure<SeedAmount>("Неизвестная единица семян")
-        };
-        var change = available.Bind(amount => SeedAmount.Create(request.Amount, request.Unit)
-            .Bind(requested => new SeedStock(amount).Sow(requested)));
-
-        return await change.Match(async sowing =>
-        {
-            var phase = Lunar.GetMoonPhase(request.Date);
-            var place = string.IsNullOrWhiteSpace(request.Place) ? null : request.Place;
-            var batch = new Seedling
-            {
-                Plant = seed.Plant, SeedId = seed.Id,
-                Quantity = request.Unit == SeedUnit.Pieces ? sowing.Sown.Value : 0,
-                Weight = request.Unit == SeedUnit.Grams ? sowing.Sown.Value : 0,
-                LandingDate = request.Date, LunarPhase = phase,
-                SeedlingSource = request.Source, PlantPlace = place,
-                SeedlingInfos = [new SeedlingInfo
-                {
-                    LandingDate = request.Date, LunarPhase = phase,
-                    SeedlingSource = request.Source, PlantPlace = place, SeedlingNumber = 0
-                }]
-            };
-            if (request.Unit == SeedUnit.Pieces)
-                seed.SeedsInfo.AmountSeeds = sowing.Remaining.Available.Value;
-            else
-                seed.SeedsInfo.AmountSeedsWeight = sowing.Remaining.Available.Value;
-
-            await uow.Repository<Seedling>().AddAsync(batch);
-            await uow.SaveChangesAsync();
-            return Result.Success(new SowingReceipt(batch, seed));
-        }, error => Task.FromResult(Result.Failure<SowingReceipt>(error)));
-    }
+    public Task<Result<SowingReceipt>> SowAsync(SowingRequest request)
+        => sowing.ExecuteAsync(request);
 
     public async Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync()
     {

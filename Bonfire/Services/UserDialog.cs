@@ -51,11 +51,11 @@ public class UserDialog : IUserDialog
 
     /// <summary>Активное окно приложения</summary>
     protected static Window? ActiveWindow =>
-        Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
+        System.Windows.Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
 
     /// <summary>Окно с фокусом ввода</summary>
     protected static Window? FocusedWindow =>
-        Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsFocused);
+        System.Windows.Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsFocused);
 
     /// <summary>Текущее окно приложения</summary>
     protected static Window? CurrentWindow => FocusedWindow ?? ActiveWindow;
