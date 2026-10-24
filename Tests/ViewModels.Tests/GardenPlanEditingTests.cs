@@ -1,0 +1,180 @@
+using Bonfire.Infrastructure;
+using BonfireDB.Entities.GardenPlanning;
+using BonfireDB.Entities.GardenPlanning.States;
+using BonfireDB.Entities.GardenPlanning.SpotStates;
+
+namespace ViewModels.Tests;
+
+public partial class GardenPlanWorkflowTests
+{
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DeleteGarden_OnlyRemovesAfterConfirmation(bool confirmed)
+    {
+        var vm = CreateVm(); var garden = GardenVm(); vm.Gardens = [garden]; vm.SelectedGarden = garden;
+        var entity = new Garden { Id = garden.Id };
+        _gardens.GetGardenByIdAsync(garden.Id).Returns(entity);
+        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirmed);
+        vm.DeleteGardenCommand.Execute(null);
+        Assert.Equal(confirmed ? 0 : 1, vm.Gardens.Count);
+        _gardens.Received(confirmed ? 1 : 0).DeleteGardenAsync(entity);
+    }
+
+    [Fact]
+    public void AddGreenhouse_UsesDefaultMetersAndLinksCanvasContainers()
+    {
+        var vm = CreateVm(); vm.SelectedGarden = GardenVm();
+        _gardens.AddGreenhouseAsync(1, "Теплица 1", 6, 3, CanvasConstants.PixelsPerMeter, Arg.Any<double>(), Arg.Any<double>())
+            .Returns(new Greenhouse { Id = 5, Name = "Теплица", WidthMeters = 6, HeightMeters = 3, CanvasWidth = 900, CanvasHeight = 450 });
+        vm.AddGreenhouseCommand.Execute(null);
+        var added = Assert.Single(vm.SelectedGarden.Greenhouses);
+        Assert.Equal(5, added.Id);
+        Assert.Same(vm.SelectedGarden.Elements, added.ContainerElements);
+        Assert.Same(vm.SelectedGarden.Greenhouses, added.ContainerGreenhouses);
+        Assert.Equal(vm.GardenZoom, added.CanvasZoom);
+    }
+
+    [Fact]
+    public void AddGreenhouse_NoRoom_WarnsWithoutPersistence()
+    {
+        var vm = CreateVm(); vm.SelectedGarden = new() { CanvasWidth = 1, CanvasHeight = 1 };
+        vm.AddGreenhouseCommand.Execute(null);
+        Assert.Empty(vm.SelectedGarden.Greenhouses);
+        _dialog.Received(1).Warning(Arg.Any<string>(), "Добавление теплицы");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DeleteGreenhouse_RequiresConfirmation(bool confirmed)
+    {
+        var vm = CreateVm(); vm.SelectedGarden = GardenVm();
+        var selected = new GreenhouseFromViewModel { Id = 2 };
+        vm.SelectedGarden.Greenhouses.Add(selected); vm.SelectedGreenhouse = selected;
+        var entity = new Greenhouse { Id = 2 };
+        _gardens.GetGreenhouseByIdAsync(2).Returns(entity);
+        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirmed);
+        vm.DeleteGreenhouseCommand.Execute(null);
+        Assert.Equal(confirmed ? 0 : 1, vm.SelectedGarden.Greenhouses.Count);
+        _gardens.Received(confirmed ? 1 : 0).DeleteGreenhouseAsync(entity);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SaveGreenhouseSize_RejectsOverflowOrPersistsInnerDimensions(bool overflow)
+    {
+        var vm = CreateVm();
+        var child = new GardenElementFromViewModel { X = overflow ? 100000 : 0, Width = 10, Height = 10 };
+        vm.SelectedGreenhouse = new() { Id = 2, WidthMeters = 6, HeightMeters = 3, InnerElements = [child], Material = "Стекло" };
+        var entity = new Greenhouse { Id = 2 };
+        _gardens.GetGreenhouseByIdAsync(2).Returns(entity);
+        vm.SaveGreenhouseSizeCommand.Execute(null);
+        if (overflow)
+        {
+            _dialog.Received(1).Warning(Arg.Any<string>(), "Изменение размера теплицы");
+            _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
+        }
+        else
+        {
+            Assert.Equal(6 * CanvasConstants.PixelsPerMeter, entity.CanvasWidth);
+            Assert.Equal("Стекло", entity.Material);
+            Assert.Equal(entity.CanvasWidth, child.ContainerCanvasWidth);
+            Assert.Equal(entity.CanvasHeight, child.ContainerCanvasHeight);
+        }
+    }
+
+    [Theory]
+    [InlineData("Bed")]
+    [InlineData("ColdFrame")]
+    public void SaveElementPosition_PreservesGeometryAndSubtypeProperties(string type)
+    {
+        var vm = CreateVm();
+        GardenElement entity = type == "Bed" ? new Bed { Id = 1 } : new ColdFrame { Id = 1 };
+        _gardens.GetElementByIdAsync(1).Returns(entity);
+        vm.SelectedElement = new() { Id = 1, X = 30, Y = 45, Width = 180, Height = 90, Name = "Новое", Note = "Заметка", SoilType = "Суглинок", Orientation = "Север", CoverMaterial = "Плёнка" };
+        vm.SaveElementPositionCommand.Execute(null);
+        Assert.Equal(30, entity.X); Assert.Equal(45, entity.Y);
+        Assert.Equal(180, entity.DisplayWidth); Assert.Equal(90, entity.DisplayHeight);
+        Assert.Equal("Новое", entity.Name); Assert.Equal("Суглинок", entity.SoilType);
+        if (entity is Bed bed) Assert.Equal("Север", bed.Orientation);
+        if (entity is ColdFrame frame) Assert.Equal("Плёнка", frame.CoverMaterial);
+        _gardens.Received(1).UpdateElementAsync(entity);
+    }
+
+    [Fact]
+    public void SaveAndLockGreenhouse_PersistsDisplayGeometryAndLockState()
+    {
+        var vm = CreateVm(); var model = new GreenhouseFromViewModel { Id = 1, X = 30, Y = 45, DisplayWidth = 300, DisplayHeight = 150, Name = "Новая", Note = "Заметка" };
+        var entity = new Greenhouse { Id = 1 };
+        _gardens.GetGreenhouseByIdAsync(1).Returns(entity);
+        vm.SaveGreenhousePositionCommand.Execute(model);
+        Assert.Equal(30, entity.X); Assert.Equal(300, entity.DisplayWidth); Assert.Equal("Новая", entity.Name);
+        vm.ToggleLockGreenhouseCommand.Execute(model);
+        Assert.True(model.IsLocked); Assert.True(entity.IsLocked);
+        vm.ToggleLockGreenhouseCommand.Execute(model);
+        Assert.False(model.IsLocked); Assert.False(entity.IsLocked);
+    }
+
+    [Fact]
+    public void DeleteAndLockElement_UpdateSelectedCollectionAndPersistence()
+    {
+        var vm = CreateVm(); vm.SelectedGarden = GardenVm();
+        var model = new GardenElementFromViewModel { Id = 1 };
+        var entity = new Bed { Id = 1 };
+        _gardens.GetElementByIdAsync(1).Returns(entity);
+        vm.SelectedGarden.Elements.Add(model); vm.SelectedElement = model;
+        vm.ToggleLockElementCommand.Execute(model);
+        Assert.True(model.IsLocked); Assert.True(entity.IsLocked);
+        vm.DeleteElementCommand.Execute(null);
+        Assert.Empty(vm.SelectedGarden.Elements); Assert.Null(vm.SelectedElement);
+        _gardens.Received(1).DeleteElementAsync(entity);
+    }
+
+    [Fact]
+    public void GreenhouseState_ValidTransitionUpdatesDisplayedState()
+    {
+        var vm = CreateVm(); vm.SelectedGreenhouse = new() { Id = 1, StateTypeName = nameof(PlannedState) };
+        var entity = new Greenhouse { Id = 1 };
+        _gardens.GetGreenhouseByIdAsync(1).Returns(entity);
+        vm.ChangeGreenhouseStateCommand.Execute(nameof(PreparedState));
+        Assert.Equal(nameof(PreparedState), vm.SelectedGreenhouse.StateTypeName);
+        _gardens.Received(1).ChangeGreenhouseStateAsync(entity, Arg.Is<GardenElementState>(s => s is PreparedState));
+    }
+
+    [Fact]
+    public void PlantingGrid_OpenSelectToggleRebuildAndClose()
+    {
+        var vm = CreateVm();
+        vm.SelectedElement = new() { Id = 1, CanModifyGrid = true, GridRows = 2, GridColumns = 3 };
+        var entity = new Bed { Id = 1, GridRows = 2, GridColumns = 3, PlantingSpots = [new() { Id = 5, Row = 1, Column = 2 }] };
+        _gardens.GetElementByIdAsync(1).Returns(entity);
+        vm.OpenPlantingGridCommand.Execute(null);
+        Assert.True(vm.IsGridOpen); Assert.Same(vm.SelectedElement, vm.EditingGridElement);
+        var spot = new PlantingSpotFromViewModel { Id = 5 };
+        vm.SelectSpotCommand.Execute(spot); Assert.Same(spot, vm.SelectedSpot);
+        vm.SelectSpotCommand.Execute(spot); Assert.Null(vm.SelectedSpot);
+        vm.RebuildGridCommand.Execute(null);
+        Assert.Equal(5, Assert.Single(vm.EditingGridElement!.PlantingSpots).Id);
+        _gardens.Received(1).RebuildGridAsync(entity, 2, 3);
+        vm.CloseGridCommand.Execute(null); Assert.False(vm.IsGridOpen);
+    }
+
+    [Theory]
+    [InlineData("Reserved")]
+    [InlineData("Harvested")]
+    [InlineData("Dead")]
+    public void SpotTransitions_UpdateDisplayedStatusWithoutUsingInventory(string target)
+    {
+        var vm = CreateVm();
+        var entity = new PlantingSpot { Id = 1, StateTypeName = target == "Reserved" ? nameof(EmptySpotState) : nameof(PlantedSpotState) };
+        _gardens.GetSpotAsync(1).Returns(entity);
+        vm.PlanPickerLabel = "Томат Черри";
+        var spot = new PlantingSpotFromViewModel { Id = 1 };
+        (target switch { "Reserved" => vm.ReserveSpotCommand, "Harvested" => vm.HarvestSpotCommand, _ => vm.MarkDeadSpotCommand }).Execute(spot);
+        Assert.Equal(target + "SpotState", spot.StateTypeName);
+        if (target == "Reserved") Assert.Equal("Томат Черри", spot.PlantLabel);
+        _planting.DidNotReceive().PlantAsync(Arg.Any<PlantRequest>());
+    }
+}
