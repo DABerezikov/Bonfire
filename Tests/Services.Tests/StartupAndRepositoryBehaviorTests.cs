@@ -49,7 +49,7 @@ public class StartupAndRepositoryBehaviorTests
     public async Task GreenhouseRepository_ReloadsParentChildrenAndPlantingGridAcrossContexts()
     {
         using var fx = new SqliteUowFixture();
-        var service = new GardenService(fx.Factory);
+        var service = fx.CreateGardenService();
         var plan = await service.CreatePlanAsync("План", 2026);
         var garden = await service.CreateGardenAsync(plan.Id, "Участок", 20, 15);
         var greenhouse = await service.AddGreenhouseAsync(garden.Id, "Теплица", 6, 3);

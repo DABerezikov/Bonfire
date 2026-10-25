@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
 using BonfireDB.Entities.GardenPlanning;
 
 namespace Bonfire.Models.Mappers;
@@ -10,6 +12,13 @@ namespace Bonfire.Models.Mappers;
 /// </summary>
 internal static class GardenPlanMapper
 {
+    public static PlantingSpotFromViewModel MapSpot(GridSpotFromViewModel spot) => new()
+    {
+        Id = spot.Id, Row = spot.Row, Column = spot.Column, StateTypeName = spot.StateTypeName,
+        SeedlingInfoId = spot.SeedlingInfoId.ToNullable(), PlantedDate = spot.PlantedDate.ToNullable(),
+        PlantLabel = spot.Note.ToNullable(), Note = spot.Note.ToNullable()
+    };
+
     public static GardenFromViewModel MapGarden(Garden g)
     {
         var elements = new ObservableCollection<GardenElementFromViewModel>(

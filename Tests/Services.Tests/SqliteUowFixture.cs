@@ -12,6 +12,8 @@ using Bonfire.Application.Libraries;
 using BonfireDB.Libraries;
 using Bonfire.Application.Seeds;
 using BonfireDB.SeedEditing;
+using Bonfire.Application.Garden;
+using BonfireDB.Planting;
 
 namespace Services.Tests;
 
@@ -24,6 +26,8 @@ internal sealed class SqliteUowFixture : IDisposable
     private readonly ServiceProvider _provider;
 
     public IUnitOfWorkFactory Factory { get; }
+
+    public GardenService CreateGardenService() => new(Factory, new ResizeGrid(new DbGridWriter(Factory)));
 
     public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)));
 

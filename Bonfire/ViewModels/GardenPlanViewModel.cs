@@ -998,14 +998,20 @@ public class GardenPlanViewModel(
 
     private async Task RebuildGridAsync()
     {
-        if (EditingGridElement is null) return;
-        var entity = await gardenService.GetElementByIdAsync(EditingGridElement.Id);
-        if (entity is null) return;
-
-        await gardenService.RebuildGridAsync(entity, EditingGridElement.GridRows, EditingGridElement.GridColumns);
-
-        SelectedSpot = null;
-        RebuildSpotsVm(EditingGridElement, entity);
+        if (EditingGridElement is not { } editing) return;
+        var result = await gardenService.ResizeGridAsync(new(editing.Id, editing.GridRows, editing.GridColumns));
+        result.Match(saved =>
+        {
+            editing.GridRows = saved.Rows;
+            editing.GridColumns = saved.Columns;
+            editing.PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(saved.Spots.Select(GardenPlanMapper.MapSpot));
+            if (ReferenceEquals(editing, EditingGridElement)) SelectedSpot = null;
+            return true;
+        }, error =>
+        {
+            userDialog.Warning(error, "Сетка посадок");
+            return false;
+        });
     }
 
     // --- Выделение ячейки ---
@@ -1145,14 +1151,6 @@ public class GardenPlanViewModel(
     // ─────────────────────────────────────
     //  Вспомогательные методы маппинга
     // ─────────────────────────────────────
-
-    private static void RebuildSpotsVm(GardenElementFromViewModel vm, GardenElement entity)
-    {
-        vm.GridRows = entity.GridRows;
-        vm.GridColumns = entity.GridColumns;
-        vm.PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(
-            entity.PlantingSpots.OrderBy(s => s.Row).ThenBy(s => s.Column).Select(GardenPlanMapper.MapSpot));
-    }
 
     /// <summary>
     /// Обновляет VM ячейки после изменения состояния.

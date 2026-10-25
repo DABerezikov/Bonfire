@@ -2,6 +2,8 @@ using Bonfire.Infrastructure;
 using BonfireDB.Entities.GardenPlanning;
 using Bonfire.Domain.Garden.States;
 using Bonfire.Domain.Garden.SpotStates;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
 
 namespace ViewModels.Tests;
 
@@ -148,8 +150,8 @@ public partial class GardenPlanWorkflowTests
     {
         var vm = CreateVm();
         vm.SelectedElement = new() { Id = 1, CanModifyGrid = true, GridRows = 2, GridColumns = 3 };
-        var entity = new Bed { Id = 1, GridRows = 2, GridColumns = 3, PlantingSpots = [new() { Id = 5, Row = 1, Column = 2 }] };
-        _gardens.GetElementByIdAsync(1).Returns(entity);
+        _gardens.ResizeGridAsync(Arg.Any<ResizeGridFromViewModel>()).Returns(Result.Success(new GridResultFromViewModel(1, 2, 3,
+            [new(5, 1, 2, nameof(EmptySpotState), Option.None<int>(), Option.None<DateTime>(), Option.None<DateTime>(), Option.None<string>())])));
         vm.OpenPlantingGridCommand.Execute(null);
         Assert.True(vm.IsGridOpen); Assert.Same(vm.SelectedElement, vm.EditingGridElement);
         var spot = new PlantingSpotFromViewModel { Id = 5 };
@@ -157,7 +159,7 @@ public partial class GardenPlanWorkflowTests
         vm.SelectSpotCommand.Execute(spot); Assert.Null(vm.SelectedSpot);
         vm.RebuildGridCommand.Execute(null);
         Assert.Equal(5, Assert.Single(vm.EditingGridElement!.PlantingSpots).Id);
-        _gardens.Received(1).RebuildGridAsync(entity, 2, 3);
+        _gardens.Received(1).ResizeGridAsync(Arg.Is<ResizeGridFromViewModel>(request => request.ElementId == 1 && request.Rows == 2 && request.Columns == 3));
         vm.CloseGridCommand.Execute(null); Assert.False(vm.IsGridOpen);
     }
 

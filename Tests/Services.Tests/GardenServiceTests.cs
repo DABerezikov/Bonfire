@@ -1,6 +1,7 @@
 using BonfireDB.Entities.GardenPlanning;
 using Bonfire.Domain.Garden.States;
 using Bonfire.Domain.Garden.SpotStates;
+using Bonfire.Application.Garden;
 
 namespace Services.Tests;
 
@@ -22,7 +23,7 @@ public class GardenServiceTests
         _uow.Repository<PlantingSpot>().Returns(_spots);
     }
 
-    private GardenService CreateService() => new(_uow.ToFactory());
+    private GardenService CreateService() => new(_uow.ToFactory(), Substitute.For<IResizeGrid>());
 
     // ── CreatePlanAsync ───────────────────────────────────────────────────────
 

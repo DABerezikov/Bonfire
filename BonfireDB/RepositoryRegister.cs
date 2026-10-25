@@ -23,6 +23,7 @@ public static class RepositoryRegister
         .AddSingleton<ISeedlingChangeWriter, DbSeedlingChangeWriter>()
         .AddSingleton<ISeedlingEditWriter, DbSeedlingEditWriter>()
         .AddSingleton<IPlantingWriter, DbPlantingWriter>()
+        .AddSingleton<IGridWriter, DbGridWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

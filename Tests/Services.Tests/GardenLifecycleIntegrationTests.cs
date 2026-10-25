@@ -8,7 +8,7 @@ namespace Services.Tests;
 public class GardenLifecycleIntegrationTests : IDisposable
 {
     private readonly SqliteUowFixture _fx = new();
-    private GardenService Service => new(_fx.Factory);
+    private GardenService Service => _fx.CreateGardenService();
     public void Dispose() => _fx.Dispose();
 
     [Fact]

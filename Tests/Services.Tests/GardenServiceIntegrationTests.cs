@@ -4,6 +4,8 @@ using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Bonfire.Application.Garden;
+using BonfireDB.Planting;
 
 namespace Services.Tests;
 
@@ -27,7 +29,11 @@ public class GardenServiceIntegrationTests : IDisposable
 
     public void Dispose() => _sp.Dispose();
 
-    private GardenService CreateService() => new(_sp.GetRequiredService<IUnitOfWorkFactory>());
+    private GardenService CreateService()
+    {
+        var factory = _sp.GetRequiredService<IUnitOfWorkFactory>();
+        return new(factory, new ResizeGrid(new DbGridWriter(factory)));
+    }
 
     private async Task<(int planId, int gardenId, int bedId)> SeedAsync(int year = 2026)
     {

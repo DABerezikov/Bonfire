@@ -2,6 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Garden;
+using BonfireDB.Planting;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
@@ -12,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid) : IGardenService
 {
     // --- Чтение ---
 
@@ -251,47 +256,19 @@ internal class GardenService(IUnitOfWorkFactory uowFactory) : IGardenService
 
     // --- Перестройка сетки ---
 
+    public Task<Result<GridResultFromViewModel>> ResizeGridAsync(ResizeGridFromViewModel request, CancellationToken cancellationToken = default)
+        => resizeGrid.ExecuteAsync(request, cancellationToken);
+
     public async Task RebuildGridAsync(GardenElement element, int rows, int cols)
     {
-        if (!element.State.CanModifyGrid)
-            throw new InvalidOperationException(
-                $"В состоянии «{element.State.DisplayName}» изменение сетки запрещено");
-
-        await using var uow = uowFactory.Create();
-        var spots = uow.Repository<PlantingSpot>();
-
-        // Удалить ячейки, выходящие за новые границы
-        var toRemove = element.PlantingSpots
-            .Where(s => s.Row >= rows || s.Column >= cols)
-            .ToList();
-        foreach (var spot in toRemove)
+        var change = GridSize.Create(rows, cols).Bind(size => DbGridMapper.Read(element).WithSize(size, element.State));
+        await change.Match(async layout =>
         {
-            element.PlantingSpots.Remove(spot);
-            await spots.RemoveAsync(spot.Id);
-        }
-
-        // Создать недостающие ячейки (FK GardenElementId задаётся явно)
-        for (var r = 0; r < rows; r++)
-        {
-            for (var c = 0; c < cols; c++)
-            {
-                if (!element.PlantingSpots.Any(s => s.Row == r && s.Column == c))
-                {
-                    var newSpot = new PlantingSpot
-                    {
-                        GardenElementId = element.Id,
-                        Row = r,
-                        Column = c
-                    };
-                    element.PlantingSpots.Add(newSpot);
-                    await spots.AddAsync(newSpot);
-                }
-            }
-        }
-
-        element.GridRows = rows;
-        element.GridColumns = cols;
-        await uow.Repository<GardenElement>().UpdateAsync(element);
-        await uow.SaveChangesAsync();
+            await using var unit = uowFactory.Create();
+            await DbGridMapper.ApplyAsync(layout, element, unit);
+            await unit.Repository<GardenElement>().UpdateAsync(element);
+            await unit.SaveChangesAsync();
+            return true;
+        }, error => throw new InvalidOperationException(error));
     }
 }

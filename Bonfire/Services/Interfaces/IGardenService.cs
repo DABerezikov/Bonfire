@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
 using Bonfire.Domain.Garden.SpotStates;
@@ -58,5 +61,6 @@ public interface IGardenService
         string? plantLabel = null, DateTime? plantedDate = null, int? seedlingInfoId = null);
 
     // --- Перестройка сетки ---
+    Task<Result<GridResultFromViewModel>> ResizeGridAsync(ResizeGridFromViewModel request, CancellationToken cancellationToken = default);
     Task RebuildGridAsync(GardenElement element, int rows, int cols);
 }
