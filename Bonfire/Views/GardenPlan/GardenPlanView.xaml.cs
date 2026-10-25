@@ -10,11 +10,18 @@ public partial class GardenPlanView : UserControl
 {
     private readonly HashSet<ValidationError> _elementEditorErrors = [];
     private readonly HashSet<ValidationError> _greenhouseEditorErrors = [];
+    private readonly HashSet<ValidationError> _gardenEditorErrors = [];
 
     private void OnElementEditorValidationError(object sender, ValidationErrorEventArgs e)
     {
         var hasErrors = UpdateValidationErrors(_elementEditorErrors, e);
         if (DataContext is GardenPlanViewModel vm) vm.ElementEditorHasBindingErrors = hasErrors;
+    }
+
+    private void OnGardenEditorValidationError(object sender, ValidationErrorEventArgs e)
+    {
+        var hasErrors = UpdateValidationErrors(_gardenEditorErrors, e);
+        if (DataContext is GardenPlanViewModel vm) vm.GardenEditorHasBindingErrors = hasErrors;
     }
 
     private void OnGreenhouseEditorValidationError(object sender, ValidationErrorEventArgs e)
@@ -29,6 +36,12 @@ public partial class GardenPlanView : UserControl
         else errors.Remove(e.Error);
         CommandManager.InvalidateRequerySuggested();
         return errors.Count > 0;
+    }
+
+    private void OnGardenEditorUnloaded(object sender, RoutedEventArgs e)
+    {
+        _gardenEditorErrors.Clear();
+        if (DataContext is GardenPlanViewModel vm) vm.GardenEditorHasBindingErrors = false;
     }
 
     private void OnGreenhouseEditorUnloaded(object sender, RoutedEventArgs e)

@@ -19,6 +19,8 @@ public interface IGardenService
 
     Task<Result<GreenhousePropertiesResultFromViewModel>> EditGreenhousePropertiesAsync(EditGreenhousePropertiesFromViewModel request);
 
+    Task<Result<GardenPropertiesResultFromViewModel>> EditGardenPropertiesAsync(EditGardenPropertiesFromViewModel request);
+
     // --- Чтение ---
     Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
     Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);

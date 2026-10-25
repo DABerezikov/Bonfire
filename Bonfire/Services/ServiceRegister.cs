@@ -31,6 +31,7 @@ namespace Bonfire.Services
             .AddSingleton<ISaveGardenGeometry, SaveGardenGeometry>()
             .AddSingleton<IEditElementProperties, EditElementProperties>()
             .AddSingleton<IEditGreenhouseProperties, EditGreenhouseProperties>()
+            .AddSingleton<IEditGardenProperties, EditGardenProperties>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

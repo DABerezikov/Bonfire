@@ -180,11 +180,14 @@ public partial class GardenPlanWorkflowTests
     public void SaveGardenSize_RejectsOutOfBoundsElementsOrGreenhouses(bool greenhouse)
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
-        vm.SelectedGarden.WidthMeters = 1;
+        vm.GardenEditor!.WidthMeters = 1;
         if (greenhouse) vm.SelectedGarden.Greenhouses.Add(new() { X = 10000, DisplayWidth = 200 });
         else vm.SelectedGarden.Elements.Add(new() { X = 10000, Width = 200 });
+        _gardens.EditGardenPropertiesAsync(Arg.Any<EditGardenPropertiesFromViewModel>()).Returns(Result.Failure<GardenPropertiesResultFromViewModel>("Свежий объект за границами"));
         vm.SaveGardenSizeCommand.Execute(null);
-        _dialog.Received(1).Warning(Arg.Any<string>(), "Изменение размера участка");
+        _dialog.Received(1).Warning("Свежий объект за границами", "Изменение размера участка");
+        Assert.Equal(1, vm.GardenEditor.WidthMeters);
+        Assert.Equal(20, vm.SelectedGarden.WidthMeters);
         _gardens.DidNotReceive().UpdateGardenAsync(Arg.Any<Garden>());
     }
 
@@ -192,15 +195,17 @@ public partial class GardenPlanWorkflowTests
     public void SaveGardenSize_PersistsDimensionsAndUpdatesChildrenLimits()
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
-        vm.SelectedGarden.Elements.Add(new() { Width = 10, Height = 10 });
+        vm.SelectedGarden.Elements.Add(new() { X = 10000, Width = 10, Height = 10 });
         vm.SelectedGarden.Greenhouses.Add(new() { DisplayWidth = 10, DisplayHeight = 10 });
-        var entity = new Garden { Id = 1 };
-        _gardens.GetGardenByIdAsync(1).Returns(entity);
+        vm.GardenEditor!.WidthMeters = 21;
+        _gardens.EditGardenPropertiesAsync(Arg.Any<EditGardenPropertiesFromViewModel>()).Returns(Result.Success(
+            new GardenPropertiesResultFromViewModel(1, vm.GardenEditor.Values, CanvasRectangle.Create(0, 0, 3150, 1500).ValueOrThrow())));
         vm.SaveGardenSizeCommand.Execute(null);
-        Assert.Equal(20 * CanvasConstants.PixelsPerMeter, entity.CanvasWidth);
-        Assert.Equal(entity.CanvasWidth, vm.SelectedGarden.Elements[0].ContainerCanvasWidth);
-        Assert.Equal(entity.CanvasHeight, vm.SelectedGarden.Greenhouses[0].ContainerCanvasHeight);
-        _gardens.Received(1).UpdateGardenAsync(entity);
+        Assert.Equal(3150, vm.SelectedGarden.CanvasWidth);
+        Assert.Equal(3150, vm.SelectedGarden.Elements[0].ContainerCanvasWidth);
+        Assert.Equal(1500, vm.SelectedGarden.Greenhouses[0].ContainerCanvasHeight);
+        _gardens.DidNotReceive().GetGardenByIdAsync(Arg.Any<int>());
+        _gardens.DidNotReceive().UpdateGardenAsync(Arg.Any<Garden>());
     }
 
     [Fact]

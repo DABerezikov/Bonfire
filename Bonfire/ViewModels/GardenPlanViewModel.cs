@@ -73,10 +73,24 @@ public class GardenPlanViewModel(
         {
             if (!Set(ref field, value)) return;
             SelectedElement = null;
+            GardenEditor = value is null ? null : GardenEditorMapper.Open(value);
             OnPropertyChanged(nameof(GardenPropertiesPanel));
             if (value is not null) RecalculateInitialZoom();
         }
     }
+
+    public GardenEditorDraft? GardenEditor
+    {
+        get;
+        private set
+        {
+            if (Set(ref field, value)) GardenEditorHasBindingErrors = false;
+        }
+    }
+
+    public bool GardenEditorHasBindingErrors { get; set; }
+    private bool _isSavingGardenProperties;
+    public bool IsGardenEditorEnabled => !_isSavingGardenProperties;
 
     // ─── Масштаб холста ───
 
@@ -526,65 +540,37 @@ public class GardenPlanViewModel(
     [field: AllowNull, MaybeNull]
     public ICommand SaveGardenSizeCommand => field
         ??= new LambdaCommandAsync(SaveGardenSizeAsync,
-            () => SelectedGarden is not null);
+            () => GardenEditor is { IsDirty: true } && !GardenEditorHasBindingErrors && !_isSavingGardenProperties);
+
+    [field: AllowNull, MaybeNull]
+    public ICommand CancelGardenPropertiesCommand => field
+        ??= new LambdaCommand(() =>
+        {
+            if (SelectedGarden is { } garden) GardenEditor = GardenEditorMapper.Open(garden);
+        }, () => SelectedGarden is not null && !_isSavingGardenProperties);
 
     private async Task SaveGardenSizeAsync()
     {
-        if (SelectedGarden is null) return;
-
-        var scale = CanvasConstants.PixelsPerMeter;
-        var newCanvasW = SelectedGarden.WidthMeters * scale;
-        var newCanvasH = SelectedGarden.HeightMeters * scale;
-
-        // Проверяем, что ни один элемент не выходит за новые границы
-        var blockedElement = SelectedGarden.Elements
-            .FirstOrDefault(el => el.X + el.Width > newCanvasW || el.Y + el.Height > newCanvasH);
-        if (blockedElement is not null)
+        if (SelectedGarden is not { } garden || GardenEditor is not { IsDirty: true } draft ||
+            draft.Id != garden.Id || GardenEditorHasBindingErrors || _isSavingGardenProperties) return;
+        var submitted = draft.Values;
+        _isSavingGardenProperties = true;
+        OnPropertyChanged(nameof(IsGardenEditorEnabled));
+        try
         {
-            userDialog.Warning(
-                $"Нельзя уменьшить участок: элемент «{blockedElement.Name}» " +
-                $"(правый/нижний край {blockedElement.X + blockedElement.Width:F0}×{blockedElement.Y + blockedElement.Height:F0} пкс) " +
-                $"выходит за новые границы {newCanvasW:F0}×{newCanvasH:F0} пкс.",
-                "Изменение размера участка");
-            return;
+            var result = await gardenService.EditGardenPropertiesAsync(new(draft.Id, draft.Original, submitted, CanvasConstants.PixelsPerMeter));
+            result.Match(saved =>
+            {
+                GardenEditorMapper.Apply(saved, garden);
+                if (ReferenceEquals(SelectedGarden, garden) && GardenEditor is { } activeDraft)
+                    activeDraft.Accept(saved.Values, ReferenceEquals(activeDraft, draft) ? submitted : activeDraft.Original);
+                return true;
+            }, error => { userDialog.Warning(error, "Изменение размера участка"); return false; });
         }
-
-        var blockedGh = SelectedGarden.Greenhouses
-            .FirstOrDefault(gh => gh.X + gh.DisplayWidth > newCanvasW || gh.Y + gh.DisplayHeight > newCanvasH);
-        if (blockedGh is not null)
+        finally
         {
-            userDialog.Warning(
-                $"Нельзя уменьшить участок: теплица «{blockedGh.Name}» выходит за новые границы.",
-                "Изменение размера участка");
-            return;
-        }
-
-        var entity = await gardenService.GetGardenByIdAsync(SelectedGarden.Id);
-        if (entity is null) return;
-
-        entity.Name          = SelectedGarden.Name;
-        entity.WidthMeters   = SelectedGarden.WidthMeters;
-        entity.HeightMeters  = SelectedGarden.HeightMeters;
-        entity.CanvasWidth   = newCanvasW;
-        entity.CanvasHeight  = newCanvasH;
-        entity.Address       = SelectedGarden.Address;
-        entity.Note          = SelectedGarden.Note;
-
-        await gardenService.UpdateGardenAsync(entity);
-
-        SelectedGarden.CanvasWidth  = newCanvasW;
-        SelectedGarden.CanvasHeight = newCanvasH;
-
-        // Обновляем контейнерные размеры у всех элементов на участке
-        foreach (var el in SelectedGarden.Elements)
-        {
-            el.ContainerCanvasWidth  = newCanvasW;
-            el.ContainerCanvasHeight = newCanvasH;
-        }
-        foreach (var gh in SelectedGarden.Greenhouses)
-        {
-            gh.ContainerCanvasWidth  = newCanvasW;
-            gh.ContainerCanvasHeight = newCanvasH;
+            _isSavingGardenProperties = false;
+            OnPropertyChanged(nameof(IsGardenEditorEnabled));
         }
     }
 
