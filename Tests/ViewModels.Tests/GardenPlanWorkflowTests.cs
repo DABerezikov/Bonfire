@@ -25,7 +25,7 @@ public partial class GardenPlanWorkflowTests
         _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray<GardenPlanResultFromViewModel>.Empty));
         _gardens.ReadGardensAsync(Arg.Any<int>()).Returns(Result.Success(ImmutableArray<GardenReadFromViewModel>.Empty));
         _seeds.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
-        _seedlings.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
+        _seedlings.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
         return new(_gardens, _dialog, _seedlings, _seeds, _planting);
     }
 
@@ -49,11 +49,11 @@ public partial class GardenPlanWorkflowTests
             new Seed { Id = 4, Plant = plant, SeedsInfo = new SeedsInfo { AmountSeedsWeight = 0.5 } },
             new Seed { Id = 5, Plant = plant, SeedsInfo = new SeedsInfo() }
         }.ReadSeeds());
-        _seedlings.GetAllSeedlingsAsync().Returns(new[]
+        _seedlings.ReadSeedlingsAsync().Returns(new[]
         {
             new Seedling { Id = 6, Plant = plant, SeedlingInfos = [new() { GerminationDate = DateTime.Today }, new() { GerminationDate = DateTime.Today, IsDead = true }] },
             new Seedling { Id = 7, Plant = plant, IsPlantedInBed = true, SeedlingInfos = [new() { GerminationDate = DateTime.Today }] }
-        });
+        }.ReadSeedlings());
 
         vm.LoadDataCommand.Execute(null);
 

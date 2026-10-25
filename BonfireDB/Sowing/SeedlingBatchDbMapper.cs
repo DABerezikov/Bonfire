@@ -50,11 +50,13 @@ public static class SeedlingBatchDbMapper
     }
 
     public static SeedlingChangeResultFromViewModel Receipt(Seedling batch) => new(batch.Id,
-        batch.SeedlingInfos.Select(info => new SeedlingEntryFromViewModel(info.Id, info.SeedlingNumber,
-            info.GerminationDate.ToOption(), info.IsDead.ToOption())
-        {
-            DeathNote = info.DeathNote.ToOption(),
-            Replants = (info.Replants ?? []).Select(replant => new ReplantingEntryFromViewModel(replant.Id,
-                replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToArray()
-        }).ToArray()) { PlantedOut = batch.PlantedOut };
+        batch.SeedlingInfos.Select(Receipt).ToArray()) { PlantedOut = batch.PlantedOut };
+
+    public static SeedlingEntryFromViewModel Receipt(SeedlingInfo info) => new(info.Id, info.SeedlingNumber,
+        info.GerminationDate.ToOption(), info.IsDead.ToOption())
+    {
+        DeathNote = info.DeathNote.ToOption(),
+        Replants = (info.Replants ?? []).Select(replant => new ReplantingEntryFromViewModel(replant.Id,
+            replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToImmutableArray()
+    };
 }

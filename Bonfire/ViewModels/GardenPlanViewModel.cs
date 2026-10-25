@@ -1,3 +1,4 @@
+using Bonfire.Application.Seedlings;
 using Bonfire.Application.Seeds;
 using System;
 using System.Collections.ObjectModel;
@@ -395,7 +396,9 @@ public class GardenPlanViewModel(
     {
         // ── Рассада: из рассады сажают ВЗОШЕДШИЕ живые ростки штучно. ───────
         // Доступно = взошедшие живые − уже высаженные (вес рассады не при чём).
-        var allSeedlings = await seedlingsService.GetAllSeedlingsAsync();
+        var seedlingResult = await seedlingsService.ReadSeedlingsAsync();
+        if (seedlingResult.IsFailure) { userDialog.Warning(seedlingResult.Match(_ => "", e => e), "Загрузка рассады"); return; }
+        var allSeedlings = seedlingResult.ValueOrThrow().Select(snapshot => new SeedlingReadModel(snapshot)).ToArray();
 
         AvailableSeedlingItems = new ObservableCollection<PlantSourceItem>(
             allSeedlings
@@ -403,7 +406,7 @@ public class GardenPlanViewModel(
             .Select(s =>
             {
                 var name = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
-                var qty  = Services.SeedlingAvailability.Available(s);
+                var qty  = s.ToBatch().ValueOrThrow().AvailableCount;
                 return new PlantSourceItem
                 {
                     Kind          = PlantSourceKind.Seedling,

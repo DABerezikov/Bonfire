@@ -1927,3 +1927,34 @@ skipped нет (678/536/295/35/6), новых тестов нет — струк
 совместимости оставлено общему шагу очистки. Этап 7 открыт; далее чтение рассады.
 
 Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/8a457f87bc3240d3b38aac153d04beff/smoke.db. Рабочая БД не использовалась.
+
+## 2026-10-25 — этап 7, шаг 3: чтение рассады без EF
+
+ReadSeedlings содержит immutable-снимки партии/метаданных/истории с Option,
+переиспользует PlantRead и существующие DTO всходов/пересадок. DbSeedlingReader
+читает коротким Uow/AsNoTracking/AsSplitQuery, явно загружает обработки, прежде
+не входившие в список Include. SeedlingReadDbMapper переиспользует
+SeedlingBatchDbMapper/SeedReadDbMapper; количества проверяются общими моделями,
+исторический дефицит не обнуляется. SeedId остаётся информационной ссылкой.
+Отсутствующая партия — успешный None, ошибка — Result с ID.
+
+SeedlingReadModel — immutable оболочка WPF, nullable только для привязок;
+SeedlingReadMapper создаёт новый снимок по DTO изменения, сохраняет карантин/
+обработки/прочую историю. Редактор читает снимок, не EF. Выбор после результата
+обновляется без EF-графа; планировщик получает доступность через SeedlingBatch.
+Старые EF-перегрузки/сервисные методы оставлены для общего шага очистки, из UI
+не вызываются. Фикстурам без SQLite-генератора ключей назначены синтетические ID
+до проверенного маппинга; это только подготовка тестов, не нормализация рантайма.
+
+Red SQLite: 2 failed, artifacts/stage7-seedling-read-red. Green focused 2/2;
+проверены полный сохранённый граф/обработки/карантин, независимость от пакета,
+различия None/Some, дефицит -2 и None отсутствующей партии. Отдельно проверено
+применение изменения без мутации старого снимка и потери истории. Прежние тесты
+успешных изменений читают свежий кэш, а не ожидают мутации EF-фикстуры; assertions
+сценариев сохранены. Общий гейт **1553/1553**, failed/skipped нет: Models 679,
+Services 538, ViewModels 295, Repository 35, SeedsFromViewModel 6.
+TRX: artifacts/stage7-seedling-read-green. WPF-редактор/жесты/оба DPI прошли в гейте.
+Схема/пакеты прежние; рабочая БД не использовалась, push/merge не выполнялись.
+Далее отчёты и очистка; этап 7 ещё не завершён.
+
+Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/865c1f2977414d35bb29070ee9e79fd2/smoke.db. Рабочая БД не использовалась.

@@ -18,7 +18,7 @@ public class SeedlingEditorWpfTests(WpfRuntime runtime)
         var batch = new Seedling { Id = 7, Quantity = 3, Plant = SeedsWorkflowTests.Seed(1).Plant,
             SeedlingInfos = [new() { Id = 1, LandingDate = DateTime.Today, SeedlingSource = "Из семян" }] };
         var service = Substitute.For<ISeedlingsService>();
-        service.GetAllSeedlingsAsync().Returns(new[] { batch });
+        service.ReadSeedlingsAsync().Returns(new[] { batch }.ReadSeedlings());
         service.Lunar.Returns(new MoonPhase());
         var seeds = Substitute.For<ISeedsService>(); seeds.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         var vm = new SeedlingsViewModel(service, seeds, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());

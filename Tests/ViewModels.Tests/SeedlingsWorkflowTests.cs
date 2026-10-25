@@ -22,7 +22,7 @@ public class SeedlingsWorkflowTests
 
     private SeedlingsViewModel CreateVm(params Seedling[] seedlings)
     {
-        _service.GetAllSeedlingsAsync().Returns(seedlings);
+        _service.ReadSeedlingsAsync().Returns(seedlings.ReadSeedlings());
         _seeds.ReadSeedsAsync().Returns(new[] { SeedsWorkflowTests.Seed(1) }.ReadSeeds());
         _service.Lunar.Returns(new MoonPhase());
         _service.UpdateSeedling(Arg.Any<Seedling>()).Returns(c => c.Arg<Seedling>());
@@ -60,7 +60,7 @@ public class SeedlingsWorkflowTests
         var seed = SeedsWorkflowTests.Seed(1);
         if (grams) { seed.SeedsInfo.AmountSeeds = 0; seed.SeedsInfo.AmountSeedsWeight = 1.5; }
         _seeds.ReadSeedsAsync().Returns(new[] { seed }.ReadSeeds());
-        _service.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
+        _service.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
         _service.Lunar.Returns(new MoonPhase());
         var saved = Batch(2);
         saved.Quantity = grams ? 0 : 2;
@@ -75,7 +75,7 @@ public class SeedlingsWorkflowTests
         _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(1,
             SeedAmount.Create(grams ? 0.5 : 2, grams ? SeedUnit.Grams : SeedUnit.Pieces).ValueOrThrow(), details,
             new SavedSowing(saved.Id, refreshedSeed.SeedsInfo.AmountSeeds, gramsLeft))));
-        _service.GetSeedlingAsync(saved.Id).Returns(saved);
+        _service.ReadSeedlingAsync(saved.Id).Returns(Result.Success(Option.Some(new[] { saved }.ReadSeedlings().ValueOrThrow().Single())));
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         vm.AddCulture = "Томат";
@@ -169,7 +169,7 @@ public class SeedlingsWorkflowTests
         var details = new SowingDetails(vm.PlantingDate, PlantSources.FromSeeds, Option.None<string>(), "Фаза");
         _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(1,
             SeedAmount.Create(2, SeedUnit.Pieces).ValueOrThrow(), details, new SavedSowing(42, 8, Option.None<double>()))));
-        _service.GetSeedlingAsync(42).Returns((Seedling?)null);
+        _service.ReadSeedlingAsync(42).Returns(Result.Success(Option.None<SeedlingReadFromViewModel>()));
 
         vm.AddOrCorrectSeedlingCommand.Execute(null);
 
@@ -207,8 +207,8 @@ public class SeedlingsWorkflowTests
         _dialog.RequestSeedlingRemoval(Arg.Any<string>()).Returns(Option.Some<SeedlingRemoval>(new SeedlingRemoval.CorrectSowing()));
         _service.DeleteAsync(Arg.Any<DeleteSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingDeletionResultFromViewModel>("Исходный пакет удалён"));
         vm.DeleteSeedlingCommand.Execute(null);
-        Assert.Same(batch, Assert.Single(vm.Seedlings!));
-        Assert.Same(batch, vm.SelectedItem);
+        Assert.Equal(batch.Id, Assert.Single(vm.Seedlings!).Id);
+        Assert.Same(vm.Seedlings![0], vm.SelectedItem);
         Assert.Same(draft, vm.EditedItem);
         _dialog.Received(1).Warning("Исходный пакет удалён", "Удаление рассады");
     }
@@ -221,7 +221,7 @@ public class SeedlingsWorkflowTests
         seed.SeedsInfo.AmountSeeds = 0;
         seed.SeedsInfo.AmountSeedsWeight = 0;
         _seeds.ReadSeedsAsync().Returns(new[] { seed }.ReadSeeds());
-        _service.GetAllSeedlingsAsync().Returns(new[] { batch });
+        _service.ReadSeedlingsAsync().Returns(new[] { batch }.ReadSeedlings());
         _service.Lunar.Returns(new MoonPhase());
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
@@ -255,8 +255,8 @@ public class SeedlingsWorkflowTests
              new(4, 3, Option.Some(new DateTime(2026, 3, 7)), Option.None<bool>())])));
         vm.Germinate = 20; vm.GerminationDate = new DateTime(2026, 3, 7);
         vm.GerminateSeedlingCommand.Execute(null);
-        Assert.Equal(3, batch.SeedlingInfos.Count(i => i.GerminationDate.HasValue));
-        Assert.Equal(new[] { 1, 2, 3 }, batch.SeedlingInfos.Where(i => i.GerminationDate.HasValue).Select(i => i.SeedlingNumber));
+        Assert.Equal(3, vm.SelectedItem!.SeedlingInfos.Count(i => i.GerminationDate.HasValue));
+        Assert.Equal(new[] { 1, 2, 3 }, vm.SelectedItem!.SeedlingInfos.Where(i => i.GerminationDate.HasValue).Select(i => i.SeedlingNumber));
         Assert.Equal(0, vm.Germinate);
         _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.Germinate(20, new DateTime(2026, 3, 7))));
         _service.DidNotReceive().AddSeedlingInfo(Arg.Any<SeedlingInfo>());
@@ -271,7 +271,7 @@ public class SeedlingsWorkflowTests
         _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingChangeResultFromViewModel(batch.Id,
             [new(1, 0, Option.None<DateTime>(), Option.Some(true))])));
         vm.GerminateSeedlingCommand.Execute(null);
-        Assert.Equal(dead, batch.SeedlingInfos[0].IsDead == true);
+        Assert.Equal(dead, vm.SelectedItem!.SeedlingInfos[0].IsDead == true);
         _service.DidNotReceive().AddSeedlingInfo(Arg.Any<SeedlingInfo>());
     }
 
@@ -283,7 +283,7 @@ public class SeedlingsWorkflowTests
         var date = vm.GerminationDate;
         _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingChangeResultFromViewModel>("Ошибка всходов"));
         vm.GerminateSeedlingCommand.Execute(null);
-        Assert.Single(batch.SeedlingInfos);
+        Assert.Single(vm.SelectedItem!.SeedlingInfos);
         Assert.Equal(3, vm.Germinate);
         Assert.Equal(date, vm.GerminationDate);
         Assert.Single(vm.EditedItem!.Entries);
@@ -299,7 +299,7 @@ public class SeedlingsWorkflowTests
             [new(1, 0, Option.None<DateTime>(), Option.None<bool>())
             { Replants = [new(1, new DateTime(2026, 4, 1), Option.None<double>(), Option.None<string>())] }])));
         vm.ReplantsSeedlingCommand.Execute(null);
-        Assert.Equal(new DateTime(2026, 4, 1), Assert.Single(batch.SeedlingInfos[0].Replants!).ReplantingDate);
+        Assert.Equal(new DateTime(2026, 4, 1), Assert.Single(vm.SelectedItem!.SeedlingInfos[0].Replants!).ReplantingDate);
         Assert.False(vm.ReplantsSeedlingCommand.CanExecute(null));
         _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.Replant(new DateTime(2026, 4, 1))));
     }
@@ -311,7 +311,7 @@ public class SeedlingsWorkflowTests
         vm.ReplantsDate = new DateTime(2026, 4, 1);
         _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingChangeResultFromViewModel>("Ошибка пересадки"));
         vm.ReplantsSeedlingCommand.Execute(null);
-        Assert.Empty(batch.SeedlingInfos[0].Replants!);
+        Assert.Empty(vm.SelectedItem!.SeedlingInfos[0].Replants!);
         Assert.Equal(new DateTime(2026, 4, 1), vm.ReplantsDate);
         Assert.True(vm.ReplantsSeedlingCommand.CanExecute(null));
         _dialog.Received(1).Warning("Ошибка пересадки", "Пересадка рассады");
@@ -331,7 +331,7 @@ public class SeedlingsWorkflowTests
         vm.DeathSeedlingCommand.Execute(null);
         _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.MarkDead(2, Option.Some("Засохли"))));
         Assert.Equal(0, vm.DeadNumbers); Assert.Equal(string.Empty, vm.DeathNote);
-        Assert.Equal(new[] { 2, 3 }, batch.SeedlingInfos.Where(info => info.IsDead == true).Select(info => info.SeedlingNumber));
+        Assert.Equal(new[] { 2, 3 }, vm.SelectedItem!.SeedlingInfos.Where(info => info.IsDead == true).Select(info => info.SeedlingNumber));
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class SeedlingsWorkflowTests
         vm.DeathSeedlingCommand.Execute(null);
         Assert.Equal(1, vm.DeadNumbers);
         Assert.Equal("Причина", vm.DeathNote);
-        Assert.Null(batch.SeedlingInfos[1].IsDead);
+        Assert.Null(vm.SelectedItem!.SeedlingInfos[1].IsDead);
         _dialog.Received(1).Warning("Ошибка гибели", "Гибель рассады");
     }
 
@@ -365,7 +365,7 @@ public class SeedlingsWorkflowTests
         var batch = Batch(); var vm = CreateVm(batch);
         vm.EditedItem!.Quantity = 7;
         vm.CancelUpdateSeedlingInfoCommand.Execute(null);
-        Assert.Equal(3, batch.Quantity);
+        Assert.Equal(3, vm.SelectedItem!.Quantity);
         Assert.Equal(3, vm.EditedItem!.Quantity);
     }
 
@@ -377,7 +377,7 @@ public class SeedlingsWorkflowTests
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         _service.EditAsync(Arg.Any<EditSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingEditResultFromViewModel>("Ошибка сохранения"));
         vm.UpdateSeedlingInfoCommand.Execute(null);
-        Assert.Equal(3, batch.Quantity);
+        Assert.Equal(3, vm.SelectedItem!.Quantity);
         Assert.Equal(7, vm.EditedItem!.Quantity);
         _dialog.Received(1).Warning("Ошибка сохранения", "Редактирование рассады");
     }
@@ -393,8 +393,8 @@ public class SeedlingsWorkflowTests
             new(batch.Id, [new(1, 0, Option.None<DateTime>(), Option.None<bool>())]))));
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         vm.UpdateSeedlingInfoCommand.Execute(null);
-        Assert.Equal(date, batch.LandingDate);
-        Assert.Equal(date, batch.SeedlingInfos[0].LandingDate);
+        Assert.Equal(date, vm.SelectedItem!.LandingDate);
+        Assert.Equal(date, vm.SelectedItem!.SeedlingInfos[0].LandingDate);
     }
 
     [Fact]
@@ -403,7 +403,7 @@ public class SeedlingsWorkflowTests
         var batch = Batch(); var vm = CreateVm(batch);
         vm.EditedItem!.Quantity = 7;
         vm.UpdateSeedlingInfoCommand.Execute(null);
-        Assert.Equal(3, batch.Quantity);
+        Assert.Equal(3, vm.SelectedItem!.Quantity);
         Assert.Equal(7, vm.EditedItem.Quantity);
         _service.DidNotReceive().EditAsync(Arg.Any<EditSeedlingFromViewModel>());
     }

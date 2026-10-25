@@ -5,10 +5,13 @@ namespace Models.Tests;
 
 public class SeedlingEditorDraftTests
 {
+    private static Plant MakePlant() => new() { PlantCulture = new() { Name = "Культура" },
+        PlantSort = new() { Name = "Сорт", Producer = new() { Name = "Фирма" } } };
+
     [Fact]
     public void Draft_EditRowsAndDetails_DoesNotChangeEntityGraphOrEarlierRequest()
     {
-        var source = new Seedling { Id = 7, Quantity = 3,
+        var source = new Seedling { Id = 7, Quantity = 3, Plant = MakePlant(),
             SeedlingInfos = [new() { Id = 1, Note = "Исходная", LandingDate = new(2026, 3, 1), SeedlingSource = "Из семян" }] };
         var draft = SeedlingEditMapper.Create(source);
         var request = SeedlingEditMapper.ToRequest(draft);
@@ -28,7 +31,7 @@ public class SeedlingEditorDraftTests
     [Fact]
     public void Draft_ExistingRootMetadata_IsPreferredAndOptionalValuesStayAbsent()
     {
-        var source = new Seedling { Id = 7, LandingDate = new(2026, 4, 1), SeedlingSource = "Подарено",
+        var source = new Seedling { Id = 7, Plant = MakePlant(), LandingDate = new(2026, 4, 1), SeedlingSource = "Подарено",
             SeedlingInfos = [new() { Id = 1, LandingDate = new(2026, 3, 1), SeedlingSource = "Из семян" }] };
         var draft = SeedlingEditMapper.Create(source);
         Assert.Equal(source.LandingDate, draft.LandingDate);

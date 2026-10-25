@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using BonfireDB.Entities;
@@ -14,6 +15,8 @@ public interface ISeedlingsService
     Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(DeleteSeedlingFromViewModel request);
     Task<Result<SeedlingChangeResultFromViewModel>> ChangeAsync(ChangeSeedlingFromViewModel request);
     Task<Result<SeedlingEditResultFromViewModel>> EditAsync(EditSeedlingFromViewModel request);
+    Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> ReadSeedlingsAsync();
+    Task<Result<Option<SeedlingReadFromViewModel>>> ReadSeedlingAsync(int id);
     Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync();
     Task<Seedling?> GetSeedlingAsync(int id);
     Task<Seedling> MakeASeedling(Seedling seedling);

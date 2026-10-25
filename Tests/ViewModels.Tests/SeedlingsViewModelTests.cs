@@ -12,7 +12,7 @@ public class SeedlingsViewModelTests
     private SeedlingsViewModel CreateVm()
     {
         _seedsService.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
-        _seedlingsService.GetAllSeedlingsAsync().Returns(new List<Seedling>());
+        _seedlingsService.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
         _seedlingsService.Lunar.Returns(new MoonPhase());
         return new SeedlingsViewModel(_seedlingsService, _seedsService, _userDialog, _reportService);
     }
