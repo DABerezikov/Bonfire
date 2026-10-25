@@ -584,3 +584,26 @@ SeedAcquisitionValues с SeedUnit/Option. Прежний разбор текст
 устраняет зависимость от кэша, но не вводит защиту от одновременного пополнения
 несколькими процессами: схема/протокол конкурентных обновлений не менялись.
 Этап 4 целиком не завершён; следующий сценарий — удаление с причиной.
+
+## 25.10.2026 — общие преобразования nullable ↔ Option
+
+База: `c92713a`. По замечанию владельца преобразования перенесены в существующий
+Bonfire.Domain/Functional/OptionExtensions: ToOption для Nullable<T>/string и
+ToNullable для Option<T>/Option<string>. Дополнительный функциональный toolkit
+не создавался; Map остаётся extension-методом с прежним pattern matching.
+
+Удалены локальные копии из SeedEditMapper, SeedPackageEditModel, DbSeedEditWriter
+и SeedPackageDbMapper. Заменены аналогичные выражения в библиотечном редакторе,
+маппере добавления, адаптере посева и ViewModel рассады. Nullable остаётся внешней
+границей; конверсия не интерпретирует бизнес-значения: ноль, пустая строка, пробелы
+и NaN сохраняются в Some, null преобразуется только в None. Null вместо Option
+отклоняется через ArgumentNullException. Правило закреплено в AGENTS.md.
+
+TDD: сначала 10 проверок OptionConversionTests, Red — 8 ожидаемых отказов и 2
+успешных сценария отсутствия. После реализации и замены потребителей общий гейт
+`dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false -p:UseSharedCompilation=false --logger trx --results-directory artifacts/refactoring-option-conversions`
+прошёл **873/873**, без пропусков (+10 к 863). TRX — в игнорируемом artifacts.
+Повторный поиск подтверждает отсутствие локальных ToOption/ToNullable и прежних
+однотипных nullable-преобразований в производственных потребителях. Поведение
+маппинга, EF и WPF сохранено. Покрытие строк заново не измерялось; прежние
+предупреждения NuGet остаются. Следующий сценарий плана — удаление с причиной.

@@ -22,6 +22,8 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 
 Для перенесённого посева сервис делегирует Application, который вызывает Domain и порты; `BonfireDB/Sowing/` реализует порт сохранения. Не возвращайте EF-сущности в контракты Application. Отсутствие в новых контрактах выражайте через `Option`, преобразуя nullable только на внешних границах.
 
+Для nullable ↔ Option используйте общие extension-методы `ToOption()`/`ToNullable()` из `Bonfire.Domain/Functional/OptionExtensions.cs`. Не дублируйте эти преобразования локальными методами или одинаковыми тернарными выражениями. Пустая строка, пробелы и ноль сохраняются как Some; только null означает None.
+
 Редактирование культуры проходит через `Application/Libraries/UpdateCulture` и `Domain/Libraries/CultureDefinition`; сохранение — через `BonfireDB/Libraries/DbCultureWriter`. Имя и класс обязательны, идентификатор — `CultureId`. Непустой текст и пользовательские классы сохраняются без неявной нормализации.
 
 Редактирование производителя использует `ProducerDefinition`, `ProducerId`, `UpdateProducer` и `DbProducerWriter`. Общий value object `LibraryName` проверяет названия культуры и производителя; не дублируйте эту проверку в новых доменных моделях. Application возвращает DTO, EF-типы остаются на границе совместимости `LibraryService`.

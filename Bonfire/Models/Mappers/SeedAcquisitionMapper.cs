@@ -12,6 +12,6 @@ internal static class SeedAcquisitionMapper
         return Units.ResolveSeedUnit(request.SizeUnit).Bind(unit => Result.Success(new AcquireSeedsFromViewModel(new(
             request.Culture, request.Sort, request.Producer, request.Class, request.SeedSource, unit,
             request.QuantityInPack, request.PackCount, request.CostPack, request.BestBy,
-            request.Note is { } note ? Option.Some(note) : Option.None<string>()))));
+            request.Note.ToOption()))));
     }
 }

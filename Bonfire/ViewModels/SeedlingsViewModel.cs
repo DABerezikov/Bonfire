@@ -741,7 +741,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         await result.Match(async receipt =>
         {
             selectedSeed.SeedsInfo.AmountSeeds = receipt.Saved.RemainingPieces;
-            selectedSeed.SeedsInfo.AmountSeedsWeight = receipt.Saved.RemainingGrams.Match<double?>(weight => weight, () => null);
+            selectedSeed.SeedsInfo.AmountSeedsWeight = receipt.Saved.RemainingGrams.ToNullable();
             RemoveItemFromCollection(selectedSeed);
             ClearFieldSeedlingView();
             var batch = await _seedlingsService.GetSeedlingAsync(receipt.Saved.BatchId);

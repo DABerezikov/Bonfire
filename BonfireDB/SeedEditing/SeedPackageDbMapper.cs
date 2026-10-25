@@ -12,9 +12,9 @@ public static class SeedPackageDbMapper
         return new()
         {
             WeightPack = info.WeightPack, QuantityPack = info.QuantityPack, AmountSeeds = info.AmountSeeds,
-            AmountSeedsWeight = ToOption(info.AmountSeedsWeight), CostPack = info.CostPack,
+            AmountSeedsWeight = info.AmountSeedsWeight.ToOption(), CostPack = info.CostPack,
             PurchaseDate = info.PurchaseDate, ExpirationDate = info.ExpirationDate,
-            Note = ToOption(info.Note), SeedSource = ToOption(info.SeedSource), DisposeComment = ToOption(info.DisposeComment)
+            Note = info.Note.ToOption(), SeedSource = info.SeedSource.ToOption(), DisposeComment = info.DisposeComment.ToOption()
         };
     }
 
@@ -25,19 +25,12 @@ public static class SeedPackageDbMapper
         target.WeightPack = values.WeightPack;
         target.QuantityPack = values.QuantityPack;
         target.AmountSeeds = values.AmountSeeds;
-        target.AmountSeedsWeight = ToNullable(values.AmountSeedsWeight);
+        target.AmountSeedsWeight = values.AmountSeedsWeight.ToNullable();
         target.CostPack = values.CostPack;
         target.PurchaseDate = values.PurchaseDate;
         target.ExpirationDate = values.ExpirationDate;
-        target.Note = ToNullable(values.Note);
-        target.SeedSource = ToNullable(values.SeedSource);
-        target.DisposeComment = ToNullable(values.DisposeComment);
+        target.Note = values.Note.ToNullable();
+        target.SeedSource = values.SeedSource.ToNullable();
+        target.DisposeComment = values.DisposeComment.ToNullable();
     }
-
-    private static Option<T> ToOption<T>(T? value) where T : struct
-        => value is { } present ? Option.Some(present) : Option.None<T>();
-    private static Option<string> ToOption(string? value)
-        => value is { } present ? Option.Some(present) : Option.None<string>();
-    private static T? ToNullable<T>(Option<T> value) where T : struct => value.Match<T?>(present => present, () => null);
-    private static string? ToNullable(Option<string> value) => value.Match<string?>(present => present, () => null);
 }

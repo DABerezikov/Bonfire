@@ -39,7 +39,7 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
         private async Task<SavedSowing> SaveAsync(Seed seed, SowingChange change, SowingDetails details, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var place = details.Place.Match<string?>(value => value, () => null);
+            var place = details.Place.ToNullable();
             var batch = new Seedling
             {
                 Plant = seed.Plant, SeedId = seed.Id,
@@ -60,7 +60,7 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
 
             await unit.Repository<Seedling>().AddAsync(batch, cancellationToken).ConfigureAwait(false);
             await unit.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            var grams = seed.SeedsInfo.AmountSeedsWeight is double weight ? Option.Some(weight) : Option.None<double>();
+            var grams = seed.SeedsInfo.AmountSeedsWeight.ToOption();
             return new SavedSowing(batch.Id, seed.SeedsInfo.AmountSeeds, grams);
         }
 

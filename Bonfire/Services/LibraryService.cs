@@ -43,7 +43,7 @@ internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture upda
         ArgumentNullException.ThrowIfNull(model);
         if (model.Name is not { } name)
             return Task.FromResult(Result.Failure<SortDetailsFromViewModel>("Название не может быть пустым"));
-        var culture = model.CultureId is { } id ? Option.Some(id) : Option.None<int>();
+        var culture = model.CultureId.ToOption();
         return updateSort.ExecuteAsync(new UpdateSortFromViewModel(model.Id, name, culture));
     }
 

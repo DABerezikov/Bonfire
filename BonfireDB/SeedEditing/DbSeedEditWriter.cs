@@ -45,22 +45,22 @@ public sealed class DbSeedEditWriter(IUnitOfWorkFactory units) : ISeedEditWriter
     {
         target.Name = details.Name.Value;
         var values = details.Values;
-        target.Description = ToNullable(values.Description);
-        target.MinGerminationTime = ToNullable(values.MinGerminationTime);
-        target.MaxGerminationTime = ToNullable(values.MaxGerminationTime);
-        target.AgeOfSeedlings = ToNullable(values.AgeOfSeedlings);
-        target.MaxAgeOfSeedlings = ToNullable(values.MaxAgeOfSeedlings);
-        target.GrowingSeason = ToNullable(values.GrowingSeason);
-        target.MaxGrowingSeason = ToNullable(values.MaxGrowingSeason);
-        target.LandingPattern = ToNullable(values.LandingPattern);
-        target.LandingRowSpacing = ToNullable(values.LandingRowSpacing);
-        target.PlantHeight = ToNullable(values.PlantHeight);
-        target.MaxPlantHeight = ToNullable(values.MaxPlantHeight);
-        target.PlantColor = ToNullable(values.PlantColor);
-        target.Maturity = ToNullable(values.Maturity);
-        target.YieldKg = ToNullable(values.YieldKg);
-        target.MinFruitWeight = ToNullable(values.MinFruitWeight);
-        target.MaxFruitWeight = ToNullable(values.MaxFruitWeight);
+        target.Description = values.Description.ToNullable();
+        target.MinGerminationTime = values.MinGerminationTime.ToNullable();
+        target.MaxGerminationTime = values.MaxGerminationTime.ToNullable();
+        target.AgeOfSeedlings = values.AgeOfSeedlings.ToNullable();
+        target.MaxAgeOfSeedlings = values.MaxAgeOfSeedlings.ToNullable();
+        target.GrowingSeason = values.GrowingSeason.ToNullable();
+        target.MaxGrowingSeason = values.MaxGrowingSeason.ToNullable();
+        target.LandingPattern = values.LandingPattern.ToNullable();
+        target.LandingRowSpacing = values.LandingRowSpacing.ToNullable();
+        target.PlantHeight = values.PlantHeight.ToNullable();
+        target.MaxPlantHeight = values.MaxPlantHeight.ToNullable();
+        target.PlantColor = values.PlantColor.ToNullable();
+        target.Maturity = values.Maturity.ToNullable();
+        target.YieldKg = values.YieldKg.ToNullable();
+        target.MinFruitWeight = values.MinFruitWeight.ToNullable();
+        target.MaxFruitWeight = values.MaxFruitWeight.ToNullable();
     }
 
     private static Task RememberOptionAsync(IUnitOfWork unit, string category, Option<string> value, CancellationToken cancellationToken)
@@ -72,7 +72,4 @@ public sealed class DbSeedEditWriter(IUnitOfWorkFactory units) : ISeedEditWriter
             if (!await options.Items.AnyAsync(option => option.Category == category && option.Name == name, cancellationToken).ConfigureAwait(false))
                 await options.AddAsync(new SortOption { Category = category, Name = name }, cancellationToken).ConfigureAwait(false);
         }, () => Task.CompletedTask);
-
-    private static T? ToNullable<T>(Option<T> value) where T : struct => value.Match<T?>(present => present, () => null);
-    private static string? ToNullable(Option<string> value) => value.Match<string?>(present => present, () => null);
 }

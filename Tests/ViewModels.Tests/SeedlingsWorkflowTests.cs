@@ -70,7 +70,7 @@ public class SeedlingsWorkflowTests
         refreshedSeed.SeedsInfo.AmountSeeds = grams ? 0 : 8;
         refreshedSeed.SeedsInfo.AmountSeedsWeight = grams ? 1 : seed.SeedsInfo.AmountSeedsWeight;
         var details = new SowingDetails(new DateTime(2026, 3, 1), PlantSources.FromSeeds, Option.Some("Подоконник"), "Фаза");
-        var gramsLeft = refreshedSeed.SeedsInfo.AmountSeedsWeight is double weight ? Option.Some(weight) : Option.None<double>();
+        var gramsLeft = refreshedSeed.SeedsInfo.AmountSeedsWeight.ToOption();
         _service.SowAsync(Arg.Any<SowingRequest>()).Returns(Result.Success(new SowingReceipt(1,
             SeedAmount.Create(grams ? 0.5 : 2, grams ? SeedUnit.Grams : SeedUnit.Pieces).ValueOrThrow(), details,
             new SavedSowing(saved.Id, refreshedSeed.SeedsInfo.AmountSeeds, gramsLeft))));

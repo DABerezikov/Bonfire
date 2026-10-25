@@ -25,27 +25,22 @@ internal static class SeedEditMapper
             draft.Package.Values,
             new()
             {
-                Description = ToOption(sort.Description),
-                MinGerminationTime = ToOption(sort.MinGerminationTime),
-                MaxGerminationTime = ToOption(sort.MaxGerminationTime),
-                AgeOfSeedlings = ToOption(sort.AgeOfSeedlings),
-                MaxAgeOfSeedlings = ToOption(sort.MaxAgeOfSeedlings),
-                GrowingSeason = ToOption(sort.GrowingSeason),
-                MaxGrowingSeason = ToOption(sort.MaxGrowingSeason),
-                LandingPattern = ToOption(sort.LandingPattern),
-                LandingRowSpacing = ToOption(sort.LandingRowSpacing),
-                PlantHeight = ToOption(sort.PlantHeight),
-                MaxPlantHeight = ToOption(sort.MaxPlantHeight),
-                PlantColor = ToOption(sort.PlantColor),
-                Maturity = ToOption(sort.Maturity),
-                YieldKg = ToOption(sort.YieldKg),
-                MinFruitWeight = ToOption(sort.MinFruitWeight),
-                MaxFruitWeight = ToOption(sort.MaxFruitWeight)
+                Description = sort.Description.ToOption(),
+                MinGerminationTime = sort.MinGerminationTime.ToOption(),
+                MaxGerminationTime = sort.MaxGerminationTime.ToOption(),
+                AgeOfSeedlings = sort.AgeOfSeedlings.ToOption(),
+                MaxAgeOfSeedlings = sort.MaxAgeOfSeedlings.ToOption(),
+                GrowingSeason = sort.GrowingSeason.ToOption(),
+                MaxGrowingSeason = sort.MaxGrowingSeason.ToOption(),
+                LandingPattern = sort.LandingPattern.ToOption(),
+                LandingRowSpacing = sort.LandingRowSpacing.ToOption(),
+                PlantHeight = sort.PlantHeight.ToOption(),
+                MaxPlantHeight = sort.MaxPlantHeight.ToOption(),
+                PlantColor = sort.PlantColor.ToOption(),
+                Maturity = sort.Maturity.ToOption(),
+                YieldKg = sort.YieldKg.ToOption(),
+                MinFruitWeight = sort.MinFruitWeight.ToOption(),
+                MaxFruitWeight = sort.MaxFruitWeight.ToOption()
             }));
     }
-
-    private static Option<T> ToOption<T>(T? value) where T : struct
-        => value is { } present ? Option.Some(present) : Option.None<T>();
-    private static Option<string> ToOption(string? value)
-        => value is { } present ? Option.Some(present) : Option.None<string>();
 }

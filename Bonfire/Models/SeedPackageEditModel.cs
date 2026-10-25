@@ -37,8 +37,8 @@ public sealed class SeedPackageEditModel : ViewModel
 
     public double? AmountSeedsWeight
     {
-        get => ToNullable(Values.AmountSeedsWeight);
-        set => Update(Values with { AmountSeedsWeight = ToOption(value) });
+        get => Values.AmountSeedsWeight.ToNullable();
+        set => Update(Values with { AmountSeedsWeight = value.ToOption() });
     }
 
     public decimal CostPack
@@ -61,20 +61,20 @@ public sealed class SeedPackageEditModel : ViewModel
 
     public string? Note
     {
-        get => ToNullable(Values.Note);
-        set => Update(Values with { Note = ToOption(value) });
+        get => Values.Note.ToNullable();
+        set => Update(Values with { Note = value.ToOption() });
     }
 
     public string? SeedSource
     {
-        get => ToNullable(Values.SeedSource);
-        set => Update(Values with { SeedSource = ToOption(value) });
+        get => Values.SeedSource.ToNullable();
+        set => Update(Values with { SeedSource = value.ToOption() });
     }
 
     public string? DisposeComment
     {
-        get => ToNullable(Values.DisposeComment);
-        set => Update(Values with { DisposeComment = ToOption(value) });
+        get => Values.DisposeComment.ToNullable();
+        set => Update(Values with { DisposeComment = value.ToOption() });
     }
 
     private void Update(SeedPackageValues values, [CallerMemberName] string? property = null)
@@ -85,11 +85,4 @@ public sealed class SeedPackageEditModel : ViewModel
         OnPropertyChanged(nameof(Values));
         OnPropertyChanged(nameof(HasErrors));
     }
-
-    private static Option<T> ToOption<T>(T? value) where T : struct
-        => value is { } present ? Option.Some(present) : Option.None<T>();
-    private static Option<string> ToOption(string? value)
-        => value is { } present ? Option.Some(present) : Option.None<string>();
-    private static T? ToNullable<T>(Option<T> value) where T : struct => value.Match<T?>(present => present, () => null);
-    private static string? ToNullable(Option<string> value) => value.Match<string?>(present => present, () => null);
 }
