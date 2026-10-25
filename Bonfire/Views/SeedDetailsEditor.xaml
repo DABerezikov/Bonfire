@@ -33,8 +33,8 @@
                            TextWrapping="Wrap" TextAlignment="Center" Margin="8,0">
                     <TextBlock.Text>
                         <MultiBinding StringFormat="{}{0} - {1}">
-                            <Binding Path="EditedItem.Plant.PlantCulture.Name"/>
-                            <Binding Path="EditedItem.Plant.PlantSort.Name"/>
+                            <Binding Path="EditedItem.CultureName"/>
+                            <Binding Path="EditedItem.SortName"/>
                         </MultiBinding>
                     </TextBlock.Text>
                 </TextBlock>
@@ -42,7 +42,7 @@
             <UniformGrid Columns="8" Margin="0,0,0,14">
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Источник семян" Margin="0,0,0,5"/>
-                    <ComboBox SelectedValue="{Binding EditedItem.SeedsInfo.SeedSource, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}" SelectedValuePath="Content">
+                    <ComboBox SelectedValue="{Binding EditedItem.Package.SeedSource, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}" SelectedValuePath="Content">
                         <ComboBoxItem Content="Куплено"/>
                         <ComboBoxItem Content="Собрано"/>
                         <ComboBoxItem Content="Подарено"/>
@@ -50,31 +50,31 @@
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Дата покупки" Margin="0,0,0,5"/>
-                    <DatePicker SelectedDate="{Binding EditedItem.SeedsInfo.PurchaseDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"/>
+                    <DatePicker SelectedDate="{Binding EditedItem.Package.PurchaseDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Вес в уп., г" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding EditedItem.SeedsInfo.WeightPack, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
+                    <TextBox Text="{Binding EditedItem.Package.WeightPack, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Кол-во в уп., шт" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding EditedItem.SeedsInfo.QuantityPack, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
+                    <TextBox Text="{Binding EditedItem.Package.QuantityPack, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Срок годности" Margin="0,0,0,5"/>
-                    <DatePicker SelectedDate="{Binding EditedItem.SeedsInfo.ExpirationDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"/>
+                    <DatePicker SelectedDate="{Binding EditedItem.Package.ExpirationDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Стоимость, руб." Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding EditedItem.SeedsInfo.CostPack, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
+                    <TextBox Text="{Binding EditedItem.Package.CostPack, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Остаток, шт" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding EditedItem.SeedsInfo.AmountSeeds, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
+                    <TextBox Text="{Binding EditedItem.Package.AmountSeeds, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,8,0">
                     <TextBlock Text="Остаток, г" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding EditedItem.SeedsInfo.AmountSeedsWeight, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
+                    <TextBox Text="{Binding EditedItem.Package.AmountSeedsWeight, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                 </StackPanel>
             </UniformGrid>
             <Grid>
@@ -182,7 +182,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="Примечание к упаковке" Margin="0,0,0,5"/>
-                    <TextBox Grid.Row="1" Text="{Binding EditedItem.SeedsInfo.Note, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"
+                    <TextBox Grid.Row="1" Text="{Binding EditedItem.Package.Note, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"
                              AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" TextAlignment="Left"/>
                     <TextBlock Grid.Row="2" Text="Описание сорта" Margin="0,12,0,5"/>
                     <TextBox Grid.Row="3" Text="{Binding SeedSortDetail.Description, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True}"

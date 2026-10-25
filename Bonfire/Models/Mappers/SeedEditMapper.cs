@@ -1,20 +1,18 @@
 using System;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 using BonfireDB.Entities;
 
 namespace Bonfire.Models.Mappers;
 
 internal static class SeedEditMapper
 {
-    public static Result<EditSeedFromViewModel> ToRequest(Seed seed, SortEditModel sort, int producerId)
+    public static SeedEditorDraft FromSeed(Seed seed)
     {
         ArgumentNullException.ThrowIfNull(seed);
-        ArgumentNullException.ThrowIfNull(sort);
-        if (sort.Name is not { } name)
-            return Result.Failure<EditSeedFromViewModel>("Название не может быть пустым");
-        return Result.Success(new EditSeedFromViewModel(seed.Id, sort.Id, producerId, name,
-            new()
+        return new SeedEditorDraft(seed.Id, seed.Plant.PlantCulture.Name, seed.Plant.PlantSort.Name,
+            seed.Plant.PlantSort.Producer.Id, new SeedPackageValues
             {
                 WeightPack = seed.SeedsInfo.WeightPack,
                 QuantityPack = seed.SeedsInfo.QuantityPack,
@@ -26,7 +24,17 @@ internal static class SeedEditMapper
                 Note = ToOption(seed.SeedsInfo.Note),
                 SeedSource = ToOption(seed.SeedsInfo.SeedSource),
                 DisposeComment = ToOption(seed.SeedsInfo.DisposeComment)
-            },
+            });
+    }
+
+    public static Result<EditSeedFromViewModel> ToRequest(SeedEditorDraft draft, SortEditModel sort, int producerId)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentNullException.ThrowIfNull(sort);
+        if (sort.Name is not { } name)
+            return Result.Failure<EditSeedFromViewModel>("Название не может быть пустым");
+        return Result.Success(new EditSeedFromViewModel(draft.Id, sort.Id, producerId, name,
+            draft.Package.Values,
             new()
             {
                 Description = ToOption(sort.Description),

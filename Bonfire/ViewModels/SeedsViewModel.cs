@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
 using Bonfire.Data;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
@@ -46,10 +48,10 @@ public class SeedsViewModel : SourceSelectionViewModel
     public bool EditorHasBindingErrors { get; set; }
     public bool CanEditSeedDetails => !_isSaving;
 
-    public bool HasUnsavedSeedChanges => SelectedItem != null &&
+    public bool HasUnsavedSeedChanges => EditedItem is { } draft &&
         (EditorHasBindingErrors || SeedSortDetail is { IsDirty: true }
-         || EditedProducerId != SelectedItem.Plant.PlantSort.Producer.Id
-         || !SeedMapper.SamePackage(EditedItem.SeedsInfo, SelectedItem.SeedsInfo));
+         || EditedProducerId != draft.OriginalProducerId
+         || draft.HasPackageChanges);
 
     public bool TryDiscardSeedChanges()
     {
@@ -57,7 +59,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         if (HasUnsavedSeedChanges && !_userDialog.YesNoQuestion(
                 "Сбросить несохранённые изменения семян и характеристик сорта?", "Несохранённые изменения"))
             return false;
-        CopySeedToEditItem(SelectedItem, EditedItem);
+        LoadSeedDraft(SelectedItem);
         return true;
     }
 
@@ -201,28 +203,16 @@ public class SeedsViewModel : SourceSelectionViewModel
             if (!ReferenceEquals(field, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
             if (Set(ref field, value))
             {
-                CopySeedToEditItem(SelectedItem, EditedItem);
-                if (value is null) SeedSortDetail = null;
+                LoadSeedDraft(value);
             }
         }
     }
 
-    public Seed EditedItem
+    public SeedEditorDraft? EditedItem
     {
         get;
-        set => Set(ref field, value);
-    } = new()
-    {
-        Plant = new Plant
-        {
-            PlantCulture = new PlantCulture(),
-            PlantSort = new PlantSort
-            {
-                Producer = new Producer()
-            }
-        },
-        SeedsInfo = new SeedsInfo()
-    };
+        private set => Set(ref field, value);
+    }
 
     public List<string> ListCulture
     {
@@ -508,14 +498,12 @@ public class SeedsViewModel : SourceSelectionViewModel
         OnPropertyChanged(nameof(ListCulture));
     }
 
-    private void CopySeedToEditItem(Seed? seedFrom, Seed seedTo)
+    private void LoadSeedDraft(Seed? seed)
     {
-        if (seedFrom == null) return;
-        SeedMapper.CopyInto(seedFrom, seedTo);
-        SeedSortDetail = LibraryMapper.ToEditModel(seedFrom.Plant.PlantSort);
-        EditedProducerId = seedFrom.Plant.PlantSort.Producer.Id;
+        EditedItem = seed is { } source ? SeedEditMapper.FromSeed(source) : null;
+        SeedSortDetail = seed is { } selected ? LibraryMapper.ToEditModel(selected.Plant.PlantSort) : null;
+        EditedProducerId = EditedItem is { } draft ? draft.OriginalProducerId : 0;
         EditorHasBindingErrors = false;
-        OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
     }
 
@@ -675,19 +663,21 @@ public class SeedsViewModel : SourceSelectionViewModel
         ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted,
             () => SelectedItem != null && !_isSaving && !EditorHasBindingErrors
                 && SeedSortDetail is { HasErrors: false } && EditedProducerId > 0
-                && SeedMapper.IsPackageValid(EditedItem.SeedsInfo));
+                && EditedItem is { Package.HasErrors: false });
 
     private async Task OnUpdateSeedsInfoCommandExecuted()
     {
-        if (SeedSortDetail is not { } detail) return;
+        if (SeedSortDetail is not { } detail || EditedItem is not { } draft) return;
         if (!_userDialog.YesNoQuestion(
-                $"Сохранить изменения упаковки? Характеристики сорта «{EditedItem.Plant.PlantSort.Name}» и выбранный производитель будут изменены у всех записей этого сорта.",
+                $"Сохранить изменения упаковки? Характеристики сорта «{draft.SortName}» и выбранный производитель будут изменены у всех записей этого сорта.",
                 "Редактирование семян")) return;
-        var id = EditedItem.Id;
+        var id = draft.Id;
         SetSaving(true);
         try
         {
-            var result = await _seedsService.SaveSeedEditAsync(EditedItem, detail, EditedProducerId);
+            var result = await SeedEditMapper.ToRequest(draft, detail, EditedProducerId).Match(
+                request => _seedsService.SaveSeedEditAsync(request),
+                error => Task.FromResult(Result.Failure<SeedEditResultFromViewModel>(error)));
             await result.Match(async _ =>
             {
                 _ignoreDiscard = true;

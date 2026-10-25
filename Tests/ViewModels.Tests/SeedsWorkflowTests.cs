@@ -107,14 +107,14 @@ public class SeedsWorkflowTests
         var original = Seed(1);
         var vm = CreateVm(original);
         vm.SelectedItem = original;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         vm.SeedSortDetail!.Description = "Общее описание";
         vm.EditedProducerId = 2;
         var saved = Seed(1); saved.SeedsInfo.Note = "Черновик";
         saved.Plant.PlantSort.Description = "Общее описание";
         saved.Plant.PlantSort.Producer = new Producer { Id = 2, Name = "Новый" };
         _service.GetAllSeedsAsync().Returns(new[] { saved });
-        _service.SaveSeedEditAsync(Arg.Any<Seed>(), Arg.Any<SortEditModel>(), 2).Returns(_ =>
+        _service.SaveSeedEditAsync(Arg.Is<Bonfire.Application.Seeds.EditSeedFromViewModel>(r => r.ProducerId == 2)).Returns(_ =>
         {
             Assert.Null(original.SeedsInfo.Note);
             Assert.Null(original.Plant.PlantSort.Description);
@@ -136,13 +136,13 @@ public class SeedsWorkflowTests
         var vm = CreateVm(Seed(1)); vm.SelectedItem = vm.Seeds![0];
         vm.EditorHasBindingErrors = true;
         Assert.False(vm.UpdateSeedsInfoCommand.CanExecute(null));
-        vm.EditorHasBindingErrors = false; vm.EditedItem.SeedsInfo.AmountSeeds = -1;
+        vm.EditorHasBindingErrors = false; vm.EditedItem!.Package.AmountSeeds = -1;
         Assert.False(vm.UpdateSeedsInfoCommand.CanExecute(null));
-        vm.EditedItem.SeedsInfo.Note = "Не терять";
+        vm.EditedItem!.Package.Note = "Не терять";
         _dialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns((string?)null);
         vm.DeleteSeedCommand.Execute(null);
         Assert.Single(vm.Seeds);
-        Assert.Equal("Не терять", vm.EditedItem.SeedsInfo.Note);
+        Assert.Equal("Не терять", vm.EditedItem!.Package.Note);
         _service.DidNotReceive().DeleteSeedWithReasonAsync(Arg.Any<int>(), Arg.Any<string>());
     }
 
@@ -152,18 +152,41 @@ public class SeedsWorkflowTests
         var original = Seed(1);
         var vm = CreateVm(original);
         vm.SelectedItem = original;
-        vm.EditedItem.SeedsInfo.Note = "Не терять";
+        vm.EditedItem!.Package.Note = "Не терять";
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
-        _service.SaveSeedEditAsync(Arg.Any<Seed>(), Arg.Any<SortEditModel>(), Arg.Any<int>())
+        _service.SaveSeedEditAsync(Arg.Any<Bonfire.Application.Seeds.EditSeedFromViewModel>())
             .Returns(Result.Failure<SeedEditResultFromViewModel>("Ошибка сохранения"));
         _service.ClearReceivedCalls();
         vm.UpdateSeedsInfoCommand.Execute(null);
-        Assert.Equal("Не терять", vm.EditedItem.SeedsInfo.Note);
+        Assert.Equal("Не терять", vm.EditedItem!.Package.Note);
         Assert.True(vm.HasUnsavedSeedChanges);
         Assert.True(vm.CanEditSeedDetails);
         Assert.Null(original.SeedsInfo.Note);
         _dialog.Received(1).Error("Ошибка сохранения", Arg.Any<string>());
         _service.DidNotReceive().GetAllSeedsAsync();
+    }
+
+    [Fact]
+    public void Draft_CacheChangesToSameValue_RemainsDirtyAgainstOriginalSnapshot()
+    {
+        var original = Seed(1);
+        var vm = CreateVm(original);
+        vm.SelectedItem = original;
+        vm.EditedItem!.Package.AmountSeeds = 8;
+        original.SeedsInfo.AmountSeeds = 8;
+        Assert.True(vm.HasUnsavedSeedChanges);
+    }
+
+    [Fact]
+    public void Selection_Cleared_RemovesDraftAndPreventsSaving()
+    {
+        var vm = CreateVm(Seed(1));
+        vm.SelectedItem = vm.Seeds![0];
+        vm.SelectedItem = null;
+        Assert.Null(vm.EditedItem);
+        Assert.Null(vm.SeedSortDetail);
+        Assert.False(vm.HasUnsavedSeedChanges);
+        Assert.False(vm.UpdateSeedsInfoCommand.CanExecute(null));
     }
 
     [Fact]

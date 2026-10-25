@@ -68,6 +68,25 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     });
 
     [Fact]
+    public void SeedEditor_PackageBinding_UpdatesDraftAndReflectsModelNotifications() => runtime.Invoke(() =>
+    {
+        var source = SeedsWorkflowTests.Seed(1);
+        var vm = SeedsVm(null, source);
+        var editor = new SeedDetailsEditor { DataContext = vm };
+        WpfRuntime.Layout(editor, 1060, 500);
+        var input = WpfRuntime.Descendants<TextBox>(editor).Single(box =>
+            BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == "EditedItem.Package.AmountSeeds");
+        input.Text = "8";
+        input.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();
+        Assert.Equal(8, vm.EditedItem!.Package.AmountSeeds);
+        Assert.Equal(10, source.SeedsInfo.AmountSeeds);
+        Assert.True(vm.HasUnsavedSeedChanges);
+        vm.EditedItem.Package.AmountSeeds = 7;
+        WpfRuntime.Layout(editor, 1060, 500);
+        Assert.Equal("7", input.Text);
+    });
+
+    [Fact]
     public void SeedEditor_HeaderAndInputsPreserveAgreedPresentation() => runtime.Invoke(() =>
     {
         var vm = SeedsVm(null, SeedsWorkflowTests.Seed(1));
@@ -94,10 +113,10 @@ public class WpfBehaviorTests(WpfRuntime runtime)
         var row = Assert.IsType<DataGridRow>(grid.ItemContainerGenerator.ContainerFromIndex(0));
         grid.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Control.MouseDoubleClickEvent, Source = row });
         Assert.Equal(Visibility.Visible, row.DetailsVisibility);
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         grid.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Control.MouseDoubleClickEvent, Source = row });
         Assert.Equal(Visibility.Visible, row.DetailsVisibility);
-        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
+        Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
     });
 
     [Fact]

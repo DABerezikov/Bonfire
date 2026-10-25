@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
+using Bonfire.Models.Mappers;
 
 namespace Services.Tests;
 
@@ -6,6 +9,11 @@ public class SeedEditorIntegrationTests : IDisposable
 {
     private readonly SqliteUowFixture _fx = new();
     public void Dispose() => _fx.Dispose();
+
+    private static Task<Result<SeedEditResultFromViewModel>> SaveAsync(SeedsService service, Seed edited, SortEditModel sort, int producer)
+        => SeedEditMapper.ToRequest(SeedEditMapper.FromSeed(edited), sort, producer).Match(
+            service.SaveSeedEditAsync,
+            error => Task.FromResult(Result.Failure<SeedEditResultFromViewModel>(error)));
 
     [Fact]
     public async Task SaveSeedEditAsync_SharedSort_UpdatesAllPackagesWithoutRenamingProducer()
@@ -17,7 +25,7 @@ public class SeedEditorIntegrationTests : IDisposable
         edit.SeedsInfo.AmountSeeds = 8;
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Черри", Description = "Общее описание" };
 
-        await service.SaveSeedEditAsync(edit, sort, producerId);
+        await SaveAsync(service, edit, sort, producerId);
 
         var first = (await service.GetSeedAsync(firstId))!;
         var second = (await service.GetSeedAsync(secondId))!;
@@ -39,7 +47,7 @@ public class SeedEditorIntegrationTests : IDisposable
         edit.SeedsInfo.Note = "Не сохранять";
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Черри", Description = "Не сохранять" };
 
-        Assert.True((await service.SaveSeedEditAsync(edit, sort, int.MaxValue)).IsFailure);
+        Assert.True((await SaveAsync(service, edit, sort, int.MaxValue)).IsFailure);
 
         var saved = (await service.GetSeedAsync(firstId))!;
         Assert.Null(saved.SeedsInfo.Note);
@@ -75,7 +83,7 @@ public class SeedEditorIntegrationTests : IDisposable
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Новое", PlantColor = "Новый цвет" };
         await _fx.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
             "CREATE TRIGGER RejectPackage BEFORE UPDATE ON SeedsInfo BEGIN SELECT RAISE(ABORT, 'package rejected'); END;"));
-        var result = await service.SaveSeedEditAsync(edit, sort, producer);
+        var result = await SaveAsync(service, edit, sort, producer);
         Assert.Contains("package rejected", result.Match(_ => "не ожидалось", error => error));
         var saved = (await service.GetSeedAsync(id))!;
         Assert.Equal(10, saved.SeedsInfo.AmountSeeds);
@@ -107,7 +115,7 @@ public class SeedEditorIntegrationTests : IDisposable
             PlantHeight = null, MaxPlantHeight = 0, YieldKg = null, MinFruitWeight = 0, MaxFruitWeight = null,
             CultureId = int.MaxValue
         };
-        await service.SaveSeedEditAsync(edit, sort, producer);
+        await SaveAsync(service, edit, sort, producer);
         var saved = (await service.GetSeedAsync(id))!;
         Assert.True(Bonfire.Models.Mappers.SeedMapper.SamePackage(edit.SeedsInfo, saved.SeedsInfo));
         Assert.Equal(" Черри ", saved.Plant.PlantSort.Name);
@@ -149,7 +157,7 @@ public class SeedEditorIntegrationTests : IDisposable
             LandingPattern = 20, LandingRowSpacing = 40,
             MinGerminationTime = 3, MaxGerminationTime = 7, AgeOfSeedlings = 30, MaxAgeOfSeedlings = 40
         };
-        await service.SaveSeedEditAsync(edit, sort, producerId);
+        await SaveAsync(service, edit, sort, producerId);
         var saved = (await service.GetSeedAsync(id))!.Plant.PlantSort;
         Assert.Equal(70, saved.GrowingSeason);
         Assert.Equal(50, saved.PlantHeight);
@@ -166,7 +174,7 @@ public class SeedEditorIntegrationTests : IDisposable
         Assert.Equal(40, saved.MaxAgeOfSeedlings);
         sort.PlantColor = "Красный";
         sort.Maturity = "Ранний";
-        await service.SaveSeedEditAsync(edit, sort, producerId);
+        await SaveAsync(service, edit, sort, producerId);
         var options = await service.GetEditorOptionsAsync();
         Assert.Contains("Полосатый", options.Colors);
         Assert.Contains("Красный", options.Colors);
@@ -187,7 +195,7 @@ public class SeedEditorIntegrationTests : IDisposable
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Новое", PlantColor = "Не сохранять" };
         if (missing) edit.Id = int.MaxValue;
         else sort = new() { Id = int.MaxValue, Name = "Новое", PlantColor = "Не сохранять" };
-        var result = await service.SaveSeedEditAsync(edit, sort, producer);
+        var result = await SaveAsync(service, edit, sort, producer);
         Assert.Contains(missing ? "Запись семян удалена" : "Сорт записи изменён", result.Match(_ => "не ожидалось", error => error));
         var saved = (await service.GetSeedAsync(id))!;
         Assert.Null(saved.SeedsInfo.Note);

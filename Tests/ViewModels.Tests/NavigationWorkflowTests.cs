@@ -34,7 +34,7 @@ public class NavigationWorkflowTests
     {
         var vm = CreateVm(); vm.ShowSeedViewModelCommand.Execute(null);
         vm.SeedsViewModel.SelectedItem = SeedsWorkflowTests.Seed(1);
-        vm.SeedsViewModel.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.SeedsViewModel.EditedItem!.Package.Note = "Черновик";
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirm);
         (target switch
         {
@@ -43,6 +43,6 @@ public class NavigationWorkflowTests
             _ => vm.ShowGardenPlanViewModelCommand
         }).Execute(null);
         Assert.Equal(!confirm, ReferenceEquals(vm.SeedsViewModel, vm.CurrentViewModel));
-        Assert.Equal(confirm ? null : "Черновик", vm.SeedsViewModel.EditedItem.SeedsInfo.Note);
+        Assert.Equal(confirm ? null : "Черновик", vm.SeedsViewModel.EditedItem!.Package.Note);
     }
 }

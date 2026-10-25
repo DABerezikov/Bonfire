@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;
-using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
@@ -15,10 +14,8 @@ namespace Bonfire.Services;
 
 internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed) : ISeedsService
 {
-    public Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(Seed seed, SortEditModel sort, int producerId)
-        => SeedEditMapper.ToRequest(seed, sort, producerId).Match(
-            request => editSeed.ExecuteAsync(request),
-            error => Task.FromResult(Result.Failure<SeedEditResultFromViewModel>(error)));
+    public Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request)
+        => editSeed.ExecuteAsync(request);
 
     public async Task<SeedEditorOptions> GetEditorOptionsAsync()
     {

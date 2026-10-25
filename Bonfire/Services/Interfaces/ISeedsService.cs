@@ -14,7 +14,7 @@ public interface ISeedsService
     Task<Seed?> GetSeedAsync(int id);
     Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest request, IReadOnlyList<Seed> existingSeeds);
     Task<Seed> UpdateSeed(Seed seed);
-    Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(Seed seed, SortEditModel sort, int producerId);
+    Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request);
     Task<SeedEditorOptions> GetEditorOptionsAsync();
     Task<Seed> DeleteSeed(Seed seed);
     Task<Seed> DeleteSeedWithReasonAsync(int seedId, string reason);

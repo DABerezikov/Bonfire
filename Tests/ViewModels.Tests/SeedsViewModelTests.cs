@@ -140,11 +140,11 @@ public class SeedsViewModelTests
         var vm = CreateVm();
         var first = MakeSeed(1);
         vm.SelectedItem = first;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
         vm.SelectedItem = MakeSeed(2);
         Assert.Same(first, vm.SelectedItem);
-        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
+        Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
         Assert.Null(first.SeedsInfo.Note);
     }
 
@@ -155,11 +155,11 @@ public class SeedsViewModelTests
         var first = MakeSeed(1);
         var second = MakeSeed(2);
         vm.SelectedItem = first;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         vm.SelectedItem = second;
         Assert.Same(second, vm.SelectedItem);
-        Assert.Null(vm.EditedItem.SeedsInfo.Note);
+        Assert.Null(vm.EditedItem!.Package.Note);
         Assert.Null(first.SeedsInfo.Note);
         _userDialog.Received(1).YesNoQuestion(Arg.Any<string>(), Arg.Any<string>());
     }
@@ -198,7 +198,7 @@ public class SeedsViewModelTests
         var vm = CreateVm();
         var seed = MakeSeed(1);
         vm.SelectedItem = seed;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         vm.SeedSortDetail!.Description = "Общее описание";
         vm.EditedProducerId = 2;
         _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
@@ -208,8 +208,8 @@ public class SeedsViewModelTests
         Assert.Null(seed.SeedsInfo.Note);
         Assert.Null(seed.Plant.PlantSort.Description);
         Assert.Equal(1, seed.Plant.PlantSort.Producer.Id);
-        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
-        _seedsService.DidNotReceive().SaveSeedEditAsync(Arg.Any<Seed>(), Arg.Any<SortEditModel>(), Arg.Any<int>());
+        Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
+        _seedsService.DidNotReceive().SaveSeedEditAsync(Arg.Any<Bonfire.Application.Seeds.EditSeedFromViewModel>());
     }
 
     private static void SetAllVerificationFields(SeedsViewModel vm)
