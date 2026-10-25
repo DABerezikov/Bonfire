@@ -1737,3 +1737,29 @@ TRX: artifacts/stage6-plan-delete-green. Полный ручной UI/DPI-про
 Предупреждения NuGet/PRAGMA прежние; push/merge не выполнялись.
 
 Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/f83488b63a3443a3a2b12b96635132bd/smoke.db. Рабочая БД не использовалась.
+
+## 2026-10-25 — этап 6, 4в5а: создание плана и участка
+
+Прослежены прежние методы создания, значения по умолчанию EF, привязки и мапперы.
+CreateGardenPlan использует TimeProvider.GetLocalNow, GardenPlanDefinition владеет
+именем. GardenCreation проверяет ID/размеры через общие GardenPlanId/PlotDimensions.
+Не введены Trim, запрет пустых имён, новые минимумы или диапазон года. Нулевой
+холст сохраняется, неконечные/отрицательные размеры и неверный масштаб дают отказ.
+DbGardenCreationWriter проверяет свежий план; FK остаётся последней защитой.
+Оба порта создают ровно одну строку одним SaveChanges; возвращают существующий
+GardenProperties DTO или независимый DTO плана. Маппер UI создаёт совместимый
+кэш плана на границе, EF не передаётся в Application. UI захватывает коллекцию/
+выбор до await, успех не сбрасывает новый выбор, отказ сохраняет черновик.
+
+Red хранения: 6 failed / 6 passed (artifacts/stage6-create-garden-red).
+Ошибки компиляции assertions Option исправлены до доказательного Red; у Option
+нет IsNone/IsSome. Red UI: 3 failed (artifacts/stage6-create-garden-ui-red).
+Green: общий dotnet test Bonfire.sln **1513/1513**, failed/skipped нет; Models 671,
+Services 518, ViewModels 283, Repository 35, SeedsFromViewModel 6. 15 новых проверок:
+локальный год на границе суток, текст/ноль/размеры, удалённый план, два триггера
+отката, недопустимый ввод, отказ и смена плана в UI. TRX:
+artifacts/stage6-create-garden-green. Полный ручной UI/DPI-прогон и Coverlet не
+повторялись; предупреждения NuGet/PRAGMA прежние. Следующий шаг — создание
+элементов/теплиц; этап 6 открыт. Push/merge не выполнялись.
+
+Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/aa6d295d77894a97a877cdbb538145a9/smoke.db. Рабочая БД не использовалась.

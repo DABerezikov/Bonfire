@@ -34,6 +34,8 @@ public static class RepositoryRegister
         .AddSingleton<IGreenhouseDeletionWriter, DbGreenhouseDeletionWriter>()
         .AddSingleton<IGardenDeletionWriter, DbGardenDeletionWriter>()
         .AddSingleton<IGardenPlanDeletionWriter, DbGardenPlanDeletionWriter>()
+        .AddSingleton<IGardenPlanCreationWriter, DbGardenPlanCreationWriter>()
+        .AddSingleton<IGardenCreationWriter, DbGardenCreationWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

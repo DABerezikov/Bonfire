@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties, IEditGreenhouseProperties editGreenhouseProperties, IEditGardenProperties editGardenProperties, ISetGardenLock setGardenLock, IDeleteGardenElement deleteGardenElement, IDeleteGreenhouse deleteGreenhouse, IDeleteGarden deleteGarden, IDeleteGardenPlan deleteGardenPlan) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties, IEditGreenhouseProperties editGreenhouseProperties, IEditGardenProperties editGardenProperties, ISetGardenLock setGardenLock, IDeleteGardenElement deleteGardenElement, IDeleteGreenhouse deleteGreenhouse, IDeleteGarden deleteGarden, IDeleteGardenPlan deleteGardenPlan, ICreateGardenPlan createGardenPlan, ICreateGarden createGarden) : IGardenService
 {
     public Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request)
         => saveGardenGeometry.ExecuteAsync(request);
@@ -45,6 +45,9 @@ internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGr
 
     public Task<Result<GardenPlanDeletionResultFromViewModel>> DeletePlanByIdAsync(DeleteGardenPlanFromViewModel request)
         => deleteGardenPlan.ExecuteAsync(request);
+
+    public Task<Result<GardenPlanResultFromViewModel>> CreateCurrentPlanAsync() => createGardenPlan.ExecuteAsync();
+    public Task<Result<GardenPropertiesResultFromViewModel>> CreateGardenFromRequestAsync(CreateGardenFromViewModel request) => createGarden.ExecuteAsync(request);
 
     // --- Чтение ---
 

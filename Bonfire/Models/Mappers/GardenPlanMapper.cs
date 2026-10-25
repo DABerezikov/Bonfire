@@ -12,6 +12,18 @@ namespace Bonfire.Models.Mappers;
 /// </summary>
 internal static class GardenPlanMapper
 {
+    public static GardenPlan MapPlan(GardenPlanResultFromViewModel plan) => new()
+    {
+        Id = plan.Id, Name = plan.Name, Year = plan.Year, Description = plan.Description.ToNullable()
+    };
+
+    public static GardenFromViewModel MapGarden(GardenPropertiesResultFromViewModel saved)
+    {
+        var garden = new GardenFromViewModel { Id = saved.Id };
+        GardenEditorMapper.Apply(saved, garden);
+        return garden;
+    }
+
     public static PlantingSpotFromViewModel MapSpot(GridSpotFromViewModel spot) => new()
     {
         Id = spot.Id, Row = spot.Row, Column = spot.Column, StateTypeName = spot.StateTypeName,

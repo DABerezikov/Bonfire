@@ -37,6 +37,8 @@ namespace Bonfire.Services
             .AddSingleton<IDeleteGreenhouse, DeleteGreenhouse>()
             .AddSingleton<IDeleteGarden, DeleteGarden>()
             .AddSingleton<IDeleteGardenPlan, DeleteGardenPlan>()
+            .AddSingleton<ICreateGardenPlan, CreateGardenPlan>()
+            .AddSingleton<ICreateGarden, CreateGarden>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

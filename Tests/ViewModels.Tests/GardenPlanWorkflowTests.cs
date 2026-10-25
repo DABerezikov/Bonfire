@@ -69,10 +69,10 @@ public partial class GardenPlanWorkflowTests
     {
         var vm = CreateVm();
         var plan = new GardenPlan { Id = 3, Name = "Новый" };
-        _gardens.CreatePlanAsync(Arg.Any<string>(), DateTime.Now.Year).Returns(plan);
+        _gardens.CreateCurrentPlanAsync().Returns(Result.Success(new GardenPlanResultFromViewModel(plan.Id, plan.Name, plan.Year, Option.None<string>())));
         vm.CreatePlanCommand.Execute(null);
-        Assert.Same(plan, vm.SelectedPlan);
-        Assert.Same(plan, Assert.Single(vm.Plans));
+        Assert.Equal(plan.Id, vm.SelectedPlan!.Id);
+        Assert.Equal(plan.Name, Assert.Single(vm.Plans).Name);
         _gardens.Received().GetGardensByPlanAsync(3);
     }
 
@@ -97,8 +97,8 @@ public partial class GardenPlanWorkflowTests
     public void CreateGarden_UsesPlanAndDisplayScaleAndSelectsCreatedGarden()
     {
         var vm = CreateVm(); vm.SelectedPlan = new GardenPlan { Id = 3 };
-        _gardens.CreateGardenAsync(3, "Новый участок", 20, 15, CanvasConstants.PixelsPerMeter)
-            .Returns(new Garden { Id = 4, Name = "Новый участок", CanvasWidth = 3000, CanvasHeight = 2250 });
+        _gardens.CreateGardenFromRequestAsync(Arg.Is<CreateGardenFromViewModel>(r => r.PlanId == 3 && r.Name == "Новый участок" && r.WidthMeters == 20 && r.HeightMeters == 15 && r.PixelsPerMeter == CanvasConstants.PixelsPerMeter))
+            .Returns(Result.Success(new GardenPropertiesResultFromViewModel(4, new("Новый участок", Option.None<string>(), Option.None<string>(), 20, 15), CanvasRectangle.Create(0, 0, 3000, 2250).ValueOrThrow())));
         vm.CreateGardenCommand.Execute(null);
         Assert.Equal(4, vm.SelectedGarden!.Id);
         Assert.Single(vm.Gardens);

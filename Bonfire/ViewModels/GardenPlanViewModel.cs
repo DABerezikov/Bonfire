@@ -474,11 +474,16 @@ public class GardenPlanViewModel(
 
     private async Task CreatePlanAsync()
     {
-        var year = DateTime.Now.Year;
-        var name = $"План {year}";
-        var plan = await gardenService.CreatePlanAsync(name, year);
-        Plans.Insert(0, plan);
-        SelectedPlan = plan;
+        var plans = Plans;
+        var selected = SelectedPlan;
+        var result = await gardenService.CreateCurrentPlanAsync();
+        result.Match(saved =>
+        {
+            var plan = GardenPlanMapper.MapPlan(saved);
+            plans.Insert(0, plan);
+            if (ReferenceEquals(Plans, plans) && ReferenceEquals(SelectedPlan, selected)) SelectedPlan = plan;
+            return true;
+        }, error => { userDialog.Warning(error, "Создание плана"); return false; });
     }
 
     [field: AllowNull, MaybeNull]
@@ -520,12 +525,19 @@ public class GardenPlanViewModel(
 
     private async Task CreateGardenAsync()
     {
-        if (SelectedPlan is null) return;
-        var garden = await gardenService.CreateGardenAsync(
-            SelectedPlan.Id, "Новый участок", 20, 15, scale: CanvasConstants.PixelsPerMeter);
-        var vm = GardenPlanMapper.MapGarden(garden);
-        Gardens.Add(vm);
-        SelectedGarden = vm;
+        if (SelectedPlan is not { } plan) return;
+        var gardens = Gardens;
+        var selected = SelectedGarden;
+        var result = await gardenService.CreateGardenFromRequestAsync(new(
+            plan.Id, "Новый участок", 20, 15, CanvasConstants.PixelsPerMeter));
+        result.Match(saved =>
+        {
+            var garden = GardenPlanMapper.MapGarden(saved);
+            gardens.Add(garden);
+            if (ReferenceEquals(SelectedPlan, plan) && ReferenceEquals(Gardens, gardens) && ReferenceEquals(SelectedGarden, selected))
+                SelectedGarden = garden;
+            return true;
+        }, error => { userDialog.Warning(error, "Создание участка"); return false; });
     }
 
     [field: AllowNull, MaybeNull]
