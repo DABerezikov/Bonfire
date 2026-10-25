@@ -16,7 +16,7 @@ public class CultureApplicationTests
         var result = await new UpdateCulture(_writer).ExecuteAsync(new(1, "Астра", "Цветы"));
         Assert.Equal("Астра", result.ValueOrThrow().Name);
         await _writer.Received(1).SaveAsync(Arg.Is<CultureDefinition>(culture =>
-            culture.Id.Value == 1 && culture.Name == "Астра" && culture.Class == "Цветы"), Arg.Any<CancellationToken>());
+            culture.Id.Value == 1 && culture.Name.Value == "Астра" && culture.Class == "Цветы"), Arg.Any<CancellationToken>());
     }
 
     [Theory]

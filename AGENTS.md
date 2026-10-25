@@ -24,6 +24,8 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 
 Редактирование культуры проходит через `Application/Libraries/UpdateCulture` и `Domain/Libraries/CultureDefinition`; сохранение — через `BonfireDB/Libraries/DbCultureWriter`. Имя и класс обязательны, идентификатор — `CultureId`. Непустой текст и пользовательские классы сохраняются без неявной нормализации.
 
+Редактирование производителя использует `ProducerDefinition`, `ProducerId`, `UpdateProducer` и `DbProducerWriter`. Общий value object `LibraryName` проверяет названия культуры и производителя; не дублируйте эту проверку в новых доменных моделях. Application возвращает DTO, EF-типы остаются на границе совместимости `LibraryService`.
+
 ## Сборка, запуск и тесты
 
 Работайте в Windows с SDK из `global.json`. Команды выполняйте из корня:

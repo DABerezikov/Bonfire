@@ -25,9 +25,9 @@ public class CultureDefinitionTests
         var updated = original.WithDetails("Астра", "Цветы").ValueOrThrow();
         Assert.NotSame(original, updated);
         Assert.Equal(original.Id, updated.Id);
-        Assert.Equal("Томат", original.Name);
+        Assert.Equal("Томат", original.Name.Value);
         Assert.Equal("Овощи", original.Class);
-        Assert.Equal("Астра", updated.Name);
+        Assert.Equal("Астра", updated.Name.Value);
         Assert.Equal("Цветы", updated.Class);
     }
 
@@ -35,7 +35,7 @@ public class CultureDefinitionTests
     public void Create_NonemptyLegacyText_PreservesWhitespaceAndCustomClass()
     {
         var culture = CultureDefinition.Create(1, " Томат ", "Особый класс").ValueOrThrow();
-        Assert.Equal(" Томат ", culture.Name);
+        Assert.Equal(" Томат ", culture.Name.Value);
         Assert.Equal("Особый класс", culture.Class);
     }
 
@@ -44,6 +44,6 @@ public class CultureDefinitionTests
     {
         var original = CultureDefinition.Create(1, "Томат", "Овощи").ValueOrThrow();
         Assert.True(original.WithDetails("", "Цветы").IsFailure);
-        Assert.Equal("Томат", original.Name);
+        Assert.Equal("Томат", original.Name.Value);
     }
 }

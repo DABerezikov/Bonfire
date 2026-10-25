@@ -20,6 +20,7 @@ namespace Bonfire.Services
             .AddSingleton<IGardenService, GardenService>()
             .AddSingleton<IPlantingService, PlantingService>()
             .AddSingleton<ILibraryService, LibraryService>()
-            .AddSingleton<IUpdateCulture, UpdateCulture>();
+            .AddSingleton<IUpdateCulture, UpdateCulture>()
+            .AddSingleton<IUpdateProducer, UpdateProducer>();
     }
 }

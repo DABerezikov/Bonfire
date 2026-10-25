@@ -17,7 +17,7 @@ public sealed class DbCultureWriter(IUnitOfWorkFactory units) : ICultureWriter
         var entity = await repository.GetAsync(culture.Id.Value, cancellationToken).ConfigureAwait(false);
         if (entity is null) return Result.Failure<CultureDetailsFromViewModel>("Культура не найдена (удалёна?)");
 
-        entity.Name = culture.Name;
+        entity.Name = culture.Name.Value;
         entity.Class = culture.Class;
         try
         {

@@ -12,7 +12,7 @@ using Bonfire.Application.Libraries;
 
 namespace Bonfire.Services;
 
-internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture updateCulture) : ILibraryService
+internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture updateCulture, IUpdateProducer updateProducer) : ILibraryService
 {
     public async Task<Result<PlantSort>> GetSortAsync(int id)
     {
@@ -95,25 +95,7 @@ internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture upda
 
     public async Task<Result<Producer>> UpdateProducerAsync(int id, string name)
     {
-        await using var uow = uowFactory.Create();
-        var entity = await uow.Repository<Producer>().GetAsync(id);
-        if (entity is null)
-            return Result.Failure<Producer>("Производитель не найден (удалён?)");
-
-        entity.Name = name;
-        try
-        {
-            await uow.Repository<Producer>().UpdateAsync(entity);
-            await uow.SaveChangesAsync();
-            return Result.Success(entity);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Result.Failure<Producer>("Запись изменена другим процессом");
-        }
-        catch (DbUpdateException ex)
-        {
-            return Result.Failure<Producer>($"Ошибка БД: {ex.InnerException?.Message ?? ex.Message}");
-        }
+        var result = await updateProducer.ExecuteAsync(new UpdateProducerFromViewModel(id, name));
+        return result.Bind(saved => Result.Success(new Producer { Id = saved.Id, Name = saved.Name }));
     }
 }

@@ -127,10 +127,17 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadProducerDetailAsync(int id)
     {
         var result = await _libraryService.GetProducerAsync(id);
-        if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-        _originalProducerName = result.Value!.Name;
-        ProducerDetailName = result.Value!.Name;
-        ProducerDetailIsDirty = false;
+        result.Match(producer =>
+        {
+            _originalProducerName = producer.Name;
+            ProducerDetailName = producer.Name;
+            ProducerDetailIsDirty = false;
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
     }
 
     // Синхронизация с SeedsViewModel
@@ -257,14 +264,21 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var producerId = SelectedProducer!.Id;
-                var savedName = ProducerDetailName!;
-                var result = await _libraryService.UpdateProducerAsync(producerId, savedName);
-                if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-                SyncAfterProducerUpdate(result.Value!);
-                _originalProducerName = savedName;
-                ProducerDetailIsDirty = false;
-                _userDialog.Information("Сохранено");
+                if (SelectedProducer is not { } producer || ProducerDetailName is not { } name) return;
+                var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
+                result.Match(saved =>
+                {
+                    SyncAfterProducerUpdate(saved);
+                    _originalProducerName = saved.Name;
+                    ProducerDetailName = saved.Name;
+                    ProducerDetailIsDirty = false;
+                    _userDialog.Information("Сохранено");
+                    return true;
+                }, error =>
+                {
+                    _userDialog.Error(error);
+                    return false;
+                });
             }
             catch (Exception ex)
             {

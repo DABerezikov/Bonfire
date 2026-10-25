@@ -31,6 +31,8 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<ISowSeeds>());
         Assert.NotNull(provider.GetRequiredService<IUpdateCulture>());
         Assert.NotNull(provider.GetRequiredService<ICultureWriter>());
+        Assert.NotNull(provider.GetRequiredService<IUpdateProducer>());
+        Assert.NotNull(provider.GetRequiredService<IProducerWriter>());
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
     }
 

@@ -16,6 +16,7 @@ public static class RepositoryRegister
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
+        .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddScoped<IRepository<Plant>, PlantRepository>()
         .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
         .AddScoped<IRepository<PlantSort>, PlantSortRepository>()

@@ -23,7 +23,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public IUnitOfWorkFactory Factory { get; }
 
-    public LibraryService CreateLibraryService() => new(Factory, new UpdateCulture(new DbCultureWriter(Factory)));
+    public LibraryService CreateLibraryService() => new(Factory, new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)));
 
     public SeedlingsService CreateSeedlingsService()
     {
