@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 ﻿using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace Bonfire.Services.Interfaces;
 
 public interface ISeedsService
 {
+    Task<Result<ImmutableArray<SeedReadFromViewModel>>> ReadSeedsAsync();
     Task<IReadOnlyList<Seed>> GetAllSeedsAsync();
     Task<Seed?> GetSeedAsync(int id);
     Task<Result<AcquisitionResultFromViewModel>> AddOrUpdateSeedAsync(AddSeedRequest request);

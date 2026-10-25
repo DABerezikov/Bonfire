@@ -12,15 +12,18 @@ public class LibraryWorkflowTests
     private readonly IUserDialog _dialog = Substitute.For<IUserDialog>();
     private readonly Seed _seed = SeedsWorkflowTests.Seed(1);
 
+    private SeedsViewModel _seedCache = null!;
+
     private (LibraryEditorViewModel Vm, Action Change, ICommand Save, ICommand Cancel, Func<bool> Dirty) Setup(string kind)
     {
         var seeds = new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>())
         {
-            Seeds = [_seed],
+            Seeds = [_seed.Read()],
             AddSortList = [new() { Id = 1, Name = "Черри" }],
             AddCultureList = [new() { Id = 1, Name = "Томат" }],
             AddProducerList = [new() { Id = 1, Name = "Фирма 1" }]
         };
+        _seedCache = seeds;
         var sort = _seed.Plant.PlantSort; sort.Plants.Add(_seed.Plant);
         _library.GetSortAsync(1).Returns(LibraryReadDbMapper.Read(sort));
         _library.GetCultureAsync(1).Returns(Result.Success(LibraryReadDbMapper.Read(_seed.Plant.PlantCulture)));
@@ -58,9 +61,9 @@ public class LibraryWorkflowTests
         Assert.False(setup.Dirty());
         Assert.Equal("Новое", kind switch
         {
-            "Sort" => _seed.Plant.PlantSort.Name,
-            "Culture" => _seed.Plant.PlantCulture.Name,
-            _ => _seed.Plant.PlantSort.Producer.Name
+            "Sort" => _seedCache.Seeds![0].Plant.PlantSort.Name,
+            "Culture" => _seedCache.Seeds![0].Plant.PlantCulture.Name,
+            _ => _seedCache.Seeds![0].Plant.PlantSort.Producer.Name
         });
         _dialog.Received(1).Information("Сохранено", Arg.Any<string>());
     }
@@ -74,9 +77,9 @@ public class LibraryWorkflowTests
                 [new(_seed.Plant.Id, new(7, "Астра", "Цветы")), new(999, new(8, "Другая", "Зелень"))])));
         setup.Change();
         setup.Save.Execute(null);
-        Assert.Equal(7, _seed.Plant.PlantCulture.Id);
-        Assert.Equal("Астра", _seed.Plant.PlantCulture.Name);
-        Assert.Equal("Цветы", _seed.Plant.PlantCulture.Class);
+        Assert.Equal(7, _seedCache.Seeds![0].Plant.PlantCulture.Id);
+        Assert.Equal("Астра", _seedCache.Seeds![0].Plant.PlantCulture.Name);
+        Assert.Equal("Цветы", _seedCache.Seeds![0].Plant.PlantCulture.Class);
         Assert.Equal("Новое", setup.Vm.Sort.Single().Name);
         Assert.False(setup.Dirty());
     }
@@ -93,7 +96,7 @@ public class LibraryWorkflowTests
         _library.UpdateProducerAsync(1, "Новое").Returns(Result.Failure<ProducerDetailsFromViewModel>("Конфликт"));
         setup.Change(); setup.Save.Execute(null);
         Assert.True(setup.Dirty());
-        Assert.Equal("Черри", _seed.Plant.PlantSort.Name);
+        Assert.Equal("Черри", _seedCache.Seeds![0].Plant.PlantSort.Name);
         _dialog.Received(1).Error("Конфликт", Arg.Any<string>());
         _dialog.DidNotReceive().Information(Arg.Any<string>(), Arg.Any<string>());
     }

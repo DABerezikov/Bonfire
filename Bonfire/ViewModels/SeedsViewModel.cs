@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -16,7 +17,7 @@ using Bonfire.Models.Mappers;
 using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities;
+using Bonfire.Application.Libraries;
 
 namespace Bonfire.ViewModels;
 
@@ -122,11 +123,16 @@ public class SeedsViewModel : SourceSelectionViewModel
         }
     }
 
-    private async Task RefreshSeedsAsync()
+    private async Task<Result<ImmutableArray<SeedReadFromViewModel>>> RefreshSeedsAsync()
     {
-        var seeds = await _seedsService.GetAllSeedsAsync();
-        Seeds = new ObservableCollection<Seed>(seeds);
-        UpdateCollectionViewSource();
+        var result = await _seedsService.ReadSeedsAsync();
+        result.Match(seeds =>
+        {
+            Seeds = new(seeds);
+            UpdateCollectionViewSource();
+            return true;
+        }, error => { _userDialog.Error(error); return false; });
+        return result;
     }
 
     // Фильтрация главного списка
@@ -175,7 +181,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     // Основные данные
 
-    public ObservableCollection<Seed>? Seeds
+    public ObservableCollection<SeedReadFromViewModel>? Seeds
     {
         get;
         set => Set(ref field, value);
@@ -196,13 +202,14 @@ public class SeedsViewModel : SourceSelectionViewModel
         }
     }
 
-    public Seed? SelectedItem
+    private SeedReadFromViewModel? _selectedItem;
+    public SeedReadFromViewModel? SelectedItem
     {
-        get;
+        get => _selectedItem;
         set
         {
-            if (!ReferenceEquals(field, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
-            if (Set(ref field, value))
+            if (!ReferenceEquals(_selectedItem, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
+            if (Set(ref _selectedItem, value))
             {
                 LoadSeedDraft(value);
             }
@@ -398,14 +405,6 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     // Методы
 
-    private async Task LoadSeed()
-    {
-        var seeds = await _seedsService.GetAllSeedsAsync();
-        _seedsView.Source = seeds.Select(SeedMapper.ToViewModel).SortSeeds();
-        Seeds = new ObservableCollection<Seed>(seeds);
-        OnPropertyChanged(nameof(SeedsView));
-    }
-
     // Списки культур/сортов/производителей строятся из уже загруженной коллекции Seeds.
     private void LoadListCulture()
     {
@@ -499,7 +498,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         OnPropertyChanged(nameof(ListCulture));
     }
 
-    private void LoadSeedDraft(Seed? seed)
+    private void LoadSeedDraft(SeedReadFromViewModel? seed)
     {
         EditedItem = seed is { } source ? SeedEditMapper.FromSeed(source) : null;
         SeedSortDetail = seed is { } selected ? LibraryMapper.ToEditModel(selected.Plant.PlantSort) : null;
@@ -543,17 +542,28 @@ public class SeedsViewModel : SourceSelectionViewModel
         _reportService.CreateSeedsReport(items, "Семена_выборка");
     }
 
-    internal void SyncAfterSortUpdate(Bonfire.Application.Libraries.SortDetailsFromViewModel updated)
+    private void ReplaceCachedSeed(int index, SeedReadFromViewModel updated)
     {
-        if (Seeds != null)
-            foreach (var seed in Seeds.Where(s => s.Plant.PlantSort.Id == updated.Id))
+        var previous = Seeds![index];
+        Seeds[index] = updated;
+        if (!ReferenceEquals(_selectedItem, previous)) return;
+        _selectedItem = updated;
+        OnPropertyChanged(nameof(SelectedItem));
+    }
+
+    internal void SyncAfterSortUpdate(SortDetailsFromViewModel updated)
+    {
+        if (Seeds is { } seeds)
+            for (var index = 0; index < seeds.Count; index++)
             {
-                seed.Plant.PlantSort.Name = updated.Name;
-                foreach (var link in updated.Plants.Where(p => p.PlantId == seed.Plant.Id))
-                    seed.Plant.PlantCulture = new PlantCulture
-                    {
-                        Id = link.Culture.Id, Name = link.Culture.Name, Class = link.Culture.Class
-                    };
+                var seed = seeds[index];
+                if (seed.Plant.PlantSort.Id != updated.Id) continue;
+                var link = updated.Plants.FirstOrDefault(p => p.PlantId == seed.Plant.Id);
+                ReplaceCachedSeed(index, seed with { Plant = seed.Plant with
+                {
+                    PlantSort = seed.Plant.PlantSort with { Name = updated.Name },
+                    PlantCulture = link is not null ? link.Culture : seed.Plant.PlantCulture
+                } });
             }
 
         var sortItem = AddSortList.FirstOrDefault(s => s.Id == updated.Id);
@@ -566,12 +576,10 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     internal void SyncAfterCultureUpdate(Bonfire.Application.Libraries.CultureDetailsFromViewModel updated)
     {
-        if (Seeds != null)
-            foreach (var seed in Seeds.Where(s => s.Plant.PlantCulture.Id == updated.Id))
-            {
-                seed.Plant.PlantCulture.Name = updated.Name;
-                seed.Plant.PlantCulture.Class = updated.Class;
-            }
+        if (Seeds is { } seeds)
+            for (var index = 0; index < seeds.Count; index++)
+                if (seeds[index] is { } seed && seed.Plant.PlantCulture.Id == updated.Id)
+                    ReplaceCachedSeed(index, seed with { Plant = seed.Plant with { PlantCulture = updated } });
 
         var cultureItem = AddCultureList.FirstOrDefault(c => c.Id == updated.Id);
         if (cultureItem is not null)
@@ -583,9 +591,10 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     internal void SyncAfterProducerUpdate(Bonfire.Application.Libraries.ProducerDetailsFromViewModel updated)
     {
-        if (Seeds != null)
-            foreach (var seed in Seeds.Where(s => s.Plant.PlantSort.Producer.Id == updated.Id))
-                seed.Plant.PlantSort.Producer.Name = updated.Name;
+        if (Seeds is { } seeds)
+            for (var index = 0; index < seeds.Count; index++)
+                if (seeds[index] is { } seed && seed.Plant.PlantSort.Producer.Id == updated.Id)
+                    ReplaceCachedSeed(index, seed with { Plant = seed.Plant with { PlantSort = seed.Plant.PlantSort with { Producer = updated } } });
 
         var producerItem = AddProducerList.FirstOrDefault(p => p.Id == updated.Id);
         if (producerItem is not null)
@@ -609,7 +618,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             UpdateCollectionViewSource();
             return;
         }
-        await LoadSeed();
+        if ((await RefreshSeedsAsync()).IsFailure) return;
         LoadListCulture();
         LoadListSort();
         LoadListProducer();
@@ -649,7 +658,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             await result.Match(async receipt =>
             {
                 _ignoreDiscard = true;
-                await RefreshSeedsAsync();
+                if ((await RefreshSeedsAsync()).IsFailure) return;
                 EditorOptions = await _seedsService.GetEditorOptionsAsync();
                 RebuildSeedSuggestions();
                 ClearFieldSeedView();
@@ -670,7 +679,7 @@ public class SeedsViewModel : SourceSelectionViewModel
     {
         if (_isSaving || SelectedItem is not { } selected) return;
         var reason = _userDialog.RequestDeleteReason(selected.Plant.PlantSort.Name,
-            selected.SeedsInfo.DisposeComment);
+            selected.SeedsInfo.DisposeComment.ToNullable());
         if (reason is null) return;
         SetSaving(true);
         try
@@ -719,7 +728,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             await result.Match(async _ =>
             {
                 _ignoreDiscard = true;
-                await RefreshSeedsAsync();
+                if ((await RefreshSeedsAsync()).IsFailure) return;
                 EditorOptions = await _seedsService.GetEditorOptionsAsync();
                 SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
                 RebuildSeedSuggestions();

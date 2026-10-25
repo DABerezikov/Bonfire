@@ -129,7 +129,7 @@ public class SeedsViewModelTests
                 PlantSort = new PlantSort { Name = "Черри", Producer = new Producer { Name = "Г" } }
             },
             SeedsInfo = new SeedsInfo()
-        };
+        }.Read();
 
         Assert.True(vm.DeleteSeedCommand.CanExecute(null));
     }
@@ -147,7 +147,7 @@ public class SeedsViewModelTests
         vm.SelectedItem = MakeSeed(2);
         Assert.Same(first, vm.SelectedItem);
         Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
-        Assert.Null(first.SeedsInfo.Note);
+        Assert.Null(first.SeedsInfo.Note.ToNullable());
     }
 
     [Fact]
@@ -162,11 +162,11 @@ public class SeedsViewModelTests
         vm.SelectedItem = second;
         Assert.Same(second, vm.SelectedItem);
         Assert.Null(vm.EditedItem!.Package.Note);
-        Assert.Null(first.SeedsInfo.Note);
+        Assert.Null(first.SeedsInfo.Note.ToNullable());
         _userDialog.Received(1).YesNoQuestion(Arg.Any<string>(), Arg.Any<string>());
     }
 
-    private static Seed MakeSeed(int id) => new()
+    private static SeedReadFromViewModel MakeSeed(int id) => new Seed()
     {
         Id = id,
         Plant = new Plant
@@ -175,7 +175,7 @@ public class SeedsViewModelTests
             PlantSort = new PlantSort { Id = 1, Name = "Черри", Producer = new Producer { Id = 1, Name = "Гавриш" } }
         },
         SeedsInfo = new SeedsInfo()
-    };
+    }.Read();
 
     [Fact]
     public void DeleteSeedCommand_Confirmed_RemovesCachedRecordBySavedId()
@@ -207,8 +207,8 @@ public class SeedsViewModelTests
 
         vm.UpdateSeedsInfoCommand.Execute(null);
 
-        Assert.Null(seed.SeedsInfo.Note);
-        Assert.Null(seed.Plant.PlantSort.Description);
+        Assert.Null(seed.SeedsInfo.Note.ToNullable());
+        Assert.Null(seed.Plant.PlantSort.Characteristics.Description.ToNullable());
         Assert.Equal(1, seed.Plant.PlantSort.Producer.Id);
         Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
         _seedsService.DidNotReceive().SaveSeedEditAsync(Arg.Any<Bonfire.Application.Seeds.EditSeedFromViewModel>());

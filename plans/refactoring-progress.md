@@ -1879,3 +1879,29 @@ Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True;
 изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/
 30ff9ceef75c4a5980459e615b028494/smoke.db. Рабочая БД не использовалась.
 Схема/пакеты/предупреждения прежние, push/merge не выполнялись. Этап 7 открыт.
+
+## 2026-10-25 — этап 7, шаг 2б: кэш семян без EF
+
+ReadSeeds задаёт immutable Seed/Plant-снимки, переиспользует SeedPackageValues и
+DTO библиотек/SortCharacteristicsValues. ISeedReader/DbSeedReader читают свежий
+неотслеживаемый граф; SeedReadDbMapper/LibraryReadDbMapper общие. SeedPackage
+проверяет данные чтения, None/Some/ноль/пробелы не смешиваются. Сбой содержит ID,
+БД не переписывается. SeedsViewModel хранит снимки, SeedEditMapper принимает их;
+производители в SeedEditorOptions — независимые DTO. Library-синхронизация через
+with заменяет кэш, общий ReplaceCachedSeed обновляет выбранный снимок, не сбрасывая
+черновик и не запрашивая лишнего подтверждения. Read/refresh общие; отказ не
+очищает поля и не продолжает сценарий как успешное чтение.
+
+Red SQLite: 2 failed, artifacts/stage7-seed-read-red. Red UI 1 failed / 1 passed
+(устаревшая выбранная запись после immutable-замены, сохранность черновика при
+отказе refresh); artifacts/stage7-seed-read-ui-red. Новая фикстура тестов использует
+производственный маппер без дублирования полей. Проверки прежнего поведения
+сохранены; мутация живого кэша в тесте dirty заменена immutable-заменой записи.
+Общий гейт **1550/1550**, failed/skipped нет: Models 678, Services 536,
+ViewModels 295, Repository 35, SeedsFromViewModel 6. Четыре новые проверки;
+TRX: artifacts/stage7-seed-read-green. WPF-редактор и существующая фильтрация/
+отчёты/подтверждения прошли. Старые EF-API и перегрузки мапперов оставлены до
+очистки; инвентарь в рассаде/планировщике пока использует их, следующий шаг 2в.
+Пакеты/схема прежние, рабочая БД не использовалась, push/merge не выполнялись.
+
+Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/f2c1ae6e966e4c5e9e52e26fd383c26c/smoke.db. Рабочая БД не использовалась.

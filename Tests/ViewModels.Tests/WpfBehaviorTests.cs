@@ -1,3 +1,4 @@
+using BonfireDB.Libraries;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -14,11 +15,11 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     private static SeedsViewModel SeedsVm(IUserDialog? dialog = null, params Seed[] seeds)
     {
         var service = Substitute.For<ISeedsService>();
-        service.GetAllSeedsAsync().Returns(seeds);
-        service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => s.Plant.PlantSort.Producer).ToArray()));
+        service.ReadSeedsAsync().Returns(seeds.ReadSeeds());
+        service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToArray()));
         var vm = new SeedsViewModel(service, dialog ?? Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
         vm.LoadDataCommand.Execute(null);
-        if (seeds.Length > 0) vm.SelectedItem = seeds[0];
+        if (seeds.Length > 0) vm.SelectedItem = vm.Seeds![0];
         return vm;
     }
 

@@ -29,7 +29,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public GardenService CreateGardenService() => new(Factory, new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(Factory)), new EditGardenProperties(new DbGardenPropertiesWriter(Factory)), new SetGardenLock(new DbGardenLockWriter(Factory)), new DeleteGardenElement(new DbElementDeletionWriter(Factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(Factory)), new DeleteGarden(new DbGardenDeletionWriter(Factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(Factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(Factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(Factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(Factory)), new DbGardenReader(Factory));
 
-    public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)));
+    public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory));
 
     public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)));
 

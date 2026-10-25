@@ -24,7 +24,7 @@ public class LibraryEditorViewModelTests
         if (sorts != null) vm.AddSortList = sorts;
         if (cultures != null) vm.AddCultureList = cultures;
         if (producers != null) vm.AddProducerList = producers;
-        if (seeds != null) vm.Seeds = seeds;
+        if (seeds != null) vm.Seeds = new(seeds.Select(SeedReadFixtures.Read));
         return vm;
     }
 

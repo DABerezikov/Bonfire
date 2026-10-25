@@ -42,6 +42,7 @@ public static class RepositoryRegister
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()
+        .AddSingleton<ISeedReader, DbSeedReader>()
         .AddSingleton<ISeedEditWriter, DbSeedEditWriter>()
         .AddSingleton<ISeedAcquisitionWriter, DbSeedAcquisitionWriter>()
         .AddSingleton<ISeedDeletionWriter, DbSeedDeletionWriter>()

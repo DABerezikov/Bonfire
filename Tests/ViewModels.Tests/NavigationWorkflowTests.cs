@@ -33,7 +33,7 @@ public class NavigationWorkflowTests
     public void LeavingSeeds_WithDirtyDraft_RequiresDiscardConfirmation(string target, bool confirm)
     {
         var vm = CreateVm(); vm.ShowSeedViewModelCommand.Execute(null);
-        vm.SeedsViewModel.SelectedItem = SeedsWorkflowTests.Seed(1);
+        vm.SeedsViewModel.SelectedItem = SeedsWorkflowTests.Seed(1).Read();
         vm.SeedsViewModel.EditedItem!.Package.Note = "Черновик";
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirm);
         (target switch

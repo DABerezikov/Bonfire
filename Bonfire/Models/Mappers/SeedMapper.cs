@@ -1,3 +1,5 @@
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
 using BonfireDB.Entities;
 
 namespace Bonfire.Models.Mappers;
@@ -33,7 +35,7 @@ internal static class SeedMapper
         to.DisposeComment = from.DisposeComment;
     }
 
-    public static SeedsFromViewModel ToViewModel(Seed seed) => new()
+    public static SeedsFromViewModel ToViewModel(SeedReadFromViewModel seed) => new()
     {
         Id = seed.Id,
         Culture = seed.Plant.PlantCulture.Name,
@@ -43,8 +45,11 @@ internal static class SeedMapper
         QuantityPack = seed.SeedsInfo.QuantityPack,
         WeightPack = seed.SeedsInfo.WeightPack,
         AmountSeedsQuantity = seed.SeedsInfo.AmountSeeds,
-        AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight
+        AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight.ToNullable()
     };
+
+    public static SeedsFromViewModel ToViewModel(Seed seed)
+        => ToViewModel(BonfireDB.SeedEditing.SeedReadDbMapper.Read(seed).ValueOrThrow());
 
     /// <summary>
     /// Глубокое копирование полей (Plant/Sort/Culture/Producer/SeedsInfo)

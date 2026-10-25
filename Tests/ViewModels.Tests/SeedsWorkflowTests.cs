@@ -1,3 +1,4 @@
+using BonfireDB.Libraries;
 using System.Threading.Tasks;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
@@ -12,8 +13,8 @@ public class SeedsWorkflowTests
 
     private SeedsViewModel CreateVm(params Seed[] seeds)
     {
-        _service.GetAllSeedsAsync().Returns(seeds);
-        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => s.Plant.PlantSort.Producer).ToArray()));
+        _service.ReadSeedsAsync().Returns(seeds.ReadSeeds());
+        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToArray()));
         var vm = new SeedsViewModel(_service, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         return vm;
@@ -92,8 +93,8 @@ public class SeedsWorkflowTests
         AcquisitionResultFromViewModel receipt = isNew ? new AcquisitionResultFromViewModel.Created(returned.Id)
             : new AcquisitionResultFromViewModel.Replenished(returned.Id);
         _service.AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>()).Returns(Result.Success(receipt));
-        _service.GetAllSeedsAsync().Returns(isNew ? new[] { existing, returned } : new[] { existing });
-        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions([], [], [returned.Plant.PlantSort.Producer]));
+        _service.ReadSeedsAsync().Returns((isNew ? new[] { existing, returned } : new[] { existing }).ReadSeeds());
+        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions([], [], [LibraryReadDbMapper.Read(returned.Plant.PlantSort.Producer)]));
         vm.SeedSource = "Куплено"; vm.AddClass = "Цветы"; vm.AddCulture = "Астра";
         vm.AddSort = "Новая"; vm.AddProducer = "Фирма"; vm.AddSize = Units.GramsOption;
         vm.AddQuantityInPac = "0,5"; vm.AddQuantityPac = "2"; vm.AddCostPack = "10,50";
@@ -111,7 +112,7 @@ public class SeedsWorkflowTests
     {
         var source = Seed(1);
         var vm = CreateVm(source);
-        vm.SelectedItem = source;
+        vm.SelectedItem = vm.Seeds!.Single(s => s.Id == source.Id);
         vm.EditedItem!.Package.Note = "Не терять";
         vm.SeedSource = "Куплено"; vm.AddClass = "Овощи"; vm.AddCulture = "Томат";
         vm.AddSort = "Черри"; vm.AddProducer = "Фирма"; vm.AddSize = Units.PiecesOption;
@@ -137,7 +138,7 @@ public class SeedsWorkflowTests
         Assert.Equal("0,5", vm.AddQuantityInPac);
         Assert.True(vm.CanEditSeedDetails);
         _dialog.Received(1).Error("Ошибка добавления", Arg.Any<string>());
-        _service.DidNotReceive().GetAllSeedsAsync();
+        _service.DidNotReceive().ReadSeedsAsync();
     }
 
     [Fact]
@@ -145,14 +146,14 @@ public class SeedsWorkflowTests
     {
         var original = Seed(1);
         var vm = CreateVm(original);
-        vm.SelectedItem = original;
+        vm.SelectedItem = vm.Seeds!.Single(s => s.Id == original.Id);
         vm.EditedItem!.Package.Note = "Черновик";
         vm.SeedSortDetail!.Description = "Общее описание";
         vm.EditedProducerId = 2;
         var saved = Seed(1); saved.SeedsInfo.Note = "Черновик";
         saved.Plant.PlantSort.Description = "Общее описание";
         saved.Plant.PlantSort.Producer = new Producer { Id = 2, Name = "Новый" };
-        _service.GetAllSeedsAsync().Returns(new[] { saved });
+        _service.ReadSeedsAsync().Returns(new[] { saved }.ReadSeeds());
         _service.SaveSeedEditAsync(Arg.Is<Bonfire.Application.Seeds.EditSeedFromViewModel>(r => r.ProducerId == 2)).Returns(_ =>
         {
             Assert.Null(original.SeedsInfo.Note);
@@ -161,7 +162,7 @@ public class SeedsWorkflowTests
         });
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         vm.UpdateSeedsInfoCommand.Execute(null);
-        Assert.Equal("Черновик", vm.SelectedItem!.SeedsInfo.Note);
+        Assert.Equal("Черновик", vm.SelectedItem!.SeedsInfo.Note.ToNullable());
         Assert.Equal("Общее описание", vm.SeedSortDetail!.Description);
         Assert.Equal(2, vm.EditedProducerId);
         Assert.False(vm.HasUnsavedSeedChanges);
@@ -190,12 +191,12 @@ public class SeedsWorkflowTests
     {
         var original = Seed(1);
         var vm = CreateVm(original);
-        vm.SelectedItem = original;
+        vm.SelectedItem = vm.Seeds!.Single(s => s.Id == original.Id);
         vm.EditedItem!.Package.Note = "Не терять";
         _dialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("Удалить");
         _service.DeleteSeedWithReasonAsync(1, "Удалить").Returns(Result.Failure<SeedDeletionResultFromViewModel>("Ошибка удаления"));
         vm.DeleteSeedCommand.Execute(null);
-        Assert.Same(original, vm.SelectedItem);
+        Assert.Same(vm.Seeds!.Single(s => s.Id == original.Id), vm.SelectedItem);
         Assert.Single(vm.Seeds!);
         Assert.Equal("Не терять", vm.EditedItem.Package.Note);
         Assert.True(vm.CanEditSeedDetails);
@@ -207,7 +208,7 @@ public class SeedsWorkflowTests
     {
         var first = Seed(1);
         var vm = CreateVm(first, Seed(2, "Астра", "Белая", "Цветы"));
-        vm.SelectedItem = first;
+        vm.SelectedItem = vm.Seeds!.Single(s => s.Id == first.Id);
         vm.EditedItem!.Package.Note = "Сбросить после удаления";
         _dialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("");
         _service.DeleteSeedWithReasonAsync(1, "").Returns(Result.Success(new SeedDeletionResultFromViewModel(1)));
@@ -230,7 +231,7 @@ public class SeedsWorkflowTests
     {
         var original = Seed(1);
         var vm = CreateVm(original);
-        vm.SelectedItem = original;
+        vm.SelectedItem = vm.Seeds!.Single(s => s.Id == original.Id);
         vm.EditedItem!.Package.Note = "Не терять";
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         _service.SaveSeedEditAsync(Arg.Any<Bonfire.Application.Seeds.EditSeedFromViewModel>())
@@ -242,7 +243,7 @@ public class SeedsWorkflowTests
         Assert.True(vm.CanEditSeedDetails);
         Assert.Null(original.SeedsInfo.Note);
         _dialog.Received(1).Error("Ошибка сохранения", Arg.Any<string>());
-        _service.DidNotReceive().GetAllSeedsAsync();
+        _service.DidNotReceive().ReadSeedsAsync();
     }
 
     [Fact]
@@ -250,9 +251,9 @@ public class SeedsWorkflowTests
     {
         var original = Seed(1);
         var vm = CreateVm(original);
-        vm.SelectedItem = original;
+        vm.SelectedItem = vm.Seeds!.Single(s => s.Id == original.Id);
         vm.EditedItem!.Package.AmountSeeds = 8;
-        original.SeedsInfo.AmountSeeds = 8;
+        vm.Seeds![0] = vm.Seeds[0] with { SeedsInfo = vm.Seeds[0].SeedsInfo with { AmountSeeds = 8 } };
         Assert.True(vm.HasUnsavedSeedChanges);
     }
 

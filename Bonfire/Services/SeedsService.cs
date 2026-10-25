@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 using System;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
@@ -13,8 +16,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed) : ISeedsService
+internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed, ISeedReader seedReader) : ISeedsService
 {
+    public Task<Result<ImmutableArray<SeedReadFromViewModel>>> ReadSeedsAsync() => seedReader.ReadAsync(default);
+
     public Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request)
         => editSeed.ExecuteAsync(request);
 
@@ -30,7 +35,7 @@ internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, I
         return new SeedEditorOptions(
             Values(sorts.Select(s => s.PlantColor).Concat(options.Where(o => o.Category == "Цвет").Select(o => o.Name))),
             Values(sorts.Select(s => s.Maturity).Concat(options.Where(o => o.Category == "Созревание").Select(o => o.Name))),
-            producers);
+            producers.Select(LibraryReadDbMapper.Read).ToArray());
     }
 
     public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync()

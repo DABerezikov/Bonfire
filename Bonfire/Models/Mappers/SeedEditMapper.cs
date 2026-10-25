@@ -15,6 +15,9 @@ internal static class SeedEditMapper
             seed.Plant.PlantSort.Producer.Id, SeedPackageDbMapper.Read(seed.SeedsInfo));
     }
 
+    public static SeedEditorDraft FromSeed(SeedReadFromViewModel seed)
+        => new(seed.Id, seed.Plant.PlantCulture.Name, seed.Plant.PlantSort.Name, seed.Plant.PlantSort.Producer.Id, seed.SeedsInfo);
+
     public static Result<EditSeedFromViewModel> ToRequest(SeedEditorDraft draft, SortEditModel sort, int producerId)
     {
         ArgumentNullException.ThrowIfNull(draft);
