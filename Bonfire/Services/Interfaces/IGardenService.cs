@@ -25,6 +25,8 @@ public interface IGardenService
 
     Task<Result<ElementDeletionResultFromViewModel>> DeleteGardenElementAsync(DeleteGardenElementFromViewModel request);
 
+    Task<Result<GreenhouseDeletionResultFromViewModel>> DeleteGreenhouseByIdAsync(DeleteGreenhouseFromViewModel request);
+
     // --- Чтение ---
     Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
     Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);

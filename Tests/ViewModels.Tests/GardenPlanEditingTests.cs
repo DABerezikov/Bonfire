@@ -55,12 +55,13 @@ public partial class GardenPlanWorkflowTests
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
         var selected = new GreenhouseFromViewModel { Id = 2 };
         vm.SelectedGarden.Greenhouses.Add(selected); vm.SelectedGreenhouse = selected;
-        var entity = new Greenhouse { Id = 2 };
-        _gardens.GetGreenhouseByIdAsync(2).Returns(entity);
+        _gardens.DeleteGreenhouseByIdAsync(Arg.Any<DeleteGreenhouseFromViewModel>()).Returns(Result.Success(new GreenhouseDeletionResultFromViewModel(2)));
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirmed);
         vm.DeleteGreenhouseCommand.Execute(null);
         Assert.Equal(confirmed ? 0 : 1, vm.SelectedGarden.Greenhouses.Count);
-        _gardens.Received(confirmed ? 1 : 0).DeleteGreenhouseAsync(entity);
+        _gardens.Received(confirmed ? 1 : 0).DeleteGreenhouseByIdAsync(Arg.Is<DeleteGreenhouseFromViewModel>(r => r.GreenhouseId == 2));
+        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
+        _gardens.DidNotReceive().DeleteGreenhouseAsync(Arg.Any<Greenhouse>());
     }
 
     [Theory]

@@ -677,17 +677,25 @@ public class GardenPlanViewModel(
 
     private async Task DeleteGreenhouseAsync()
     {
-        if (SelectedGreenhouse is null || SelectedGarden is null) return;
+        if (SelectedGreenhouse is not { } house || SelectedGarden is not { } garden) return;
+        var houses = garden.Greenhouses;
         if (!userDialog.YesNoQuestion(
-                $"Удалить теплицу «{SelectedGreenhouse.Name}»? Все элементы и посадки будут удалены.",
+                $"Удалить теплицу «{house.Name}»? Все элементы и посадки будут удалены.",
                 "Удаление теплицы")) return;
 
-        var entity = await gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
-        if (entity is null) return;
-
-        await gardenService.DeleteGreenhouseAsync(entity);
-        SelectedGarden.Greenhouses.Remove(SelectedGreenhouse);
-        SelectedGreenhouse = null;
+        var result = await gardenService.DeleteGreenhouseByIdAsync(new(house.Id));
+        result.Match(_ =>
+        {
+            houses.Remove(house);
+            if (EditingGridElement is { } grid && house.InnerElements.Contains(grid)) CloseGridFor(grid);
+            if (ReferenceEquals(SelectedGreenhouse, house))
+            {
+                IsEditingGreenhouse = false;
+                SelectedGreenhouse = null;
+            }
+            else if (SelectedElement is { } selected && house.InnerElements.Contains(selected)) SelectedElement = null;
+            return true;
+        }, error => { userDialog.Warning(error, "Удаление теплицы"); return false; });
     }
 
     [field: AllowNull, MaybeNull]
@@ -873,14 +881,17 @@ public class GardenPlanViewModel(
         {
             elements.Remove(editing);
             if (ReferenceEquals(SelectedElement, editing)) SelectedElement = null;
-            if (ReferenceEquals(EditingGridElement, editing))
-            {
-                IsGridOpen = false;
-                EditingGridElement = null;
-                SelectedSpot = null;
-            }
+            CloseGridFor(editing);
             return true;
         }, error => { userDialog.Warning(error, "Удаление элемента"); return false; });
+    }
+
+    private void CloseGridFor(GardenElementFromViewModel model)
+    {
+        if (!ReferenceEquals(EditingGridElement, model)) return;
+        IsGridOpen = false;
+        EditingGridElement = null;
+        SelectedSpot = null;
     }
 
     [field: AllowNull, MaybeNull]
