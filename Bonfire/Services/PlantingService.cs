@@ -1,122 +1,31 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Garden;
+using Bonfire.Domain.Seedlings;
+using Bonfire.Domain.Seeds;
 using Bonfire.Models;
 using Bonfire.Services.Interfaces;
-using BonfireDB.Entities;
-using BonfireDB.Entities.Base;
-using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
-using BonfireDB.Sowing;
-using MoonCalendar;
 
 namespace Bonfire.Services;
 
-// Бизнес-операция «посадить в ячейку» выполняется в ОДНОМ Unit of Work:
-// загрузка ячейки/рассады/семени, списание инвентаря, создание записи о рассаде
-// и перевод ячейки — всё в одном контексте и одним SaveChanges (атомарно).
-internal class PlantingService(IUnitOfWorkFactory uowFactory, MoonPhase lunar) : IPlantingService
+internal class PlantingService(IPlantInSpot planting) : IPlantingService
 {
-    public async Task<PlantResult> PlantAsync(PlantRequest request)
+    public Task<Result<PlantingResultFromViewModel>> PlantAsync(PlantRequest request, CancellationToken cancellationToken = default)
     {
-        await using var uow = uowFactory.Create();
-
-        var spot = await uow.Repository<PlantingSpot>().GetAsync(request.SpotId);
-        if (spot is null) return new PlantResult(false, null);
-
-        var newState = new PlantedSpotState();
-        if (!spot.State.CanTransitionTo(newState)) return new PlantResult(false, null);
-
-        var info = request.Kind == PlantSourceKind.Seedling
-            ? await PlantFromSeedlingAsync(uow, request)
-            : await PlantFromSeedAsync(uow, request);
-
-        if (info is null) return new PlantResult(false, null);
-
-        // Перевод ячейки: метка, дата и привязка к записи о рассаде (через навигацию,
-        // чтобы FK SeedlingInfoId проставился после генерации ключа записи).
-        spot.TransitionTo(newState);
-        spot.Note        = request.PlantName;
-        spot.PlantedDate = request.PlantedDate;
-        spot.SeedlingInfo = info;
-
-        await uow.SaveChangesAsync();
-        return new PlantResult(true, info.Id);
-    }
-
-    // Высадка взошедшей рассады: списываем из доступного у источника и создаём
-    // отдельную «высаженную партию» (новую Seedling в грядке) — отдельной строкой.
-    // Из рассады сажают ВЗОШЕДШИЕ живые ростки штучно (вес рассады не при чём).
-    // Доступно = взошедшие живые − уже высаженные; нельзя высадить больше доступного.
-    private async Task<SeedlingInfo?> PlantFromSeedlingAsync(IUnitOfWork uow, PlantRequest request)
-    {
-        var source = await uow.Repository<Seedling>().GetAsync(request.EntityId);
-        if (source is null) return null;
-        if (source.IsPlantedInBed) return null; // уже в грядке — повторно не сажаем (только пересадка)
-
-        return SeedlingBatchDbMapper.Read(source)
-            .Bind(batch => batch.PlantOut(request.Amount))
-            .Match<SeedlingInfo?>(change =>
-            {
-                // Источнику засчитываем высаженные ростки; посеяно и вес не меняются.
-                source.PlantedOut = change.Remaining.PlantedOut;
-                return CreatePlantedBatch(uow, source.Plant, source.SeedId, change.Quantity, weightBased: false,
-                    request.PlantedDate, request.PlantPlace);
-            }, _ => null);
-    }
-
-    // Прямой посев семян: списываем из пакета и создаём новую рассаду в грядке.
-    // Нельзя посеять больше, чем есть семян.
-    private async Task<SeedlingInfo?> PlantFromSeedAsync(IUnitOfWork uow, PlantRequest request)
-    {
-        var seed = await uow.Repository<Seed>().GetAsync(request.EntityId);
-        if (seed is null) return null;
-
-        var available = request.IsWeightBased ? (seed.SeedsInfo.AmountSeedsWeight ?? 0) : seed.SeedsInfo.AmountSeeds;
-        if (available <= 0) return null; // семян нет
-
-        var amount = Math.Min(request.Amount, available);
-
-        if (request.IsWeightBased)
-            seed.SeedsInfo.AmountSeedsWeight = Math.Max(0, (seed.SeedsInfo.AmountSeedsWeight ?? 0) - amount);
-        else
-            seed.SeedsInfo.AmountSeeds = Math.Max(0, seed.SeedsInfo.AmountSeeds - (int)Math.Round(amount));
-
-        return CreatePlantedBatch(uow, seed.Plant, seed.Id, amount, request.IsWeightBased,
-            request.PlantedDate, request.PlantPlace);
-    }
-
-    // Создаёт отдельную «высаженную партию» в грядке: новую Seedling с количеством =
-    // высажено и привязкой к месту. plant/seedId берутся у источника (рассада или семя).
-    // Attach графа: новая партия и её запись → Added, существующее растение → Unchanged.
-    private SeedlingInfo CreatePlantedBatch(IUnitOfWork uow, Plant plant, int seedId, double amount,
-        bool weightBased, DateTime plantedDate, string? plantPlace)
-    {
-        var moonPhase = lunar.GetMoonPhase(plantedDate);
-        var info = new SeedlingInfo
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+        var source = request.Kind switch
         {
-            LandingDate    = plantedDate,
-            LunarPhase     = moonPhase,
-            SeedlingNumber = 0,
-            SeedlingSource = PlantSources.FromSeeds,
-            PlantPlace     = plantPlace
+            PlantSourceKind.Seedling => SeedlingId.Create(request.EntityId).Bind(id => Result.Success<PlantingSource>(new PlantingSource.Seedlings(id))),
+            PlantSourceKind.Seed => SeedId.Create(request.EntityId).Bind(id => Result.Success<PlantingSource>(new PlantingSource.Seeds(id,
+                request.IsWeightBased ? SeedUnit.Grams : SeedUnit.Pieces))),
+            _ => Result.Failure<PlantingSource>("Неизвестный источник посадки")
         };
-        var batch = new Seedling
-        {
-            Plant          = plant,
-            SeedId         = seedId,
-            LandingDate    = plantedDate,
-            LunarPhase     = moonPhase,
-            SeedlingSource = PlantSources.FromSeeds,
-            PlantPlace     = plantPlace,
-            IsPlantedInBed = true, // партия уже в грядке — не доступна к повторной посадке
-            SeedlingInfos  = [info]
-        };
-        if (weightBased)
-            batch.Weight = amount;
-        else
-            batch.Quantity = (int)Math.Round(amount);
-
-        uow.Repository<Seedling>().Add(batch);
-        return info;
+        return source.Match(value => planting.ExecuteAsync(new(request.SpotId, value, request.Amount, request.PlantedDate,
+            request.PlantName, request.PlantPlace.ToOption()), cancellationToken),
+            error => Task.FromResult(Result.Failure<PlantingResultFromViewModel>(error)));
     }
 }

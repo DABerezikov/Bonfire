@@ -6,6 +6,15 @@ namespace BonfireDB.SeedEditing;
 
 public static class SeedPackageDbMapper
 {
+    public static Result<SeedStock> ReadStock(SeedsInfo info, SeedUnit unit) => (unit switch
+    {
+        SeedUnit.Pieces => SeedAmount.Create(info.AmountSeeds, unit),
+        SeedUnit.Grams => info.AmountSeedsWeight.ToOption().Match(
+            weight => SeedAmount.Create(weight, unit),
+            () => Result.Failure<SeedAmount>("Вес остатка семян не указан")),
+        _ => Result.Failure<SeedAmount>("Неизвестная единица семян")
+    }).Bind(amount => Result.Success(new SeedStock(amount)));
+
     public static SeedPackageValues Read(SeedsInfo info)
     {
         ArgumentNullException.ThrowIfNull(info);

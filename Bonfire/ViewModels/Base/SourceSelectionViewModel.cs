@@ -1,5 +1,7 @@
 using Bonfire.Models;
 
+using Bonfire.Domain.Seeds;
+
 namespace Bonfire.ViewModels.Base;
 
 /// <summary>

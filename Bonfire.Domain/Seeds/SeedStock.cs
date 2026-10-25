@@ -21,6 +21,16 @@ public sealed class SeedStock
                 .Bind(amount => Result.Success(new SeedStock(amount)));
     }
 
+    public Result<SowingChange> SowUpTo(SeedAmount requested)
+    {
+        ArgumentNullException.ThrowIfNull(requested);
+        if (requested.Unit != Available.Unit)
+            return Result.Failure<SowingChange>("Единицы остатка и посева должны совпадать");
+        var amount = Math.Min(requested.Value, Available.Value);
+        return SeedAmount.Create(requested.Unit == SeedUnit.Pieces ? Math.Round(amount) : amount, requested.Unit)
+            .Bind(Sow);
+    }
+
     public Result<SowingChange> Sow(SeedAmount requested)
     {
         ArgumentNullException.ThrowIfNull(requested);

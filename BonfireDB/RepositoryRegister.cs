@@ -8,6 +8,8 @@ using Bonfire.Application.Libraries;
 using BonfireDB.Libraries;
 using Bonfire.Application.Seeds;
 using BonfireDB.SeedEditing;
+using Bonfire.Application.Garden;
+using BonfireDB.Planting;
 
 namespace BonfireDB;
 
@@ -20,6 +22,7 @@ public static class RepositoryRegister
         .AddSingleton<ISeedlingDeletionWriter, DbSeedlingDeletionWriter>()
         .AddSingleton<ISeedlingChangeWriter, DbSeedlingChangeWriter>()
         .AddSingleton<ISeedlingEditWriter, DbSeedlingEditWriter>()
+        .AddSingleton<IPlantingWriter, DbPlantingWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

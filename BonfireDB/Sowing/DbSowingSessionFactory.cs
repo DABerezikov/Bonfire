@@ -3,6 +3,7 @@ using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
+using BonfireDB.SeedEditing;
 
 namespace BonfireDB.Sowing;
 
@@ -18,17 +19,10 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
         {
             var seed = await unit.Repository<Seed>().GetAsync(seedId, cancellationToken).ConfigureAwait(false);
             if (seed is null) return Result.Failure<SeedStock>("Пакет семян не найден");
-            var amount = measure switch
-            {
-                SeedUnit.Pieces => SeedAmount.Create(seed.SeedsInfo.AmountSeeds, measure),
-                SeedUnit.Grams when seed.SeedsInfo.AmountSeedsWeight is double weight => SeedAmount.Create(weight, measure),
-                SeedUnit.Grams => Result.Failure<SeedAmount>("Вес остатка семян не указан"),
-                _ => Result.Failure<SeedAmount>("Неизвестная единица семян")
-            };
-            return amount.Bind(value =>
+            return SeedPackageDbMapper.ReadStock(seed.SeedsInfo, measure).Bind(stock =>
             {
                 _loaded = Option.Some(seed);
-                return Result.Success(new SeedStock(value));
+                return Result.Success(stock);
             });
         }
 

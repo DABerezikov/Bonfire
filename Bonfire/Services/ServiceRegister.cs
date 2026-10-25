@@ -6,6 +6,7 @@ using Bonfire.Application.Seedlings;
 using Bonfire.Infrastructure;
 using Bonfire.Application.Libraries;
 using Bonfire.Application.Seeds;
+using Bonfire.Application.Garden;
 
 namespace Bonfire.Services
 {
@@ -24,6 +25,7 @@ namespace Bonfire.Services
             .AddSingleton(typeof(MoonPhase))
             .AddSingleton<IGardenService, GardenService>()
             .AddSingleton<IPlantingService, PlantingService>()
+            .AddSingleton<IPlantInSpot, PlantInSpot>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

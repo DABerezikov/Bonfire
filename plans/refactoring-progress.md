@@ -949,3 +949,59 @@ Green: общий dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:fa
 Схема, XAML и DI не менялись; визуальный и startup smoke в этом шаге не повторялись.
 Предупреждения NuGet остаются прежними; покрытие строк не измерялось. Чужие
 DbSeedEditWriter.cs и .claude/worktrees не включены. Этап 6 в целом ещё не завершён.
+
+## 25.10.2026 — посадка через Application и свежий остаток в UI
+
+Шаг 2 этапа 6 завершён. PlantingService оставлен адаптером WPF-запроса; неизвестный
+тип и неверные ID дают Result. PlantInSpot проверяет SpotPlanting до вызова общего
+ILunarCalendar и IPlantingWriter. Источник — закрытые Seedlings/Seeds с существующими
+SeedlingId/SeedId; расход — SeedAmount, отсутствие места — Option. EF/WPF отсутствуют
+в новых контрактах Application. Map/enum-состояния и параллельный toolkit не добавлены.
+
+DbPlantingWriter читает свежую ячейку и источник в одном коротком UoW. Высадка рассады
+использует SeedlingBatch.PlantOut; прямой посев — SeedStock.SowUpTo, который сначала
+ограничивает расход остатком, округляет только штуки и вызывает существующий Sow.
+Нулевой расход и округление сверх доступного дробного остатка дают отказ: пакет
+0.6 шт. не превращается в партию 1 шт. Дробные граммы не округляются. Это явная
+защита сохранения количества вместо прежнего Math.Max(0, ...) после списания.
+Рабочая БД и частота таких исторических остатков не исследовались и не изменялись.
+
+Чтение SeedStock общее через SeedPackageDbMapper.ReadStock для посева в рассаду и
+в ячейку. Существующие PlantSources перенесены в Domain/Seeds без изменения строк;
+новая копия справочника не создана. Новая партия по-прежнему сохраняет источник
+«Из семян», общий Plant и информационный SeedId; рассада не требует наличия пакета.
+Типы EF, строковые состояния ячеек, TPH и Composite не менялись.
+
+Один SaveChanges сохраняет расход/PlantedOut, новую партию и ячейку. Отказы
+DbUpdateException/DbUpdateConcurrencyException возвращаются Result; отмена остаётся
+OperationCanceledException. Схема не менялась, новые concurrency-токены не добавлены;
+защита от двух одновременных успешных записей не заявляется. Результат содержит
+ID ячейки/записи, фактический расход и свежий остаток с единицами. UI устанавливает
+остаток из результата вместо вычитания введённого количества. При отказе остаются
+выбор, количество, ячейка и остаток; показывается причина. XAML не менялся.
+
+Red: SpotSeedSowingTests — 6/11 падают на заглушке; PlantingApplicationTests — 3/8
+(отмена, делегирование и причина отказа); SQLite Writer — 6/6 на заглушке; UI — 2/2
+на прежнем вычитании. Первый запуск SQLite остановился на конфликте namespace
+BonfireDB.Garden с EF-типом Garden: это ошибка компиляции, не Red. Namespace изменён
+на BonfireDB.Planting, повторный запуск ...-storage-red-fixed дал исполняемый Red.
+Артефакты: artifacts/refactoring-stage-6-application-{domain-red,red,storage-red-fixed,ui-red}.
+
+Green и финальный гейт:
+dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false
+-p:UseSharedCompilation=false --logger trx --results-directory artifacts/refactoring-stage-6-application-final
+— 1060/1060, без пропусков (Models 486, Services 351, ViewModels 182, Repository 35,
+DTO 6). Добавлено 28 проверок к 1032. Прежние сценарии PlantingService сохранены,
+адаптирован контракт результата и ожидание отказа БД. Проверены также полный откат,
+метаданные/фаза, свежий счётчик рассады, неизвестный вес, ограничения и округление.
+
+Реальный dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj --no-restore
+-p:UseSharedCompilation=false: STARTUP_SMOKE_OK, WindowLoaded=True, HostDisposed=True.
+Изолированная БД: Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/
+22d63a83cd4c492196c10899dee92bca/smoke.db. Рабочая БД не использовалась. Остаются
+предупреждения NuGet и старых миграций PRAGMA foreign_keys; новых миграций нет.
+Coverlet и ручная проверка всех DPI/модальных ошибок не выполнялись.
+
+Следующий шаг — чистые переходы состояний и перестройка сетки с сохранением
+дискриминаторов и истории. Этап 6 целиком ещё не завершён. .claude/worktrees
+в коммит не включается; push и merge не выполняются.

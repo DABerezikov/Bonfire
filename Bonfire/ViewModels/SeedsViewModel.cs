@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Bonfire.Data;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;

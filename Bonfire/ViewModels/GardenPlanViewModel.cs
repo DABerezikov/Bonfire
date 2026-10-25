@@ -1073,22 +1073,27 @@ public class GardenPlanViewModel(
             PlantName:     source.PlantName,
             PlantPlace:    string.IsNullOrEmpty(plantPlace) ? null : plantPlace));
 
-        if (!result.Success) return;
-
-        // Списываем остаток в пикере и убираем позицию, если исчерпана
-        source.AvailableQty -= PlantingAmount;
-        if (source.AvailableQty <= 0)
+        result.Match(receipt =>
         {
-            if (source.Kind == PlantSourceKind.Seedling)
-                AvailableSeedlingItems.Remove(source);
-            else
-                AvailableSeedItems.Remove(source);
-        }
+            // Порт возвращает свежий остаток с учётом фактического расхода.
+            source.AvailableQty = receipt.Remaining.Value;
+            if (source.AvailableQty <= 0)
+            {
+                if (source.Kind == PlantSourceKind.Seedling)
+                    AvailableSeedlingItems.Remove(source);
+                else
+                    AvailableSeedItems.Remove(source);
+            }
 
-        spotVm.SeedlingInfoId = result.SeedlingInfoId;
-        UpdateSpotVm(spotVm, new PlantedSpotState(), NewPlantingDate, source.PlantName);
-
-        SelectedPlantSource = null;   // сброс пикера и количества после посадки
+            spotVm.SeedlingInfoId = receipt.SeedlingInfoId;
+            UpdateSpotVm(spotVm, new PlantedSpotState(), NewPlantingDate, source.PlantName);
+            SelectedPlantSource = null;
+            return true;
+        }, error =>
+        {
+            userDialog.Warning(error, "Посадка");
+            return false;
+        });
     }
 
     [field: AllowNull, MaybeNull]

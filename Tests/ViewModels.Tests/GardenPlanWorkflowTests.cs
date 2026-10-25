@@ -1,3 +1,6 @@
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 using Bonfire.Infrastructure;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities.GardenPlanning;
@@ -219,7 +222,7 @@ public partial class GardenPlanWorkflowTests
         var spot = new PlantingSpotFromViewModel { Id = 4 };
         var source = new PlantSourceItem { Kind = PlantSourceKind.Seed, EntityId = 7, PlantName = "Томат Черри", AvailableQty = 2 };
         vm.AvailableSeedItems = [source]; vm.SelectedPlantSource = source; vm.PlantingAmount = 2;
-        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(new PlantResult(true, 9));
+        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(Result.Success(new PlantingResultFromViewModel(4, 9, SeedAmount.Create(2, SeedUnit.Pieces).ValueOrThrow(), SeedAmount.Create(0, SeedUnit.Pieces).ValueOrThrow())));
         vm.PlantSpotCommand.Execute(spot);
         Assert.Empty(vm.AvailableSeedItems); Assert.Null(vm.SelectedPlantSource);
         Assert.Equal(nameof(PlantedSpotState), spot.StateTypeName);
@@ -232,7 +235,7 @@ public partial class GardenPlanWorkflowTests
     {
         var vm = CreateVm(); var source = new PlantSourceItem { AvailableQty = 3 };
         vm.SelectedPlantSource = source;
-        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(new PlantResult(false, null));
+        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(Result.Failure<PlantingResultFromViewModel>("Нет остатка"));
         var spot = new PlantingSpotFromViewModel { Id = 1 };
         vm.PlantSpotCommand.Execute(spot);
         Assert.Same(source, vm.SelectedPlantSource); Assert.Equal(3, source.AvailableQty);
