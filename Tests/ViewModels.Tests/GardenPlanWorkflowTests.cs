@@ -86,10 +86,11 @@ public partial class GardenPlanWorkflowTests
         var second = new GardenPlan { Id = 2, Name = "Второй" };
         vm.Plans = [first, second]; vm.SelectedPlan = first;
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirm);
+        _gardens.DeletePlanByIdAsync(Arg.Any<DeleteGardenPlanFromViewModel>()).Returns(Result.Success(new GardenPlanDeletionResultFromViewModel(1)));
         vm.DeletePlanCommand.Execute(null);
         Assert.Equal(confirm ? 1 : 2, vm.Plans.Count);
         Assert.Same(confirm ? second : first, vm.SelectedPlan);
-        _gardens.Received(confirm ? 1 : 0).DeletePlanAsync(first);
+        _gardens.Received(confirm ? 1 : 0).DeletePlanByIdAsync(Arg.Is<DeleteGardenPlanFromViewModel>(r => r.GardenPlanId == first.Id));
     }
 
     [Fact]

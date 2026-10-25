@@ -1711,3 +1711,29 @@ TRX: artifacts/stage6-garden-delete-green. Полный ручной UI/DPI-пр
 создание и итоговый аудит остаются. Push/merge не выполнялись.
 
 Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; БД — Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/069bed97827343e8aad5d16f1dae5c73/smoke.db. Рабочая БД не использовалась.
+
+## 2026-10-25 — этап 6, 4в4г: удаление плана по ID
+
+Baseline прежнего EF-API: 2/2 SQLite, Cascade плана/двух участков/элементов/ячеек,
+Restrict теплиц и сохранность самостоятельной истории/чужого плана. UI Red смены
+выбора: 1 failed; artifacts/stage6-plan-delete-baseline. Red начального порта:
+4 failed / 7 passed; artifacts/stage6-plan-delete-red. Дополнительный UI Red:
+3 failed / 2 passed (включая новый отказ и очистку последнего плана);
+artifacts/stage6-plan-delete-ui-red.
+
+Green: GardenPlanId/DeleteGardenPlan/DbGardenPlanDeletionWriter, свежая проекция
+существования и теплиц, один SaveChanges. Проверены новая теплица после чтения UI,
+отсутствующий план и откат каскада триггером ячейки. Схема/рекурсивная политика прежние.
+UI захватывает план/коллекции до диалога/await, применяет только успех. Новый выбор,
+участок и поздний ввод сохраняются; отказ сохраняет редактор/сетку. Последний план
+очищает выбранный участок/черновик/сетку. CloseEditorsFor общий с удалением участка.
+Старый EF-API остаётся совместимостью без UI-вызовов.
+
+Общий dotnet test Bonfire.sln: **1498/1498**, failed/skipped нет (Models 671,
+Services 506, ViewModels 280, Repository 35, SeedsFromViewModel 6), 14 новых проверок.
+TRX: artifacts/stage6-plan-delete-green. Полный ручной UI/DPI-прогон и Coverlet не
+повторялись; межпроцессная защита между проверкой и записью не расширялась, FK
+остаётся последним ограничением. Следующие шаги — создание объектов и аудит.
+Предупреждения NuGet/PRAGMA прежние; push/merge не выполнялись.
+
+Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/f83488b63a3443a3a2b12b96635132bd/smoke.db. Рабочая БД не использовалась.

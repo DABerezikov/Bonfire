@@ -488,14 +488,25 @@ public class GardenPlanViewModel(
 
     private async Task DeletePlanAsync()
     {
-        if (SelectedPlan is null) return;
+        if (SelectedPlan is not { } plan) return;
+        var plans = Plans;
+        var gardens = Gardens;
         if (!userDialog.YesNoQuestion(
-                $"Удалить план «{SelectedPlan.Name}»? Все участки и элементы будут удалены.",
+                $"Удалить план «{plan.Name}»? Все участки и элементы будут удалены.",
                 "Удаление плана")) return;
 
-        await gardenService.DeletePlanAsync(SelectedPlan);
-        Plans.Remove(SelectedPlan);
-        SelectedPlan = Plans.FirstOrDefault();
+        var result = await gardenService.DeletePlanByIdAsync(new(plan.Id));
+        result.Match(_ =>
+        {
+            plans.Remove(plan);
+            foreach (var garden in gardens) CloseEditorsFor(garden);
+            if (ReferenceEquals(SelectedPlan, plan))
+            {
+                SelectedGarden = null;
+                SelectedPlan = Plans.FirstOrDefault();
+            }
+            return true;
+        }, error => { userDialog.Warning(error, "Удаление плана"); return false; });
     }
 
     // ─────────────────────────────────────
@@ -534,12 +545,7 @@ public class GardenPlanViewModel(
         result.Match(_ =>
         {
             gardens.Remove(garden);
-            if (EditingGridElement is { } grid && garden.Elements.Contains(grid)) CloseGridFor(grid);
-            if (SelectedGreenhouse is { } house && garden.Greenhouses.Contains(house))
-            {
-                IsEditingGreenhouse = false;
-                SelectedGreenhouse = null;
-            }
+            CloseEditorsFor(garden);
             if (ReferenceEquals(SelectedGarden, garden)) SelectedGarden = Gardens.FirstOrDefault();
             return true;
         }, error => { userDialog.Warning(error, "Удаление участка"); return false; });
@@ -900,6 +906,18 @@ public class GardenPlanViewModel(
         IsGridOpen = false;
         EditingGridElement = null;
         SelectedSpot = null;
+    }
+
+    private void CloseEditorsFor(GardenFromViewModel garden)
+    {
+        if (EditingGridElement is { } grid &&
+            (garden.Elements.Contains(grid) || garden.Greenhouses.Any(h => h.InnerElements.Contains(grid))))
+            CloseGridFor(grid);
+        if (SelectedGreenhouse is { } house && garden.Greenhouses.Contains(house))
+        {
+            IsEditingGreenhouse = false;
+            SelectedGreenhouse = null;
+        }
     }
 
     [field: AllowNull, MaybeNull]

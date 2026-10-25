@@ -38,6 +38,7 @@ public interface IGardenService
     Task<GardenPlan> CreatePlanAsync(string name, int year, string? description = null);
     Task<GardenPlan> UpdatePlanAsync(GardenPlan plan);
     Task DeletePlanAsync(GardenPlan plan);
+    Task<Result<GardenPlanDeletionResultFromViewModel>> DeletePlanByIdAsync(DeleteGardenPlanFromViewModel request);
 
     // --- Участки огорода ---
     Task<Garden> CreateGardenAsync(int planId, string name,
