@@ -41,12 +41,4 @@ internal static class CollisionHelper
             .Bind(layout => layout.FindFreeSpot(w, h, canvasW, canvasH))
             .Bind(space => Result.Success(space.Map(rectangle => (x: rectangle.X, y: rectangle.Y))));
 
-    // Совместимость прежних потребителей: nullable только на границе UI.
-    public static (double x, double y)? FindFreeSpot(
-        IEnumerable<GardenElementFromViewModel> elements,
-        IEnumerable<GreenhouseFromViewModel>? greenhouses,
-        GardenElementFromViewModel? exclude,
-        double w, double h, double canvasW, double canvasH)
-        => FindPlacement(elements, greenhouses, exclude, w, h, canvasW, canvasH).ValueOrThrow().ToNullable();
-
 }

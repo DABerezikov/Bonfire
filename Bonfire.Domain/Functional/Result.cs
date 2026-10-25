@@ -17,10 +17,6 @@ public sealed class Result<T>
     public bool IsSuccess => _outcome is SuccessValue;
     public bool IsFailure => _outcome is FailureValue;
 
-    // Совместимость для ещё не перенесённых потребителей. Новые операции используют Match/Bind.
-    public T? Value => _outcome is SuccessValue success ? success.Item : default;
-    public string? Error => _outcome is FailureValue failure ? failure.Message : null;
-
     public static Result<T> Success(T value)
     {
         ArgumentNullException.ThrowIfNull(value);

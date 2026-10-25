@@ -2099,3 +2099,18 @@ SQLite-проверки удаляют таблицу только во врем
 OperationCanceledException. Гейт **1523/1523**: Models 686, Services 500,
 ViewModels 296, Repository 35, SeedsFromViewModel 6; 0 failed/notExecuted по пяти TRX.
 Артефакты artifacts/stage7-read-failure-green. Этап 7 открыт до заключительного гейта.
+
+## 2026-10-26 — этап 7, шаг 5ж: убрать nullable-совместимость
+
+Red: Result.Value/Error молча возвращали default/null, и оставался nullable-
+FindFreeSpot (3 failed, artifacts/stage7-null-api-red). Эти API удалены: рабочие
+потребители Result уже использовали Match/Bind/ValueOrThrow, а размещение —
+FindPlacement с Result<Option>. Все пять проверок размещения перенесены с сохранением
+утверждений: начало, соседи, теплица, исключение себя, отсутствие места как None.
+Старые проверки Result/библиотек читают значение/причину явно; ни один тест не удалён.
+
+Гейт **1526/1526**: Models 689, Services 500, ViewModels 296, Repository 35,
+SeedsFromViewModel 6; пять TRX artifacts/stage7-null-api-green, 0 failed/notExecuted.
+Заключительный аудит XAML обнаружил отдельную проблему информационных панелей:
+старые пути характеристик и отображение Option ещё требуют адаптации. Это следующий
+шаг до финального WPF-гейта; этап пока не объявляется завершённым.

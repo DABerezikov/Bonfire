@@ -8,6 +8,16 @@ namespace Models.Tests;
 public class ArchitectureBoundaryTests
 {
     [Theory]
+    [InlineData("Value")]
+    [InlineData("Error")]
+    public void Result_DoesNotExposeSilentDefaultOrNullableError(string property)
+        => Assert.Null(typeof(Result<int>).GetProperty(property));
+
+    [Fact]
+    public void Placement_DoesNotExposeObsoleteNullableWrapper()
+        => Assert.Null(typeof(Bonfire.Infrastructure.CollisionHelper).GetMethod("FindFreeSpot"));
+
+    [Theory]
     [InlineData(typeof(Bonfire.Services.Interfaces.ISeedsService))]
     [InlineData(typeof(Bonfire.Services.Interfaces.ISeedlingsService))]
     [InlineData(typeof(Bonfire.Services.Interfaces.IGardenService))]

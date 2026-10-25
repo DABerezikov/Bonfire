@@ -1,3 +1,4 @@
+using Bonfire.Domain.Functional;
 using Bonfire.Infrastructure;
 
 namespace Services.Tests;
@@ -166,37 +167,37 @@ public class CollisionHelperTests
         Assert.False(result);
     }
 
-    // ── FindFreeSpot ──────────────────────────────────────────────────────────
+    // ── FindPlacement ──────────────────────────────────────────────────────────
 
     [Fact]
-    public void FindFreeSpot_EmptyCanvas_ReturnsOrigin()
+    public void FindPlacement_EmptyCanvas_ReturnsOrigin()
     {
-        var result = CollisionHelper.FindFreeSpot(
+        var result = CollisionHelper.FindPlacement(
             elements: new List<GardenElementFromViewModel>(),
             greenhouses: null,
             exclude: null,
             w: 100, h: 80,
-            canvasW: 800, canvasH: 600);
+            canvasW: 800, canvasH: 600).ValueOrThrow();
 
-        Assert.NotNull(result);
-        Assert.Equal((0.0, 0.0), result!.Value);
+        Assert.IsType<Option<(double x, double y)>.Some>(result);
+        Assert.Equal((0.0, 0.0), Assert.IsType<Option<(double x, double y)>.Some>(result).Value);
     }
 
     [Fact]
-    public void FindFreeSpot_OneElementAtOrigin_PlacesNextToIt()
+    public void FindPlacement_OneElementAtOrigin_PlacesNextToIt()
     {
         var existing = new GardenElementFromViewModel { X = 0, Y = 0, Width = 120, Height = 80 };
         var elements = new List<GardenElementFromViewModel> { existing };
 
-        var result = CollisionHelper.FindFreeSpot(
+        var result = CollisionHelper.FindPlacement(
             elements: elements,
             greenhouses: null,
             exclude: null,
             w: 120, h: 80,
-            canvasW: 800, canvasH: 600);
+            canvasW: 800, canvasH: 600).ValueOrThrow();
 
-        Assert.NotNull(result);
-        var (rx, ry) = result!.Value;
+        Assert.IsType<Option<(double x, double y)>.Some>(result);
+        var (rx, ry) = Assert.IsType<Option<(double x, double y)>.Some>(result).Value;
         // The result must not overlap the existing element
         Assert.False(CollisionHelper.Overlaps(rx, ry, 120, 80, existing.X, existing.Y, existing.Width, existing.Height));
         // Must be within canvas bounds
@@ -205,55 +206,55 @@ public class CollisionHelperTests
     }
 
     [Fact]
-    public void FindFreeSpot_CanvasFullyBlocked_ReturnsNull()
+    public void FindPlacement_CanvasFullyBlocked_ReturnsNone()
     {
         // Canvas is 120×80. Fill it entirely with a single element of same size.
         var blocker = new GardenElementFromViewModel { X = 0, Y = 0, Width = 120, Height = 80 };
         var elements = new List<GardenElementFromViewModel> { blocker };
 
-        var result = CollisionHelper.FindFreeSpot(
+        var result = CollisionHelper.FindPlacement(
             elements: elements,
             greenhouses: null,
             exclude: null,
             w: 120, h: 80,
-            canvasW: 120, canvasH: 80);
+            canvasW: 120, canvasH: 80).ValueOrThrow();
 
-        Assert.Null(result);
+        Assert.IsType<Option<(double x, double y)>.None>(result);
     }
 
     [Fact]
-    public void FindFreeSpot_WithGreenhouseBlockingOrigin_ReturnsNonOverlappingSpot()
+    public void FindPlacement_WithGreenhouseBlockingOrigin_ReturnsNonOverlappingSpot()
     {
         var gh = new GreenhouseFromViewModel { X = 0, Y = 0, DisplayWidth = 120, DisplayHeight = 80 };
 
-        var result = CollisionHelper.FindFreeSpot(
+        var result = CollisionHelper.FindPlacement(
             elements: new List<GardenElementFromViewModel>(),
             greenhouses: new List<GreenhouseFromViewModel> { gh },
             exclude: null,
             w: 120, h: 80,
-            canvasW: 800, canvasH: 600);
+            canvasW: 800, canvasH: 600).ValueOrThrow();
 
-        Assert.NotNull(result);
-        var (rx, ry) = result!.Value;
+        Assert.IsType<Option<(double x, double y)>.Some>(result);
+        var (rx, ry) = Assert.IsType<Option<(double x, double y)>.Some>(result).Value;
         Assert.False(CollisionHelper.Overlaps(rx, ry, 120, 80, gh.X, gh.Y, gh.DisplayWidth, gh.DisplayHeight));
     }
 
     [Fact]
-    public void FindFreeSpot_ExcludedElementIgnored_ReturnsOrigin()
+    public void FindPlacement_ExcludedElementIgnored_ReturnsOrigin()
     {
         // The excluded element sits at origin. Without exclude it would block (0,0).
         // With exclude, (0,0) should be free.
         var self = new GardenElementFromViewModel { X = 0, Y = 0, Width = 120, Height = 80 };
         var elements = new List<GardenElementFromViewModel> { self };
 
-        var result = CollisionHelper.FindFreeSpot(
+        var result = CollisionHelper.FindPlacement(
             elements: elements,
             greenhouses: null,
             exclude: self,
             w: 120, h: 80,
-            canvasW: 800, canvasH: 600);
+            canvasW: 800, canvasH: 600).ValueOrThrow();
 
-        Assert.NotNull(result);
-        Assert.Equal((0.0, 0.0), result!.Value);
+        Assert.IsType<Option<(double x, double y)>.Some>(result);
+        Assert.Equal((0.0, 0.0), Assert.IsType<Option<(double x, double y)>.Some>(result).Value);
     }
 }

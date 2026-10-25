@@ -37,7 +37,7 @@ public class LibraryServiceTests
         var result = await fixture.CreateLibraryService().GetSortAsync(1);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("Черри", result.Value!.Name);
+        Assert.Equal("Черри", result.ValueOrThrow()!.Name);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class LibraryServiceTests
         var result = await fixture.CreateLibraryService().GetSortAsync(99);
 
         Assert.True(result.IsFailure);
-        Assert.NotNull(result.Error);
+        Assert.NotNull(result.Match(_ => string.Empty, error => error));
     }
 
     // ── UpdateSortAsync ───────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ public class LibraryServiceTests
         var result = await fixture.CreateLibraryService().GetCultureAsync(2);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("Томат", result.Value!.Name);
+        Assert.Equal("Томат", result.ValueOrThrow()!.Name);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class LibraryServiceTests
         var result = await fixture.CreateLibraryService().GetProducerAsync(3);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("Гавриш", result.Value!.Name);
+        Assert.Equal("Гавриш", result.ValueOrThrow()!.Name);
     }
 
     [Fact]

@@ -412,3 +412,8 @@ AsNoTracking; Items с прежними графами остаются внут
 Ожидаемые ошибки SQL при чтении преобразуются DbRead.TryAsync в Failure с причиной;
 не превращайте их в пустые коллекции/None. Отмена остаётся отменой, ошибки программы
 не подавляются. None для одной партии означает успешное чтение отсутствующей записи.
+
+Result.Value/Error и nullable CollisionHelper.FindFreeSpot удалены. Используйте
+Match/Bind, ValueOrThrow при доказанном успехе, явный fallback ValueOrDefault при
+необходимости. Размещение — только FindPlacement с Result<Option>; None и Failure
+не смешиваются. Не возвращайте молчаливые default/null аксессоры в функциональное ядро.
