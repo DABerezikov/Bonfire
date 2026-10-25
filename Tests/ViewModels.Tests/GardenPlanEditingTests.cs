@@ -66,26 +66,36 @@ public partial class GardenPlanWorkflowTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void SaveGreenhouseSize_RejectsOverflowOrPersistsInnerDimensions(bool overflow)
+    public void SaveGreenhouseSize_UsesPortResultAndPreservesInputOnFailure(bool overflow)
     {
         var vm = CreateVm();
-        var child = new GardenElementFromViewModel { X = overflow ? 100000 : 0, Width = 10, Height = 10 };
-        vm.SelectedGreenhouse = new() { Id = 2, WidthMeters = 6, HeightMeters = 3, InnerElements = [child], Material = "Стекло" };
-        var entity = new Greenhouse { Id = 2 };
-        _gardens.GetGreenhouseByIdAsync(2).Returns(entity);
+        var child = new GardenElementFromViewModel { X = 100000, Width = 10, Height = 10 };
+        vm.SelectedGreenhouse = new() { Id = 2, WidthMeters = 6, HeightMeters = 3, InnerCanvasWidth = 900, InnerCanvasHeight = 450, InnerElements = [child] };
+        var draft = vm.GreenhouseEditor!;
+        draft.WidthMeters = 5; draft.Material = "Стекло";
+        _gardens.EditGreenhousePropertiesAsync(Arg.Any<EditGreenhousePropertiesFromViewModel>()).Returns(overflow
+            ? Result.Failure<GreenhousePropertiesResultFromViewModel>("Свежий элемент не помещается")
+            : Result.Success(new GreenhousePropertiesResultFromViewModel(2, draft.Values, CanvasRectangle.Create(0, 0, 750, 450).ValueOrThrow())));
+
         vm.SaveGreenhouseSizeCommand.Execute(null);
+
         if (overflow)
         {
-            _dialog.Received(1).Warning(Arg.Any<string>(), "Изменение размера теплицы");
-            _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
+            _dialog.Received(1).Warning("Свежий элемент не помещается", "Изменение размера теплицы");
+            Assert.Equal(6, vm.SelectedGreenhouse.WidthMeters);
+            Assert.Same(draft, vm.GreenhouseEditor);
+            Assert.True(draft.IsDirty);
         }
         else
         {
-            Assert.Equal(6 * CanvasConstants.PixelsPerMeter, entity.CanvasWidth);
-            Assert.Equal("Стекло", entity.Material);
-            Assert.Equal(entity.CanvasWidth, child.ContainerCanvasWidth);
-            Assert.Equal(entity.CanvasHeight, child.ContainerCanvasHeight);
+            Assert.Equal((5.0, 750.0), (vm.SelectedGreenhouse.WidthMeters, vm.SelectedGreenhouse.InnerCanvasWidth));
+            Assert.Equal("Стекло", vm.SelectedGreenhouse.Material);
+            Assert.Equal(750, child.ContainerCanvasWidth);
+            Assert.Equal(450, child.ContainerCanvasHeight);
+            Assert.False(draft.IsDirty);
         }
+        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
+        _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
     }
 
     [Theory]

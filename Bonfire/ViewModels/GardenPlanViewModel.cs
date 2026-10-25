@@ -170,10 +170,24 @@ public class GardenPlanViewModel(
         set
         {
             if (!Set(ref field, value)) return;
+            GreenhouseEditor = value is null ? null : GreenhouseEditorMapper.Open(value);
             SelectedElement = null;
             OnPropertyChanged(nameof(GreenhousePropertiesPanel));
         }
     }
+
+    public GreenhouseEditorDraft? GreenhouseEditor
+    {
+        get;
+        private set
+        {
+            if (Set(ref field, value)) GreenhouseEditorHasBindingErrors = false;
+        }
+    }
+
+    public bool GreenhouseEditorHasBindingErrors { get; set; }
+    private bool _isSavingGreenhouseProperties;
+    public bool IsGreenhouseEditorEnabled => !_isSavingGreenhouseProperties;
 
     /// <summary>True, когда открыт оверлей внутреннего пространства теплицы.</summary>
     public bool IsEditingGreenhouse
@@ -693,48 +707,37 @@ public class GardenPlanViewModel(
     [field: AllowNull, MaybeNull]
     public ICommand SaveGreenhouseSizeCommand => field
         ??= new LambdaCommandAsync(SaveGreenhouseSizeAsync,
-            () => SelectedGreenhouse is not null);
+            () => GreenhouseEditor is { IsDirty: true } && !GreenhouseEditorHasBindingErrors && !_isSavingGreenhouseProperties);
+
+    [field: AllowNull, MaybeNull]
+    public ICommand CancelGreenhousePropertiesCommand => field
+        ??= new LambdaCommand(() =>
+        {
+            if (SelectedGreenhouse is { } house) GreenhouseEditor = GreenhouseEditorMapper.Open(house);
+        }, () => SelectedGreenhouse is not null && !_isSavingGreenhouseProperties);
 
     private async Task SaveGreenhouseSizeAsync()
     {
-        if (SelectedGreenhouse is null) return;
-
-        var scale = CanvasConstants.PixelsPerMeter;
-        var newInnerW = SelectedGreenhouse.WidthMeters * scale;
-        var newInnerH = SelectedGreenhouse.HeightMeters * scale;
-
-        var blockedElement = SelectedGreenhouse.InnerElements
-            .FirstOrDefault(el => el.X + el.Width > newInnerW || el.Y + el.Height > newInnerH);
-        if (blockedElement is not null)
+        if (SelectedGreenhouse is not { } house || GreenhouseEditor is not { IsDirty: true } draft ||
+            draft.Id != house.Id || GreenhouseEditorHasBindingErrors || _isSavingGreenhouseProperties) return;
+        var submitted = draft.Values;
+        _isSavingGreenhouseProperties = true;
+        OnPropertyChanged(nameof(IsGreenhouseEditorEnabled));
+        try
         {
-            userDialog.Warning(
-                $"Нельзя уменьшить теплицу: элемент «{blockedElement.Name}» " +
-                $"(правый/нижний край {blockedElement.X + blockedElement.Width:F0}×{blockedElement.Y + blockedElement.Height:F0} пкс) " +
-                $"выходит за новые границы {newInnerW:F0}×{newInnerH:F0} пкс.",
-                "Изменение размера теплицы");
-            return;
+            var result = await gardenService.EditGreenhousePropertiesAsync(new(draft.Id, draft.Original, submitted, CanvasConstants.PixelsPerMeter));
+            result.Match(saved =>
+            {
+                GreenhouseEditorMapper.Apply(saved, house);
+                if (ReferenceEquals(SelectedGreenhouse, house) && GreenhouseEditor is { } activeDraft)
+                    activeDraft.Accept(saved.Values, ReferenceEquals(activeDraft, draft) ? submitted : activeDraft.Original);
+                return true;
+            }, error => { userDialog.Warning(error, "Изменение размера теплицы"); return false; });
         }
-
-        var entity = await gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
-        if (entity is null) return;
-
-        entity.Name         = SelectedGreenhouse.Name;
-        entity.WidthMeters  = SelectedGreenhouse.WidthMeters;
-        entity.HeightMeters = SelectedGreenhouse.HeightMeters;
-        entity.CanvasWidth  = newInnerW;
-        entity.CanvasHeight = newInnerH;
-        entity.Note         = SelectedGreenhouse.Note;
-        entity.Material     = SelectedGreenhouse.Material;
-
-        await gardenService.UpdateGreenhouseAsync(entity);
-
-        SelectedGreenhouse.InnerCanvasWidth  = newInnerW;
-        SelectedGreenhouse.InnerCanvasHeight = newInnerH;
-
-        foreach (var el in SelectedGreenhouse.InnerElements)
+        finally
         {
-            el.ContainerCanvasWidth  = newInnerW;
-            el.ContainerCanvasHeight = newInnerH;
+            _isSavingGreenhouseProperties = false;
+            OnPropertyChanged(nameof(IsGreenhouseEditorEnabled));
         }
     }
 

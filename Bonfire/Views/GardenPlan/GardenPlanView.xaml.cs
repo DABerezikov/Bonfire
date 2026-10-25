@@ -9,13 +9,32 @@ namespace Bonfire.Views.GardenPlan;
 public partial class GardenPlanView : UserControl
 {
     private readonly HashSet<ValidationError> _elementEditorErrors = [];
+    private readonly HashSet<ValidationError> _greenhouseEditorErrors = [];
 
     private void OnElementEditorValidationError(object sender, ValidationErrorEventArgs e)
     {
-        if (e.Action == ValidationErrorEventAction.Added) _elementEditorErrors.Add(e.Error);
-        else _elementEditorErrors.Remove(e.Error);
-        if (DataContext is GardenPlanViewModel vm) vm.ElementEditorHasBindingErrors = _elementEditorErrors.Count > 0;
+        var hasErrors = UpdateValidationErrors(_elementEditorErrors, e);
+        if (DataContext is GardenPlanViewModel vm) vm.ElementEditorHasBindingErrors = hasErrors;
+    }
+
+    private void OnGreenhouseEditorValidationError(object sender, ValidationErrorEventArgs e)
+    {
+        var hasErrors = UpdateValidationErrors(_greenhouseEditorErrors, e);
+        if (DataContext is GardenPlanViewModel vm) vm.GreenhouseEditorHasBindingErrors = hasErrors;
+    }
+
+    private static bool UpdateValidationErrors(HashSet<ValidationError> errors, ValidationErrorEventArgs e)
+    {
+        if (e.Action == ValidationErrorEventAction.Added) errors.Add(e.Error);
+        else errors.Remove(e.Error);
         CommandManager.InvalidateRequerySuggested();
+        return errors.Count > 0;
+    }
+
+    private void OnGreenhouseEditorUnloaded(object sender, RoutedEventArgs e)
+    {
+        _greenhouseEditorErrors.Clear();
+        if (DataContext is GardenPlanViewModel vm) vm.GreenhouseEditorHasBindingErrors = false;
     }
 
     private void OnElementEditorUnloaded(object sender, RoutedEventArgs e)

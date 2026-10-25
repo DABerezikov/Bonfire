@@ -27,6 +27,7 @@ public static class RepositoryRegister
         .AddSingleton<IGardenStateWriter, DbGardenStateWriter>()
         .AddSingleton<IGardenGeometryWriter, DbGardenGeometryWriter>()
         .AddSingleton<IElementPropertiesWriter, DbElementPropertiesWriter>()
+        .AddSingleton<IGreenhousePropertiesWriter, DbGreenhousePropertiesWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

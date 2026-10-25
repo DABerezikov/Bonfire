@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:m="clr-namespace:Bonfire.Models"
              xmlns:gp="clr-namespace:Bonfire.Views.GardenPlan"
+             xmlns:validation="clr-namespace:Bonfire.Infrastructure.Validation"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
              mc:Ignorable="d"
@@ -863,6 +864,9 @@
 
                                     <!-- Панель теплицы (элемент не выбран) -->
                                     <StackPanel DataContext="{Binding GreenhousePropertiesPanel}"
+                                                Validation.Error="OnGreenhouseEditorValidationError"
+                                                Unloaded="OnGreenhouseEditorUnloaded"
+                                                IsEnabled="{Binding DataContext.IsGreenhouseEditorEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 Visibility="{Binding DataContext.GreenhousePropertiesPanel,
                                                     RelativeSource={RelativeSource AncestorType=UserControl},
                                                     Converter={StaticResource NullToVisibilityConverter}}">
@@ -872,16 +876,35 @@
                                         </Border>
 
                                         <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
-                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+                                        <TextBox Text="{Binding DataContext.GreenhouseEditor.Name,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl}, NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
 
                                         <TextBlock Text="Размер внутри (в метрах)" Style="{StaticResource LabelStyle}"/>
                                         <UniformGrid Columns="4" Margin="0,2,0,10">
                                             <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBox Text="{Binding WidthMeters, UpdateSourceTrigger=PropertyChanged,
-                                                         StringFormat={}{0:F1}}"/>
+                                            <TextBox>
+                                                <TextBox.Text>
+                                                    <Binding Path="DataContext.GreenhouseEditor.WidthMeters" UpdateSourceTrigger="PropertyChanged"
+                                                             RelativeSource="{RelativeSource AncestorType=UserControl}" StringFormat="{}{0:F1}"
+                                                             NotifyOnValidationError="True">
+                                                        <Binding.ValidationRules>
+                                                            <validation:PlotDimensionRule/>
+                                                        </Binding.ValidationRules>
+                                                    </Binding>
+                                                </TextBox.Text>
+                                            </TextBox>
                                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                                            <TextBox Text="{Binding HeightMeters, UpdateSourceTrigger=PropertyChanged,
-                                                         StringFormat={}{0:F1}}"/>
+                                            <TextBox>
+                                                <TextBox.Text>
+                                                    <Binding Path="DataContext.GreenhouseEditor.HeightMeters" UpdateSourceTrigger="PropertyChanged"
+                                                             RelativeSource="{RelativeSource AncestorType=UserControl}" StringFormat="{}{0:F1}"
+                                                             NotifyOnValidationError="True">
+                                                        <Binding.ValidationRules>
+                                                            <validation:PlotDimensionRule/>
+                                                        </Binding.ValidationRules>
+                                                    </Binding>
+                                                </TextBox.Text>
+                                            </TextBox>
                                         </UniformGrid>
 
                                         <TextBlock Foreground="#757575" FontSize="11" Margin="0,0,0,10">
@@ -901,11 +924,17 @@
                                             </StackPanel>
                                         </Button>
 
+                                        <Button Content="Отмена" HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                                Command="{Binding DataContext.CancelGreenhousePropertiesCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
                                         <TextBlock Text="Материал" Style="{StaticResource LabelStyle}"/>
-                                        <TextBox Text="{Binding Material, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+                                        <TextBox Text="{Binding DataContext.GreenhouseEditor.Material,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl}, NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
 
                                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
-                                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding DataContext.GreenhouseEditor.Note,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl}, NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
                                                  TextWrapping="Wrap" MinHeight="40" AcceptsReturn="True" Margin="0,2,0,10"/>
 
                                         <Separator Margin="0,4,0,10"/>

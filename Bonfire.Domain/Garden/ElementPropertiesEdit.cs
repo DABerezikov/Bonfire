@@ -11,17 +11,15 @@ public sealed record ElementEditorValues(ElementDetailsValues Details, double X,
         ArgumentNullException.ThrowIfNull(original);
         ArgumentNullException.ThrowIfNull(edited);
         return new(
-        new(Pick(original.Details.Name, edited.Details.Name, Details.Name),
-            Pick(original.Details.Note, edited.Details.Note, Details.Note),
-            Pick(original.Details.SoilType, edited.Details.SoilType, Details.SoilType),
-            Pick(original.Details.Orientation, edited.Details.Orientation, Details.Orientation),
-            Pick(original.Details.CoverMaterial, edited.Details.CoverMaterial, Details.CoverMaterial)),
-        Pick(original.X, edited.X, X), Pick(original.Y, edited.Y, Y),
-        Pick(original.Width, edited.Width, Width), Pick(original.Height, edited.Height, Height));
+        new(Details.Name.WithChangeFrom(original.Details.Name, edited.Details.Name),
+            Details.Note.WithChangeFrom(original.Details.Note, edited.Details.Note),
+            Details.SoilType.WithChangeFrom(original.Details.SoilType, edited.Details.SoilType),
+            Details.Orientation.WithChangeFrom(original.Details.Orientation, edited.Details.Orientation),
+            Details.CoverMaterial.WithChangeFrom(original.Details.CoverMaterial, edited.Details.CoverMaterial)),
+        X.WithChangeFrom(original.X, edited.X), Y.WithChangeFrom(original.Y, edited.Y),
+        Width.WithChangeFrom(original.Width, edited.Width), Height.WithChangeFrom(original.Height, edited.Height));
     }
 
-    private static T Pick<T>(T original, T edited, T current)
-        => EqualityComparer<T>.Default.Equals(original, edited) ? current : edited;
 }
 public sealed record ElementPropertiesState(int Id, ElementDetailsValues Details, CanvasRectangle Rectangle, double AreaSquareMeters, bool IsLocked);
 
