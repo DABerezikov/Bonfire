@@ -11,7 +11,7 @@ public class SeedlingsViewModelTests
 
     private SeedlingsViewModel CreateVm()
     {
-        _seedsService.GetAllSeedsAsync().Returns(new List<Seed>());
+        _seedsService.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         _seedlingsService.GetAllSeedlingsAsync().Returns(new List<Seedling>());
         _seedlingsService.Lunar.Returns(new MoonPhase());
         return new SeedlingsViewModel(_seedlingsService, _seedsService, _userDialog, _reportService);

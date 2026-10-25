@@ -1,3 +1,4 @@
+using Bonfire.Application.Seeds;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -417,8 +418,10 @@ public class GardenPlanViewModel(
             .OrderBy(i => i.PlantName));
 
         // ── Семена: штучные (AmountSeeds > 0) и граммовые (AmountSeedsWeight > 0) ──
-        var seedEntities = (await seedsService.GetAllSeedsAsync())
-            .Where(s => s.SeedsInfo.AmountSeeds > 0 || s.SeedsInfo.AmountSeedsWeight > 0)
+        var seedResult = await seedsService.ReadSeedsAsync();
+        if (seedResult.IsFailure) { userDialog.Warning(seedResult.Match(_ => "", e => e), "Загрузка семян"); return; }
+        var seedEntities = seedResult.ValueOrThrow()
+            .Where(s => s.SeedsInfo.AmountSeeds > 0 || s.SeedsInfo.AmountSeedsWeight.ToNullable() > 0)
             .ToList();
 
         AvailableSeedItems = new ObservableCollection<PlantSourceItem>(
@@ -426,8 +429,8 @@ public class GardenPlanViewModel(
             .Select(s =>
             {
                 var name        = $"{s.Plant.PlantCulture.Name} {s.Plant.PlantSort.Name}";
-                var weightBased = s.SeedsInfo is { AmountSeeds: <= 0, AmountSeedsWeight: > 0 };
-                var qty         = weightBased ? (s.SeedsInfo.AmountSeedsWeight ?? 0) : s.SeedsInfo.AmountSeeds;
+                var weightBased = s.SeedsInfo.AmountSeeds <= 0 && s.SeedsInfo.AmountSeedsWeight.ToNullable() > 0;
+                var qty         = weightBased ? (s.SeedsInfo.AmountSeedsWeight.ToNullable() ?? 0) : s.SeedsInfo.AmountSeeds;
                 var qtyLabel    = weightBased ? $"{qty:F1} г." : $"{(int)qty} шт.";
                 return new PlantSourceItem
                 {

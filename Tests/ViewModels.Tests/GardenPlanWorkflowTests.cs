@@ -24,7 +24,7 @@ public partial class GardenPlanWorkflowTests
     {
         _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray<GardenPlanResultFromViewModel>.Empty));
         _gardens.ReadGardensAsync(Arg.Any<int>()).Returns(Result.Success(ImmutableArray<GardenReadFromViewModel>.Empty));
-        _seeds.GetAllSeedsAsync().Returns(Array.Empty<Seed>());
+        _seeds.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         _seedlings.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
         return new(_gardens, _dialog, _seedlings, _seeds, _planting);
     }
@@ -42,13 +42,13 @@ public partial class GardenPlanWorkflowTests
         var plan = new GardenPlanFromViewModel { Id = 1, Name = "План" };
         _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray.Create(new GardenPlanResultFromViewModel(plan.Id, plan.Name, plan.Year, plan.Description))));
         _gardens.ReadGardensAsync(1).Returns(Result.Success(ImmutableArray.Create(GardenReadDbMapper.ReadGarden(new Garden { Id = 2, Name = "Участок", CanvasWidth = 3000, CanvasHeight = 2000 }).ValueOrThrow())));
-        var plant = new Plant { PlantCulture = new PlantCulture { Name = "Томат" }, PlantSort = new PlantSort { Name = "Черри" } };
-        _seeds.GetAllSeedsAsync().Returns(new[]
+        var plant = new Plant { PlantCulture = new PlantCulture { Name = "Томат" }, PlantSort = new PlantSort { Name = "Черри", Producer = new Producer { Name = "Фирма" } } };
+        _seeds.ReadSeedsAsync().Returns(new[]
         {
             new Seed { Id = 3, Plant = plant, SeedsInfo = new SeedsInfo { AmountSeeds = 5 } },
             new Seed { Id = 4, Plant = plant, SeedsInfo = new SeedsInfo { AmountSeedsWeight = 0.5 } },
             new Seed { Id = 5, Plant = plant, SeedsInfo = new SeedsInfo() }
-        });
+        }.ReadSeeds());
         _seedlings.GetAllSeedlingsAsync().Returns(new[]
         {
             new Seedling { Id = 6, Plant = plant, SeedlingInfos = [new() { GerminationDate = DateTime.Today }, new() { GerminationDate = DateTime.Today, IsDead = true }] },

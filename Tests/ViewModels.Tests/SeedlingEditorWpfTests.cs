@@ -20,7 +20,7 @@ public class SeedlingEditorWpfTests(WpfRuntime runtime)
         var service = Substitute.For<ISeedlingsService>();
         service.GetAllSeedlingsAsync().Returns(new[] { batch });
         service.Lunar.Returns(new MoonPhase());
-        var seeds = Substitute.For<ISeedsService>(); seeds.GetAllSeedsAsync().Returns(Array.Empty<Seed>());
+        var seeds = Substitute.For<ISeedsService>(); seeds.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         var vm = new SeedlingsViewModel(service, seeds, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
         vm.LoadDataCommand.Execute(null);
         vm.SelectedSeedlingViewItem = Assert.Single(vm.SeedlingsView!.Cast<SeedlingFromViewModel>());

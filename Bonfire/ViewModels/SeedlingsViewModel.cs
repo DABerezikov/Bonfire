@@ -1,3 +1,4 @@
+using Bonfire.Application.Seeds;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,7 +30,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private readonly IReportService _reportService;
 
     // Кэш загруженных семян: источник для списков и для выбора при создании рассады.
-    private List<Seed> _seeds = [];
+    private List<SeedReadFromViewModel> _seeds = [];
 
     public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IReportService reportService)
     {
@@ -281,17 +282,18 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         }
     }
 
-    public Seed? CurrentSeed
+    private SeedReadFromViewModel? _currentSeed;
+    public SeedReadFromViewModel? CurrentSeed
     {
-        get;
+        get => _currentSeed;
         set
         {
-            if (!Set(ref field, value)) return;
+            if (!Set(ref _currentSeed, value)) return;
             if (value is null) return;
-            Plantable = CurrentSeed!.SeedsInfo.AmountSeedsWeight > 0.0
-                ? CurrentSeed.SeedsInfo.AmountSeedsWeight
+            Plantable = CurrentSeed!.SeedsInfo.AmountSeedsWeight.ToNullable() > 0.0
+                ? CurrentSeed.SeedsInfo.AmountSeedsWeight.ToNullable()
                 : CurrentSeed.SeedsInfo.AmountSeeds;
-            AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? Units.GramsAbbr : Units.PiecesAbbr;
+            AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight.ToNullable() > 0.0 ? Units.GramsAbbr : Units.PiecesAbbr;
         }
     }
 
@@ -519,7 +521,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private void LoadListPlant()
     {
         var plants = _seeds
-            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
+            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight.ToNullable() != 0)
             .Select(s => new PlantFromViewModel
             {
                 Id = s.Id,
@@ -537,7 +539,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private void LoadListSort()
     {
         var addListSort = _seeds
-            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
+            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight.ToNullable() != 0)
             .Select(s => new SortFromSeedlingsViewModel
             {
                 Id = s.Plant.PlantSort.Id,
@@ -689,7 +691,9 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private async Task OnLoadDataCommandExecuted()
     {
         if (Seedlings != null) return;
-        _seeds = (await _seedsService.GetAllSeedsAsync()).ToList();
+        var result = await _seedsService.ReadSeedsAsync();
+        if (result.IsFailure) { _userDialog.Error(result.Match(_ => "", e => e)); return; }
+        _seeds = result.ValueOrThrow().ToList();
         await LoadSeedling();
         LoadListCulture();
         LoadListPlant();
@@ -728,9 +732,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             selectedSeed.Id, AddQuantity, unit, PlantingDate, SeedlingSource, place));
         await result.Match(async receipt =>
         {
-            selectedSeed.SeedsInfo.AmountSeeds = receipt.Saved.RemainingPieces;
-            selectedSeed.SeedsInfo.AmountSeedsWeight = receipt.Saved.RemainingGrams.ToNullable();
-            RemoveItemFromCollection(selectedSeed);
+            RemoveItemFromCollection(ApplySeedStock(selectedSeed, receipt.Saved.RemainingPieces, receipt.Saved.RemainingGrams));
             ClearFieldSeedlingView();
             var batch = await _seedlingsService.GetSeedlingAsync(receipt.Saved.BatchId);
             if (batch is not null) seedlings.Add(batch);
@@ -743,11 +745,24 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         });
     }
 
-    private void RemoveItemFromCollection(Seed seed)
+    private SeedReadFromViewModel ApplySeedStock(SeedReadFromViewModel seed, double pieces, Option<double> grams)
+    {
+        var updated = seed with { SeedsInfo = seed.SeedsInfo with { AmountSeeds = pieces, AmountSeedsWeight = grams } };
+        var index = _seeds.FindIndex(item => item.Id == seed.Id);
+        if (index >= 0) _seeds[index] = updated;
+        if (_currentSeed?.Id == seed.Id)
+        {
+            _currentSeed = updated;
+            OnPropertyChanged(nameof(CurrentSeed));
+        }
+        return updated;
+    }
+
+    private void RemoveItemFromCollection(SeedReadFromViewModel seed)
     {
         if (seed.SeedsInfo.AmountSeeds != 0) return;
-        if (seed.SeedsInfo.AmountSeedsWeight != null)
-            if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight != 0) return;
+        if (seed.SeedsInfo.AmountSeedsWeight.ToNullable() != null)
+            if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight.ToNullable() != 0) return;
         AddPlantList.Remove(AddPlantList.First(s => s.Producer == seed.Plant.PlantSort.Producer.Name
                                                     && s.Culture == seed.Plant.PlantCulture.Name
                                                     && s.Sort == seed.Plant.PlantSort.Name
@@ -780,8 +795,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
                     var seed = _seeds.FirstOrDefault(seed => seed.Id == stock.SeedId);
                     if (seed is not null)
                     {
-                        seed.SeedsInfo.AmountSeeds = stock.Pieces;
-                        seed.SeedsInfo.AmountSeedsWeight = stock.Grams.ToNullable();
+                        ApplySeedStock(seed, stock.Pieces, stock.Grams);
                         if (CurrentSeed?.Id == seed.Id)
                             Plantable = AddSize == Units.GramsAbbr ? stock.Grams.ToNullable() : stock.Pieces;
                     }

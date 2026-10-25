@@ -35,7 +35,7 @@ public class WpfBehaviorTests(WpfRuntime runtime)
         var seedlingService = Substitute.For<ISeedlingsService>();
         seedlingService.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
         seedlingService.Lunar.Returns(new MoonPhase());
-        var seedService = Substitute.For<ISeedsService>(); seedService.GetAllSeedsAsync().Returns(Array.Empty<Seed>());
+        var seedService = Substitute.For<ISeedsService>(); seedService.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         var gardenService = Substitute.For<IGardenService>(); gardenService.ReadPlansAsync().Returns(Bonfire.Domain.Functional.Result.Success(System.Collections.Immutable.ImmutableArray<Bonfire.Application.Garden.GardenPlanResultFromViewModel>.Empty));
         var garden = new GardenPlanViewModel(gardenService, Substitute.For<IUserDialog>(), seedlingService, seedService, Substitute.For<IPlantingService>());
         FrameworkElement view = screen switch

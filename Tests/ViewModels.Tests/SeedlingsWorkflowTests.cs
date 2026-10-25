@@ -23,7 +23,7 @@ public class SeedlingsWorkflowTests
     private SeedlingsViewModel CreateVm(params Seedling[] seedlings)
     {
         _service.GetAllSeedlingsAsync().Returns(seedlings);
-        _seeds.GetAllSeedsAsync().Returns(new[] { SeedsWorkflowTests.Seed(1) });
+        _seeds.ReadSeedsAsync().Returns(new[] { SeedsWorkflowTests.Seed(1) }.ReadSeeds());
         _service.Lunar.Returns(new MoonPhase());
         _service.UpdateSeedling(Arg.Any<Seedling>()).Returns(c => c.Arg<Seedling>());
         _service.MakeASeedling(Arg.Any<Seedling>()).Returns(c => { var entity = c.Arg<Seedling>(); entity.Id = 5; return entity; });
@@ -59,7 +59,7 @@ public class SeedlingsWorkflowTests
     {
         var seed = SeedsWorkflowTests.Seed(1);
         if (grams) { seed.SeedsInfo.AmountSeeds = 0; seed.SeedsInfo.AmountSeedsWeight = 1.5; }
-        _seeds.GetAllSeedsAsync().Returns(new[] { seed });
+        _seeds.ReadSeedsAsync().Returns(new[] { seed }.ReadSeeds());
         _service.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
         _service.Lunar.Returns(new MoonPhase());
         var saved = Batch(2);
@@ -92,9 +92,12 @@ public class SeedlingsWorkflowTests
         Assert.Equal(PlantSources.FromSeeds, added.SeedlingInfos[0].SeedlingSource);
         Assert.Equal(grams ? 0.5 : 0, added.Weight);
         Assert.Equal(grams ? 0 : 2, added.Quantity);
-        Assert.Equal(grams ? 0 : 8, seed.SeedsInfo.AmountSeeds);
-        if (grams) Assert.Equal(1, seed.SeedsInfo.AmountSeedsWeight);
+        Assert.Equal(grams ? 0 : 10, seed.SeedsInfo.AmountSeeds);
+        if (grams) Assert.Equal(1.5, seed.SeedsInfo.AmountSeedsWeight);
         Assert.Null(vm.CurrentSeed);
+        vm.CurrentPlant = Assert.Single(vm.AddPlantList);
+        Assert.Equal(grams ? 0 : 8, vm.CurrentSeed!.SeedsInfo.AmountSeeds);
+        if (grams) Assert.Equal(1, vm.CurrentSeed.SeedsInfo.AmountSeedsWeight.ToNullable());
         _service.Received(1).SowAsync(Arg.Is<SowingRequest>(request =>
             request.SeedId == 1 && request.Amount == (grams ? 0.5 : 2)
             && request.Unit == (grams ? SeedUnit.Grams : SeedUnit.Pieces)
@@ -106,7 +109,7 @@ public class SeedlingsWorkflowTests
     public async Task CreateSeedling_RejectedSowing_PreservesStockAndEditor()
     {
         var vm = CreateVm();
-        var seed = (await _seeds.GetAllSeedsAsync()).Single();
+        var seed = (await _seeds.ReadSeedsAsync()).ValueOrThrow().Single();
         vm.AddCulture = "Томат";
         vm.CurrentPlant = vm.AddPlantList[0];
         vm.AddProducer = $"Фирма 1 {seed.SeedsInfo.ExpirationDate.Year}";
@@ -129,7 +132,7 @@ public class SeedlingsWorkflowTests
     public async Task CreateSeedling_PendingSowing_DoesNotMutateInventoryBeforeSuccess()
     {
         var vm = CreateVm();
-        var seed = (await _seeds.GetAllSeedsAsync()).Single();
+        var seed = (await _seeds.ReadSeedsAsync()).ValueOrThrow().Single();
         vm.AddCulture = "Томат";
         vm.CurrentPlant = vm.AddPlantList[0];
         vm.AddProducer = $"Фирма 1 {seed.SeedsInfo.ExpirationDate.Year}";
@@ -217,7 +220,7 @@ public class SeedlingsWorkflowTests
         var seed = SeedsWorkflowTests.Seed(1);
         seed.SeedsInfo.AmountSeeds = 0;
         seed.SeedsInfo.AmountSeedsWeight = 0;
-        _seeds.GetAllSeedsAsync().Returns(new[] { seed });
+        _seeds.ReadSeedsAsync().Returns(new[] { seed }.ReadSeeds());
         _service.GetAllSeedlingsAsync().Returns(new[] { batch });
         _service.Lunar.Returns(new MoonPhase());
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
@@ -231,8 +234,10 @@ public class SeedlingsWorkflowTests
         vm.DeleteSeedlingCommand.Execute(null);
 
         Assert.Empty(vm.Seedlings!);
-        Assert.Equal(3, seed.SeedsInfo.AmountSeeds);
+        Assert.Equal(0, seed.SeedsInfo.AmountSeeds);
         Assert.Equal(1, Assert.Single(vm.AddPlantList).Id);
+        vm.CurrentPlant = vm.AddPlantList[0];
+        Assert.Equal(3, vm.CurrentSeed!.SeedsInfo.AmountSeeds);
         Assert.Single(vm.AddSortList);
         Assert.Single(vm.AddCultureList);
     }
