@@ -4,7 +4,7 @@ using Bonfire.Views.GardenPlan;
 namespace ViewModels.Tests;
 
 [Collection("WPF runtime")]
-public class CanvasInteractionTests(WpfRuntime runtime)
+public partial class CanvasInteractionTests(WpfRuntime runtime)
 {
     [Theory]
     [InlineData(false)]

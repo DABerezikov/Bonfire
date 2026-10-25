@@ -33,6 +33,59 @@ public sealed record CanvasRectangle
         ArgumentNullException.ThrowIfNull(other);
         return CanvasIntersection.Overlaps(X, Y, Width, Height, other.X, other.Y, other.Width, other.Height);
     }
+
+    public Result<CanvasRectangle> WithMoved(double horizontal, double vertical, double scale, CanvasBounds bounds)
+    {
+        ArgumentNullException.ThrowIfNull(bounds);
+        if (!ValidDelta(horizontal, vertical, scale))
+            return Result.Failure<CanvasRectangle>("Дельта должна быть конечной, масштаб — конечным и положительным");
+        const double step = 15;
+        var maxX = bounds.Width.Match(width => width - Width, () => double.MaxValue);
+        var maxY = bounds.Height.Match(height => height - Height, () => double.MaxValue);
+        return Create(Math.Round(Math.Max(0, Math.Min(X + horizontal / scale, maxX)) / step) * step,
+            Math.Round(Math.Max(0, Math.Min(Y + vertical / scale, maxY)) / step) * step, Width, Height);
+    }
+
+    public Result<CanvasRectangle> WithResized(double horizontal, double vertical, double scale, CanvasBounds bounds, double minimum)
+    {
+        ArgumentNullException.ThrowIfNull(bounds);
+        if (!ValidDelta(horizontal, vertical, scale) || !double.IsFinite(minimum) || minimum <= 0)
+            return Result.Failure<CanvasRectangle>("Дельта должна быть конечной, масштаб и минимальный размер — конечными и положительными");
+        var maxWidth = bounds.Width.Match(width => width - X, () => double.MaxValue);
+        var maxHeight = bounds.Height.Match(height => height - Y, () => double.MaxValue);
+        return Create(X, Y, Math.Round(Math.Max(minimum, Math.Min(Width + horizontal / scale, maxWidth))),
+            Math.Round(Math.Max(minimum, Math.Min(Height + vertical / scale, maxHeight))));
+    }
+
+    public CanvasRectangle ResolveDropFrom(CanvasRectangle original, Func<CanvasRectangle, bool> collides)
+    {
+        ArgumentNullException.ThrowIfNull(original);
+        ArgumentNullException.ThrowIfNull(collides);
+        var wasColliding = collides(original);
+        var isColliding = collides(this);
+        return isColliding && !wasColliding ? original : this;
+    }
+
+    private static bool ValidDelta(double horizontal, double vertical, double scale)
+        => double.IsFinite(horizontal) && double.IsFinite(vertical) && double.IsFinite(scale) && scale > 0;
+}
+
+public sealed record CanvasBounds
+{
+    public Option<double> Width { get; }
+    public Option<double> Height { get; }
+    private CanvasBounds(Option<double> width, Option<double> height) => (Width, Height) = (width, height);
+
+    public static Result<CanvasBounds> Create(Option<double> width, Option<double> height)
+    {
+        ArgumentNullException.ThrowIfNull(width);
+        ArgumentNullException.ThrowIfNull(height);
+        return width.Match(IsValid, () => true) && height.Match(IsValid, () => true)
+            ? Result.Success(new CanvasBounds(width, height))
+            : Result.Failure<CanvasBounds>("Известные границы холста должны быть конечными и положительными");
+    }
+
+    private static bool IsValid(double value) => double.IsFinite(value) && value > 0;
 }
 
 public sealed class PlotLayout

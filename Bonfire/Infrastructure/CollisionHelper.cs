@@ -4,6 +4,7 @@ using System.Linq;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden;
 using Bonfire.Models;
+using Bonfire.Models.Mappers;
 
 namespace Bonfire.Infrastructure;
 
@@ -36,8 +37,8 @@ internal static class CollisionHelper
         IEnumerable<GreenhouseFromViewModel>? greenhouses,
         GardenElementFromViewModel? exclude,
         double w, double h, double canvasW, double canvasH)
-        => ReadLayout(elements.Where(element => element != exclude).Select(Rectangle)
-                .Concat((greenhouses ?? []).Select(Rectangle)))
+        => ReadLayout(elements.Where(element => element != exclude).Select(CanvasGeometryMapper.Read)
+                .Concat((greenhouses ?? []).Select(CanvasGeometryMapper.Read)))
             .Bind(layout => layout.FindFreeSpot(w, h, canvasW, canvasH))
             .Bind(space => Result.Success(space.Map(rectangle => (x: rectangle.X, y: rectangle.Y))));
 
@@ -48,12 +49,6 @@ internal static class CollisionHelper
         GardenElementFromViewModel? exclude,
         double w, double h, double canvasW, double canvasH)
         => FindPlacement(elements, greenhouses, exclude, w, h, canvasW, canvasH).ValueOrThrow().ToNullable();
-
-    private static Result<CanvasRectangle> Rectangle(GardenElementFromViewModel element)
-        => CanvasRectangle.Create(element.X, element.Y, element.Width, element.Height);
-
-    private static Result<CanvasRectangle> Rectangle(GreenhouseFromViewModel greenhouse)
-        => CanvasRectangle.Create(greenhouse.X, greenhouse.Y, greenhouse.DisplayWidth, greenhouse.DisplayHeight);
 
     private static Result<PlotLayout> ReadLayout(IEnumerable<Result<CanvasRectangle>> obstacles)
         => obstacles.Aggregate(Result.Success(ImmutableList<CanvasRectangle>.Empty),

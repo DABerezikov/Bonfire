@@ -106,7 +106,9 @@ GardenGrid, ResizeGrid и атомарный DbGridWriter; UI принимает
 Запись переходов и очистки перенесена через ChangeGardenState/DbGardenStateWriter:
 читаются свежие данные, UI принимает DTO только после успеха. Пересечения и поиск
 места вынесены в CanvasRectangle/PlotLayout; UI различает ошибку и отсутствие места.
-Далее — drag/resize/масштаб и разделение взаимодействий/редакторов.
+Расчёты drag/resize/отката перенесены в CanvasRectangle, масштаб — в общий WPF
+CanvasScale; code-behind оставляет действия представления. Далее — запись геометрии
+и разделение взаимодействий/редакторов.
 Последовательность оставшихся шагов — [план этапа 6](refactoring-stage-6.md).
 
 Затрагивается: `GardenPlanViewModel`, `GardenService`, `PlantingService`, модели
