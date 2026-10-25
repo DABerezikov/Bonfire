@@ -8,6 +8,9 @@ namespace BonfireDB.Planting;
 
 internal static class DbCanvasSiblings
 {
+    public static Task<Result<PlotLayout>> ForPlotAsync(IUnitOfWork unit, int plotId, CancellationToken token)
+        => ReadAsync(unit, plotId, Option.None<int>(), Option.None<int>(), token);
+
     public static Task<Result<PlotLayout>> ForElementAsync(IUnitOfWork unit, int plotId, int id, CancellationToken token)
         => ReadAsync(unit, plotId, Option.Some(id), Option.None<int>(), token);
 

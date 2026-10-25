@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Garden.States;
 using BonfireDB.Entities.GardenPlanning;
 
 namespace Bonfire.Models.Mappers;
@@ -12,6 +13,33 @@ namespace Bonfire.Models.Mappers;
 /// </summary>
 internal static class GardenPlanMapper
 {
+    public static GardenElementFromViewModel MapElement(ElementCreationResultFromViewModel saved)
+    {
+        var state = new PlannedState();
+        var element = new GardenElementFromViewModel
+        {
+            Id = saved.Properties.Id, ElementType = saved.ElementType,
+            ContainerCanvasWidth = saved.Container.Width, ContainerCanvasHeight = saved.Container.Height,
+            StateTypeName = nameof(PlannedState), StateDisplayName = state.DisplayName, StateColor = state.StatusColor,
+            CanAddPlanting = state.CanAddPlanting, CanModifyGrid = state.CanModifyGrid
+        };
+        ElementEditorMapper.Apply(saved.Properties, element);
+        return element;
+    }
+
+    public static GreenhouseFromViewModel MapGreenhouse(GreenhouseCreationResultFromViewModel saved)
+    {
+        var state = new PlannedState();
+        var house = new GreenhouseFromViewModel
+        {
+            Id = saved.Properties.Id, ContainerCanvasWidth = saved.Container.Width, ContainerCanvasHeight = saved.Container.Height,
+            StateTypeName = nameof(PlannedState), StateDisplayName = state.DisplayName, StateColor = state.StatusColor
+        };
+        GreenhouseEditorMapper.Apply(saved.Properties, house);
+        CanvasGeometryMapper.Apply(saved.Rectangle, house);
+        return house;
+    }
+
     public static GardenPlan MapPlan(GardenPlanResultFromViewModel plan) => new()
     {
         Id = plan.Id, Name = plan.Name, Year = plan.Year, Description = plan.Description.ToNullable()

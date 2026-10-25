@@ -27,11 +27,13 @@ public partial class GardenPlanWorkflowTests
     public void AddGreenhouse_UsesDefaultMetersAndLinksCanvasContainers()
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
-        _gardens.AddGreenhouseAsync(1, "Теплица 1", 6, 3, CanvasConstants.PixelsPerMeter, Arg.Any<double>(), Arg.Any<double>())
-            .Returns(new Greenhouse { Id = 5, Name = "Теплица", WidthMeters = 6, HeightMeters = 3, CanvasWidth = 900, CanvasHeight = 450 });
+        _gardens.CreateGreenhouseFromRequestAsync(Arg.Is<CreateGreenhouseFromViewModel>(r => r.PlotId == 1 && r.Name == "Теплица 1" && r.WidthMeters == 6 && r.HeightMeters == 3 && r.Scale == CanvasConstants.PixelsPerMeter))
+            .Returns(c => Result.Success(CreatedGreenhouse(c.Arg<CreateGreenhouseFromViewModel>())));
         vm.AddGreenhouseCommand.Execute(null);
         var added = Assert.Single(vm.SelectedGarden.Greenhouses);
-        Assert.Equal(5, added.Id);
+        Assert.Equal(12, added.Id);
+        Assert.Equal(6, added.WidthMeters); Assert.Equal(3, added.HeightMeters);
+        Assert.Equal(900, added.DisplayWidth); Assert.Equal(450, added.DisplayHeight);
         Assert.Same(vm.SelectedGarden.Elements, added.ContainerElements);
         Assert.Same(vm.SelectedGarden.Greenhouses, added.ContainerGreenhouses);
         Assert.Equal(vm.GardenZoom, added.CanvasZoom);

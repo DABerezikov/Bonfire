@@ -35,6 +35,8 @@ public interface IGardenService
     Task<Greenhouse?> GetGreenhouseByIdAsync(int id);
 
     // --- Планы ---
+    Task<Result<ElementCreationResultFromViewModel>> CreateElementFromRequestAsync(CreateGardenElementFromViewModel request);
+    Task<Result<GreenhouseCreationResultFromViewModel>> CreateGreenhouseFromRequestAsync(CreateGreenhouseFromViewModel request);
     Task<Result<GardenPlanResultFromViewModel>> CreateCurrentPlanAsync();
     Task<Result<GardenPropertiesResultFromViewModel>> CreateGardenFromRequestAsync(CreateGardenFromViewModel request);
 

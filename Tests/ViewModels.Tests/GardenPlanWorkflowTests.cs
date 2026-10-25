@@ -112,7 +112,7 @@ public partial class GardenPlanWorkflowTests
     public void AddElement_EachType_UsesCorrectSizeAndContainer(string type, double width, double height)
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm(); vm.SelectedElementType = type;
-        _gardens.AddElementAsync(Arg.Any<GardenElement>()).Returns(c => { var e = c.Arg<GardenElement>(); e.Id = 12; return e; });
+        _gardens.CreateElementFromRequestAsync(Arg.Any<CreateGardenElementFromViewModel>()).Returns(c => Result.Success(CreatedElement(c.Arg<CreateGardenElementFromViewModel>())));
         vm.AddElementCommand.Execute(null);
         var added = Assert.Single(vm.SelectedGarden.Elements);
         Assert.Equal(type, added.ElementType);
@@ -129,7 +129,7 @@ public partial class GardenPlanWorkflowTests
         vm.AddElementCommand.Execute(null);
         Assert.Empty(vm.SelectedGarden.Elements);
         _dialog.Received(1).Warning(Arg.Any<string>(), "Добавление элемента");
-        _gardens.DidNotReceive().AddElementAsync(Arg.Any<GardenElement>());
+        _gardens.DidNotReceive().CreateElementFromRequestAsync(Arg.Any<CreateGardenElementFromViewModel>());
     }
 
     [Fact]

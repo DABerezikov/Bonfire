@@ -1763,3 +1763,35 @@ artifacts/stage6-create-garden-green. Полный ручной UI/DPI-прог�
 элементов/теплиц; этап 6 открыт. Push/merge не выполнялись.
 
 Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/aa6d295d77894a97a877cdbb538145a9/smoke.db. Рабочая БД не использовалась.
+
+## 2026-10-25 — этап 6, 4в5б: создание элементов и теплиц
+
+Прослежены UI, оба создания, стандартные размеры/имена, EF-конструкторы/сетка/
+состояние и мапперы. Domain Red: 2 failed / 3 passed; DB Red: 12 failed;
+artifacts/stage6-create-objects-red. UI Red: 4 failed — отказ обоих созданий,
+неверный контейнер теплицы и переключение на старый элемент при await;
+artifacts/stage6-create-objects-ui-red.
+
+Green: GardenObjectCreation, RequirePlacement и GardenElementTemplate. Unknown
+сохраняет прежний fallback; новые проверки не меняют историческую геометрию.
+CreateGardenObjects делегирует проверенные варианты общему порту. DbCanvasSiblings
+читает оба вида препятствий, контейнер — свежая проекция без EF-графа. Один
+SaveChanges создаёт выбранный подтип. Отсутствие/свежее препятствие/ошибка БД — Result.
+UI меняется после успеха, сохраняет новый выбор/черновик. Общие DB/UI-мапперы
+редакторов переиспользованы. Начальные Area=0, сетка 1×1 без ячеек, Planned,
+lock=false и пустые метаданные сохранены. Старые EF-API — совместимость этапа 7.
+
+Общий dotnet test Bonfire.sln: **1534/1534**, failed/skipped нет (Models 676,
+Services 530, ViewModels 287, Repository 35, SeedsFromViewModel 6), 21 новая проверка.
+Первый общий прогон выявил неадаптированный ID фикстуры теста теплицы (5 вместо 12);
+исправлено ожидание, добавлены проверки размеров. TRX: artifacts/stage6-create-objects-green.
+Startup/exit smoke успешен: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True;
+изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/
+cc54b0eff7294bdab0d9d745d5263b26/smoke.db. Рабочая БД не использовалась.
+
+До smoke и документации автоматическая проверка разрешений не выполнилась из-за
+лимита использования до 22:56; команда тогда не запускалась. После пробуждения
+в 23:00 тот же smoke разрешён и прошёл. Полный ручной UI/DPI-прогон и Coverlet
+не повторялись. Межпроцессная сериализация проверки/вставки не вводилась.
+Схема и предупреждения NuGet/PRAGMA прежние; push/merge не выполнялись.
+Следующий шаг — итоговый аудит этапа 6.

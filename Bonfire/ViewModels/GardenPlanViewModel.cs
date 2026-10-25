@@ -779,20 +779,13 @@ public class GardenPlanViewModel(
         var canvasW = ActiveCanvasWidth;
         var canvasH = ActiveCanvasHeight;
 
-        // Физические размеры по умолчанию для каждого типа (в пикселях = метры × ppm).
-        //   Грядка:         2.0 × 0.9 м
-        //   Парник:         1.2 × 0.8 м
-        //   Цветник:        0.6 × 0.6 м
-        //   Открытый грунт: 2.0 × 2.0 м
-        var ppm = CanvasConstants.PixelsPerMeter;
-        var (defaultW, defaultH) = SelectedElementType switch
-        {
-            "Bed"            => (2.0 * ppm, 0.9 * ppm),
-            "ColdFrame"      => (1.2 * ppm, 0.8 * ppm),
-            "FlowerBed"      => (0.6 * ppm, 0.6 * ppm),
-            "OpenGroundArea" => (2.0 * ppm, 2.0 * ppm),
-            _                => (ppm, ppm)
-        };
+        var garden = SelectedGarden;
+        var greenhouse = SelectedGreenhouse;
+        var selected = SelectedElement;
+        var containerId = ActiveContainerId;
+        var template = GardenElementTemplate.From(SelectedElementType);
+        var defaultW = template.WidthMeters * CanvasConstants.PixelsPerMeter;
+        var defaultH = template.HeightMeters * CanvasConstants.PixelsPerMeter;
 
         var placement = CollisionHelper.FindPlacement(
             activeElements, activeGreenhouses, exclude: null,
@@ -815,34 +808,22 @@ public class GardenPlanViewModel(
             return;
         }
 
-        GardenElement element = SelectedElementType switch
+        var result = await gardenService.CreateElementFromRequestAsync(new(containerId,
+            $"{template.Label} {activeElements.Count + 1}", template.Kind, spot.Value.x, spot.Value.y, defaultW, defaultH));
+        result.Match(saved =>
         {
-            "ColdFrame"      => new ColdFrame(),
-            "FlowerBed"      => new FlowerBed(),
-            "OpenGroundArea" => new OpenGroundArea(),
-            _                => new Bed()
-        };
-
-        element.PlotId        = ActiveContainerId;
-        element.Name          = GetDefaultName(SelectedElementType, activeElements.Count + 1);
-        element.X             = spot.Value.x;
-        element.Y             = spot.Value.y;
-        element.DisplayWidth  = defaultW;
-        element.DisplayHeight = defaultH;
-
-        var saved = await gardenService.AddElementAsync(element);
-        var vm = GardenPlanMapper.MapElement(saved, canvasW, canvasH);
-        vm.ContainerElements    = activeElements;
-        vm.ContainerGreenhouses = activeGreenhouses;
-        activeElements.Add(vm);
-        // Если новый элемент меньше текущего минимума — пересчитываем зум
-        // чтобы он сразу был читаем; иначе просто синхронизируем CanvasZoom.
-        var minSide = Math.Min(defaultW, defaultH);
-        if (minSide * _gardenZoom < 64)
-            RecalculateInitialZoom();
-        else
-            vm.CanvasZoom = _gardenZoom;
-        SelectedElement = vm;
+            var model = GardenPlanMapper.MapElement(saved);
+            model.ContainerElements = activeElements;
+            model.ContainerGreenhouses = activeGreenhouses;
+            model.CanvasZoom = _gardenZoom;
+            activeElements.Add(model);
+            if (ReferenceEquals(SelectedGarden, garden) && ReferenceEquals(SelectedGreenhouse, greenhouse) && ReferenceEquals(SelectedElement, selected))
+            {
+                if (Math.Min(defaultW, defaultH) * _gardenZoom < 64) RecalculateInitialZoom();
+                SelectedElement = model;
+            }
+            return true;
+        }, error => { userDialog.Warning(error, "Добавление элемента"); return false; });
     }
 
     [field: AllowNull, MaybeNull]
@@ -852,14 +833,14 @@ public class GardenPlanViewModel(
 
     private async Task AddGreenhouseAsync()
     {
-        if (SelectedGarden is null) return;
+        if (SelectedGarden is not { } garden) return;
 
         var ghScale = CanvasConstants.PixelsPerMeter;
         double ghW = 6 * ghScale, ghH = 3 * ghScale; // 6×3 м
 
         var placement = CollisionHelper.FindPlacement(
-            SelectedGarden.Elements, SelectedGarden.Greenhouses, exclude: null,
-            ghW, ghH, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+            garden.Elements, garden.Greenhouses, exclude: null,
+            ghW, ghH, garden.CanvasWidth, garden.CanvasHeight);
 
         if (placement.IsFailure)
         {
@@ -871,22 +852,23 @@ public class GardenPlanViewModel(
         if (spot is null)
         {
             userDialog.Warning(
-                $"На участке «{SelectedGarden.Name}» нет свободного места для теплицы 6×3 м.\n" +
+                $"На участке «{garden.Name}» нет свободного места для теплицы 6×3 м.\n" +
                 "Увеличьте участок или уберите лишние элементы.",
                 "Добавление теплицы");
             return;
         }
 
-        var gh = await gardenService.AddGreenhouseAsync(
-            SelectedGarden.Id,
-            $"Теплица {SelectedGarden.Greenhouses.Count + 1}",
-            widthMeters: 6, heightMeters: 3, scale: ghScale,
-            x: spot.Value.x, y: spot.Value.y);
-        var vm = GardenPlanMapper.MapGreenhouse(gh, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
-        vm.ContainerElements    = SelectedGarden.Elements;
-        vm.ContainerGreenhouses = SelectedGarden.Greenhouses;
-        vm.CanvasZoom           = _gardenZoom;
-        SelectedGarden.Greenhouses.Add(vm);
+        var result = await gardenService.CreateGreenhouseFromRequestAsync(new(garden.Id,
+            $"Теплица {garden.Greenhouses.Count + 1}", 6, 3, ghScale, spot.Value.x, spot.Value.y));
+        result.Match(saved =>
+        {
+            var house = GardenPlanMapper.MapGreenhouse(saved);
+            house.ContainerElements = garden.Elements;
+            house.ContainerGreenhouses = garden.Greenhouses;
+            house.CanvasZoom = _gardenZoom;
+            garden.Greenhouses.Add(house);
+            return true;
+        }, error => { userDialog.Warning(error, "Добавление теплицы"); return false; });
     }
 
     // ─────────────────────────────────────
@@ -1268,12 +1250,4 @@ public class GardenPlanViewModel(
         if (plantLabel is not null) vm.PlantLabel  = plantLabel;
     }
 
-    private static string GetDefaultName(string type, int index) => type switch
-    {
-        "Bed"            => $"Грядка {index}",
-        "ColdFrame"      => $"Парник {index}",
-        "FlowerBed"      => $"Цветник {index}",
-        "OpenGroundArea" => $"Открытый грунт {index}",
-        _                => $"Элемент {index}"
-    };
 }

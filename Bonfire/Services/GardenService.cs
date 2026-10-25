@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties, IEditGreenhouseProperties editGreenhouseProperties, IEditGardenProperties editGardenProperties, ISetGardenLock setGardenLock, IDeleteGardenElement deleteGardenElement, IDeleteGreenhouse deleteGreenhouse, IDeleteGarden deleteGarden, IDeleteGardenPlan deleteGardenPlan, ICreateGardenPlan createGardenPlan, ICreateGarden createGarden) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties, IEditGreenhouseProperties editGreenhouseProperties, IEditGardenProperties editGardenProperties, ISetGardenLock setGardenLock, IDeleteGardenElement deleteGardenElement, IDeleteGreenhouse deleteGreenhouse, IDeleteGarden deleteGarden, IDeleteGardenPlan deleteGardenPlan, ICreateGardenPlan createGardenPlan, ICreateGarden createGarden, ICreateGardenObjects createGardenObjects) : IGardenService
 {
     public Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request)
         => saveGardenGeometry.ExecuteAsync(request);
@@ -48,6 +48,9 @@ internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGr
 
     public Task<Result<GardenPlanResultFromViewModel>> CreateCurrentPlanAsync() => createGardenPlan.ExecuteAsync();
     public Task<Result<GardenPropertiesResultFromViewModel>> CreateGardenFromRequestAsync(CreateGardenFromViewModel request) => createGarden.ExecuteAsync(request);
+
+    public Task<Result<ElementCreationResultFromViewModel>> CreateElementFromRequestAsync(CreateGardenElementFromViewModel request) => createGardenObjects.CreateElementAsync(request);
+    public Task<Result<GreenhouseCreationResultFromViewModel>> CreateGreenhouseFromRequestAsync(CreateGreenhouseFromViewModel request) => createGardenObjects.CreateGreenhouseAsync(request);
 
     // --- Чтение ---
 
