@@ -10,7 +10,6 @@ public class SeedsViewModelTests
 
     private SeedsViewModel CreateVm()
     {
-        _seedsService.GetAllSeedsAsync().Returns(new List<Seed>());
         return new SeedsViewModel(_seedsService, _userDialog, _reportService);
     }
 

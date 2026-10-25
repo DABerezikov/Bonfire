@@ -22,7 +22,7 @@ public class SeedAcquisitionIntegrationTests : IDisposable
         var saved = (await service.AddOrUpdateSeedAsync(request)).ValueOrThrow();
         Assert.IsType<AcquisitionResultFromViewModel.Replenished>(saved);
         Assert.Equal(first.SeedId, saved.SeedId);
-        var actual = (await service.GetSeedAsync(first.SeedId))!;
+        var actual = (await _fixture.LoadAsync<Seed>(first.SeedId))!;
         Assert.Equal(16, unit == Units.PiecesOption ? actual.SeedsInfo.AmountSeeds : actual.SeedsInfo.AmountSeedsWeight);
         Assert.Equal(2, unit == Units.PiecesOption ? actual.SeedsInfo.QuantityPack : actual.SeedsInfo.WeightPack);
         Assert.Equal(new DateTime(2028, 12, 31), actual.SeedsInfo.ExpirationDate);
@@ -37,10 +37,10 @@ public class SeedAcquisitionIntegrationTests : IDisposable
     {
         var service = _fixture.CreateSeedsService();
         var first = (await service.AddOrUpdateSeedAsync(Request())).ValueOrThrow();
-        var cache = await service.GetAllSeedsAsync();
+        var cache = await _fixture.LoadAllAsync<Seed>();
         var second = (await service.AddOrUpdateSeedAsync(Request(producer: "Фирма Б"))).ValueOrThrow();
-        var storedFirst = (await service.GetSeedAsync(first.SeedId))!;
-        var storedSecond = (await service.GetSeedAsync(second.SeedId))!;
+        var storedFirst = (await _fixture.LoadAsync<Seed>(first.SeedId))!;
+        var storedSecond = (await _fixture.LoadAsync<Seed>(second.SeedId))!;
         Assert.Equal(first.SeedId, second.SeedId);
         Assert.Equal("Фирма Б", storedFirst.Plant.PlantSort.Producer.Name);
         Assert.Equal("Фирма Б", storedSecond.Plant.PlantSort.Producer.Name);
@@ -64,7 +64,7 @@ public class SeedAcquisitionIntegrationTests : IDisposable
     {
         var service = _fixture.CreateSeedsService();
         await service.AddOrUpdateSeedAsync(Request());
-        var cache = await service.GetAllSeedsAsync();
+        var cache = await _fixture.LoadAllAsync<Seed>();
         await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
             "CREATE TRIGGER RejectAcquisition BEFORE UPDATE ON SeedsInfo BEGIN SELECT RAISE(ABORT, 'acquisition rejected'); END;"));
         var result = await service.AddOrUpdateSeedAsync(Request(producer: "Фирма Б"));
@@ -97,7 +97,7 @@ public class SeedAcquisitionIntegrationTests : IDisposable
         var first = (await service.AddOrUpdateSeedAsync(Request())).ValueOrThrow();
         var result = await service.AddOrUpdateSeedAsync(Request(Units.GramsOption) with { Note = "Не сохранять" });
         Assert.Contains("Остаток в граммах не указан", result.Match(_ => "не ожидалось", error => error));
-        var saved = (await service.GetSeedAsync(first.SeedId))!;
+        var saved = (await _fixture.LoadAsync<Seed>(first.SeedId))!;
         Assert.Equal(6, saved.SeedsInfo.AmountSeeds);
         Assert.Null(saved.SeedsInfo.AmountSeedsWeight);
         Assert.Equal("Первый", saved.SeedsInfo.Note);

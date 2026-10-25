@@ -7,6 +7,16 @@ namespace Models.Tests;
 
 public class ArchitectureBoundaryTests
 {
+    [Theory]
+    [InlineData(typeof(Bonfire.Services.Interfaces.ISeedsService))]
+    [InlineData(typeof(Bonfire.Services.Interfaces.ISeedlingsService))]
+    public void InventoryServiceContracts_DoNotExposePersistence(Type type)
+    {
+        foreach (var method in type.GetMethods())
+        foreach (var boundary in method.GetParameters().Select(p => p.ParameterType).Append(method.ReturnType).SelectMany(Expand))
+            Assert.NotEqual("BonfireDB", boundary.Assembly.GetName().Name);
+    }
+
     [Fact]
     public void EditorOptionsContract_ExpressesReadFailure()
     {

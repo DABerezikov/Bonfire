@@ -25,9 +25,6 @@ public class SeedlingsWorkflowTests
         _service.ReadSeedlingsAsync().Returns(seedlings.ReadSeedlings());
         _seeds.ReadSeedsAsync().Returns(new[] { SeedsWorkflowTests.Seed(1) }.ReadSeeds());
         _service.Lunar.Returns(new MoonPhase());
-        _service.UpdateSeedling(Arg.Any<Seedling>()).Returns(c => c.Arg<Seedling>());
-        _service.MakeASeedling(Arg.Any<Seedling>()).Returns(c => { var entity = c.Arg<Seedling>(); entity.Id = 5; return entity; });
-        _seeds.UpdateSeed(Arg.Any<Seed>()).Returns(c => c.Arg<Seed>());
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         if (seedlings.Length > 0) vm.SelectedSeedlingViewItem = vm.SeedlingsView!.Cast<SeedlingFromViewModel>().First();
@@ -102,7 +99,6 @@ public class SeedlingsWorkflowTests
             request.SeedId == 1 && request.Amount == (grams ? 0.5 : 2)
             && request.Unit == (grams ? SeedUnit.Grams : SeedUnit.Pieces)
             && request.Place.Match(value => value == "Подоконник", () => false)));
-        _ = _seeds.DidNotReceive().UpdateSeed(Arg.Any<Seed>());
     }
 
     [Fact]
@@ -125,7 +121,6 @@ public class SeedlingsWorkflowTests
         Assert.Same(seed, vm.CurrentSeed);
         Assert.Equal(2, vm.AddQuantity);
         _dialog.Received(1).Warning("Остаток изменился", Arg.Any<string>());
-        _ = _seeds.DidNotReceive().UpdateSeed(Arg.Any<Seed>());
     }
 
     [Fact]
@@ -194,7 +189,6 @@ public class SeedlingsWorkflowTests
         vm.DeleteSeedlingCommand.Execute(null);
         Assert.Equal(choice == 0 ? 1 : 0, vm.Seedlings!.Count);
         _service.Received(choice == 0 ? 0 : 1).DeleteAsync(Arg.Is<DeleteSeedlingFromViewModel>(request => request.SeedlingId == 1 && request.Removal == removal));
-        _seeds.DidNotReceive().ReturnSeedsFromSeedling(Arg.Any<int>(), Arg.Any<double>(), Arg.Any<double?>());
         if (choice != 0) Assert.Null(vm.SelectedItem);
         Assert.Contains("-Выбрать все-", vm.ListCulture);
     }
@@ -259,7 +253,6 @@ public class SeedlingsWorkflowTests
         Assert.Equal(new[] { 1, 2, 3 }, vm.SelectedItem!.SeedlingInfos.Where(i => i.GerminationDate.HasValue).Select(i => i.SeedlingNumber));
         Assert.Equal(0, vm.Germinate);
         _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.Germinate(20, new DateTime(2026, 3, 7))));
-        _service.DidNotReceive().AddSeedlingInfo(Arg.Any<SeedlingInfo>());
     }
 
     [Theory]
@@ -272,7 +265,6 @@ public class SeedlingsWorkflowTests
             [new(1, 0, Option.None<DateTime>(), Option.Some(true))])));
         vm.GerminateSeedlingCommand.Execute(null);
         Assert.Equal(dead, vm.SelectedItem!.SeedlingInfos[0].IsDead == true);
-        _service.DidNotReceive().AddSeedlingInfo(Arg.Any<SeedlingInfo>());
     }
 
     [Fact]

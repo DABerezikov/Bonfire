@@ -36,7 +36,7 @@ public class SeedlingEditingIntegrationTests : IDisposable
     {
         var (id, infoId) = await PrepareAsync();
         Assert.True((await SaveAsync(id, infoId)).IsSuccess);
-        var saved = await _fixture.CreateSeedlingsService().GetSeedlingAsync(id);
+        var saved = await _fixture.LoadAsync<Seedling>(id);
         Assert.Equal(7, saved!.Quantity);
         Assert.Equal(1.5, saved.Weight);
         Assert.Equal(saved.LandingDate, saved.SeedlingInfos[0].LandingDate);

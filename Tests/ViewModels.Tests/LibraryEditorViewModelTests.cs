@@ -19,7 +19,6 @@ public class LibraryEditorViewModelTests
         ObservableCollection<ProducerFromViewModel>? producers = null,
         ObservableCollection<Seed>? seeds = null)
     {
-        _seedsService.GetAllSeedsAsync().Returns(new List<Seed>());
         var vm = new SeedsViewModel(_seedsService, _userDialog, _reportService);
         if (sorts != null) vm.AddSortList = sorts;
         if (cultures != null) vm.AddCultureList = cultures;

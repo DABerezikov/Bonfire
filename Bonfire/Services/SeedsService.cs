@@ -1,22 +1,14 @@
 using System.Collections.Immutable;
-using Bonfire.Application.Libraries;
-using BonfireDB.Libraries;
-using System;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
-using BonfireDB.Entities;
-using BonfireDB.Entities.Base;
-using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed, ISeedReader seedReader, ISeedEditorOptionsReader editorOptions) : ISeedsService
+internal class SeedsService(IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed, ISeedReader seedReader, ISeedEditorOptionsReader editorOptions) : ISeedsService
 {
     public Task<Result<ImmutableArray<SeedReadFromViewModel>>> ReadSeedsAsync() => seedReader.ReadAsync(default);
 
@@ -25,96 +17,12 @@ internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, I
 
     public Task<Result<SeedEditorOptionsFromViewModel>> GetEditorOptionsAsync() => editorOptions.ReadAsync(default);
 
-    public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync()
-    {
-        await using var uow = uowFactory.Create();
-        return await uow.Repository<Seed>().Items.ToListAsync();
-    }
-
-    public async Task<Seed?> GetSeedAsync(int id)
-    {
-        await using var uow = uowFactory.Create();
-        return await uow.Repository<Seed>().GetAsync(id);
-    }
-
     public Task<Result<AcquisitionResultFromViewModel>> AddOrUpdateSeedAsync(AddSeedRequest request)
         => SeedAcquisitionMapper.ToRequest(request).Match(
             acquisition => acquireSeeds.ExecuteAsync(acquisition),
             error => Task.FromResult(Result.Failure<AcquisitionResultFromViewModel>(error)));
 
-    public async Task ReturnSeedsFromSeedling(int seedId, double quantity, double? weight)
-    {
-        await using var uow = uowFactory.Create();
-        var seeds = uow.Repository<Seed>();
-        var seed = await seeds.Items.FirstAsync(s => s.Id == seedId);
-        seed.SeedsInfo.AmountSeeds       += quantity;
-        seed.SeedsInfo.AmountSeedsWeight += weight;
-        await seeds.UpdateAsync(seed);
-        await uow.SaveChangesAsync();
-    }
-
-    // Строит граф нового семени в рамках переданного UoW (без SaveChanges — его делает вызывающий).
-    internal async Task<Seed> MakeASeed(IUnitOfWork uow, Plant plant, SeedsInfo seedsInfo)
-    {
-        if (plant.Id == 0)
-        {
-            if (plant.PlantCulture.Id == 0)
-                plant.PlantCulture = await uow.Repository<PlantCulture>().AddAsync(plant.PlantCulture).ConfigureAwait(false);
-            if (plant.PlantSort.Producer.Id == 0)
-                plant.PlantSort.Producer = await uow.Repository<Producer>().AddAsync(plant.PlantSort.Producer).ConfigureAwait(false);
-            if (plant.PlantSort.Id == 0)
-                plant.PlantSort = await uow.Repository<PlantSort>().AddAsync(plant.PlantSort).ConfigureAwait(false);
-            plant = await uow.Repository<Plant>().AddAsync(plant);
-        }
-
-        if (seedsInfo.Id == 0)
-            seedsInfo = await uow.Repository<SeedsInfo>().AddAsync(seedsInfo);
-
-        var seed = new Seed { Plant = plant, SeedsInfo = seedsInfo };
-        seed.SeedsInfo.Seed = seed;
-        return await uow.Repository<Seed>().AddAsync(seed);
-    }
-
-    public async Task<Seed> UpdateSeed(Seed seed)
-    {
-        await using var uow = uowFactory.Create();
-        await uow.Repository<Seed>().UpdateAsync(seed);
-        await uow.SaveChangesAsync();
-        return seed;
-    }
-
-    public async Task<Seed> DeleteSeed(Seed seed)
-    {
-        await using var uow = uowFactory.Create();
-        await uow.Repository<Seed>().RemoveAsync(seed.Id);
-        await uow.SaveChangesAsync();
-        return seed;
-    }
-
     public Task<Result<SeedDeletionResultFromViewModel>> DeleteSeedWithReasonAsync(int seedId, string reason)
         => deleteSeed.ExecuteAsync(new DeleteSeedFromViewModel(seedId, reason));
 
-    public async Task<PlantSort> UpdateSort(PlantSort sort1)
-    {
-        await using var uow = uowFactory.Create();
-        await uow.Repository<PlantSort>().UpdateAsync(sort1);
-        await uow.SaveChangesAsync();
-        return sort1;
-    }
-
-    public async Task<PlantCulture> UpdateCulture(PlantCulture culture1)
-    {
-        await using var uow = uowFactory.Create();
-        await uow.Repository<PlantCulture>().UpdateAsync(culture1);
-        await uow.SaveChangesAsync();
-        return culture1;
-    }
-
-    public async Task<Producer> UpdateProducer(Producer producer1)
-    {
-        await using var uow = uowFactory.Create();
-        await uow.Repository<Producer>().UpdateAsync(producer1);
-        await uow.SaveChangesAsync();
-        return producer1;
-    }
 }

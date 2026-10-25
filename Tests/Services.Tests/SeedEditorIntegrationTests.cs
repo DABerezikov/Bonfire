@@ -22,15 +22,15 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (firstId, secondId, producerId) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var edit = (await service.GetSeedAsync(firstId))!;
+        var edit = (await _fx.LoadAsync<Seed>(firstId))!;
         edit.SeedsInfo.Note = "Новая заметка";
         edit.SeedsInfo.AmountSeeds = 8;
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Черри", Description = "Общее описание" };
 
         await SaveAsync(service, edit, sort, producerId);
 
-        var first = (await service.GetSeedAsync(firstId))!;
-        var second = (await service.GetSeedAsync(secondId))!;
+        var first = (await _fx.LoadAsync<Seed>(firstId))!;
+        var second = (await _fx.LoadAsync<Seed>(secondId))!;
         Assert.Equal("Общее описание", second.Plant.PlantSort.Description);
         Assert.Equal(producerId, second.Plant.PlantSort.Producer.Id);
         Assert.Equal("Новый производитель", second.Plant.PlantSort.Producer.Name);
@@ -45,13 +45,13 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (firstId, _, _) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var edit = (await service.GetSeedAsync(firstId))!;
+        var edit = (await _fx.LoadAsync<Seed>(firstId))!;
         edit.SeedsInfo.Note = "Не сохранять";
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Черри", Description = "Не сохранять" };
 
         Assert.True((await SaveAsync(service, edit, sort, int.MaxValue)).IsFailure);
 
-        var saved = (await service.GetSeedAsync(firstId))!;
+        var saved = (await _fx.LoadAsync<Seed>(firstId))!;
         Assert.Null(saved.SeedsInfo.Note);
         Assert.Null(saved.Plant.PlantSort.Description);
     }
@@ -79,7 +79,7 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (id, second, producer) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var edit = (await service.GetSeedAsync(id))!;
+        var edit = (await _fx.LoadAsync<Seed>(id))!;
         edit.SeedsInfo.AmountSeeds = 2;
         edit.SeedsInfo.Note = "Не сохранять";
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Новое", PlantColor = "Новый цвет" };
@@ -87,13 +87,13 @@ public class SeedEditorIntegrationTests : IDisposable
             "CREATE TRIGGER RejectPackage BEFORE UPDATE ON SeedsInfo BEGIN SELECT RAISE(ABORT, 'package rejected'); END;"));
         var result = await SaveAsync(service, edit, sort, producer);
         Assert.Contains("package rejected", result.Match(_ => "не ожидалось", error => error));
-        var saved = (await service.GetSeedAsync(id))!;
+        var saved = (await _fx.LoadAsync<Seed>(id))!;
         Assert.Equal(10, saved.SeedsInfo.AmountSeeds);
         Assert.Null(saved.SeedsInfo.Note);
         Assert.Equal("Черри", saved.Plant.PlantSort.Name);
         Assert.Equal("Первый", saved.Plant.PlantSort.Producer.Name);
         Assert.Equal(0, await _fx.QueryAsync(db => db.SortOptions.CountAsync()));
-        Assert.Equal("Второй пакет", (await service.GetSeedAsync(second))!.SeedsInfo.Note);
+        Assert.Equal("Второй пакет", (await _fx.LoadAsync<Seed>(second))!.SeedsInfo.Note);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (id, _, producer) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var edit = (await service.GetSeedAsync(id))!;
+        var edit = (await _fx.LoadAsync<Seed>(id))!;
         edit.SeedsInfo.WeightPack = .8; edit.SeedsInfo.QuantityPack = 10;
         edit.SeedsInfo.AmountSeeds = 0; edit.SeedsInfo.AmountSeedsWeight = null;
         edit.SeedsInfo.CostPack = 12.34m;
@@ -118,7 +118,7 @@ public class SeedEditorIntegrationTests : IDisposable
             CultureId = int.MaxValue
         };
         await SaveAsync(service, edit, sort, producer);
-        var saved = (await service.GetSeedAsync(id))!;
+        var saved = (await _fx.LoadAsync<Seed>(id))!;
         Assert.Equal(SeedPackageDbMapper.Read(edit.SeedsInfo), SeedPackageDbMapper.Read(saved.SeedsInfo));
         Assert.Equal(" Черри ", saved.Plant.PlantSort.Name);
         Assert.Equal("", saved.Plant.PlantSort.Description);
@@ -137,10 +137,10 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (id, secondId, _) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var infoId = (await service.GetSeedAsync(id))!.SeedsInfo.Id;
+        var infoId = (await _fx.LoadAsync<Seed>(id))!.SeedsInfo.Id;
         await service.DeleteSeedWithReasonAsync(id, "  Истёк срок годности  ");
-        Assert.Null(await service.GetSeedAsync(id));
-        Assert.NotNull(await service.GetSeedAsync(secondId));
+        Assert.Null(await _fx.LoadAsync<Seed>(id));
+        Assert.NotNull(await _fx.LoadAsync<Seed>(secondId));
         var info = await _fx.QueryAsync(db => db.SeedsInfo.SingleAsync(i => i.Id == infoId));
         Assert.Equal("Истёк срок годности", info.DisposeComment);
     }
@@ -150,7 +150,7 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (id, _, producerId) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var edit = (await service.GetSeedAsync(id))!;
+        var edit = (await _fx.LoadAsync<Seed>(id))!;
         var sort = new SortEditModel
         {
             Id = edit.Plant.PlantSort.Id, Name = "Черри", PlantColor = "Полосатый",
@@ -160,7 +160,7 @@ public class SeedEditorIntegrationTests : IDisposable
             MinGerminationTime = 3, MaxGerminationTime = 7, AgeOfSeedlings = 30, MaxAgeOfSeedlings = 40
         };
         await SaveAsync(service, edit, sort, producerId);
-        var saved = (await service.GetSeedAsync(id))!.Plant.PlantSort;
+        var saved = (await _fx.LoadAsync<Seed>(id))!.Plant.PlantSort;
         Assert.Equal(70, saved.GrowingSeason);
         Assert.Equal(50, saved.PlantHeight);
         Assert.Equal(10.5, saved.MinFruitWeight);
@@ -192,14 +192,14 @@ public class SeedEditorIntegrationTests : IDisposable
     {
         var (id, _, producer) = await CreatePackages();
         var service = _fx.CreateSeedsService();
-        var edit = (await service.GetSeedAsync(id))!;
+        var edit = (await _fx.LoadAsync<Seed>(id))!;
         edit.SeedsInfo.Note = "Не сохранять";
         var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Новое", PlantColor = "Не сохранять" };
         if (missing) edit.Id = int.MaxValue;
         else sort = new() { Id = int.MaxValue, Name = "Новое", PlantColor = "Не сохранять" };
         var result = await SaveAsync(service, edit, sort, producer);
         Assert.Contains(missing ? "Запись семян удалена" : "Сорт записи изменён", result.Match(_ => "не ожидалось", error => error));
-        var saved = (await service.GetSeedAsync(id))!;
+        var saved = (await _fx.LoadAsync<Seed>(id))!;
         Assert.Null(saved.SeedsInfo.Note);
         Assert.Equal("Черри", saved.Plant.PlantSort.Name);
         Assert.Equal(0, await _fx.QueryAsync(db => db.SortOptions.CountAsync()));
@@ -216,11 +216,11 @@ public class SeedEditorIntegrationTests : IDisposable
             await db.SaveChangesAsync();
             return culture.Id;
         });
-        var sortId = (await _fx.CreateSeedsService().GetSeedAsync(id))!.Plant.PlantSort.Id;
+        var sortId = (await _fx.LoadAsync<Seed>(id))!.Plant.PlantSort.Id;
         var result = await _fx.CreateLibraryService().UpdateSortAsync(
             new SortEditModel { Id = sortId, Name = "Черри", CultureId = cultureId });
         Assert.True(result.IsSuccess);
-        var seed = (await _fx.CreateSeedsService().GetSeedAsync(id))!;
+        var seed = (await _fx.LoadAsync<Seed>(id))!;
         Assert.Equal(cultureId, seed.Plant.PlantCulture.Id);
     }
 }
