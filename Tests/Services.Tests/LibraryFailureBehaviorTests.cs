@@ -24,7 +24,7 @@ public class LibraryFailureBehaviorTests
         Exception failure = concurrency ? new DbUpdateConcurrencyException() : new DbUpdateException("DB", new Exception("Причина"));
         uow.SaveChangesAsync().Returns<int>(_ => throw failure);
         var factory = uow.ToFactory();
-        var service = new LibraryService(factory, new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)));
+        var service = new LibraryService(new DbLibraryReader(factory), new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)));
         var error = kind switch
         {
             "Sort" => (await service.UpdateSortAsync(new SortEditModel { Id = 1, Name = "Новый" })).Error,

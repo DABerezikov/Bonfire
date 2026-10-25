@@ -1,3 +1,5 @@
+using Bonfire.Application.Libraries;
+using Bonfire.Domain.Functional;
 using BonfireDB.Entities;
 using System.Linq;
 
@@ -6,34 +8,43 @@ namespace Bonfire.Models.Mappers;
 internal static class LibraryMapper
 {
     public static SortEditModel ToEditModel(PlantSort sort)
+        => ToEditModel(sort.Id, sort.Name, (sort.Plants.FirstOrDefault()?.PlantCulture.Id).ToOption(), BonfireDB.SeedEditing.SortCharacteristicsDbMapper.Read(sort));
+
+    public static SortEditModel ToEditModel(SortReadFromViewModel sort)
+        => ToEditModel(sort.Id, sort.Name, sort.CultureId, sort.Characteristics);
+
+    private static SortEditModel ToEditModel(int id, string name, Option<int> cultureId, Bonfire.Domain.Seeds.SortCharacteristicsValues values)
     {
         var model = new SortEditModel
         {
-            Id = sort.Id,
-            Name = sort.Name,
-            CultureId = sort.Plants.FirstOrDefault()?.PlantCulture.Id,
-            Description = sort.Description,
-            MinGerminationTime = sort.MinGerminationTime,
-            MaxGerminationTime = sort.MaxGerminationTime,
-            AgeOfSeedlings = sort.AgeOfSeedlings,
-            GrowingSeason = sort.GrowingSeason,
-            MaxGrowingSeason = sort.MaxGrowingSeason,
-            LandingPattern = sort.LandingPattern,
-            PlantHeight = sort.PlantHeight,
-            PlantColor = sort.PlantColor,
-            Maturity = sort.Maturity,
-            MaxAgeOfSeedlings = sort.MaxAgeOfSeedlings,
-            MaxPlantHeight = sort.MaxPlantHeight,
-            LandingRowSpacing = sort.LandingRowSpacing,
-            YieldKg = sort.YieldKg,
-            MinFruitWeight = sort.MinFruitWeight,
-            MaxFruitWeight = sort.MaxFruitWeight
+            Id = id,
+            Name = name,
+            CultureId = cultureId.ToNullable(),
+            Description = values.Description.ToNullable(),
+            MinGerminationTime = values.MinGerminationTime.ToNullable(),
+            MaxGerminationTime = values.MaxGerminationTime.ToNullable(),
+            AgeOfSeedlings = values.AgeOfSeedlings.ToNullable(),
+            GrowingSeason = values.GrowingSeason.ToNullable(),
+            MaxGrowingSeason = values.MaxGrowingSeason.ToNullable(),
+            LandingPattern = values.LandingPattern.ToNullable(),
+            PlantHeight = values.PlantHeight.ToNullable(),
+            PlantColor = values.PlantColor.ToNullable(),
+            Maturity = values.Maturity.ToNullable(),
+            MaxAgeOfSeedlings = values.MaxAgeOfSeedlings.ToNullable(),
+            MaxPlantHeight = values.MaxPlantHeight.ToNullable(),
+            LandingRowSpacing = values.LandingRowSpacing.ToNullable(),
+            YieldKg = values.YieldKg.ToNullable(),
+            MinFruitWeight = values.MinFruitWeight.ToNullable(),
+            MaxFruitWeight = values.MaxFruitWeight.ToNullable()
         };
         model.ResetDirty();
         return model;
     }
 
     public static CultureEditModel ToEditModel(PlantCulture culture)
+        => ToEditModel(new CultureDetailsFromViewModel(culture.Id, culture.Name, culture.Class));
+
+    public static CultureEditModel ToEditModel(CultureDetailsFromViewModel culture)
     {
         var model = new CultureEditModel
         {

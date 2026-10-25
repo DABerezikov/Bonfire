@@ -1,7 +1,8 @@
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 using System.Windows.Input;
 
 using Bonfire.Domain.Functional;
-using Bonfire.Application.Libraries;
 
 namespace ViewModels.Tests;
 
@@ -21,9 +22,9 @@ public class LibraryWorkflowTests
             AddProducerList = [new() { Id = 1, Name = "Фирма 1" }]
         };
         var sort = _seed.Plant.PlantSort; sort.Plants.Add(_seed.Plant);
-        _library.GetSortAsync(1).Returns(Result.Success(sort));
-        _library.GetCultureAsync(1).Returns(Result.Success(_seed.Plant.PlantCulture));
-        _library.GetProducerAsync(1).Returns(Result.Success(sort.Producer));
+        _library.GetSortAsync(1).Returns(LibraryReadDbMapper.Read(sort));
+        _library.GetCultureAsync(1).Returns(Result.Success(LibraryReadDbMapper.Read(_seed.Plant.PlantCulture)));
+        _library.GetProducerAsync(1).Returns(Result.Success(LibraryReadDbMapper.Read(sort.Producer)));
         var vm = new LibraryEditorViewModel(_library, _dialog, seeds);
         switch (kind)
         {
@@ -51,8 +52,8 @@ public class LibraryWorkflowTests
             var sort = new SortDetailsFromViewModel(1, c.Arg<SortEditModel>().Name!, []);
             return Result.Success(sort);
         });
-        _library.UpdateCultureAsync(Arg.Any<CultureEditModel>()).Returns(c => Result.Success(new PlantCulture { Id = 1, Name = c.Arg<CultureEditModel>().Name!, Class = "Овощи" }));
-        _library.UpdateProducerAsync(1, "Новое").Returns(Result.Success(new Producer { Id = 1, Name = "Новое" }));
+        _library.UpdateCultureAsync(Arg.Any<CultureEditModel>()).Returns(c => Result.Success(new CultureDetailsFromViewModel(1, c.Arg<CultureEditModel>().Name!, "Овощи")));
+        _library.UpdateProducerAsync(1, "Новое").Returns(Result.Success(new ProducerDetailsFromViewModel(1, "Новое")));
         setup.Change(); setup.Save.Execute(null);
         Assert.False(setup.Dirty());
         Assert.Equal("Новое", kind switch
@@ -88,8 +89,8 @@ public class LibraryWorkflowTests
     {
         var setup = Setup(kind);
         _library.UpdateSortAsync(Arg.Any<SortEditModel>()).Returns(Result.Failure<SortDetailsFromViewModel>("Конфликт"));
-        _library.UpdateCultureAsync(Arg.Any<CultureEditModel>()).Returns(Result.Failure<PlantCulture>("Конфликт"));
-        _library.UpdateProducerAsync(1, "Новое").Returns(Result.Failure<Producer>("Конфликт"));
+        _library.UpdateCultureAsync(Arg.Any<CultureEditModel>()).Returns(Result.Failure<CultureDetailsFromViewModel>("Конфликт"));
+        _library.UpdateProducerAsync(1, "Новое").Returns(Result.Failure<ProducerDetailsFromViewModel>("Конфликт"));
         setup.Change(); setup.Save.Execute(null);
         Assert.True(setup.Dirty());
         Assert.Equal("Черри", _seed.Plant.PlantSort.Name);

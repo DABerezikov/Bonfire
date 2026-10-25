@@ -45,22 +45,7 @@ public sealed class DbSeedEditWriter(IUnitOfWorkFactory units) : ISeedEditWriter
     {
         target.Name = details.Name.Value;
         var values = details.Values;
-        target.Description = values.Description.ToNullable();
-        target.MinGerminationTime = values.MinGerminationTime.ToNullable();
-        target.MaxGerminationTime = values.MaxGerminationTime.ToNullable();
-        target.AgeOfSeedlings = values.AgeOfSeedlings.ToNullable();
-        target.MaxAgeOfSeedlings = values.MaxAgeOfSeedlings.ToNullable();
-        target.GrowingSeason = values.GrowingSeason.ToNullable();
-        target.MaxGrowingSeason = values.MaxGrowingSeason.ToNullable();
-        target.LandingPattern = values.LandingPattern.ToNullable();
-        target.LandingRowSpacing = values.LandingRowSpacing.ToNullable();
-        target.PlantHeight = values.PlantHeight.ToNullable();
-        target.MaxPlantHeight = values.MaxPlantHeight.ToNullable();
-        target.PlantColor = values.PlantColor.ToNullable();
-        target.Maturity = values.Maturity.ToNullable();
-        target.YieldKg = values.YieldKg.ToNullable();
-        target.MinFruitWeight = values.MinFruitWeight.ToNullable();
-        target.MaxFruitWeight = values.MaxFruitWeight.ToNullable();
+        SortCharacteristicsDbMapper.Apply(values, target);
     }
 
     private static Task RememberOptionAsync(IUnitOfWork unit, string category, Option<string> value, CancellationToken cancellationToken)

@@ -31,7 +31,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)));
 
-    public LibraryService CreateLibraryService() => new(Factory, new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)));
+    public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)));
 
     public SeedlingsService CreateSeedlingsService()
     {

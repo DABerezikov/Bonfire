@@ -543,6 +543,59 @@ public class SeedsViewModel : SourceSelectionViewModel
         _reportService.CreateSeedsReport(items, "Семена_выборка");
     }
 
+    internal void SyncAfterSortUpdate(Bonfire.Application.Libraries.SortDetailsFromViewModel updated)
+    {
+        if (Seeds != null)
+            foreach (var seed in Seeds.Where(s => s.Plant.PlantSort.Id == updated.Id))
+            {
+                seed.Plant.PlantSort.Name = updated.Name;
+                foreach (var link in updated.Plants.Where(p => p.PlantId == seed.Plant.Id))
+                    seed.Plant.PlantCulture = new PlantCulture
+                    {
+                        Id = link.Culture.Id, Name = link.Culture.Name, Class = link.Culture.Class
+                    };
+            }
+
+        var sortItem = AddSortList.FirstOrDefault(s => s.Id == updated.Id);
+        if (sortItem is not null)
+            AddSortList[AddSortList.IndexOf(sortItem)] =
+                new SortFromSeedsViewModel { Id = updated.Id, Name = updated.Name };
+
+        UpdateCollectionViewSource();
+    }
+
+    internal void SyncAfterCultureUpdate(Bonfire.Application.Libraries.CultureDetailsFromViewModel updated)
+    {
+        if (Seeds != null)
+            foreach (var seed in Seeds.Where(s => s.Plant.PlantCulture.Id == updated.Id))
+            {
+                seed.Plant.PlantCulture.Name = updated.Name;
+                seed.Plant.PlantCulture.Class = updated.Class;
+            }
+
+        var cultureItem = AddCultureList.FirstOrDefault(c => c.Id == updated.Id);
+        if (cultureItem is not null)
+            AddCultureList[AddCultureList.IndexOf(cultureItem)] =
+                new CultureFromViewModel { Id = updated.Id, Name = updated.Name };
+
+        UpdateCollectionViewSource();
+    }
+
+    internal void SyncAfterProducerUpdate(Bonfire.Application.Libraries.ProducerDetailsFromViewModel updated)
+    {
+        if (Seeds != null)
+            foreach (var seed in Seeds.Where(s => s.Plant.PlantSort.Producer.Id == updated.Id))
+                seed.Plant.PlantSort.Producer.Name = updated.Name;
+
+        var producerItem = AddProducerList.FirstOrDefault(p => p.Id == updated.Id);
+        if (producerItem is not null)
+            AddProducerList[AddProducerList.IndexOf(producerItem)] =
+                new ProducerFromViewModel { Id = updated.Id, Name = updated.Name };
+
+        UpdateCollectionViewSource();
+    }
+
+
     // Команды
 
     public ICommand LoadDataCommand => field

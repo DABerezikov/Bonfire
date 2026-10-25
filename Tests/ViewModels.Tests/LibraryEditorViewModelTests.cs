@@ -1,3 +1,5 @@
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 using BonfireDB.Entities.Base;
 
 using Bonfire.Domain.Functional;
@@ -43,7 +45,7 @@ public class LibraryEditorViewModelTests
     {
         var vm = CreateVm();
         vm.SortDetail = new SortEditModel { Id = 0, Name = "X" };
-        _libraryService.GetSortAsync(Arg.Any<int>()).Returns(Result.Failure<PlantSort>("err"));
+        _libraryService.GetSortAsync(Arg.Any<int>()).Returns(Result.Failure<SortReadFromViewModel>("err"));
 
         vm.SelectedSort = new SortFromSeedsViewModel { Id = 1, Name = "Черри" };
 
@@ -55,7 +57,7 @@ public class LibraryEditorViewModelTests
     {
         var vm = CreateVm();
         vm.CultureDetail = new CultureEditModel { Id = 0, Name = "X" };
-        _libraryService.GetCultureAsync(Arg.Any<int>()).Returns(Result.Failure<PlantCulture>("err"));
+        _libraryService.GetCultureAsync(Arg.Any<int>()).Returns(Result.Failure<CultureDetailsFromViewModel>("err"));
 
         vm.SelectedCulture = new CultureFromViewModel { Id = 2, Name = "Томат" };
 
@@ -66,7 +68,7 @@ public class LibraryEditorViewModelTests
     public void SelectedProducer_Set_ClearsProducerDetailName()
     {
         var vm = CreateVm();
-        _libraryService.GetProducerAsync(Arg.Any<int>()).Returns(Result.Failure<Producer>("err"));
+        _libraryService.GetProducerAsync(Arg.Any<int>()).Returns(Result.Failure<ProducerDetailsFromViewModel>("err"));
 
         vm.SelectedProducer = new ProducerFromViewModel { Id = 3, Name = "Гавриш" };
 
@@ -79,7 +81,7 @@ public class LibraryEditorViewModelTests
     public void SelectedSort_Set_ClearsSelectedCultureAndProducer()
     {
         var vm = CreateVm();
-        _libraryService.GetSortAsync(Arg.Any<int>()).Returns(Result.Failure<PlantSort>("err"));
+        _libraryService.GetSortAsync(Arg.Any<int>()).Returns(Result.Failure<SortReadFromViewModel>("err"));
         vm.SelectedCulture = new CultureFromViewModel { Id = 1, Name = "Томат" };
         vm.SelectedProducer = new ProducerFromViewModel { Id = 1, Name = "Гавриш" };
 
@@ -278,7 +280,7 @@ public class LibraryEditorViewModelTests
     {
         var vm = CreateVm();
         vm.SelectedProducer = new ProducerFromViewModel { Id = 1, Name = "Гавриш" };
-        _libraryService.GetProducerAsync(Arg.Any<int>()).Returns(Result.Failure<Producer>("err"));
+        _libraryService.GetProducerAsync(Arg.Any<int>()).Returns(Result.Failure<ProducerDetailsFromViewModel>("err"));
         vm.ProducerDetailName = "Гавриш Новый";
         vm.ProducerDetailIsDirty = true;
 

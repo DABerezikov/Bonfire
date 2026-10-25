@@ -1852,3 +1852,30 @@ TRX: artifacts/stage7-garden-read-green. WPF-регрессия и оба DPI п
 сужение проекций — шаг очистки запросов. Схема/пакеты не менялись, этап 7 открыт.
 
 Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/c0a4a596dc244fc48bad6ef65f38157d/smoke.db. Рабочая БД не использовалась.
+
+## 2026-10-25 — этап 7, шаг 2а: DTO библиотек и общий маппинг
+
+ILibraryService больше не возвращает EF: ReadLibraries/ILibraryReader,
+DbLibraryReader и LibraryReadDbMapper возвращают существующие DTO культуры/
+производителя и независимый SortReadFromViewModel. LibraryService зависит только
+от портов, не от UnitOfWork/EF. Культура связана с первым Plant по прежней семантике,
+отсутствие — Option; характеристики читаются точно без нормализации/исправления.
+SortCharacteristicsDbMapper общий для чтения и записи DbSeedEditWriter; поля не
+дублируются. Совместимые перегрузки LibraryMapper для кэша семян остаются до 2б.
+
+SeedsViewModel владеет синхронизацией собственного кэша и подсказок, редактор
+библиотек не создаёт EF-графы. Сам кэш семян пока EF — следующий шаг, не скрыто.
+Red старого ответа культуры: 1 failed, artifacts/stage7-library-loading-red;
+после await все три загрузки проверяют текущую выбранную цель до применения.
+SQLite проверяет все характеристики/Option/связи и независимость снимка после
+нового сохранения, несвязанный сорт явно возвращает None культуры.
+
+Общий гейт **1546/1546**, failed/skipped нет: Models 678, Services 534,
+ViewModels 293, Repository 35, SeedsFromViewModel 6. Три новые проверки;
+TRX: artifacts/stage7-library-read-green. Старые проверки сервиса/синхронизации
+сохранены и адаптированы к DTO. В ходе компиляции исправлено использование
+ToOption только для поддержанного nullable-int, без нового локального конвертера.
+Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True;
+изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/
+30ff9ceef75c4a5980459e615b028494/smoke.db. Рабочая БД не использовалась.
+Схема/пакеты/предупреждения прежние, push/merge не выполнялись. Этап 7 открыт.

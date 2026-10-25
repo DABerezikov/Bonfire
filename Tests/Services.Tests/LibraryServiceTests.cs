@@ -22,7 +22,7 @@ public class LibraryServiceTests
     private LibraryService CreateService()
     {
         var factory = _uow.ToFactory();
-        return new(factory, new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)));
+        return new(new DbLibraryReader(factory), new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)));
     }
 
     // ── GetSortAsync ──────────────────────────────────────────────────────────

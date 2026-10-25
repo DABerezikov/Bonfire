@@ -12,7 +12,6 @@ using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities;
 
 namespace Bonfire.ViewModels;
 
@@ -107,6 +106,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadSortDetailAsync(int id)
     {
         var result = await _libraryService.GetSortAsync(id);
+        if (SelectedSort?.Id != id) return;
         result.Match(sort =>
         {
             SortDetail = LibraryMapper.ToEditModel(sort);
@@ -121,6 +121,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadCultureDetailAsync(int id)
     {
         var result = await _libraryService.GetCultureAsync(id);
+        if (SelectedCulture?.Id != id) return;
         result.Match(culture =>
         {
             CultureDetail = LibraryMapper.ToEditModel(culture);
@@ -135,6 +136,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadProducerDetailAsync(int id)
     {
         var result = await _libraryService.GetProducerAsync(id);
+        if (SelectedProducer?.Id != id) return;
         result.Match(producer =>
         {
             _originalProducerName = producer.Name;
@@ -150,58 +152,6 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
 
     // Синхронизация с SeedsViewModel
 
-    private void SyncAfterSortUpdate(SortDetailsFromViewModel updated)
-    {
-        if (_seedsViewModel.Seeds != null)
-            foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantSort.Id == updated.Id))
-            {
-                seed.Plant.PlantSort.Name = updated.Name;
-                foreach (var link in updated.Plants.Where(p => p.PlantId == seed.Plant.Id))
-                    seed.Plant.PlantCulture = new PlantCulture
-                    {
-                        Id = link.Culture.Id, Name = link.Culture.Name, Class = link.Culture.Class
-                    };
-            }
-
-        var sortItem = _seedsViewModel.AddSortList.FirstOrDefault(s => s.Id == updated.Id);
-        if (sortItem is not null)
-            _seedsViewModel.AddSortList[_seedsViewModel.AddSortList.IndexOf(sortItem)] =
-                new SortFromSeedsViewModel { Id = updated.Id, Name = updated.Name };
-
-        _seedsViewModel.UpdateCollectionViewSource();
-    }
-
-    private void SyncAfterCultureUpdate(PlantCulture updated)
-    {
-        if (_seedsViewModel.Seeds != null)
-            foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantCulture.Id == updated.Id))
-            {
-                seed.Plant.PlantCulture.Name = updated.Name;
-                seed.Plant.PlantCulture.Class = updated.Class;
-            }
-
-        var cultureItem = _seedsViewModel.AddCultureList.FirstOrDefault(c => c.Id == updated.Id);
-        if (cultureItem is not null)
-            _seedsViewModel.AddCultureList[_seedsViewModel.AddCultureList.IndexOf(cultureItem)] =
-                new CultureFromViewModel { Id = updated.Id, Name = updated.Name };
-
-        _seedsViewModel.UpdateCollectionViewSource();
-    }
-
-    private void SyncAfterProducerUpdate(Producer updated)
-    {
-        if (_seedsViewModel.Seeds != null)
-            foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantSort.Producer.Id == updated.Id))
-                seed.Plant.PlantSort.Producer.Name = updated.Name;
-
-        var producerItem = _seedsViewModel.AddProducerList.FirstOrDefault(p => p.Id == updated.Id);
-        if (producerItem is not null)
-            _seedsViewModel.AddProducerList[_seedsViewModel.AddProducerList.IndexOf(producerItem)] =
-                new ProducerFromViewModel { Id = updated.Id, Name = updated.Name };
-
-        _seedsViewModel.UpdateCollectionViewSource();
-    }
-    
     // Команды — Сорт
 
     [field: AllowNull, MaybeNull]
@@ -214,7 +164,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
                 var result = await _libraryService.UpdateSortAsync(detail);
                 result.Match(saved =>
                 {
-                    SyncAfterSortUpdate(saved);
+                    _seedsViewModel.SyncAfterSortUpdate(saved);
                     detail.ResetDirty();
                     _userDialog.Information("Сохранено");
                     return true;
@@ -250,7 +200,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
                 var result = await _libraryService.UpdateCultureAsync(detail);
                 result.Match(saved =>
                 {
-                    SyncAfterCultureUpdate(saved);
+                    _seedsViewModel.SyncAfterCultureUpdate(saved);
                     detail.ResetDirty();
                     _userDialog.Information("Сохранено");
                     return true;
@@ -286,7 +236,7 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
                 var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
                 result.Match(saved =>
                 {
-                    SyncAfterProducerUpdate(saved);
+                    _seedsViewModel.SyncAfterProducerUpdate(saved);
                     _originalProducerName = saved.Name;
                     ProducerDetailName = saved.Name;
                     ProducerDetailIsDirty = false;
