@@ -31,7 +31,9 @@ public static class DbGridMapper
     }
 
     public static GridResultFromViewModel Receipt(GardenElement element) => new(element.Id, element.GridRows, element.GridColumns,
-        element.PlantingSpots.OrderBy(spot => spot.Row).ThenBy(spot => spot.Column).Select(spot => new GridSpotFromViewModel(
-            spot.Id, spot.Row, spot.Column, spot.StateTypeName, spot.SeedlingInfoId.ToOption(),
-            spot.PlantedDate.ToOption(), spot.HarvestDate.ToOption(), spot.Note.ToOption())).ToArray());
+        element.PlantingSpots.OrderBy(spot => spot.Row).ThenBy(spot => spot.Column).Select(Receipt).ToArray());
+
+    public static GridSpotFromViewModel Receipt(PlantingSpot spot) => new(
+        spot.Id, spot.Row, spot.Column, spot.StateTypeName, spot.SeedlingInfoId.ToOption(),
+        spot.PlantedDate.ToOption(), spot.HarvestDate.ToOption(), spot.Note.ToOption());
 }

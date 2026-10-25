@@ -103,7 +103,8 @@ nullable через `!`. На входе из WPF, EF и внешних API null
 Существующие иерархии состояний перенесены в Domain без дублирования; чистый
 TransitionTo возвращает Result, EF делегирует ему. Сетка перенесена через чистый
 GardenGrid, ResizeGrid и атомарный DbGridWriter; UI принимает DTO только после успеха.
-Запись переходов состояний пока прежняя.
+Запись переходов и очистки перенесена через ChangeGardenState/DbGardenStateWriter:
+читаются свежие данные, UI принимает DTO только после успеха. Далее — геометрия.
 Последовательность оставшихся шагов — [план этапа 6](refactoring-stage-6.md).
 
 Затрагивается: `GardenPlanViewModel`, `GardenService`, `PlantingService`, модели

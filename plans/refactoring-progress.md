@@ -1103,3 +1103,65 @@ Repository 35, DTO 6). Добавлено 23 проверки к 1122. Триг�
 Следующая часть 3в — запись переходов состояний через Application по свежим данным.
 Весь этап 6 ещё не завершён. .claude/worktrees, DbSeedEditWriter.cs, push и merge
 не затрагивались.
+
+## 25.10.2026 — запись переходов состояний и очистки через Application
+
+Часть 3в этапа 6 завершена. ChangeGardenState принимает ID и закрытый StateChangeTarget
+(Element/Greenhouse/Spot); GardenStateChange проверяет ID и инварианты вложенных
+значений до порта. SpotChange различает переход и очистку, без enum/bool+nullable.
+PlantingCell хранит immutable-снимок состояния, ссылки, дат и заметки через Option.
+WithState использует существующую матрицу TransitionTo: None метки сохраняет Note,
+Some сохраняется точно, включая пустую строку/пробелы. Clear создаёт новый снимок:
+EmptySpotState, None ссылки и дат, прежняя Note. Исходный снимок не меняется.
+
+DbGardenStateWriter читает свежий элемент/теплицу/ячейку и меняет только нужные поля
+одним SaveChanges. Для элемента/теплицы сохраняется только StateTypeName, другие
+свойства и Composite не переписываются. Ячейка маппируется через PlantingCellDbMapper;
+DTO GridSpotFromViewModel и DbGridMapper.Receipt общие с перестройкой сетки.
+Ошибки SaveChanges возвращаются Result, отмена остаётся OperationCanceledException.
+В новой операции нет обращения к инвентарю семян/рассады и сохранения их графов.
+Схема, TPH, каскады, строки состояний и матрицы переходов не менялись.
+
+GardenPlanViewModel использует ChangeStateAsync для элемента, теплицы, бронирования,
+уборки, гибели и очистки. UI применяет DTO после успеха; отказ показывает причину
+и сохраняет отображение/ввод. Выбранная модель захватывается до await. Очистка,
+как прежде, скрывает PlantLabel и сохраняет Note, а теперь ещё синхронизирует
+SeedlingInfoId кэша с БД. Уборка не подставляет автоматически дату уборки.
+Загрузка EF перед изменением статуса и LoadSpotEntityAsync убраны из UI.
+
+Старые ChangeElementStateAsync/ChangeGreenhouseStateAsync/ChangeSpotStateAsync и
+ClearSpotAsync остаются API совместимости с тестами до этапа 7 без вызовов из UI.
+Очистка совместимости переиспользует PlantingCell/маппер; отдельного правила очистки
+не осталось. Прочие старые EF-API пока сохраняют прежнее поведение. CRUD и геометрия
+в GardenService ещё не перенесены, этап 6 целиком не завершён.
+
+Red: PlantingCellTests 6/6 падают на заглушке; GardenStateApplicationTests 2/4
+(делегирование/отмена); GardenStateWritingIntegrationTests 5/5 на заглушке порта.
+В исходном UI Red две проверки были подготовлены неверно: выбор теплицы снимал
+выбор элемента. Порядок исправлен; новые обработчики временно заменены прежними из
+HEAD, и повтор ...-ui-red-fixed дал 4/4 ожидаемых отказа, включая причину ошибки и
+очистку ссылки. Первые две невалидные проверки не считаются доказательством Red.
+Артефакты: artifacts/refactoring-stage-6-state-writing-{domain-red,application-red,
+storage-red,ui-red-fixed}.
+
+Первый общий прогон выявил только ошибку подготовки этих двух тестов. После
+восстановления нового исходника инкрементальный запуск ...-final ещё использовал
+DLL с прежними обработчиками: Copy-Item сохранил старую дату файла. Это не Green.
+Отметка времени обновлена, исходник пересобран. Итоговый общий гейт:
+dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false
+-p:UseSharedCompilation=false --logger trx --results-directory artifacts/refactoring-stage-6-state-writing-final-rebuilt
+— 1164/1164, без пропусков (Models 564, Services 371, ViewModels 188,
+Repository 35, DTO 6). Добавлено 19 проверок к 1145. Доказаны свежий запрет перехода,
+откат метки/статуса при триггере отказа, сохранность Composite, дат, истории рассады,
+меток и UI при отказе. Старые проверки переходов, посадок и совместимости проходят.
+
+Реальный dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj --no-restore
+-p:UseSharedCompilation=false: STARTUP_SMOKE_OK, WindowLoaded=True, HostDisposed=True.
+Изолированная БД: Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/
+51e7ff01e4824912ab04bfcba22941fb/smoke.db. Рабочая БД не использовалась.
+Остались прежние предупреждения NuGet и миграций PRAGMA foreign_keys; новых
+миграций/пакетов нет. XAML не менялся, ручной UI/DPI и Coverlet не запускались.
+Фабрики From по-прежнему сохраняют исторический fallback неизвестных строк;
+новые concurrency-токены не добавлены, предотвращение двух конкурентных успешных
+переходов не заявляется. Следующее — геометрия и разделение взаимодействий
+планировщика. .claude/worktrees, DbSeedEditWriter.cs, merge и push не затрагивались.

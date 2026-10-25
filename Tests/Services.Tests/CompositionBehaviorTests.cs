@@ -35,6 +35,8 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<IPlantingWriter>());
         Assert.NotNull(provider.GetRequiredService<IResizeGrid>());
         Assert.NotNull(provider.GetRequiredService<IGridWriter>());
+        Assert.NotNull(provider.GetRequiredService<IChangeGardenState>());
+        Assert.NotNull(provider.GetRequiredService<IGardenStateWriter>());
         Assert.NotNull(provider.GetRequiredService<IUpdateCulture>());
         Assert.NotNull(provider.GetRequiredService<ICultureWriter>());
         Assert.NotNull(provider.GetRequiredService<IUpdateProducer>());

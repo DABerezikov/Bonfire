@@ -11,6 +11,12 @@ ViewModel — с **22,8% до 94,4%**. Это не заявление о пол�
 
 ## Порядок работы
 
+Запись состояний и очистки: **1164/1164**. 19 новых проверок PlantingCellTests,
+GardenStateApplicationTests, GardenStateWritingIntegrationTests и GardenStateWorkflowTests.
+Проверены чистые переходы/очистка, точность меток, свежий запрет, сохранность
+Composite/истории, откат БД, отмена и UI при отказе. Старые сценарии совместимости
+сохранены; покрытие строк повторно не измерялось.
+
 Перестройка сетки: **1145/1145**. 23 новых проверки: GardenGridTests,
 GridResizingApplicationTests, GridResizingIntegrationTests, GardenGridWorkflowTests.
 Проверены чистый расчёт, нулевые/некорректные размеры, блокировки свежего состояния,

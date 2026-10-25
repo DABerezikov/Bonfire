@@ -45,6 +45,7 @@ public interface IGardenService
     Task DeleteElementAsync(GardenElement element);
 
     // --- Переходы состояний ---
+    Task<Result<GardenStateResultFromViewModel>> ChangeStateAsync(ChangeGardenStateFromViewModel request, CancellationToken cancellationToken = default);
     Task ChangeElementStateAsync(GardenElement element, GardenElementState newState);
     Task ChangeGreenhouseStateAsync(Greenhouse greenhouse, GardenElementState newState);
 

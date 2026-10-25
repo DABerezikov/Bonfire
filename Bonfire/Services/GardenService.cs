@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState) : IGardenService
 {
     // --- Чтение ---
 
@@ -180,6 +180,9 @@ internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGr
 
     // --- Переходы состояний ---
 
+    public Task<Result<GardenStateResultFromViewModel>> ChangeStateAsync(ChangeGardenStateFromViewModel request, CancellationToken cancellationToken = default)
+        => changeGardenState.ExecuteAsync(request, cancellationToken);
+
     public async Task ChangeElementStateAsync(GardenElement element, GardenElementState newState)
     {
         element.TransitionTo(newState);
@@ -225,10 +228,7 @@ internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGr
 
     public async Task ClearSpotAsync(PlantingSpot spot)
     {
-        spot.SeedlingInfoId = null;
-        spot.PlantedDate = null;
-        spot.HarvestDate = null;
-        spot.StateTypeName = nameof(EmptySpotState);
+        PlantingCellDbMapper.Apply(PlantingCellDbMapper.Read(spot).Apply(new SpotChange.Clear()).ValueOrThrow(), spot);
         await using var uow = uowFactory.Create();
         await uow.Repository<PlantingSpot>().UpdateAsync(spot);
         await uow.SaveChangesAsync();

@@ -27,6 +27,7 @@ namespace Bonfire.Services
             .AddSingleton<IPlantingService, PlantingService>()
             .AddSingleton<IPlantInSpot, PlantInSpot>()
             .AddSingleton<IResizeGrid, ResizeGrid>()
+            .AddSingleton<IChangeGardenState, ChangeGardenState>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

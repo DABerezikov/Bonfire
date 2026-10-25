@@ -4,6 +4,7 @@ using Bonfire.Domain.Garden.States;
 using Bonfire.Domain.Garden.SpotStates;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Garden;
 
 namespace ViewModels.Tests;
 
@@ -138,11 +139,11 @@ public partial class GardenPlanWorkflowTests
     public void GreenhouseState_ValidTransitionUpdatesDisplayedState()
     {
         var vm = CreateVm(); vm.SelectedGreenhouse = new() { Id = 1, StateTypeName = nameof(PlannedState) };
-        var entity = new Greenhouse { Id = 1 };
-        _gardens.GetGreenhouseByIdAsync(1).Returns(entity);
+        _gardens.ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>()).Returns(Result.Success<GardenStateResultFromViewModel>(
+            new GardenStateResultFromViewModel.Greenhouse(1, new PreparedState())));
         vm.ChangeGreenhouseStateCommand.Execute(nameof(PreparedState));
         Assert.Equal(nameof(PreparedState), vm.SelectedGreenhouse.StateTypeName);
-        _gardens.Received(1).ChangeGreenhouseStateAsync(entity, Arg.Is<GardenElementState>(s => s is PreparedState));
+        _gardens.Received(1).ChangeStateAsync(Arg.Is<ChangeGardenStateFromViewModel>(request => request.EntityId == 1));
     }
 
     [Fact]
@@ -170,8 +171,8 @@ public partial class GardenPlanWorkflowTests
     public void SpotTransitions_UpdateDisplayedStatusWithoutUsingInventory(string target)
     {
         var vm = CreateVm();
-        var entity = new PlantingSpot { Id = 1, StateTypeName = target == "Reserved" ? nameof(EmptySpotState) : nameof(PlantedSpotState) };
-        _gardens.GetSpotAsync(1).Returns(entity);
+        _gardens.ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>()).Returns(Result.Success<GardenStateResultFromViewModel>(
+            new GardenStateResultFromViewModel.Spot(new(1, 0, 0, target + "SpotState", Option.None<int>(), Option.None<DateTime>(), Option.None<DateTime>(), Option.Some("Томат Черри")))));
         vm.PlanPickerLabel = "Томат Черри";
         var spot = new PlantingSpotFromViewModel { Id = 1 };
         (target switch { "Reserved" => vm.ReserveSpotCommand, "Harvested" => vm.HarvestSpotCommand, _ => vm.MarkDeadSpotCommand }).Execute(spot);

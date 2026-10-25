@@ -5,6 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Bonfire.Infrastructure;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Garden;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
@@ -633,20 +636,24 @@ public class GardenPlanViewModel(
 
     private async Task ChangeGreenhouseStateAsync(string? stateTypeName)
     {
-        if (SelectedGreenhouse is null || stateTypeName is null) return;
+        if (SelectedGreenhouse is not { } editing || stateTypeName is null) return;
 
         var newState = GardenElementState.From(stateTypeName);
-        var currentState = GardenElementState.From(SelectedGreenhouse.StateTypeName);
+        var currentState = GardenElementState.From(editing.StateTypeName);
         if (!currentState.CanTransitionTo(newState)) return;
 
-        var entity = await gardenService.GetGreenhouseByIdAsync(SelectedGreenhouse.Id);
-        if (entity is null) return;
-
-        await gardenService.ChangeGreenhouseStateAsync(entity, newState);
-
-        SelectedGreenhouse.StateTypeName    = newState.GetType().Name;
-        SelectedGreenhouse.StateDisplayName = newState.DisplayName;
-        SelectedGreenhouse.StateColor       = newState.StatusColor;
+        var result = await gardenService.ChangeStateAsync(new(editing.Id, new StateChangeTarget.Greenhouse(newState)));
+        ApplyStateResult(result, saved =>
+        {
+            var state = saved switch
+            {
+                GardenStateResultFromViewModel.Greenhouse greenhouse => greenhouse.State,
+                _ => throw new System.Diagnostics.UnreachableException()
+            };
+            editing.StateTypeName = state.GetType().Name;
+            editing.StateDisplayName = state.DisplayName;
+            editing.StateColor = state.StatusColor;
+        });
     }
 
     [field: AllowNull, MaybeNull]
@@ -950,24 +957,28 @@ public class GardenPlanViewModel(
 
     private async Task ChangeElementStateAsync(string? stateTypeName)
     {
-        if (SelectedElement is null || stateTypeName is null) return;
+        if (SelectedElement is not { } editing || stateTypeName is null) return;
 
         // Проверяем допустимость перехода до обращения к БД — кнопка должна быть задизаблена,
         // но на случай гонки или вызова из ContextMenu дублируем проверку здесь.
         var newState = GardenElementState.From(stateTypeName);
-        var currentState = GardenElementState.From(SelectedElement.StateTypeName);
+        var currentState = GardenElementState.From(editing.StateTypeName);
         if (!currentState.CanTransitionTo(newState)) return;
 
-        var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
-        if (entity is null) return;
-
-        await gardenService.ChangeElementStateAsync(entity, newState);
-
-        SelectedElement.StateTypeName = newState.GetType().Name;
-        SelectedElement.StateDisplayName = newState.DisplayName;
-        SelectedElement.StateColor = newState.StatusColor;
-        SelectedElement.CanAddPlanting = newState.CanAddPlanting;
-        SelectedElement.CanModifyGrid = newState.CanModifyGrid;
+        var result = await gardenService.ChangeStateAsync(new(editing.Id, new StateChangeTarget.Element(newState)));
+        ApplyStateResult(result, saved =>
+        {
+            var state = saved switch
+            {
+                GardenStateResultFromViewModel.Element element => element.State,
+                _ => throw new System.Diagnostics.UnreachableException()
+            };
+            editing.StateTypeName = state.GetType().Name;
+            editing.StateDisplayName = state.DisplayName;
+            editing.StateColor = state.StatusColor;
+            editing.CanAddPlanting = state.CanAddPlanting;
+            editing.CanModifyGrid = state.CanModifyGrid;
+        });
     }
 
     // ─────────────────────────────────────
@@ -1038,15 +1049,8 @@ public class GardenPlanViewModel(
     private async Task PlanSpotReserveAsync(PlantingSpotFromViewModel? spotVm)
     {
         if (spotVm is null) return;
-        var entity = await LoadSpotEntityAsync(spotVm.Id);
-        if (entity is null) return;
-        var newState = new ReservedSpotState();
-        if (!entity.State.CanTransitionTo(newState)) return;
-
-        // Сохраняем метку растения в Note — инвентарь НЕ расходуется
         var label = string.IsNullOrWhiteSpace(PlanPickerLabel) ? null : PlanPickerLabel.Trim();
-        await gardenService.ChangeSpotStateAsync(entity, newState, plantLabel: label);
-        UpdateSpotVm(spotVm, newState, plantLabel: label);
+        await ApplySpotChangeAsync(spotVm, new SpotChange.Transition(new ReservedSpotState(), label.ToOption()));
     }
 
     [field: AllowNull, MaybeNull]
@@ -1123,30 +1127,43 @@ public class GardenPlanViewModel(
     private async Task ChangeSpotAsync(PlantingSpotFromViewModel? spotVm, PlantingSpotState newState)
     {
         if (spotVm is null) return;
-        var entity = await LoadSpotEntityAsync(spotVm.Id);
-        if (entity is null) return;
-        if (!entity.State.CanTransitionTo(newState)) return;
-
-        await gardenService.ChangeSpotStateAsync(entity, newState);
-        UpdateSpotVm(spotVm, newState);
+        await ApplySpotChangeAsync(spotVm, new SpotChange.Transition(newState, Option.None<string>()));
     }
 
     private async Task ClearSpotAsync(PlantingSpotFromViewModel? spotVm)
     {
         if (spotVm is null) return;
-        var entity = await LoadSpotEntityAsync(spotVm.Id);
-        if (entity is null) return;
-
-        await gardenService.ClearSpotAsync(entity);
-
-        var emptyState = new EmptySpotState();
-        spotVm.StateTypeName = emptyState.GetType().Name;
-        spotVm.PlantedDate   = null;
-        spotVm.PlantLabel    = null;
+        await ApplySpotChangeAsync(spotVm, new SpotChange.Clear());
     }
 
-    private async Task<PlantingSpot?> LoadSpotEntityAsync(int spotId)
-        => await gardenService.GetSpotAsync(spotId);
+    private async Task ApplySpotChangeAsync(PlantingSpotFromViewModel spot, SpotChange change)
+    {
+        var result = await gardenService.ChangeStateAsync(new(spot.Id, new StateChangeTarget.Spot(change)));
+        ApplyStateResult(result, saved =>
+        {
+            var cell = saved switch
+            {
+                GardenStateResultFromViewModel.Spot changed => changed.Cell,
+                _ => throw new System.Diagnostics.UnreachableException()
+            };
+            spot.StateTypeName = cell.StateTypeName;
+            spot.SeedlingInfoId = cell.SeedlingInfoId.ToNullable();
+            spot.PlantedDate = cell.PlantedDate.ToNullable();
+            spot.Note = cell.Note.ToNullable();
+            spot.PlantLabel = change is SpotChange.Clear ? null : cell.Note.ToNullable();
+        });
+    }
+
+    private void ApplyStateResult(Result<GardenStateResultFromViewModel> result, Action<GardenStateResultFromViewModel> success)
+        => result.Match(saved =>
+        {
+            success(saved);
+            return true;
+        }, error =>
+        {
+            userDialog.Warning(error, "Состояние планировщика");
+            return false;
+        });
 
     // ─────────────────────────────────────
     //  Вспомогательные методы маппинга

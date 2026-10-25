@@ -1,6 +1,7 @@
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
+using Bonfire.Domain.Garden;
 using Bonfire.Infrastructure;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities.GardenPlanning;
@@ -206,13 +207,13 @@ public partial class GardenPlanWorkflowTests
     public void ElementState_ValidTransitionSavesAndInvalidTransitionDoesNothing()
     {
         var vm = CreateVm(); vm.SelectedElement = new() { Id = 1, StateTypeName = nameof(PlannedState) };
-        var entity = new Bed { Id = 1 };
-        _gardens.GetElementByIdAsync(1).Returns(entity);
+        _gardens.ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>()).Returns(Result.Success<GardenStateResultFromViewModel>(
+            new GardenStateResultFromViewModel.Element(1, new PreparedState())));
         vm.ChangeElementStateCommand.Execute(nameof(PreparedState));
         Assert.Equal(nameof(PreparedState), vm.SelectedElement.StateTypeName);
-        _gardens.Received(1).ChangeElementStateAsync(entity, Arg.Is<GardenElementState>(s => s is PreparedState));
+        _gardens.Received(1).ChangeStateAsync(Arg.Is<ChangeGardenStateFromViewModel>(request => request.EntityId == 1));
         vm.ChangeElementStateCommand.Execute(nameof(PlannedState));
-        _gardens.Received(1).ChangeElementStateAsync(entity, Arg.Any<GardenElementState>());
+        _gardens.Received(1).ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>());
     }
 
     [Fact]
@@ -245,12 +246,13 @@ public partial class GardenPlanWorkflowTests
     [Fact]
     public void ClearSpot_ClearsDisplayedPlantAndDate()
     {
-        var vm = CreateVm(); var entity = new PlantingSpot { Id = 1 };
-        _gardens.GetSpotAsync(1).Returns(entity);
+        var vm = CreateVm();
+        _gardens.ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>()).Returns(Result.Success<GardenStateResultFromViewModel>(
+            new GardenStateResultFromViewModel.Spot(new(1, 0, 0, nameof(EmptySpotState), Option.None<int>(), Option.None<DateTime>(), Option.None<DateTime>(), Option.None<string>()))));
         var spot = new PlantingSpotFromViewModel { Id = 1, PlantLabel = "Томат", PlantedDate = DateTime.Today };
         vm.ClearSpotCommand.Execute(spot);
         Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
         Assert.Null(spot.PlantLabel); Assert.Null(spot.PlantedDate);
-        _gardens.Received(1).ClearSpotAsync(entity);
+        _gardens.Received(1).ChangeStateAsync(Arg.Is<ChangeGardenStateFromViewModel>(request => request.EntityId == 1 && request.Target.Equals(new StateChangeTarget.Spot(new SpotChange.Clear()))));
     }
 }
