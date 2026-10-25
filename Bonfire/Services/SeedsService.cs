@@ -16,27 +16,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed, ISeedReader seedReader) : ISeedsService
+internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed, ISeedReader seedReader, ISeedEditorOptionsReader editorOptions) : ISeedsService
 {
     public Task<Result<ImmutableArray<SeedReadFromViewModel>>> ReadSeedsAsync() => seedReader.ReadAsync(default);
 
     public Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request)
         => editSeed.ExecuteAsync(request);
 
-    public async Task<SeedEditorOptions> GetEditorOptionsAsync()
-    {
-        await using var uow = uowFactory.Create();
-        var sorts = await uow.Repository<PlantSort>().Items.ToListAsync();
-        var options = await uow.Repository<SortOption>().Items.ToListAsync();
-        var producers = await uow.Repository<Producer>().Items.OrderBy(p => p.Name).ToListAsync();
-        static string[] Values(IEnumerable<string?> values) => values
-            .Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(v => v).ToArray();
-        return new SeedEditorOptions(
-            Values(sorts.Select(s => s.PlantColor).Concat(options.Where(o => o.Category == "Цвет").Select(o => o.Name))),
-            Values(sorts.Select(s => s.Maturity).Concat(options.Where(o => o.Category == "Созревание").Select(o => o.Name))),
-            producers.Select(LibraryReadDbMapper.Read).ToArray());
-    }
+    public Task<Result<SeedEditorOptionsFromViewModel>> GetEditorOptionsAsync() => editorOptions.ReadAsync(default);
 
     public async Task<IReadOnlyList<Seed>> GetAllSeedsAsync()
     {

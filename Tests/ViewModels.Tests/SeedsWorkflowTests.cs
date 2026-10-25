@@ -1,7 +1,8 @@
-using BonfireDB.Libraries;
-using System.Threading.Tasks;
+using System.Collections.Immutable;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
+using BonfireDB.Libraries;
+using System.Threading.Tasks;
 
 namespace ViewModels.Tests;
 
@@ -14,7 +15,7 @@ public class SeedsWorkflowTests
     private SeedsViewModel CreateVm(params Seed[] seeds)
     {
         _service.ReadSeedsAsync().Returns(seeds.ReadSeeds());
-        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToArray()));
+        _service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToImmutableArray())));
         var vm = new SeedsViewModel(_service, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         return vm;
@@ -94,7 +95,7 @@ public class SeedsWorkflowTests
             : new AcquisitionResultFromViewModel.Replenished(returned.Id);
         _service.AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>()).Returns(Result.Success(receipt));
         _service.ReadSeedsAsync().Returns((isNew ? new[] { existing, returned } : new[] { existing }).ReadSeeds());
-        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions([], [], [LibraryReadDbMapper.Read(returned.Plant.PlantSort.Producer)]));
+        _service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel([], [], [LibraryReadDbMapper.Read(returned.Plant.PlantSort.Producer)])));
         vm.SeedSource = "Куплено"; vm.AddClass = "Цветы"; vm.AddCulture = "Астра";
         vm.AddSort = "Новая"; vm.AddProducer = "Фирма"; vm.AddSize = Units.GramsOption;
         vm.AddQuantityInPac = "0,5"; vm.AddQuantityPac = "2"; vm.AddCostPack = "10,50";

@@ -7,6 +7,13 @@ namespace Models.Tests;
 
 public class ArchitectureBoundaryTests
 {
+    [Fact]
+    public void EditorOptionsContract_ExpressesReadFailure()
+    {
+        var result = typeof(Bonfire.Services.Interfaces.ISeedsService).GetMethod("GetEditorOptionsAsync")!.ReturnType.GetGenericArguments()[0];
+        Assert.True(result.IsGenericType && result.GetGenericTypeDefinition() == typeof(Result<>));
+    }
+
     [Theory]
     [InlineData("Bonfire.Domain")]
     [InlineData("Bonfire.Application")]

@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
 using BonfireDB.Libraries;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,7 +19,7 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     {
         var service = Substitute.For<ISeedsService>();
         service.ReadSeedsAsync().Returns(seeds.ReadSeeds());
-        service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToArray()));
+        service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToImmutableArray())));
         var vm = new SeedsViewModel(service, dialog ?? Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
         vm.LoadDataCommand.Execute(null);
         if (seeds.Length > 0) vm.SelectedItem = vm.Seeds![0];

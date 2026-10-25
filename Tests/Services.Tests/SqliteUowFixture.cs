@@ -29,7 +29,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public GardenService CreateGardenService() => new(Factory, new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(Factory)), new EditGardenProperties(new DbGardenPropertiesWriter(Factory)), new SetGardenLock(new DbGardenLockWriter(Factory)), new DeleteGardenElement(new DbElementDeletionWriter(Factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(Factory)), new DeleteGarden(new DbGardenDeletionWriter(Factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(Factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(Factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(Factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(Factory)), new DbGardenReader(Factory));
 
-    public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory));
+    public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory), new DbSeedEditorOptionsReader(Factory));
 
     public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)));
 
@@ -39,14 +39,18 @@ internal sealed class SqliteUowFixture : IDisposable
         return new SeedlingsService(Factory, lunar, new SowSeeds(new DbSowingSessionFactory(Factory), new MoonPhaseCalendar(lunar)), new DeleteSeedling(new DbSeedlingDeletionWriter(Factory)), new ChangeSeedling(new DbSeedlingChangeWriter(Factory)), new EditSeedling(new DbSeedlingEditWriter(Factory), new MoonPhaseCalendar(lunar)), new DbSeedlingReader(Factory));
     }
 
-    public SqliteUowFixture()
+    public SqliteUowFixture(Action<string>? commandLog = null)
     {
         // Соединение держим открытым — на нём живёт in-memory БД, общая для всех областей.
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
         var services = new ServiceCollection();
-        services.AddDbContext<DbBonfire>(o => o.UseSqlite(_connection));
+        services.AddDbContext<DbBonfire>(o =>
+        {
+            o.UseSqlite(_connection);
+            if (commandLog is not null) o.LogTo(commandLog, [Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.CommandExecuted]);
+        });
         services.AddRepositoriesInDb();
         _provider = services.BuildServiceProvider();
 

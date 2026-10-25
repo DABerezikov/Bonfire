@@ -129,7 +129,7 @@ public class SeedEditorIntegrationTests : IDisposable
         Assert.Equal(" Полосатый ", saved.Plant.PlantSort.PlantColor);
         Assert.Null(saved.Plant.PlantSort.Maturity);
         Assert.Equal("Томат", saved.Plant.PlantCulture.Name);
-        Assert.Contains("Полосатый", (await service.GetEditorOptionsAsync()).Colors);
+        Assert.Contains("Полосатый", (await service.GetEditorOptionsAsync()).ValueOrThrow().Colors);
     }
 
     [Fact]
@@ -177,11 +177,11 @@ public class SeedEditorIntegrationTests : IDisposable
         sort.PlantColor = "Красный";
         sort.Maturity = "Ранний";
         await SaveAsync(service, edit, sort, producerId);
-        var options = await service.GetEditorOptionsAsync();
+        var options = (await service.GetEditorOptionsAsync()).ValueOrThrow();
         Assert.Contains("Полосатый", options.Colors);
         Assert.Contains("Красный", options.Colors);
         Assert.Contains("Среднеранний", options.Maturities);
-        Assert.Equal(2, options.Producers.Count);
+        Assert.Equal(2, options.Producers.Length);
         Assert.Equal(1, await _fx.QueryAsync(db => db.SortOptions.CountAsync(o => o.Category == "Цвет" && o.Name == "Полосатый")));
     }
 

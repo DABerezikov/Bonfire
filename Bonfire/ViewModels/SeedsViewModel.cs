@@ -41,7 +41,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         set => Set(ref field, value);
     }
 
-    public SeedEditorOptions EditorOptions
+    public SeedEditorOptionsFromViewModel EditorOptions
     {
         get;
         private set => Set(ref field, value);
@@ -610,9 +610,13 @@ public class SeedsViewModel : SourceSelectionViewModel
     public ICommand LoadDataCommand => field
         ??= new LambdaCommandAsync(OnLoadDataCommandExecuted);
 
+    private async Task<bool> ReloadEditorOptionsAsync()
+        => (await _seedsService.GetEditorOptionsAsync()).Match(options => { EditorOptions = options; return true; },
+            error => { _userDialog.Error(error); return false; });
+
     private async Task OnLoadDataCommandExecuted()
     {
-        EditorOptions = await _seedsService.GetEditorOptionsAsync() ?? new([], [], []);
+        if (!await ReloadEditorOptionsAsync()) return;
         if (Seeds != null)
         {
             UpdateCollectionViewSource();
@@ -659,7 +663,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             {
                 _ignoreDiscard = true;
                 if ((await RefreshSeedsAsync()).IsFailure) return;
-                EditorOptions = await _seedsService.GetEditorOptionsAsync();
+                await ReloadEditorOptionsAsync();
                 RebuildSeedSuggestions();
                 ClearFieldSeedView();
                 UpdateCollectionViewSource(receipt.SeedId);
@@ -729,7 +733,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             {
                 _ignoreDiscard = true;
                 if ((await RefreshSeedsAsync()).IsFailure) return;
-                EditorOptions = await _seedsService.GetEditorOptionsAsync();
+                await ReloadEditorOptionsAsync();
                 SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
                 RebuildSeedSuggestions();
             }, error =>

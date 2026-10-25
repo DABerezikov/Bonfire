@@ -8,6 +8,22 @@ namespace ViewModels.Tests;
 public class SeedReadingWorkflowTests
 {
     [Fact]
+    public void Reload_OptionsRefused_PreservesOptionsSelectionAndDraft()
+    {
+        var original = SeedsWorkflowTests.Seed(1).Read();
+        var service = Substitute.For<ISeedsService>(); var dialog = Substitute.For<IUserDialog>();
+        var options = new SeedEditorOptionsFromViewModel(["Красный"], [], []);
+        service.GetEditorOptionsAsync().Returns(Result.Success(options));
+        var vm = new SeedsViewModel(service, dialog, Substitute.For<IReportService>()) { Seeds = [original] };
+        vm.LoadDataCommand.Execute(null); vm.SelectedItem = original; var draft = vm.EditedItem!;
+        draft.Package.Note = "Правка";
+        service.GetEditorOptionsAsync().Returns(Result.Failure<SeedEditorOptionsFromViewModel>("Ошибка чтения вариантов"));
+        vm.LoadDataCommand.Execute(null);
+        Assert.Same(options, vm.EditorOptions); Assert.Same(original, vm.SelectedItem); Assert.Same(draft, vm.EditedItem);
+        Assert.Equal("Правка", draft.Package.Note); dialog.Received(1).Error("Ошибка чтения вариантов", Arg.Any<string>());
+    }
+
+    [Fact]
     public void LibrarySave_ImmutableCache_UpdatesSelectionButPreservesDraftAndOriginalSnapshot()
     {
         var original = SeedsWorkflowTests.Seed(1).Read();
