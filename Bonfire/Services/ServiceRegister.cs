@@ -29,6 +29,7 @@ namespace Bonfire.Services
             .AddSingleton<IResizeGrid, ResizeGrid>()
             .AddSingleton<IChangeGardenState, ChangeGardenState>()
             .AddSingleton<ISaveGardenGeometry, SaveGardenGeometry>()
+            .AddSingleton<IEditElementProperties, EditElementProperties>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

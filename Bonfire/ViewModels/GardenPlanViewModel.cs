@@ -136,10 +136,24 @@ public class GardenPlanViewModel(
         set
         {
             if (!Set(ref field, value)) return;
+            ElementEditor = value is null ? null : ElementEditorMapper.Open(value);
             OnPropertyChanged(nameof(GardenPropertiesPanel));
             OnPropertyChanged(nameof(GreenhousePropertiesPanel));
         }
     }
+
+    public ElementEditorDraft? ElementEditor
+    {
+        get;
+        private set
+        {
+            if (Set(ref field, value)) ElementEditorHasBindingErrors = false;
+        }
+    }
+
+    public bool ElementEditorHasBindingErrors { get; set; }
+    private bool _isSavingElementProperties;
+    public bool IsElementEditorEnabled => !_isSavingElementProperties;
 
     /// <summary>
     /// Возвращает SelectedGarden, когда не выбран ни один элемент —
@@ -914,38 +928,48 @@ public class GardenPlanViewModel(
 
     private Task SaveElementGeometryAsync(GardenElementFromViewModel model)
         => SaveGeometryAsync(new(model.Id, new GeometryTarget.Element(CanvasConstants.PixelsPerMeter), model.X, model.Y, model.Width, model.Height),
-            rectangle => CanvasGeometryMapper.Apply(rectangle, model));
+            rectangle =>
+            {
+                CanvasGeometryMapper.Apply(rectangle, model);
+                if (ReferenceEquals(SelectedElement, model) && ElementEditor is { } draft && !ElementEditorHasBindingErrors)
+                    draft.Accept(ElementEditorMapper.Read(model), draft.Original);
+            });
 
     [field: AllowNull, MaybeNull]
     public ICommand SaveElementPropertiesCommand => field
-        ??= new LambdaCommandAsync(SaveElementPropertiesAsync, () => SelectedElement is not null);
+        ??= new LambdaCommandAsync(SaveElementPropertiesAsync,
+            () => ElementEditor is { IsDirty: true } && !ElementEditorHasBindingErrors && !_isSavingElementProperties);
+
+    [field: AllowNull, MaybeNull]
+    public ICommand CancelElementPropertiesCommand => field
+        ??= new LambdaCommand(() =>
+        {
+            if (SelectedElement is { } element) ElementEditor = ElementEditorMapper.Open(element);
+        }, () => SelectedElement is not null && !_isSavingElementProperties);
 
     private async Task SaveElementPropertiesAsync()
     {
-        if (SelectedElement is null) return;
-        var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
-        if (entity is null) return;
-
-        entity.X = SelectedElement.X;
-        entity.Y = SelectedElement.Y;
-        entity.DisplayWidth = SelectedElement.Width;
-        entity.DisplayHeight = SelectedElement.Height;
-        entity.AreaSquareMeters = SelectedElement.AreaSquareMeters;
-        entity.Name = SelectedElement.Name;
-        entity.Note = SelectedElement.Note;
-        entity.SoilType = SelectedElement.SoilType;
-
-        switch (entity)
+        if (SelectedElement is not { } element || ElementEditor is not { IsDirty: true } draft ||
+            draft.Id != element.Id || ElementEditorHasBindingErrors || _isSavingElementProperties) return;
+        var submitted = draft.Values;
+        _isSavingElementProperties = true;
+        OnPropertyChanged(nameof(IsElementEditorEnabled));
+        try
         {
-            case Bed bed:
-                bed.Orientation = SelectedElement.Orientation;
-                break;
-            case ColdFrame cf:
-                cf.CoverMaterial = SelectedElement.CoverMaterial;
-                break;
+            var result = await gardenService.EditElementPropertiesAsync(new(draft.Id, draft.Original, submitted, CanvasConstants.PixelsPerMeter));
+            result.Match(saved =>
+            {
+                ElementEditorMapper.Apply(saved, element);
+                if (ReferenceEquals(SelectedElement, element) && ElementEditor is { } activeDraft)
+                    activeDraft.Accept(ElementEditorMapper.Values(saved), ReferenceEquals(activeDraft, draft) ? submitted : activeDraft.Original);
+                return true;
+            }, error => { userDialog.Warning(error, "Свойства элемента"); return false; });
         }
-
-        await gardenService.UpdateElementAsync(entity);
+        finally
+        {
+            _isSavingElementProperties = false;
+            OnPropertyChanged(nameof(IsElementEditorEnabled));
+        }
     }
 
     [field: AllowNull, MaybeNull]

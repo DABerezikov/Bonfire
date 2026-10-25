@@ -17,10 +17,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties) : IGardenService
 {
     public Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request)
         => saveGardenGeometry.ExecuteAsync(request);
+
+    public Task<Result<ElementPropertiesResultFromViewModel>> EditElementPropertiesAsync(EditElementPropertiesFromViewModel request)
+        => editElementProperties.ExecuteAsync(request);
 
     // --- Чтение ---
 

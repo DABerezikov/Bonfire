@@ -94,16 +94,22 @@ public partial class GardenPlanWorkflowTests
     public void SaveElementProperties_PreservesGeometryAndSubtypeProperties(string type)
     {
         var vm = CreateVm();
-        GardenElement entity = type == "Bed" ? new Bed { Id = 1 } : new ColdFrame { Id = 1 };
-        _gardens.GetElementByIdAsync(1).Returns(entity);
-        vm.SelectedElement = new() { Id = 1, X = 30, Y = 45, Width = 180, Height = 90, Name = "Новое", Note = "Заметка", SoilType = "Суглинок", Orientation = "Север", CoverMaterial = "Плёнка" };
+        vm.SelectedElement = new() { Id = 1, ElementType = type, Width = 90, Height = 90 };
+        var draft = vm.ElementEditor!;
+        draft.X = 30; draft.Y = 45; draft.Width = 180;
+        draft.Name = "Новое"; draft.Note = "Заметка"; draft.SoilType = "Суглинок";
+        draft.Orientation = "Север"; draft.CoverMaterial = "Плёнка";
+        _gardens.EditElementPropertiesAsync(Arg.Any<EditElementPropertiesFromViewModel>()).Returns(Result.Success(
+            new ElementPropertiesResultFromViewModel(1, draft.Values.Details, CanvasRectangle.Create(30, 45, 180, 90).ValueOrThrow(), 0.7)));
+
         vm.SaveElementPropertiesCommand.Execute(null);
-        Assert.Equal(30, entity.X); Assert.Equal(45, entity.Y);
-        Assert.Equal(180, entity.DisplayWidth); Assert.Equal(90, entity.DisplayHeight);
-        Assert.Equal("Новое", entity.Name); Assert.Equal("Суглинок", entity.SoilType);
-        if (entity is Bed bed) Assert.Equal("Север", bed.Orientation);
-        if (entity is ColdFrame frame) Assert.Equal("Плёнка", frame.CoverMaterial);
-        _gardens.Received(1).UpdateElementAsync(entity);
+
+        Assert.Equal((30.0, 45.0, 180.0, 90.0), (vm.SelectedElement.X, vm.SelectedElement.Y, vm.SelectedElement.Width, vm.SelectedElement.Height));
+        Assert.Equal(("Новое", "Суглинок", "Север", "Плёнка"), (vm.SelectedElement.Name, vm.SelectedElement.SoilType, vm.SelectedElement.Orientation, vm.SelectedElement.CoverMaterial));
+        Assert.False(draft.IsDirty);
+        _gardens.Received(1).EditElementPropertiesAsync(Arg.Is<EditElementPropertiesFromViewModel>(request => request.Id == 1 && request.Values.Width == 180 && request.Original.Width == 90));
+        _gardens.DidNotReceive().GetElementByIdAsync(Arg.Any<int>());
+        _gardens.DidNotReceive().UpdateElementAsync(Arg.Any<GardenElement>());
     }
 
     [Fact]

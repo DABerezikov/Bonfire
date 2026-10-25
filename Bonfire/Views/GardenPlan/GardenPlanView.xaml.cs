@@ -1,11 +1,29 @@
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows;
+using System.Collections.Generic;
 using Bonfire.ViewModels;
 
 namespace Bonfire.Views.GardenPlan;
 
 public partial class GardenPlanView : UserControl
 {
+    private readonly HashSet<ValidationError> _elementEditorErrors = [];
+
+    private void OnElementEditorValidationError(object sender, ValidationErrorEventArgs e)
+    {
+        if (e.Action == ValidationErrorEventAction.Added) _elementEditorErrors.Add(e.Error);
+        else _elementEditorErrors.Remove(e.Error);
+        if (DataContext is GardenPlanViewModel vm) vm.ElementEditorHasBindingErrors = _elementEditorErrors.Count > 0;
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void OnElementEditorUnloaded(object sender, RoutedEventArgs e)
+    {
+        _elementEditorErrors.Clear();
+        if (DataContext is GardenPlanViewModel vm) vm.ElementEditorHasBindingErrors = false;
+    }
+
     public GardenPlanView()
     {
         InitializeComponent();

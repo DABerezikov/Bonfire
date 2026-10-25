@@ -9,6 +9,19 @@ namespace Models.Tests;
 public class ConverterBehaviorTests
 {
     [Theory]
+    [InlineData("не число")]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("NaN")]
+    [InlineData("Infinity")]
+    [InlineData("1e309")]
+    public void CheckedPixelsAndMeters_InvalidInput_DoesNotSubstituteZero(string? text)
+    {
+        var converter = new PxToMetersConverter { RejectInvalidInput = true };
+        Assert.Same(DependencyProperty.UnsetValue, converter.ConvertBack(text, typeof(double), null, CultureInfo.InvariantCulture));
+        Assert.Equal(0d, converter.ConvertBack("0", typeof(double), null, CultureInfo.InvariantCulture));
+    }
+    [Theory]
     [InlineData("ru-RU", "1,5")]
     [InlineData("en-US", "1.5")]
     public void PixelsAndMeters_RoundTripUsesRequestedCulture(string cultureName, string text)

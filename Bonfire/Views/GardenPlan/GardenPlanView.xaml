@@ -282,6 +282,9 @@
 
                     <!-- Редактор выбранного элемента -->
                     <StackPanel DataContext="{Binding SelectedElement}"
+                                Validation.Error="OnElementEditorValidationError"
+                                Unloaded="OnElementEditorUnloaded"
+                                IsEnabled="{Binding DataContext.IsElementEditorEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 Visibility="{Binding DataContext.SelectedElement,
                                     RelativeSource={RelativeSource AncestorType=UserControl},
                                     Converter={StaticResource NullToVisibilityConverter}}">
@@ -294,7 +297,9 @@
                         </Border>
 
                         <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+                        <TextBox Text="{Binding DataContext.ElementEditor.Name,
+                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                     NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
 
                         <!-- Состояние -->
                         <TextBlock Text="Состояние" Style="{StaticResource LabelStyle}"/>
@@ -342,10 +347,14 @@
                         <Separator Margin="0,4,0,10"/>
 
                         <TextBlock Text="Почва" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SoilType, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+                        <TextBox Text="{Binding DataContext.ElementEditor.SoilType,
+                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                     NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
 
                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding DataContext.ElementEditor.Note,
+                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                     NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
                                  TextWrapping="Wrap" MinHeight="50" AcceptsReturn="True" Margin="0,2,0,10"/>
 
                         <Separator Margin="0,4,0,10"/>
@@ -354,23 +363,34 @@
                         <TextBlock Text="Позиция и размер (метры)" Style="{StaticResource LabelStyle}"/>
                         <UniformGrid Columns="4" Margin="0,2,0,4">
                             <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding X, UpdateSourceTrigger=LostFocus,
-                                         Converter={StaticResource PxToMeters}}"/>
+                            <TextBox Text="{Binding DataContext.ElementEditor.X,
+                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource CheckedPxToMeters}}"/>
                             <TextBlock Text="Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                            <TextBox Text="{Binding Y, UpdateSourceTrigger=LostFocus,
-                                         Converter={StaticResource PxToMeters}}"/>
+                            <TextBox Text="{Binding DataContext.ElementEditor.Y,
+                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource CheckedPxToMeters}}"/>
                         </UniformGrid>
                         <UniformGrid Columns="4" Margin="0,0,0,10">
                             <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBox Text="{Binding Width, UpdateSourceTrigger=LostFocus,
-                                         Converter={StaticResource PxToMeters}}"/>
+                            <TextBox Text="{Binding DataContext.ElementEditor.Width,
+                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource CheckedPxToMeters}}"/>
                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                            <TextBox Text="{Binding Height, UpdateSourceTrigger=LostFocus,
-                                         Converter={StaticResource PxToMeters}}"/>
+                            <TextBox Text="{Binding DataContext.ElementEditor.Height,
+                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                         Converter={StaticResource CheckedPxToMeters}}"/>
                         </UniformGrid>
 
                         <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
                                 Command="{Binding DataContext.SaveElementPropertiesCommand,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <Button Content="Отмена" HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                Command="{Binding DataContext.CancelElementPropertiesCommand,
                                     RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
                         <Separator Margin="0,6,0,10"/>
@@ -714,6 +734,9 @@
 
                                     <!-- Панель выбранного inner-элемента -->
                                     <StackPanel DataContext="{Binding SelectedElement}"
+                                                Validation.Error="OnElementEditorValidationError"
+                                                Unloaded="OnElementEditorUnloaded"
+                                                IsEnabled="{Binding DataContext.IsElementEditorEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 Visibility="{Binding DataContext.SelectedElement,
                                                     RelativeSource={RelativeSource AncestorType=UserControl},
                                                     Converter={StaticResource NullToVisibilityConverter}}">
@@ -725,7 +748,9 @@
                                         </Border>
 
                                         <TextBlock Text="Название" Style="{StaticResource LabelStyle}"/>
-                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+                                        <TextBox Text="{Binding DataContext.ElementEditor.Name,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                                     NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
 
                                         <TextBlock Text="Состояние" Style="{StaticResource LabelStyle}"/>
                                         <Border Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
@@ -770,10 +795,14 @@
                                         <Separator Margin="0,4,0,10"/>
 
                                         <TextBlock Text="Почва" Style="{StaticResource LabelStyle}"/>
-                                        <TextBox Text="{Binding SoilType, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
+                                        <TextBox Text="{Binding DataContext.ElementEditor.SoilType,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                                     NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,10"/>
 
                                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}"/>
-                                        <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding DataContext.ElementEditor.Note,
+                                                     RelativeSource={RelativeSource AncestorType=UserControl},
+                                                     NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
                                                  TextWrapping="Wrap" MinHeight="50" AcceptsReturn="True" Margin="0,2,0,10"/>
 
                                         <Separator Margin="0,4,0,10"/>
@@ -781,23 +810,34 @@
                                         <TextBlock Text="Позиция и размер (метры)" Style="{StaticResource LabelStyle}"/>
                                         <UniformGrid Columns="4" Margin="0,2,0,4">
                                             <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged,
-                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBox Text="{Binding DataContext.ElementEditor.X,
+                                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource CheckedPxToMeters}}"/>
                                             <TextBlock Text="Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                                            <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged,
-                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBox Text="{Binding DataContext.ElementEditor.Y,
+                                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource CheckedPxToMeters}}"/>
                                         </UniformGrid>
                                         <UniformGrid Columns="4" Margin="0,0,0,10">
                                             <TextBlock Text="Д" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBox Text="{Binding Width, UpdateSourceTrigger=LostFocus,
-                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBox Text="{Binding DataContext.ElementEditor.Width,
+                                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource CheckedPxToMeters}}"/>
                                             <TextBlock Text="Ш" VerticalAlignment="Center" Margin="8,0,4,0"/>
-                                            <TextBox Text="{Binding Height, UpdateSourceTrigger=LostFocus,
-                                                         Converter={StaticResource PxToMeters}}"/>
+                                            <TextBox Text="{Binding DataContext.ElementEditor.Height,
+                                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                                         NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged,
+                                                         Converter={StaticResource CheckedPxToMeters}}"/>
                                         </UniformGrid>
 
                                         <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
                                                 Command="{Binding DataContext.SaveElementPropertiesCommand,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                        <Button Content="Отмена" HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                                                Command="{Binding DataContext.CancelElementPropertiesCommand,
                                                     RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
                                         <Separator Margin="0,6,0,10"/>

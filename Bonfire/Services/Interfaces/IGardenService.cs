@@ -15,6 +15,8 @@ public interface IGardenService
 {
     Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request);
 
+    Task<Result<ElementPropertiesResultFromViewModel>> EditElementPropertiesAsync(EditElementPropertiesFromViewModel request);
+
     // --- Чтение ---
     Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
     Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);

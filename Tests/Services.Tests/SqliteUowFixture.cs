@@ -27,7 +27,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public IUnitOfWorkFactory Factory { get; }
 
-    public GardenService CreateGardenService() => new(Factory, new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)));
+    public GardenService CreateGardenService() => new(Factory, new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)));
 
     public SeedsService CreateSeedsService() => new(Factory, new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)));
 
