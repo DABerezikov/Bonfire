@@ -27,6 +27,7 @@ namespace Bonfire.Services
             .AddSingleton<IUpdateSort, UpdateSort>()
             .AddSingleton<IEditSeed, EditSeed>()
             .AddSingleton<IAcquireSeeds, AcquireSeeds>()
+            .AddSingleton<IDeleteSeed, DeleteSeed>()
             .AddSingleton(TimeProvider.System);
     }
 }

@@ -507,16 +507,11 @@ public class SeedsViewModel : SourceSelectionViewModel
         OnPropertyChanged(nameof(SelectedItem));
     }
 
-    private void RemoveOfAddLists(Seed deleteSeed)
+    private void RebuildSeedSuggestions()
     {
-        if (!Seeds!.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
-            AddCultureList.Remove(AddCultureList.Find(c => c.Name == deleteSeed.Plant.PlantCulture.Name)!);
-
-        if (!Seeds!.Contains(s => s.Plant.PlantSort.Name == deleteSeed.Plant.PlantSort.Name))
-            AddSortList.Remove(AddSortList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Name)!);
-
-        if (!Seeds!.Contains(s => s.Plant.PlantSort.Producer.Name == deleteSeed.Plant.PlantSort.Producer.Name))
-            AddProducerList.Remove(AddProducerList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Producer.Name)!);
+        AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
+        ListCulture = ["-Выбрать все-"];
+        LoadListCulture(); LoadListSort(); LoadListProducer();
     }
 
     private void CreateSeedReport()
@@ -602,9 +597,7 @@ public class SeedsViewModel : SourceSelectionViewModel
                 _ignoreDiscard = true;
                 await RefreshSeedsAsync();
                 EditorOptions = await _seedsService.GetEditorOptionsAsync();
-                AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
-                ListCulture = ["-Выбрать все-"];
-                LoadListCulture(); LoadListSort(); LoadListProducer();
+                RebuildSeedSuggestions();
                 ClearFieldSeedView();
                 UpdateCollectionViewSource(receipt.SeedId);
             }, error =>
@@ -617,24 +610,35 @@ public class SeedsViewModel : SourceSelectionViewModel
     }
 
     public ICommand DeleteSeedCommand => field
-        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null);
+        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null && !_isSaving);
 
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (_isSaving || SelectedItem is null) return;
-        var reason = _userDialog.RequestDeleteReason(SelectedItem.Plant.PlantSort.Name,
-            SelectedItem.SeedsInfo.DisposeComment);
+        if (_isSaving || SelectedItem is not { } selected) return;
+        var reason = _userDialog.RequestDeleteReason(selected.Plant.PlantSort.Name,
+            selected.SeedsInfo.DisposeComment);
         if (reason is null) return;
         SetSaving(true);
         try
         {
-            var deleteSeed = await _seedsService.DeleteSeedWithReasonAsync(SelectedItem.Id, reason);
-            var cachedSeed = Seeds!.FirstOrDefault(s => s.Id == deleteSeed.Id);
-            if (cachedSeed != null) Seeds!.Remove(cachedSeed);
-            RemoveOfAddLists(deleteSeed);
-            _ignoreDiscard = true;
-            SelectedItem = null;
-            UpdateCollectionViewSource();
+            var result = await _seedsService.DeleteSeedWithReasonAsync(selected.Id, reason);
+            result.Match(receipt =>
+            {
+                _ignoreDiscard = true;
+                SelectedItem = null;
+                if (Seeds is { } inventory)
+                {
+                    foreach (var cached in inventory.Where(seed => seed.Id == receipt.SeedId).ToArray())
+                        inventory.Remove(cached);
+                    RebuildSeedSuggestions();
+                    UpdateCollectionViewSource();
+                }
+                return true;
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return false;
+            });
         }
         finally { _ignoreDiscard = false; SetSaving(false); }
     }
@@ -664,9 +668,7 @@ public class SeedsViewModel : SourceSelectionViewModel
                 await RefreshSeedsAsync();
                 EditorOptions = await _seedsService.GetEditorOptionsAsync();
                 SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
-                AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
-                ListCulture = ["-Выбрать все-"];
-                LoadListCulture(); LoadListSort(); LoadListProducer();
+                RebuildSeedSuggestions();
             }, error =>
             {
                 _userDialog.Error(error);

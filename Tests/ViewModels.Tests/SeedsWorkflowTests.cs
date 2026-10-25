@@ -186,6 +186,46 @@ public class SeedsWorkflowTests
     }
 
     [Fact]
+    public void Delete_ResultFailure_PreservesSelectionCacheAndDraftAndShowsReason()
+    {
+        var original = Seed(1);
+        var vm = CreateVm(original);
+        vm.SelectedItem = original;
+        vm.EditedItem!.Package.Note = "Не терять";
+        _dialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("Удалить");
+        _service.DeleteSeedWithReasonAsync(1, "Удалить").Returns(Result.Failure<SeedDeletionResultFromViewModel>("Ошибка удаления"));
+        vm.DeleteSeedCommand.Execute(null);
+        Assert.Same(original, vm.SelectedItem);
+        Assert.Single(vm.Seeds!);
+        Assert.Equal("Не терять", vm.EditedItem.Package.Note);
+        Assert.True(vm.CanEditSeedDetails);
+        _dialog.Received(1).Error("Ошибка удаления", Arg.Any<string>());
+    }
+
+    [Fact]
+    public void Delete_Success_RemovesUnusedSuggestionsAndClearsApprovedDraft()
+    {
+        var first = Seed(1);
+        var vm = CreateVm(first, Seed(2, "Астра", "Белая", "Цветы"));
+        vm.SelectedItem = first;
+        vm.EditedItem!.Package.Note = "Сбросить после удаления";
+        _dialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("");
+        _service.DeleteSeedWithReasonAsync(1, "").Returns(Result.Success(new SeedDeletionResultFromViewModel(1)));
+        vm.DeleteSeedCommand.Execute(null);
+        Assert.Single(vm.Seeds!);
+        Assert.Null(vm.SelectedItem);
+        Assert.Null(vm.EditedItem);
+        Assert.False(vm.HasUnsavedSeedChanges);
+        Assert.DoesNotContain(vm.AddCultureList, item => item.Id == 1);
+        Assert.DoesNotContain(vm.AddSortList, item => item.Id == 1);
+        Assert.DoesNotContain(vm.AddProducerList, item => item.Id == 1);
+        Assert.DoesNotContain("Томат", vm.ListCulture);
+        Assert.Contains("Астра", vm.ListCulture);
+        Assert.Null(first.SeedsInfo.DisposeComment);
+        Assert.True(vm.CanEditSeedDetails);
+    }
+
+    [Fact]
     public void Save_ResultFailure_KeepsDirtyDraftAndShowsReasonWithoutReload()
     {
         var original = Seed(1);

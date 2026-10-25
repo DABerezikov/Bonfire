@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds) : ISeedsService
+internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed) : ISeedsService
 {
     public Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request)
         => editSeed.ExecuteAsync(request);
@@ -99,17 +99,8 @@ internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, I
         return seed;
     }
 
-    public async Task<Seed> DeleteSeedWithReasonAsync(int seedId, string reason)
-    {
-        await using var uow = uowFactory.Create();
-        var seeds = uow.Repository<Seed>();
-        var seed = await seeds.GetAsync(seedId) ?? throw new InvalidOperationException("Запись семян удалена");
-        // SeedsInfo — главная запись связи; при удалении Seed остаётся с причиной списания.
-        seed.SeedsInfo.DisposeComment = reason.Trim();
-        await seeds.RemoveAsync(seedId);
-        await uow.SaveChangesAsync();
-        return seed;
-    }
+    public Task<Result<SeedDeletionResultFromViewModel>> DeleteSeedWithReasonAsync(int seedId, string reason)
+        => deleteSeed.ExecuteAsync(new DeleteSeedFromViewModel(seedId, reason));
 
     public async Task<PlantSort> UpdateSort(PlantSort sort1)
     {

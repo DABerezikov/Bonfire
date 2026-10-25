@@ -1,3 +1,5 @@
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
 namespace ViewModels.Tests;
 
 public class SeedsViewModelTests
@@ -176,14 +178,14 @@ public class SeedsViewModelTests
     };
 
     [Fact]
-    public void DeleteSeedCommand_Confirmed_RemovesCachedRecordReturnedFromAnotherContext()
+    public void DeleteSeedCommand_Confirmed_RemovesCachedRecordBySavedId()
     {
         var vm = CreateVm();
         var first = MakeSeed(1);
         vm.Seeds = [first, MakeSeed(2)];
         vm.SelectedItem = first;
         _userDialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("Истёк срок");
-        _seedsService.DeleteSeedWithReasonAsync(1, "Истёк срок").Returns(MakeSeed(1));
+        _seedsService.DeleteSeedWithReasonAsync(1, "Истёк срок").Returns(Result.Success(new SeedDeletionResultFromViewModel(1)));
 
         vm.DeleteSeedCommand.Execute(null);
 

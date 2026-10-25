@@ -17,7 +17,7 @@ public interface ISeedsService
     Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request);
     Task<SeedEditorOptions> GetEditorOptionsAsync();
     Task<Seed> DeleteSeed(Seed seed);
-    Task<Seed> DeleteSeedWithReasonAsync(int seedId, string reason);
+    Task<Result<SeedDeletionResultFromViewModel>> DeleteSeedWithReasonAsync(int seedId, string reason);
     Task ReturnSeedsFromSeedling(int seedId, double quantity, double? weight);
     Task<PlantSort> UpdateSort(PlantSort seed);
     Task<PlantCulture> UpdateCulture(PlantCulture culture);
