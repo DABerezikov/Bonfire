@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
 using Bonfire.Models;
 using BonfireDB.Entities;
@@ -11,7 +12,7 @@ public interface ILibraryService
     Task<Result<PlantSort>> GetSortAsync(int id);
     Task<Result<PlantCulture>> GetCultureAsync(int id);
     Task<Result<Producer>> GetProducerAsync(int id);
-    Task<Result<PlantSort>> UpdateSortAsync(SortEditModel model);
+    Task<Result<SortDetailsFromViewModel>> UpdateSortAsync(SortEditModel model);
     Task<Result<PlantCulture>> UpdateCultureAsync(CultureEditModel model);
     Task<Result<Producer>> UpdateProducerAsync(int id, string name);
 }

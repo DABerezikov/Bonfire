@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Bonfire.Data;
+using Bonfire.Application.Libraries;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
@@ -106,8 +107,15 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadSortDetailAsync(int id)
     {
         var result = await _libraryService.GetSortAsync(id);
-        if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-        SortDetail = LibraryMapper.ToEditModel(result.Value!);
+        result.Match(sort =>
+        {
+            SortDetail = LibraryMapper.ToEditModel(sort);
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
     }
 
     private async Task LoadCultureDetailAsync(int id)
@@ -142,14 +150,17 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
 
     // Синхронизация с SeedsViewModel
 
-    private void SyncAfterSortUpdate(PlantSort updated)
+    private void SyncAfterSortUpdate(SortDetailsFromViewModel updated)
     {
         if (_seedsViewModel.Seeds != null)
             foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantSort.Id == updated.Id))
             {
                 seed.Plant.PlantSort.Name = updated.Name;
-                var plant = updated.Plants.FirstOrDefault(p => p.Id == seed.Plant.Id);
-                if (plant != null) seed.Plant.PlantCulture = plant.PlantCulture;
+                foreach (var link in updated.Plants.Where(p => p.PlantId == seed.Plant.Id))
+                    seed.Plant.PlantCulture = new PlantCulture
+                    {
+                        Id = link.Culture.Id, Name = link.Culture.Name, Class = link.Culture.Class
+                    };
             }
 
         var sortItem = _seedsViewModel.AddSortList.FirstOrDefault(s => s.Id == updated.Id);
@@ -199,12 +210,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var detail = SortDetail!;
+                if (SortDetail is not { } detail) return;
                 var result = await _libraryService.UpdateSortAsync(detail);
-                if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-                SyncAfterSortUpdate(result.Value!);
-                detail.ResetDirty();
-                _userDialog.Information("Сохранено");
+                result.Match(saved =>
+                {
+                    SyncAfterSortUpdate(saved);
+                    detail.ResetDirty();
+                    _userDialog.Information("Сохранено");
+                    return true;
+                }, error =>
+                {
+                    _userDialog.Error(error);
+                    return false;
+                });
             }
             catch (Exception ex)
             {

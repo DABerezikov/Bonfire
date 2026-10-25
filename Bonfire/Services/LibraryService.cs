@@ -1,18 +1,15 @@
 using System;
 using Bonfire.Domain.Functional;
-using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;
-using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
-using Microsoft.EntityFrameworkCore;
 using Bonfire.Application.Libraries;
 
 namespace Bonfire.Services;
 
-internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture updateCulture, IUpdateProducer updateProducer) : ILibraryService
+internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture updateCulture, IUpdateProducer updateProducer, IUpdateSort updateSort) : ILibraryService
 {
     public async Task<Result<PlantSort>> GetSortAsync(int id)
     {
@@ -41,43 +38,13 @@ internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture upda
             : Result.Success(entity);
     }
 
-    public async Task<Result<PlantSort>> UpdateSortAsync(SortEditModel model)
+    public Task<Result<SortDetailsFromViewModel>> UpdateSortAsync(SortEditModel model)
     {
-        await using var uow = uowFactory.Create();
-        var entity = await uow.Repository<PlantSort>().GetAsync(model.Id);
-        if (entity is null)
-            return Result.Failure<PlantSort>("Сорт не найден (удалён?)");
-
-        if (string.IsNullOrWhiteSpace(model.Name))
-            return Result.Failure<PlantSort>("Название не может быть пустым");
-        PlantCulture? culture = null;
-        if (model.CultureId.HasValue)
-        {
-            culture = await uow.Repository<PlantCulture>().GetAsync(model.CultureId.Value);
-            if (culture is null) return Result.Failure<PlantSort>("Культура не найдена");
-        }
-        entity.Name = model.Name.Trim();
-        if (culture is not null)
-        {
-            var plants = await uow.Repository<Plant>().Items
-                .Where(p => p.PlantSort.Id == entity.Id).ToListAsync();
-            foreach (var plant in plants)
-                plant.PlantCulture = culture;
-        }
-        try
-        {
-            await uow.Repository<PlantSort>().UpdateAsync(entity);
-            await uow.SaveChangesAsync();
-            return Result.Success(entity);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Result.Failure<PlantSort>("Запись изменена другим процессом");
-        }
-        catch (DbUpdateException ex)
-        {
-            return Result.Failure<PlantSort>($"Ошибка БД: {ex.InnerException?.Message ?? ex.Message}");
-        }
+        ArgumentNullException.ThrowIfNull(model);
+        if (model.Name is not { } name)
+            return Task.FromResult(Result.Failure<SortDetailsFromViewModel>("Название не может быть пустым"));
+        var culture = model.CultureId is { } id ? Option.Some(id) : Option.None<int>();
+        return updateSort.ExecuteAsync(new UpdateSortFromViewModel(model.Id, name, culture));
     }
 
     public async Task<Result<PlantCulture>> UpdateCultureAsync(CultureEditModel model)

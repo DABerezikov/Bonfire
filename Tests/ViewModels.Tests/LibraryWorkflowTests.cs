@@ -1,6 +1,7 @@
 using System.Windows.Input;
 
 using Bonfire.Domain.Functional;
+using Bonfire.Application.Libraries;
 
 namespace ViewModels.Tests;
 
@@ -47,7 +48,7 @@ public class LibraryWorkflowTests
         var setup = Setup(kind);
         _library.UpdateSortAsync(Arg.Any<SortEditModel>()).Returns(c =>
         {
-            var sort = new PlantSort { Id = 1, Name = c.Arg<SortEditModel>().Name!, Producer = _seed.Plant.PlantSort.Producer };
+            var sort = new SortDetailsFromViewModel(1, c.Arg<SortEditModel>().Name!, []);
             return Result.Success(sort);
         });
         _library.UpdateCultureAsync(Arg.Any<CultureEditModel>()).Returns(c => Result.Success(new PlantCulture { Id = 1, Name = c.Arg<CultureEditModel>().Name!, Class = "Овощи" }));
@@ -63,6 +64,22 @@ public class LibraryWorkflowTests
         _dialog.Received(1).Information("Сохранено", Arg.Any<string>());
     }
 
+    [Fact]
+    public void SaveSort_SavedCultureLinks_UpdatesMatchingSeedAndLibraryList()
+    {
+        var setup = Setup("Sort");
+        _library.UpdateSortAsync(Arg.Any<SortEditModel>()).Returns(Result.Success(
+            new SortDetailsFromViewModel(1, "Новое",
+                [new(_seed.Plant.Id, new(7, "Астра", "Цветы")), new(999, new(8, "Другая", "Зелень"))])));
+        setup.Change();
+        setup.Save.Execute(null);
+        Assert.Equal(7, _seed.Plant.PlantCulture.Id);
+        Assert.Equal("Астра", _seed.Plant.PlantCulture.Name);
+        Assert.Equal("Цветы", _seed.Plant.PlantCulture.Class);
+        Assert.Equal("Новое", setup.Vm.Sort.Single().Name);
+        Assert.False(setup.Dirty());
+    }
+
     [Theory]
     [InlineData("Sort")]
     [InlineData("Culture")]
@@ -70,7 +87,7 @@ public class LibraryWorkflowTests
     public void Save_Failure_KeepsDirtyDraftAndShowsError(string kind)
     {
         var setup = Setup(kind);
-        _library.UpdateSortAsync(Arg.Any<SortEditModel>()).Returns(Result.Failure<PlantSort>("Конфликт"));
+        _library.UpdateSortAsync(Arg.Any<SortEditModel>()).Returns(Result.Failure<SortDetailsFromViewModel>("Конфликт"));
         _library.UpdateCultureAsync(Arg.Any<CultureEditModel>()).Returns(Result.Failure<PlantCulture>("Конфликт"));
         _library.UpdateProducerAsync(1, "Новое").Returns(Result.Failure<Producer>("Конфликт"));
         setup.Change(); setup.Save.Execute(null);
