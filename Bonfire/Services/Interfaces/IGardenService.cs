@@ -21,6 +21,8 @@ public interface IGardenService
 
     Task<Result<GardenPropertiesResultFromViewModel>> EditGardenPropertiesAsync(EditGardenPropertiesFromViewModel request);
 
+    Task<Result<GardenLockResultFromViewModel>> SetLockAsync(SetGardenLockFromViewModel request);
+
     // --- Чтение ---
     Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
     Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);

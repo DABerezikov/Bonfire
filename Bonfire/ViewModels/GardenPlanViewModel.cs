@@ -881,15 +881,9 @@ public class GardenPlanViewModel(
             async p => await ToggleLockElementAsync(p as GardenElementFromViewModel),
             _ => true);
 
-    private async Task ToggleLockElementAsync(GardenElementFromViewModel? vm)
-    {
-        if (vm is null) return;
-        vm.IsLocked = !vm.IsLocked;
-        var entity = await gardenService.GetElementByIdAsync(vm.Id);
-        if (entity is null) return;
-        entity.IsLocked = vm.IsLocked;
-        await gardenService.UpdateElementAsync(entity);
-    }
+    private Task ToggleLockElementAsync(GardenElementFromViewModel? model)
+        => model is null ? Task.CompletedTask : SetGardenLockAsync(model.Id, new GardenLockTarget.Element(), !model.IsLocked,
+            locked => { if (model.IsLocked != locked) model.IsLocked = locked; });
 
     [field: AllowNull, MaybeNull]
     public ICommand ToggleLockGreenhouseCommand => field
@@ -897,14 +891,15 @@ public class GardenPlanViewModel(
             async p => await ToggleLockGreenhouseAsync(p as GreenhouseFromViewModel),
             _ => true);
 
-    private async Task ToggleLockGreenhouseAsync(GreenhouseFromViewModel? vm)
+    private Task ToggleLockGreenhouseAsync(GreenhouseFromViewModel? model)
+        => model is null ? Task.CompletedTask : SetGardenLockAsync(model.Id, new GardenLockTarget.Greenhouse(), !model.IsLocked,
+            locked => { if (model.IsLocked != locked) model.IsLocked = locked; });
+
+    private async Task SetGardenLockAsync(int id, GardenLockTarget target, bool isLocked, Action<bool> apply)
     {
-        if (vm is null) return;
-        vm.IsLocked = !vm.IsLocked;
-        var entity = await gardenService.GetGreenhouseByIdAsync(vm.Id);
-        if (entity is null) return;
-        entity.IsLocked = vm.IsLocked;
-        await gardenService.UpdateGreenhouseAsync(entity);
+        var result = await gardenService.SetLockAsync(new(id, target, isLocked));
+        result.Match(saved => { apply(saved.IsLocked); return true; },
+            error => { userDialog.Warning(error, "Блокировка геометрии"); return false; });
     }
 
     [field: AllowNull, MaybeNull]

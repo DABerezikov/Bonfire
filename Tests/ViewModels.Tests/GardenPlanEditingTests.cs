@@ -126,12 +126,15 @@ public partial class GardenPlanWorkflowTests
     public void ToggleLockGreenhouse_PersistsLockState()
     {
         var vm = CreateVm(); var model = new GreenhouseFromViewModel { Id = 1, X = 30, Y = 45, DisplayWidth = 300, DisplayHeight = 150, Name = "Новая", Note = "Заметка" };
-        var entity = new Greenhouse { Id = 1 };
-        _gardens.GetGreenhouseByIdAsync(1).Returns(entity);
+        _gardens.SetLockAsync(Arg.Any<SetGardenLockFromViewModel>()).Returns(call =>
+            Result.Success(new GardenLockResultFromViewModel(1, call.Arg<SetGardenLockFromViewModel>().IsLocked)));
         vm.ToggleLockGreenhouseCommand.Execute(model);
-        Assert.True(model.IsLocked); Assert.True(entity.IsLocked);
+        Assert.True(model.IsLocked);
         vm.ToggleLockGreenhouseCommand.Execute(model);
-        Assert.False(model.IsLocked); Assert.False(entity.IsLocked);
+        Assert.False(model.IsLocked);
+        _gardens.Received(2).SetLockAsync(Arg.Any<SetGardenLockFromViewModel>());
+        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
+        _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
     }
 
     [Fact]
@@ -142,8 +145,9 @@ public partial class GardenPlanWorkflowTests
         var entity = new Bed { Id = 1 };
         _gardens.GetElementByIdAsync(1).Returns(entity);
         vm.SelectedGarden.Elements.Add(model); vm.SelectedElement = model;
+        _gardens.SetLockAsync(Arg.Any<SetGardenLockFromViewModel>()).Returns(Result.Success(new GardenLockResultFromViewModel(1, true)));
         vm.ToggleLockElementCommand.Execute(model);
-        Assert.True(model.IsLocked); Assert.True(entity.IsLocked);
+        Assert.True(model.IsLocked); Assert.False(entity.IsLocked);
         vm.DeleteElementCommand.Execute(null);
         Assert.Empty(vm.SelectedGarden.Elements); Assert.Null(vm.SelectedElement);
         _gardens.Received(1).DeleteElementAsync(entity);
