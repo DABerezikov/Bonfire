@@ -33,7 +33,7 @@ public class GardenDeletionWritingTests : IDisposable
     public async Task Delete_WithoutGreenhouses_PreservesPlanOtherGardenAndHistory()
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().DeleteGardenAsync(new Garden { Id = id });
+        Assert.True((await _fixture.CreateGardenService().DeleteGardenByIdAsync(new(id))).IsSuccess);
         Assert.Equal("Оставить", await _fixture.QueryAsync(db => db.Gardens.Select(g => g.Name).SingleAsync()));
         Assert.Equal("Чужой", await _fixture.QueryAsync(db => db.GardenElements.Select(e => e.Name).SingleAsync()));
         Assert.Equal(1, await _fixture.QueryAsync(db => db.PlantingSpots.CountAsync()));
@@ -47,7 +47,7 @@ public class GardenDeletionWritingTests : IDisposable
     public async Task Delete_WithGreenhouse_RestrictPreservesWholeTree()
     {
         var id = await PrepareAsync(true);
-        await Assert.ThrowsAsync<DbUpdateException>(() => _fixture.CreateGardenService().DeleteGardenAsync(new Garden { Id = id }));
+        Assert.True((await _fixture.CreateGardenService().DeleteGardenByIdAsync(new(id))).IsFailure);
         Assert.Equal(2, await _fixture.QueryAsync(db => db.Gardens.CountAsync()));
         Assert.Equal(1, await _fixture.QueryAsync(db => db.Greenhouses.CountAsync()));
         Assert.Equal(2, await _fixture.QueryAsync(db => db.GardenElements.CountAsync()));
@@ -105,7 +105,7 @@ public class GardenDeletionWritingTests : IDisposable
     public async Task Delete_GreenhouseAddedAfterUiRead_RefusesFreshTree()
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().GetGardenByIdAsync(id);
+        await _fixture.LoadAsync<BonfireDB.Entities.GardenPlanning.Garden>(id);
         await _fixture.ExecuteAsync(async db => { db.Greenhouses.Add(new() { ParentPlotId = id, Name = "Новая" }); await db.SaveChangesAsync(); });
         Assert.Contains("теплицами", (await DeleteAsync(id)).Match(_ => "", error => error));
         Assert.Equal(2, await _fixture.QueryAsync(db => db.Gardens.CountAsync()));

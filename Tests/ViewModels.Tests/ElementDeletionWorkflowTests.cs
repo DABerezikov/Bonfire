@@ -77,8 +77,6 @@ public partial class GardenPlanWorkflowTests
         Assert.True(vm.IsGridOpen);
         Assert.Same(next, vm.EditingGridElement);
         Assert.Same(nextSpot, vm.SelectedSpot);
-        await _gardens.DidNotReceive().GetElementByIdAsync(Arg.Any<int>());
-        await _gardens.DidNotReceive().DeleteElementAsync(Arg.Any<GardenElement>());
     }
 
     [Theory]

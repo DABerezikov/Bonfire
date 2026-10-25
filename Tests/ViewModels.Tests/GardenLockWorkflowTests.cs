@@ -66,8 +66,6 @@ public partial class GardenPlanWorkflowTests
         Assert.Same(nextElement, vm.SelectedElement);
         Assert.Same(nextHouse, vm.SelectedGreenhouse);
         Assert.True(command.CanExecute(model));
-        await _gardens.DidNotReceive().UpdateElementAsync(Arg.Any<BonfireDB.Entities.GardenPlanning.GardenElement>());
-        await _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<BonfireDB.Entities.GardenPlanning.Greenhouse>());
     }
 
     [Theory]

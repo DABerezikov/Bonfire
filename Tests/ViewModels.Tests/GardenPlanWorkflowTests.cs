@@ -191,7 +191,6 @@ public partial class GardenPlanWorkflowTests
         _dialog.Received(1).Warning("Свежий объект за границами", "Изменение размера участка");
         Assert.Equal(1, vm.GardenEditor.WidthMeters);
         Assert.Equal(20, vm.SelectedGarden.WidthMeters);
-        _gardens.DidNotReceive().UpdateGardenAsync(Arg.Any<Garden>());
     }
 
     [Fact]
@@ -207,8 +206,6 @@ public partial class GardenPlanWorkflowTests
         Assert.Equal(3150, vm.SelectedGarden.CanvasWidth);
         Assert.Equal(3150, vm.SelectedGarden.Elements[0].ContainerCanvasWidth);
         Assert.Equal(1500, vm.SelectedGarden.Greenhouses[0].ContainerCanvasHeight);
-        _gardens.DidNotReceive().GetGardenByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().UpdateGardenAsync(Arg.Any<Garden>());
     }
 
     [Fact]

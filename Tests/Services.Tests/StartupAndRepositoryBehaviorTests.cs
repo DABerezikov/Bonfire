@@ -1,3 +1,4 @@
+using Bonfire.Domain.Functional;
 using Bonfire.Data;
 using BonfireDB.Context;
 using BonfireDB.Entities.GardenPlanning;
@@ -50,17 +51,17 @@ public class StartupAndRepositoryBehaviorTests
     {
         using var fx = new SqliteUowFixture();
         var service = fx.CreateGardenService();
-        var plan = await service.CreatePlanAsync("План", 2026);
-        var garden = await service.CreateGardenAsync(plan.Id, "Участок", 20, 15);
-        var greenhouse = await service.AddGreenhouseAsync(garden.Id, "Теплица", 6, 3);
-        var inner = await service.AddGreenhouseAsync(greenhouse.Id, "Внутренняя", 2, 1);
-        var bed = await service.AddElementAsync(new Bed { PlotId = greenhouse.Id, Name = "Грядка" });
-        await service.RebuildGridAsync(bed, 2, 3);
-        var loaded = await service.GetGreenhouseByIdAsync(greenhouse.Id);
+        var plan = await fx.PreparePlanAsync("План", 2026);
+        var garden = (await service.CreateGardenFromRequestAsync(new(plan.Id, "Участок", 20, 15, 150))).ValueOrThrow();
+        var greenhouse = (await service.CreateGreenhouseFromRequestAsync(new(garden.Id, "Теплица", 6, 3, 150, 0, 0))).ValueOrThrow().Properties;
+        var inner = (await service.CreateGreenhouseFromRequestAsync(new(greenhouse.Id, "Внутренняя", 2, 1, 150, 0, 0))).ValueOrThrow().Properties;
+        var bed = (await service.CreateElementFromRequestAsync(new(greenhouse.Id, "Грядка", new Bonfire.Domain.Garden.GardenElementKind.Bed(), 450, 0, 100, 100))).ValueOrThrow().Properties;
+        (await service.ResizeGridAsync(new(bed.Id, 2, 3))).ValueOrThrow();
+        var loaded = await fx.LoadAsync<Greenhouse>(greenhouse.Id);
         Assert.Equal(garden.Id, loaded!.ParentPlot.Id);
         Assert.Equal(inner.Id, Assert.Single(loaded.Greenhouses).Id);
         Assert.Equal(6, Assert.Single(loaded.Elements).PlantingSpots.Count);
-        Assert.Equal(greenhouse.Id, (await service.GetElementByIdAsync(bed.Id))!.Plot.Id);
+        Assert.Equal(greenhouse.Id, (await fx.LoadAsync<GardenElement>(bed.Id))!.Plot.Id);
     }
 
     [Fact]

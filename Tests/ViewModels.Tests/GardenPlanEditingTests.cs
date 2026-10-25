@@ -61,8 +61,6 @@ public partial class GardenPlanWorkflowTests
         vm.DeleteGreenhouseCommand.Execute(null);
         Assert.Equal(confirmed ? 0 : 1, vm.SelectedGarden.Greenhouses.Count);
         _gardens.Received(confirmed ? 1 : 0).DeleteGreenhouseByIdAsync(Arg.Is<DeleteGreenhouseFromViewModel>(r => r.GreenhouseId == 2));
-        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().DeleteGreenhouseAsync(Arg.Any<Greenhouse>());
     }
 
     [Theory]
@@ -96,8 +94,6 @@ public partial class GardenPlanWorkflowTests
             Assert.Equal(450, child.ContainerCanvasHeight);
             Assert.False(draft.IsDirty);
         }
-        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
     }
 
     [Theory]
@@ -120,8 +116,6 @@ public partial class GardenPlanWorkflowTests
         Assert.Equal(("Новое", "Суглинок", "Север", "Плёнка"), (vm.SelectedElement.Name, vm.SelectedElement.SoilType, vm.SelectedElement.Orientation, vm.SelectedElement.CoverMaterial));
         Assert.False(draft.IsDirty);
         _gardens.Received(1).EditElementPropertiesAsync(Arg.Is<EditElementPropertiesFromViewModel>(request => request.Id == 1 && request.Values.Width == 180 && request.Original.Width == 90));
-        _gardens.DidNotReceive().GetElementByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().UpdateElementAsync(Arg.Any<GardenElement>());
     }
 
     [Fact]
@@ -135,8 +129,6 @@ public partial class GardenPlanWorkflowTests
         vm.ToggleLockGreenhouseCommand.Execute(model);
         Assert.False(model.IsLocked);
         _gardens.Received(2).SetLockAsync(Arg.Any<SetGardenLockFromViewModel>());
-        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
     }
 
     [Fact]
@@ -145,7 +137,6 @@ public partial class GardenPlanWorkflowTests
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
         var model = new GardenElementFromViewModel { Id = 1 };
         var entity = new Bed { Id = 1 };
-        _gardens.GetElementByIdAsync(1).Returns(entity);
         vm.SelectedGarden.Elements.Add(model); vm.SelectedElement = model;
         _gardens.SetLockAsync(Arg.Any<SetGardenLockFromViewModel>()).Returns(Result.Success(new GardenLockResultFromViewModel(1, true)));
         vm.ToggleLockElementCommand.Execute(model);
@@ -154,7 +145,6 @@ public partial class GardenPlanWorkflowTests
         vm.DeleteElementCommand.Execute(null);
         Assert.Empty(vm.SelectedGarden.Elements); Assert.Null(vm.SelectedElement);
         _gardens.Received(1).DeleteGardenElementAsync(Arg.Is<DeleteGardenElementFromViewModel>(r => r.ElementId == 1));
-        _gardens.DidNotReceive().DeleteElementAsync(Arg.Any<GardenElement>());
     }
 
     [Fact]

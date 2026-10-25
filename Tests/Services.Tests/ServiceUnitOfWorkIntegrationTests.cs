@@ -187,10 +187,10 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             return bed.Id;
         });
 
-        var detached = await Gardens().GetElementByIdAsync(elementId);
+        var detached = await _fx.LoadAsync<BonfireDB.Entities.GardenPlanning.GardenElement>(elementId);
         Assert.NotNull(detached);
 
-        await Gardens().RebuildGridAsync(detached!, rows: 2, cols: 2);
+        Assert.True((await Gardens().ResizeGridAsync(new(detached!.Id, 2, 2))).IsSuccess);
 
         var spotCount = await _fx.QueryAsync(db => db.PlantingSpots.CountAsync(s => s.GardenElementId == elementId));
         Assert.Equal(4, spotCount);

@@ -1,3 +1,4 @@
+using Bonfire.Domain.Functional;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Garden;
 using Bonfire.Domain.Garden.States;
@@ -15,9 +16,9 @@ public class GardenObjectCreationWritingTests : IDisposable
     private async Task<int> PrepareAsync(bool inner)
     {
         var service = _fixture.CreateGardenService();
-        var plan = await service.CreatePlanAsync("План", 2026);
-        var garden = await service.CreateGardenAsync(plan.Id, "Участок", 20, 15);
-        return inner ? (await service.AddGreenhouseAsync(garden.Id, "Теплица", 6, 3)).Id : garden.Id;
+        var plan = await _fixture.PreparePlanAsync("План", 2026);
+        var garden = await _fixture.PrepareGardenAsync(plan.Id, "Участок", 20, 15);
+        return inner ? (await service.CreateGreenhouseFromRequestAsync(new(garden.Id, "Теплица", 6, 3, 150, 0, 0))).ValueOrThrow().Properties.Id : garden.Id;
     }
 
     [Theory]
@@ -59,7 +60,7 @@ public class GardenObjectCreationWritingTests : IDisposable
     public async Task Create_FreshObstacle_RefusesWithoutPartialRow(bool greenhouse)
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().GetGardenByIdAsync(id);
+        await _fixture.LoadAsync<BonfireDB.Entities.GardenPlanning.Garden>(id);
         await _fixture.ExecuteAsync(async db => { db.GardenElements.Add(new Bed { PlotId = id, DisplayWidth = 1000, DisplayHeight = 1000 }); await db.SaveChangesAsync(); });
         var error = greenhouse
             ? (await Create().CreateGreenhouseAsync(new(id, "Теплица", 6, 3, 150, 0, 0))).Match(_ => "", e => e)
@@ -74,7 +75,7 @@ public class GardenObjectCreationWritingTests : IDisposable
     [InlineData(true)]
     public async Task Create_DeletedContainer_Refuses(bool greenhouse)
     {
-        var id = await PrepareAsync(false); await _fixture.CreateGardenService().DeleteGardenAsync(new Garden { Id = id });
+        var id = await PrepareAsync(false); Assert.True((await _fixture.CreateGardenService().DeleteGardenByIdAsync(new(id))).IsSuccess);
         var error = greenhouse
             ? (await Create().CreateGreenhouseAsync(new(id, "Теплица", 6, 3, 150, 0, 0))).Match(_ => "", e => e)
             : (await Create().CreateElementAsync(new(id, "Элемент", new GardenElementKind.Bed(), 0, 0, 300, 135))).Match(_ => "", e => e);

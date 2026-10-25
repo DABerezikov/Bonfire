@@ -43,6 +43,5 @@ public partial class GardenPlanWorkflowTests
         Assert.Equal("История", cell.PlantLabel);
         Assert.Equal(nameof(PlantedSpotState), cell.StateTypeName);
         Assert.Null(vm.SelectedSpot);
-        _gardens.DidNotReceive().GetElementByIdAsync(Arg.Any<int>());
     }
 }

@@ -46,3 +46,50 @@
 - `SeedlingsServiceTests.UpdateSeedlingInfo_MixedReplants_AddsOnlyNew`
 - `SeedlingsServiceTests.MarkSeedlingInfosDeadAsync_SetsIsDeadAndNoteOnEachInfo`
 - `SeedlingsServiceTests.MarkSeedlingInfosDeadAsync_UpdatesInfosAndSeedlingThenSavesOnce`
+
+
+## Планировщик
+
+Удалены EF CRUD/полная запись графа/прямые переходы и сетка без производственных
+вызовов. 32 старые проверки реализации заменяются существующими более подробными
+GardenCreationWritingTests, GardenObjectCreationWritingTests, GridResizingIntegrationTests,
+GardenStateWritingIntegrationTests, *PropertiesWritingTests и *DeletionWritingTests.
+Сквозной GardenLifecycleIntegrationTests переведён на актуальные запросы/результаты.
+Сортировка/фильтрация/граф чтения остаются проверены реальным провайдером.
+Отдельного UI редактирования плана и произвольной записи даты уборки не было;
+удаление этих общих EF-методов не вводит и не отменяет пользовательских команд.
+
+Точный перечень удалённых проверок старого механизма:
+
+- `GardenServiceTests.CreatePlanAsync_CallsPlansAddAsync`
+- `GardenServiceTests.CreatePlanAsync_SetsCorrectNameAndYear`
+- `GardenServiceTests.DeletePlanAsync_CallsPlansRemoveAsyncWithPlanId`
+- `GardenServiceTests.CreateGardenAsync_CallsGardensAddAsync`
+- `GardenServiceTests.CreateGardenAsync_SetsCanvasFromMetersAndDefaultScale`
+- `GardenServiceTests.CreateGardenAsync_SetsCanvasFromMetersAndCustomScale`
+- `GardenServiceTests.CreateGardenAsync_SetsGardenPlanId`
+- `GardenServiceTests.AddGreenhouseAsync_CallsGreenhousesAddAsync`
+- `GardenServiceTests.AddGreenhouseAsync_SetsDisplayWidthAndHeight`
+- `GardenServiceTests.AddGreenhouseAsync_SetsCanvasWidthAndHeight`
+- `GardenServiceTests.ChangeElementStateAsync_ValidTransition_UpdatesStateTypeName`
+- `GardenServiceTests.ChangeElementStateAsync_ValidTransition_CallsElementsUpdateAsync`
+- `GardenServiceTests.ChangeElementStateAsync_InvalidTransition_ThrowsInvalidOperationException`
+- `GardenServiceTests.ChangeElementStateAsync_InvalidTransition_DoesNotCallUpdateAsync`
+- `GardenServiceTests.RebuildGridAsync_ActiveState_ThrowsInvalidOperationException`
+- `GardenServiceTests.RebuildGridAsync_ActiveState_DoesNotCallElementsUpdateAsync`
+- `GardenServiceTests.RebuildGridAsync_PlannedState_SetsGridRowsAndColumns`
+- `GardenServiceTests.RebuildGridAsync_PlannedState_CallsElementsUpdateAsync`
+- `GardenServiceTests.RebuildGridAsync_RemovesOutOfBoundsSpots`
+- `GardenServiceTests.RebuildGridAsync_CreatesNewSpotsForMissingCells`
+- `GardenServiceTests.RebuildGridAsync_DoesNotDuplicateExistingSpots`
+- `GardenServiceTests.ClearSpotAsync_ResetsStateTypeName`
+- `GardenServiceTests.ClearSpotAsync_ClearsSeedlingInfoId`
+- `GardenServiceTests.ClearSpotAsync_ClearsPlantedDate`
+- `GardenServiceTests.ClearSpotAsync_ClearsHarvestDate`
+- `GardenServiceTests.ClearSpotAsync_CallsSpotsUpdateAsync`
+- `GardenServiceTests.ChangeSpotStateAsync_TransitionsState`
+- `GardenServiceTests.ChangeSpotStateAsync_WithLabel_SetsNote`
+- `GardenServiceTests.ChangeSpotStateAsync_WithoutLabel_DoesNotChangeNote`
+- `GardenServiceTests.ChangeSpotStateAsync_WithDate_SetsPlantedDate`
+- `GardenServiceTests.ChangeSpotStateAsync_WithoutDate_DoesNotChangePlantedDate`
+- `GardenServiceTests.ChangeSpotStateAsync_CallsSpotsUpdateAsync`

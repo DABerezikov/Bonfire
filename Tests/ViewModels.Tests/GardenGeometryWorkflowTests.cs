@@ -11,8 +11,6 @@ public partial class GardenPlanWorkflowTests
     public void SaveElementPosition_Gesture_DoesNotSaveUnsubmittedProperties()
     {
         var vm = CreateVm();
-        var stored = new Bed { Id = 1, Name = "Сохранённое", Note = "Из БД", Orientation = "Север" };
-        _gardens.GetElementByIdAsync(1).Returns(stored);
         vm.SelectedElement = new() { Id = 1, X = 30, Y = 45, Width = 180, Height = 90,
             Name = "Черновик", Note = "Не сохранять", Orientation = "Юг" };
         _gardens.SaveGeometryAsync(Arg.Any<SaveGardenGeometryFromViewModel>()).Returns(Result.Success(new GeometryResultFromViewModel(1,
@@ -20,11 +18,9 @@ public partial class GardenPlanWorkflowTests
 
         vm.SaveElementPositionCommand.Execute(null);
 
-        Assert.Equal("Сохранённое", stored.Name);
-        Assert.Equal("Из БД", stored.Note);
-        Assert.Equal("Север", stored.Orientation);
-        _gardens.DidNotReceive().UpdateElementAsync(Arg.Any<GardenElement>());
-        _gardens.DidNotReceive().GetElementByIdAsync(Arg.Any<int>());
+        Assert.Equal("Черновик", vm.SelectedElement!.Name);
+        Assert.Equal("Не сохранять", vm.SelectedElement!.Note);
+        Assert.Equal("Юг", vm.SelectedElement!.Orientation);
         _gardens.Received(1).SaveGeometryAsync(Arg.Is<SaveGardenGeometryFromViewModel>(request => request.EntityId == 1 && request.Target is GeometryTarget.Element && request.X == 30));
     }
 
@@ -57,8 +53,6 @@ public partial class GardenPlanWorkflowTests
 
         Assert.Equal((30.0, 45.0, 300.0, 150.0), (target.X, target.Y, target.DisplayWidth, target.DisplayHeight));
         Assert.Equal((6.0, 3.0, "Черновик", "Оставить"), (target.WidthMeters, target.HeightMeters, target.Name, target.Note));
-        _gardens.DidNotReceive().GetGreenhouseByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().UpdateGreenhouseAsync(Arg.Any<Greenhouse>());
         _gardens.Received(1).SaveGeometryAsync(Arg.Is<SaveGardenGeometryFromViewModel>(request => request.Target is GeometryTarget.Greenhouse));
     }
 

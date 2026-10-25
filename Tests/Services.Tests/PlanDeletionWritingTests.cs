@@ -32,7 +32,7 @@ public class PlanDeletionWritingTests : IDisposable
     public async Task Delete_WithoutGreenhouses_RemovesGardensButPreservesHistoryAndOtherPlan()
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().DeletePlanAsync(new GardenPlan { Id = id });
+        Assert.True((await _fixture.CreateGardenService().DeletePlanByIdAsync(new(id))).IsSuccess);
         Assert.Equal("Оставить", await _fixture.QueryAsync(db => db.GardenPlans.Select(p => p.Name).SingleAsync()));
         Assert.Equal("Чужой", await _fixture.QueryAsync(db => db.Gardens.Select(p => p.Name).SingleAsync()));
         Assert.Equal(1, await _fixture.QueryAsync(db => db.GardenElements.CountAsync()));
@@ -46,7 +46,7 @@ public class PlanDeletionWritingTests : IDisposable
     public async Task Delete_WithGreenhouse_RestrictRollsBackAllGardens()
     {
         var id = await PrepareAsync(true);
-        await Assert.ThrowsAsync<DbUpdateException>(() => _fixture.CreateGardenService().DeletePlanAsync(new GardenPlan { Id = id }));
+        Assert.True((await _fixture.CreateGardenService().DeletePlanByIdAsync(new(id))).IsFailure);
         Assert.Equal(2, await _fixture.QueryAsync(db => db.GardenPlans.CountAsync()));
         Assert.Equal(3, await _fixture.QueryAsync(db => db.Gardens.CountAsync()));
         Assert.Equal(1, await _fixture.QueryAsync(db => db.Greenhouses.CountAsync()));
@@ -69,7 +69,7 @@ public class PlanDeletionWritingTests : IDisposable
     public async Task Delete_GreenhouseAddedAfterUiRead_RefusesEntirePlan()
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().GetPlansOrderedByYearDescAsync();
+        await _fixture.CreateGardenService().ReadPlansAsync();
         await _fixture.ExecuteAsync(async db => { db.Greenhouses.Add(new() { ParentPlotId = await db.Gardens.Where(g => g.GardenPlanId == id).Select(g => g.Id).FirstAsync() }); await db.SaveChangesAsync(); });
         Assert.Contains("теплицами", (await DeleteAsync(id)).Match(_ => "", error => error));
         Assert.Equal(2, await _fixture.QueryAsync(db => db.GardenPlans.CountAsync()));

@@ -29,7 +29,7 @@ public class GardenCreationWritingTests : IDisposable
     [InlineData(0, 0, "")]
     public async Task CreateGarden_ValidDimensions_PreservesTextAndCreatesEmptyCanvas(double width, double height, string name)
     {
-        var plan = await _fixture.CreateGardenService().CreatePlanAsync("План", 2026);
+        var plan = await _fixture.PreparePlanAsync("План", 2026);
         var saved = (await CreateGarden().ExecuteAsync(new(plan.Id, name, width, height, 150))).ValueOrThrow();
         Assert.Equal(name, saved.Values.Name); Assert.Equal(width * 150, saved.Canvas.Width); Assert.Equal(height * 150, saved.Canvas.Height);
         var row = await _fixture.QueryAsync(db => db.Gardens.SingleAsync());
@@ -41,8 +41,8 @@ public class GardenCreationWritingTests : IDisposable
     [Fact]
     public async Task CreateGarden_DeletedPlan_RefusesWithoutOrphan()
     {
-        var plan = await _fixture.CreateGardenService().CreatePlanAsync("План", 2026);
-        await _fixture.CreateGardenService().DeletePlanAsync(plan);
+        var plan = await _fixture.PreparePlanAsync("План", 2026);
+        await _fixture.CreateGardenService().DeletePlanByIdAsync(new(plan.Id));
         Assert.Contains("план", (await CreateGarden().ExecuteAsync(new(plan.Id, "Участок", 20, 15, 150))).Match(_ => "", e => e));
         Assert.Equal(0, await _fixture.QueryAsync(db => db.Gardens.CountAsync()));
     }
@@ -52,7 +52,7 @@ public class GardenCreationWritingTests : IDisposable
     [InlineData(false)]
     public async Task Create_DatabaseRejectsWrite_ReturnsFailureWithoutPartialRows(bool plan)
     {
-        var parent = await _fixture.CreateGardenService().CreatePlanAsync("Прежний", 2026);
+        var parent = await _fixture.PreparePlanAsync("Прежний", 2026);
         await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(plan
             ? "CREATE TRIGGER RejectPlan BEFORE INSERT ON GardenPlans BEGIN SELECT RAISE(ABORT, 'create rejected'); END;"
             : "CREATE TRIGGER RejectGarden BEFORE INSERT ON GardenPlots BEGIN SELECT RAISE(ABORT, 'create rejected'); END;"));

@@ -42,9 +42,7 @@ public partial class GardenPlanWorkflowTests
     {
         var vm = CreateVm(); var garden = GardenVm(); vm.SelectedGarden = garden;
         var pending = new TaskCompletionSource<Result<ElementCreationResultFromViewModel>>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var legacy = new TaskCompletionSource<GardenElement>(TaskCreationOptions.RunContinuationsAsynchronously);
         _gardens.CreateElementFromRequestAsync(Arg.Any<CreateGardenElementFromViewModel>()).Returns(pending.Task);
-        _gardens.AddElementAsync(Arg.Any<GardenElement>()).Returns(legacy.Task);
         var command = (CommandAsync)vm.AddElementCommand;
         var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         command.ExecutableChanged += (_, _) => { if (command.Executable) completed.TrySetResult(); };
@@ -53,11 +51,9 @@ public partial class GardenPlanWorkflowTests
         var selected = new GardenElementFromViewModel { Id = 4 }; next.Elements.Add(selected); vm.SelectedElement = selected;
         var draft = vm.ElementEditor;
         pending.SetResult(Result.Success(CreatedElement(new(1, "Грядка 1", new GardenElementKind.Bed(), 0, 0, 300, 135))));
-        legacy.SetResult(new Bed { Id = 12, Name = "Грядка 1" });
         await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(12, Assert.Single(garden.Elements).Id); Assert.Same(selected, Assert.Single(next.Elements));
         Assert.Same(selected, vm.SelectedElement); Assert.Same(draft, vm.ElementEditor);
-        await _gardens.DidNotReceive().AddElementAsync(Arg.Any<GardenElement>());
     }
 
     [Fact]
@@ -65,19 +61,15 @@ public partial class GardenPlanWorkflowTests
     {
         var vm = CreateVm(); var garden = GardenVm(); vm.SelectedGarden = garden;
         var pending = new TaskCompletionSource<Result<GreenhouseCreationResultFromViewModel>>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var legacy = new TaskCompletionSource<Greenhouse>(TaskCreationOptions.RunContinuationsAsynchronously);
         _gardens.CreateGreenhouseFromRequestAsync(Arg.Any<CreateGreenhouseFromViewModel>()).Returns(pending.Task);
-        _gardens.AddGreenhouseAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>()).Returns(legacy.Task);
         var command = (CommandAsync)vm.AddGreenhouseCommand;
         var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         command.ExecutableChanged += (_, _) => { if (command.Executable) completed.TrySetResult(); };
         vm.AddGreenhouseCommand.Execute(null);
         var next = GardenVm(); next.Id = 2; vm.SelectedGarden = next; var draft = vm.GardenEditor;
         pending.SetResult(Result.Success(CreatedGreenhouse(new(1, "Теплица 1", 6, 3, 150, 0, 0))));
-        legacy.SetResult(new Greenhouse { Id = 12, Name = "Теплица 1" });
         await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(12, Assert.Single(garden.Greenhouses).Id); Assert.Empty(next.Greenhouses);
         Assert.Same(draft, vm.GardenEditor);
-        await _gardens.DidNotReceive().AddGreenhouseAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>());
     }
 }

@@ -107,7 +107,7 @@ public class GreenhouseDeletionWritingTests : IDisposable
     public async Task Delete_ChildAddedAfterUiRead_RemovesFreshChildButPreservesHistory()
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().GetGreenhouseByIdAsync(id);
+        await _fixture.LoadAsync<BonfireDB.Entities.GardenPlanning.Greenhouse>(id);
         await _fixture.ExecuteAsync(async db =>
         {
             db.GardenElements.Add(new Bed { PlotId = id, Name = "Новый элемент", PlantingSpots = [new() { SeedlingInfo = new() { Note = "Новая история" } }] });
@@ -122,7 +122,7 @@ public class GreenhouseDeletionWritingTests : IDisposable
     public async Task Delete_NestedHouseAddedAfterUiRead_RefusesWholeDeletion()
     {
         var id = await PrepareAsync(false);
-        await _fixture.CreateGardenService().GetGreenhouseByIdAsync(id);
+        await _fixture.LoadAsync<BonfireDB.Entities.GardenPlanning.Greenhouse>(id);
         await _fixture.ExecuteAsync(async db => { db.Greenhouses.Add(new() { ParentPlotId = id, Name = "Новая вложенная" }); await db.SaveChangesAsync(); });
         Assert.Contains("вложенными теплицами", (await DeleteAsync(id)).Match(_ => "", error => error));
         Assert.Equal(2, await _fixture.QueryAsync(db => db.Greenhouses.CountAsync()));

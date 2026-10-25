@@ -10,6 +10,7 @@ public class ArchitectureBoundaryTests
     [Theory]
     [InlineData(typeof(Bonfire.Services.Interfaces.ISeedsService))]
     [InlineData(typeof(Bonfire.Services.Interfaces.ISeedlingsService))]
+    [InlineData(typeof(Bonfire.Services.Interfaces.IGardenService))]
     public void InventoryServiceContracts_DoNotExposePersistence(Type type)
     {
         foreach (var method in type.GetMethods())

@@ -95,7 +95,7 @@ public class ElementDeletionWritingTests : IDisposable
     public async Task Delete_CellAddedAfterUiRead_DeletesFreshCellsButPreservesTheirHistory()
     {
         var id = await PrepareAsync("Bed", false);
-        await _fixture.CreateGardenService().GetElementByIdAsync(id);
+        await _fixture.LoadAsync<BonfireDB.Entities.GardenPlanning.GardenElement>(id);
         await _fixture.ExecuteAsync(async db =>
         {
             db.PlantingSpots.Add(new() { GardenElementId = id, Note = "Новая ячейка", SeedlingInfo = new() { Note = "Новая история" } });

@@ -47,8 +47,6 @@ public partial class GardenPlanWorkflowTests
         vm.DeleteGardenCommand.Execute(null);
         Assert.Same(next, vm.SelectedGarden); Assert.Null(vm.SelectedElement);
         Assert.False(vm.IsGridOpen); Assert.Null(vm.EditingGridElement); Assert.Null(vm.SelectedSpot);
-        _gardens.DidNotReceive().GetGardenByIdAsync(Arg.Any<int>());
-        _gardens.DidNotReceive().DeleteGardenAsync(Arg.Any<Garden>());
     }
 
     [Theory]

@@ -1,3 +1,4 @@
+using BonfireDB.Entities.GardenPlanning;
 using BonfireDB;
 using BonfireDB.Context;
 using BonfireDB.Entities.Base;
@@ -27,7 +28,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public IUnitOfWorkFactory Factory { get; }
 
-    public GardenService CreateGardenService() => new(Factory, new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(Factory)), new EditGardenProperties(new DbGardenPropertiesWriter(Factory)), new SetGardenLock(new DbGardenLockWriter(Factory)), new DeleteGardenElement(new DbElementDeletionWriter(Factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(Factory)), new DeleteGarden(new DbGardenDeletionWriter(Factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(Factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(Factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(Factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(Factory)), new DbGardenReader(Factory));
+    public GardenService CreateGardenService() => new( new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(Factory)), new EditGardenProperties(new DbGardenPropertiesWriter(Factory)), new SetGardenLock(new DbGardenLockWriter(Factory)), new DeleteGardenElement(new DbElementDeletionWriter(Factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(Factory)), new DeleteGarden(new DbGardenDeletionWriter(Factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(Factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(Factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(Factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(Factory)), new DbGardenReader(Factory));
 
     public SeedsService CreateSeedsService() => new( new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory), new DbSeedEditorOptionsReader(Factory));
 
@@ -59,6 +60,18 @@ internal sealed class SqliteUowFixture : IDisposable
 
         Factory = _provider.GetRequiredService<IUnitOfWorkFactory>();
     }
+
+    public Task<GardenPlan> PreparePlanAsync(string name, int year, string? description = null)
+        => PrepareAsync(new GardenPlan { Name = name, Year = year, Description = description });
+
+    public Task<Garden> PrepareGardenAsync(int planId, string name, double width, double height)
+        => PrepareAsync(new Garden { GardenPlanId = planId, Name = name, WidthMeters = width,
+            HeightMeters = height, CanvasWidth = width * 150, CanvasHeight = height * 150 });
+
+    public Task<T> PrepareAsync<T>(T entity) where T : class => QueryAsync(async db =>
+    {
+        db.Add(entity); await db.SaveChangesAsync(); return entity;
+    });
 
     // Только arrange/assert тестов: независимое чтение сохранённого EF-графа.
     public async Task<T?> LoadAsync<T>(int id) where T : class, IEntity

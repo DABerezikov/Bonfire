@@ -14,8 +14,8 @@ public class GardenReadingTests : IDisposable
     [Fact]
     public async Task Read_SavedPlan_PreservesSubtypesOptionalValuesAndOrderedCells()
     {
-        var plan = await _fixture.CreateGardenService().CreatePlanAsync("  План  ", 2026, "");
-        var other = await _fixture.CreateGardenService().CreatePlanAsync("Другой", 2027);
+        var plan = await _fixture.PreparePlanAsync("  План  ", 2026, "");
+        var other = await _fixture.PreparePlanAsync("Другой", 2027);
         await _fixture.ExecuteAsync(async db =>
         {
             db.Gardens.Add(new Garden { Name = "Участок", GardenPlanId = plan.Id, Address = "", Note = null,
@@ -46,9 +46,9 @@ public class GardenReadingTests : IDisposable
     [Fact]
     public async Task Read_InvalidHistoricalGeometry_ReturnsTargetDiagnosticWithoutChangingRow()
     {
-        var plan = await _fixture.CreateGardenService().CreatePlanAsync("План", 2026);
-        var garden = await _fixture.CreateGardenService().CreateGardenAsync(plan.Id, "Участок", 10, 10);
-        var element = await _fixture.CreateGardenService().AddElementAsync(new Bed { PlotId = garden.Id, DisplayWidth = -1 });
+        var plan = await _fixture.PreparePlanAsync("План", 2026);
+        var garden = await _fixture.PrepareGardenAsync(plan.Id, "Участок", 10, 10);
+        var element = await _fixture.PrepareAsync(new Bed { PlotId = garden.Id, DisplayWidth = -1 });
         var result = await new DbGardenReader(_fixture.Factory).ReadGardensAsync(GardenPlanId.Create(plan.Id).ValueOrThrow(), default);
         Assert.Contains($"{element.Id}", result.Match(_ => "", e => e));
         Assert.Contains("Элемент", result.Match(_ => "", e => e));

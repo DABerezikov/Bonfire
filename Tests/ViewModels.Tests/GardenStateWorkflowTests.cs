@@ -40,7 +40,6 @@ public partial class GardenPlanWorkflowTests
         Assert.Null(spot.PlantedDate);
         Assert.Null(spot.PlantLabel);
         Assert.Equal("История", spot.Note);
-        _gardens.DidNotReceive().GetSpotAsync(Arg.Any<int>());
     }
 
     [Fact]
