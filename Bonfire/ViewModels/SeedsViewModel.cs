@@ -679,6 +679,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private async Task OnUpdateSeedsInfoCommandExecuted()
     {
+        if (SeedSortDetail is not { } detail) return;
         if (!_userDialog.YesNoQuestion(
                 $"Сохранить изменения упаковки? Характеристики сорта «{EditedItem.Plant.PlantSort.Name}» и выбранный производитель будут изменены у всех записей этого сорта.",
                 "Редактирование семян")) return;
@@ -686,14 +687,21 @@ public class SeedsViewModel : SourceSelectionViewModel
         SetSaving(true);
         try
         {
-            await _seedsService.SaveSeedEditAsync(EditedItem, SeedSortDetail!, EditedProducerId);
-            _ignoreDiscard = true;
-            await RefreshSeedsAsync();
-            EditorOptions = await _seedsService.GetEditorOptionsAsync();
-            SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
-            AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
-            ListCulture = ["-Выбрать все-"];
-            LoadListCulture(); LoadListSort(); LoadListProducer();
+            var result = await _seedsService.SaveSeedEditAsync(EditedItem, detail, EditedProducerId);
+            await result.Match(async _ =>
+            {
+                _ignoreDiscard = true;
+                await RefreshSeedsAsync();
+                EditorOptions = await _seedsService.GetEditorOptionsAsync();
+                SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
+                AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
+                ListCulture = ["-Выбрать все-"];
+                LoadListCulture(); LoadListSort(); LoadListProducer();
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return Task.CompletedTask;
+            });
         }
         finally { _ignoreDiscard = false; SetSaving(false); }
     }

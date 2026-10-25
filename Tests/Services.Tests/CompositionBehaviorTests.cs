@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Bonfire.Application.Seedlings;
 using Bonfire.Application.Libraries;
+using Bonfire.Application.Seeds;
 
 namespace Services.Tests;
 
@@ -35,6 +36,8 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<IProducerWriter>());
         Assert.NotNull(provider.GetRequiredService<IUpdateSort>());
         Assert.NotNull(provider.GetRequiredService<ISortWriter>());
+        Assert.NotNull(provider.GetRequiredService<IEditSeed>());
+        Assert.NotNull(provider.GetRequiredService<ISeedEditWriter>());
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
     }
 

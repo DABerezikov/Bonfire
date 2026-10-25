@@ -20,7 +20,7 @@ public class SeedsServiceTests
         _uow.Repository<SeedsInfo>().Returns(_info);
     }
 
-    private SeedsService CreateService() => new(_uow.ToFactory());
+    private SeedsService CreateService() => new(_uow.ToFactory(), Substitute.For<Bonfire.Application.Seeds.IEditSeed>());
 
     // ── MakeASeed — plant.Id == 0 (новый) ────────────────────────────────────
 

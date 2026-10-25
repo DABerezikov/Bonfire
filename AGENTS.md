@@ -28,6 +28,8 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 
 Библиотечное редактирование сорта использует `SortLibraryEdit`, `SortId`, `UpdateSort` и `DbSortWriter`. Меняются только название (с Trim) и культура всех связанных растений. `CultureChange = None` сохраняет существующие связи; культура принадлежит Plant, а не PlantSort. Результат `UpdateSortAsync` — DTO со связями растение → культура для синхронизации UI; характеристики сорта здесь не сохраняйте.
 
+Редактирование пакета и характеристик проходит через `SeedEditMapper → Application/Seeds/EditSeed → Domain/Seeds/SeedEdit → BonfireDB/SeedEditing/DbSeedEditWriter`. Порт принимает только проверенную модель; пакет, общий сорт, производитель и варианты цвета/созревания сохраняются одним SaveChanges. `SeedPackage` и `SortCharacteristics` иммутабельны; `*Values` — входные значения, проверяемые фабриками. Nullable преобразуйте в Option на границе и обратно только при записи EF. В этом сценарии текст сорта не обрезается, CultureId не меняется. `SaveSeedEditAsync` возвращает Result: при отказе UI сохраняет черновик.
+
 ## Сборка, запуск и тесты
 
 Работайте в Windows с SDK из `global.json`. Команды выполняйте из корня:

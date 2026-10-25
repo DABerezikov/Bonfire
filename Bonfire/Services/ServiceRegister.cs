@@ -4,6 +4,7 @@ using MoonCalendar;
 using Bonfire.Application.Seedlings;
 using Bonfire.Infrastructure;
 using Bonfire.Application.Libraries;
+using Bonfire.Application.Seeds;
 
 namespace Bonfire.Services
 {
@@ -22,6 +23,7 @@ namespace Bonfire.Services
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()
-            .AddSingleton<IUpdateSort, UpdateSort>();
+            .AddSingleton<IUpdateSort, UpdateSort>()
+            .AddSingleton<IEditSeed, EditSeed>();
     }
 }

@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
 
 namespace ViewModels.Tests;
 
@@ -116,7 +118,7 @@ public class SeedsWorkflowTests
         {
             Assert.Null(original.SeedsInfo.Note);
             Assert.Null(original.Plant.PlantSort.Description);
-            return Task.CompletedTask;
+            return Task.FromResult(Result.Success(new SeedEditResultFromViewModel(1, 1)));
         });
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         vm.UpdateSeedsInfoCommand.Execute(null);
@@ -142,6 +144,26 @@ public class SeedsWorkflowTests
         Assert.Single(vm.Seeds);
         Assert.Equal("Не терять", vm.EditedItem.SeedsInfo.Note);
         _service.DidNotReceive().DeleteSeedWithReasonAsync(Arg.Any<int>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public void Save_ResultFailure_KeepsDirtyDraftAndShowsReasonWithoutReload()
+    {
+        var original = Seed(1);
+        var vm = CreateVm(original);
+        vm.SelectedItem = original;
+        vm.EditedItem.SeedsInfo.Note = "Не терять";
+        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        _service.SaveSeedEditAsync(Arg.Any<Seed>(), Arg.Any<SortEditModel>(), Arg.Any<int>())
+            .Returns(Result.Failure<SeedEditResultFromViewModel>("Ошибка сохранения"));
+        _service.ClearReceivedCalls();
+        vm.UpdateSeedsInfoCommand.Execute(null);
+        Assert.Equal("Не терять", vm.EditedItem.SeedsInfo.Note);
+        Assert.True(vm.HasUnsavedSeedChanges);
+        Assert.True(vm.CanEditSeedDetails);
+        Assert.Null(original.SeedsInfo.Note);
+        _dialog.Received(1).Error("Ошибка сохранения", Arg.Any<string>());
+        _service.DidNotReceive().GetAllSeedsAsync();
     }
 
     [Fact]

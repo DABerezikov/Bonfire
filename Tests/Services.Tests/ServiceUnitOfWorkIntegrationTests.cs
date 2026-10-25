@@ -14,7 +14,7 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
 
     public void Dispose() => _fx.Dispose();
 
-    private SeedsService Seeds() => new(_fx.Factory);
+    private SeedsService Seeds() => _fx.CreateSeedsService();
     private SeedlingsService Seedlings() => _fx.CreateSeedlingsService();
     private GardenService Gardens() => new(_fx.Factory);
 
