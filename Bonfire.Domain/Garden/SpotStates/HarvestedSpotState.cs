@@ -1,4 +1,4 @@
-namespace BonfireDB.Entities.GardenPlanning.SpotStates;
+namespace Bonfire.Domain.Garden.SpotStates;
 
 public sealed class HarvestedSpotState : PlantingSpotState
 {

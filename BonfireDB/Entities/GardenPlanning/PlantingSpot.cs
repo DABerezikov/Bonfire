@@ -1,5 +1,5 @@
 using BonfireDB.Entities.Base;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BonfireDB.Entities.GardenPlanning;
@@ -25,10 +25,9 @@ public class PlantingSpot : Entity
 
     public void TransitionTo(PlantingSpotState newState)
     {
-        if (!State.CanTransitionTo(newState))
-            throw new InvalidOperationException(
-                $"Переход «{State.DisplayName}» → «{newState.DisplayName}» запрещён");
-        StateTypeName = newState.GetType().Name;
+        StateTypeName = State.TransitionTo(newState).Match(
+            state => state.GetType().Name,
+            error => throw new InvalidOperationException(error));
     }
 
     public DateTime? PlantedDate { get; set; }

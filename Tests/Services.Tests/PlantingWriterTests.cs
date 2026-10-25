@@ -4,7 +4,7 @@ using Bonfire.Domain.Garden;
 using Bonfire.Domain.Seedlings;
 using Bonfire.Domain.Seeds;
 using BonfireDB.Planting;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using Microsoft.EntityFrameworkCore;
 
 namespace Services.Tests;

@@ -5,7 +5,7 @@ using Bonfire.Domain.Seeds;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using BonfireDB.SeedEditing;
 using BonfireDB.Sowing;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,4 @@
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.States;
 
 namespace Models.Tests;
 

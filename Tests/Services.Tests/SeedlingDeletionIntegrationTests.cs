@@ -4,7 +4,7 @@ using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
 using BonfireDB.Sowing;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace Services.Tests;
 

@@ -6,8 +6,8 @@ using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.SpotStates;
+using Bonfire.Domain.Garden.States;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;

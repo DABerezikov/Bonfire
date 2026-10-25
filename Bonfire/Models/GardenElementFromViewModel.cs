@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Bonfire.Infrastructure;
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.States;
 
 namespace Bonfire.Models;
 

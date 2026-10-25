@@ -1,7 +1,7 @@
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace ViewModels.Tests;
 

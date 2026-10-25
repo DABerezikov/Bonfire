@@ -1,7 +1,7 @@
 using Bonfire.Infrastructure;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.States;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.States;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace ViewModels.Tests;
 

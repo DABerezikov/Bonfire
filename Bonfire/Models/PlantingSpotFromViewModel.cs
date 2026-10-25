@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace Bonfire.Models;
 

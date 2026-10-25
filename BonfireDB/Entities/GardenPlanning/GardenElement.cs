@@ -1,5 +1,5 @@
 using BonfireDB.Entities.Base;
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.States;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BonfireDB.Entities.GardenPlanning;
@@ -29,10 +29,9 @@ public abstract class GardenElement : NamedEntity
 
     public void TransitionTo(GardenElementState newState)
     {
-        if (!State.CanTransitionTo(newState))
-            throw new InvalidOperationException(
-                $"Переход «{State.DisplayName}» → «{newState.DisplayName}» запрещён");
-        StateTypeName = newState.GetType().Name;
+        StateTypeName = State.TransitionTo(newState).Match(
+            state => state.GetType().Name,
+            error => throw new InvalidOperationException(error));
     }
 
     // --- Сетка внутренней планировки ---

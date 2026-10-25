@@ -1,7 +1,11 @@
-namespace BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Functional;
+
+namespace Bonfire.Domain.Garden.States;
 
 public abstract class GardenElementState
 {
+    private protected GardenElementState() { }
+
     public abstract string DisplayName { get; }
     public abstract string StatusColor { get; }
     public abstract bool CanAddPlanting { get; }
@@ -11,6 +15,14 @@ public abstract class GardenElementState
 
     public bool CanTransitionTo(GardenElementState target)
         => AllowedTransitions.Contains(target.GetType());
+
+    public Result<GardenElementState> TransitionTo(GardenElementState target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return CanTransitionTo(target)
+            ? Result.Success(target)
+            : Result.Failure<GardenElementState>($"Переход «{DisplayName}» → «{target.DisplayName}» запрещён");
+    }
 
     public static GardenElementState From(string typeName) => typeName switch
     {

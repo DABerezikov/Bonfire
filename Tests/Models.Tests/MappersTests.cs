@@ -1,7 +1,7 @@
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace Models.Tests;
 
@@ -198,7 +198,7 @@ public class MappersTests
         {
             Id = 1, Name = "Грядка 1",
             X = 10, Y = 20, DisplayWidth = 120, DisplayHeight = 80,
-            StateTypeName = nameof(BonfireDB.Entities.GardenPlanning.States.PlannedState),
+            StateTypeName = nameof(Bonfire.Domain.Garden.States.PlannedState),
             GridRows = 2, GridColumns = 2, Orientation = "СЮ",
             PlantingSpots =
             [
@@ -235,7 +235,7 @@ public class MappersTests
                 new Bed
                 {
                     Id = 1, Name = "Грядка",
-                    StateTypeName = nameof(BonfireDB.Entities.GardenPlanning.States.PlannedState)
+                    StateTypeName = nameof(Bonfire.Domain.Garden.States.PlannedState)
                 }
             ],
             Greenhouses = []

@@ -4,8 +4,8 @@ using Bonfire.Domain.Seeds;
 using Bonfire.Infrastructure;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.States;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.States;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace ViewModels.Tests;
 

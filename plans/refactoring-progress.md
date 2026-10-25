@@ -1005,3 +1005,41 @@ Coverlet и ручная проверка всех DPI/модальных оши
 Следующий шаг — чистые переходы состояний и перестройка сетки с сохранением
 дискриминаторов и истории. Этап 6 целиком ещё не завершён. .claude/worktrees
 в коммит не включается; push и merge не выполняются.
+
+## 25.10.2026 — доменные полиморфные состояния планировщика
+
+Выполнена часть 3а этапа 6: существующие GardenElementState и PlantingSpotState
+вместе с 11 sealed-вариантами перенесены из BonfireDB/Entities/GardenPlanning в
+Bonfire.Domain/Garden/States и SpotStates. Это перемещение, не параллельные копии.
+Матрицы AllowedTransitions, строки имён типов, фабрики From, подписи, цвета и
+разрешения сохранены. Конструкторы базовых типов private protected ограничивают
+расширение доменной сборкой. Enum/Map и новые зависимости не добавлены.
+
+TransitionTo возвращает Result с целевым состоянием либо прежним сообщением
+запрета, исходный экземпляр не меняется. Null-аргумент — ArgumentNullException.
+GardenElement, Greenhouse и PlantingSpot делегируют проверку домену и только при
+успехе меняют StateTypeName; прежний InvalidOperationException сохраняется на
+границе совместимости. UI и сервисы используют перенесённые типы. Полные имена
+namespace поменялись, простые строки StateTypeName и TPH-дискриминаторы — нет.
+Схема DbBonfire, миграции и Composite теплицы не изменялись.
+
+До переноса: 82/82 прежних теста GardenElementStateTests/PlantingSpotStateTests
+прошли (artifacts/refactoring-stage-6-states-baseline). Red: новые 62/62 упали на
+заглушках TransitionTo по ожидаемым причинам (artifacts/refactoring-stage-6-states-red).
+Проверены все 36 пар элементов, 25 пар ячеек, неизменность оригинала и null-инвариант.
+
+Green: dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false
+-p:UseSharedCompilation=false --logger trx --results-directory artifacts/refactoring-stage-6-states:
+1122/1122 без пропусков (Models 548, Services 351, ViewModels 182, Repository 35,
+DTO 6). Прежние проверки EF, сохранённых строк, посадок, мапперов и Composite прошли.
+Содержимое XAML не менялось, ссылок на прежние namespace в XAML не было.
+Startup smoke, ручной UI и Coverlet в этой части не повторялись; сохраняются
+предупреждения NuGet. Последний процессный smoke выполнен предыдущим шагом.
+
+Ограничения: From по-прежнему использует исторический fallback неизвестной строки;
+это не новый строгий парсер. GardenService пока сохраняет EF-модели прежними API:
+перенос правил не исправляет изменение перед SaveChanges или устаревший граф.
+Сетка пока содержит прежний алгоритм; её чистая модель, свежие данные и проверка
+сохранности истории — следующие части шага 3. IsLocked блокирует геометрию,
+CanModifyGrid — изменение сетки: новое правило блокировки здесь не вводилось.
+Этап 6 в целом не завершён. .claude/worktrees, merge и push не затрагивались.

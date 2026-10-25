@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.SpotStates;
+using Bonfire.Domain.Garden.States;
 
 namespace Bonfire.Services.Interfaces;
 

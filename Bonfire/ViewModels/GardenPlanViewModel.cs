@@ -11,8 +11,8 @@ using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.SpotStates;
+using Bonfire.Domain.Garden.States;
 
 namespace Bonfire.ViewModels;
 

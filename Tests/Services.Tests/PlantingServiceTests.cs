@@ -3,7 +3,7 @@ using Bonfire.Infrastructure;
 using BonfireDB.Planting;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
 

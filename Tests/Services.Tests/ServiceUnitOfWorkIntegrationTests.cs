@@ -1,5 +1,5 @@
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
 using Bonfire.Application.Seeds;

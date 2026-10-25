@@ -1,4 +1,4 @@
-namespace BonfireDB.Entities.GardenPlanning.States;
+namespace Bonfire.Domain.Garden.States;
 
 public sealed class RestingState : GardenElementState
 {
