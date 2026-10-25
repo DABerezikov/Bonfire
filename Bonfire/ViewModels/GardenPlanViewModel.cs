@@ -866,13 +866,21 @@ public class GardenPlanViewModel(
 
     private async Task DeleteElementAsync()
     {
-        if (SelectedElement is null || SelectedGarden is null) return;
-        var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
-        if (entity is null) return;
-
-        await gardenService.DeleteElementAsync(entity);
-        ActiveElements.Remove(SelectedElement);
-        SelectedElement = null;
+        if (SelectedElement is not { } editing || SelectedGarden is null) return;
+        var elements = ActiveElements;
+        var result = await gardenService.DeleteGardenElementAsync(new(editing.Id));
+        result.Match(_ =>
+        {
+            elements.Remove(editing);
+            if (ReferenceEquals(SelectedElement, editing)) SelectedElement = null;
+            if (ReferenceEquals(EditingGridElement, editing))
+            {
+                IsGridOpen = false;
+                EditingGridElement = null;
+                SelectedSpot = null;
+            }
+            return true;
+        }, error => { userDialog.Warning(error, "Удаление элемента"); return false; });
     }
 
     [field: AllowNull, MaybeNull]

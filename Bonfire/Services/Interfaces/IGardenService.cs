@@ -23,6 +23,8 @@ public interface IGardenService
 
     Task<Result<GardenLockResultFromViewModel>> SetLockAsync(SetGardenLockFromViewModel request);
 
+    Task<Result<ElementDeletionResultFromViewModel>> DeleteGardenElementAsync(DeleteGardenElementFromViewModel request);
+
     // --- Чтение ---
     Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
     Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);

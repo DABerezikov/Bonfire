@@ -30,6 +30,7 @@ public static class RepositoryRegister
         .AddSingleton<IGreenhousePropertiesWriter, DbGreenhousePropertiesWriter>()
         .AddSingleton<IGardenPropertiesWriter, DbGardenPropertiesWriter>()
         .AddSingleton<IGardenLockWriter, DbGardenLockWriter>()
+        .AddSingleton<IElementDeletionWriter, DbElementDeletionWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

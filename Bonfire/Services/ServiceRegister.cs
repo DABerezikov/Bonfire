@@ -33,6 +33,7 @@ namespace Bonfire.Services
             .AddSingleton<IEditGreenhouseProperties, EditGreenhouseProperties>()
             .AddSingleton<IEditGardenProperties, EditGardenProperties>()
             .AddSingleton<ISetGardenLock, SetGardenLock>()
+            .AddSingleton<IDeleteGardenElement, DeleteGardenElement>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

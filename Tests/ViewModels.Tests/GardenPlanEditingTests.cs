@@ -148,9 +148,11 @@ public partial class GardenPlanWorkflowTests
         _gardens.SetLockAsync(Arg.Any<SetGardenLockFromViewModel>()).Returns(Result.Success(new GardenLockResultFromViewModel(1, true)));
         vm.ToggleLockElementCommand.Execute(model);
         Assert.True(model.IsLocked); Assert.False(entity.IsLocked);
+        _gardens.DeleteGardenElementAsync(Arg.Any<DeleteGardenElementFromViewModel>()).Returns(Result.Success(new ElementDeletionResultFromViewModel(1)));
         vm.DeleteElementCommand.Execute(null);
         Assert.Empty(vm.SelectedGarden.Elements); Assert.Null(vm.SelectedElement);
-        _gardens.Received(1).DeleteElementAsync(entity);
+        _gardens.Received(1).DeleteGardenElementAsync(Arg.Is<DeleteGardenElementFromViewModel>(r => r.ElementId == 1));
+        _gardens.DidNotReceive().DeleteElementAsync(Arg.Any<GardenElement>());
     }
 
     [Fact]

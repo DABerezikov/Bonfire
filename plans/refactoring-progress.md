@@ -1576,3 +1576,54 @@ NuGet/PRAGMA остаются; пакеты/схема не менялись. Д
 перед реализацией требуется проверить текущие каскады и самостоятельную историю.
 Остальные CRUD и аудит ещё впереди; этап 6 не завершён. .claude/worktrees не
 затрагивалась, push/merge не выполнялись.
+
+
+## 2026-10-25 — этап 6, 4в4а: удаление элемента по ID
+
+До изменений прослежены кнопки обеих панелей и ContextMenu: они вызывают команду
+без параметра и удаляют SelectedElement. Новое подтверждение или смена этой цели
+не вводились. Проверены GardenElementRepository.RemoveAsync, UnitOfWork и FK:
+GardenElement → ячейки Cascade; связь ячейки с SeedlingInfo не делает историю
+зависимой от ячейки. Метаданные рассады/пересадки/обработки остаются самостоятельными.
+
+Baseline: 8/8 SQLite-проверок прошли на прежнем EF-API для Bed/ColdFrame/FlowerBed/
+OpenGroundArea на участке и внутри теплицы, включая ActiveState и IsLocked.
+Зафиксированы сохранность контейнеров, общей ссылки чужой ячейки и независимой
+истории с пересадкой/обработкой. В том же прогоне UI дал Red 4 failed: после await
+использовались уже другой SelectedElement/ActiveElements, исходная модель оставалась
+в кэше. artifacts/refactoring-stage-6-element-deletion-baseline.
+Отдельный Red сетки (1 failed) показал, что редактор сохранял ссылку на удалённый
+элемент; artifacts/refactoring-stage-6-element-deletion-grid-red.
+Red начального порта: 10 failed / 1 passed — каскады и обработка отказа ещё не
+реализованы; artifacts/refactoring-stage-6-element-deletion-port-red.
+
+Green/Refactor: GardenElementId — проверенный положительный ID; DeleteGardenElement
+проверяет запрос/отмену и передаёт порту ID без EF. DbElementDeletionWriter читает
+свежий элемент с ячейками в коротком Uow, вызывает существующий RemoveAsync и один
+SaveChanges. Отсутствие, конфликт и ошибка записи возвращаются Result. Исходные
+восемь проверок каскадов прошли после переноса. Новая ячейка, добавленная после
+чтения UI, удаляется вместе с элементом, её история сохраняется. Триггеры отказа
+на удалении ячейки и элемента доказывают полный откат: элемент и все ячейки остаются,
+самостоятельная история не теряется. Схема и каскады не менялись.
+
+UI захватывает элемент и коллекцию до await; успех удаляет только эту модель.
+Новый выбор и его черновик сохраняются. Если открытая сетка относится к удалённому
+элементу, она закрывается, EditingGridElement/SelectedSpot сбрасываются; сетка
+другого объекта не затрагивается. Отказ оставляет кэш, выбор, черновик и сетку,
+показывает причину. CommandAsync блокирует повторный запрос во время выполнения.
+Старый DeleteElementAsync(EF) оставлен совместимостью до этапа 7, из UI не вызывается.
+
+Гейт dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false
+-p:UseSharedCompilation=false --logger trx: **1446/1446**, failed/skipped нет.
+Models 671, Services 468, ViewModels 266, Repository 35, SeedsFromViewModel 6;
+25 новых проверок. Артефакты: artifacts/refactoring-stage-6-element-deletion-green.
+Процессный startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True.
+Изолированная БД: Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/
+76210a73cbf34251840724af23032c49/smoke.db. Рабочая БД не использовалась.
+
+Ограничения: сериализуемая защита между чтением и SaveChanges не вводилась,
+полный ручной UI/DPI-прогон и Coverlet не повторялись. Предупреждения NuGet/PRAGMA
+прежние, пакеты не менялись. Следующий шаг 4в4б — удаление теплицы с проверкой
+фактического Restrict для вложенных теплиц до реализации. Остальные CRUD и аудит
+ещё впереди; этап 6 не завершён. .claude/worktrees не затрагивалась, push/merge
+не выполнялись.
