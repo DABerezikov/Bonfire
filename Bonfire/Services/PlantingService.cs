@@ -6,6 +6,7 @@ using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
+using BonfireDB.Sowing;
 using MoonCalendar;
 
 namespace Bonfire.Services;
@@ -52,17 +53,15 @@ internal class PlantingService(IUnitOfWorkFactory uowFactory, MoonPhase lunar) :
         if (source is null) return null;
         if (source.IsPlantedInBed) return null; // уже в грядке — повторно не сажаем (только пересадка)
 
-        var available = SeedlingAvailability.Available(source);
-        if (available <= 0) return null; // взошедшей живой рассады для высадки нет
-
-        var amount = Math.Min(request.Amount, available);
-
-        // Источнику засчитываем высаженные ростки (Quantity/Weight/посеяно не трогаем).
-        source.PlantedOut += (int)Math.Round(amount);
-
-        // Высаженная партия — штучная (ростки), даже если рассада посеяна по весу.
-        return CreatePlantedBatch(uow, source.Plant, source.SeedId, amount, weightBased: false,
-            request.PlantedDate, request.PlantPlace);
+        return SeedlingBatchDbMapper.Read(source)
+            .Bind(batch => batch.PlantOut(request.Amount))
+            .Match<SeedlingInfo?>(change =>
+            {
+                // Источнику засчитываем высаженные ростки; посеяно и вес не меняются.
+                source.PlantedOut = change.Remaining.PlantedOut;
+                return CreatePlantedBatch(uow, source.Plant, source.SeedId, change.Quantity, weightBased: false,
+                    request.PlantedDate, request.PlantPlace);
+            }, _ => null);
     }
 
     // Прямой посев семян: списываем из пакета и создаём новую рассаду в грядке.

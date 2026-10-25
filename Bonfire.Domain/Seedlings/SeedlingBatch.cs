@@ -35,6 +35,20 @@ public sealed class SeedlingBatch
                     : Result.Success(new SeedlingBatch(quantity, snapshot, plantedOut));
     }
 
+    public Result<SeedlingPlanting> PlantOut(double requested)
+    {
+        if (!double.IsFinite(requested) || requested <= 0)
+            return Result.Failure<SeedlingPlanting>("Количество для высадки должно быть конечным и положительным");
+        var available = AvailableCount;
+        if (available <= 0)
+            return Result.Failure<SeedlingPlanting>("Нет доступных живых всходов для высадки");
+
+        var quantity = (int)Math.Round(Math.Min(requested, available));
+        return quantity <= 0
+            ? Result.Failure<SeedlingPlanting>("Количество для высадки после округления должно быть не меньше одной штуки")
+            : Result.Success(new SeedlingPlanting(new SeedlingBatch(Quantity, Entries, PlantedOut + quantity), quantity));
+    }
+
     public Result<SeedlingBatch> WithGermination(int count, DateTime date)
     {
         if (count < 0) return Result.Failure<SeedlingBatch>("Число всходов не может быть отрицательным");
@@ -81,6 +95,15 @@ public sealed class SeedlingBatch
             ? entry with { IsDead = Option.Some(true), DeathNote = reason }
             : entry).ToImmutableArray(), PlantedOut));
     }
+}
+
+public sealed class SeedlingPlanting
+{
+    public SeedlingBatch Remaining { get; }
+    public int Quantity { get; }
+
+    internal SeedlingPlanting(SeedlingBatch remaining, int quantity)
+        => (Remaining, Quantity) = (remaining, quantity);
 }
 
 public abstract record SeedlingAction

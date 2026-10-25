@@ -125,6 +125,68 @@ public class PlantingServiceTests : IDisposable
 
     // ── Посадка из рассады ────────────────────────────────────────────────────
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(0.5)]
+    [InlineData(double.PositiveInfinity)]
+    public async Task PlantAsync_InvalidSeedlingAmount_DoesNotChangeSourceOrSpot(double amount)
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(germinated: 3);
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: amount));
+        Assert.False(result.Success);
+        Assert.Null(result.SeedlingInfoId);
+        Assert.Equal(0, await _fx.QueryAsync(db => db.Seedlings.Where(s => s.Id == seedlingId).Select(s => s.PlantedOut).SingleAsync()));
+        Assert.Equal(1, await _fx.QueryAsync(db => db.Seedlings.CountAsync()));
+        Assert.Equal(nameof(EmptySpotState), await _fx.QueryAsync(db => db.PlantingSpots.Where(s => s.Id == spotId).Select(s => s.StateTypeName).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task PlantAsync_SeedlingPlanting_UsesFreshAvailabilityAndPreservesHistory()
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(quantity: 0, weight: 3, germinated: 4);
+        await _fx.ExecuteAsync(async db =>
+        {
+            var batch = await db.Seedlings.Include(s => s.SeedlingInfos).SingleAsync();
+            batch.PlantedOut = 1;
+            var dead = batch.SeedlingInfos.Single(i => i.SeedlingNumber == 4);
+            dead.IsDead = true;
+            dead.DeathNote = "История";
+            await db.SaveChangesAsync();
+        });
+
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2.5));
+
+        Assert.True(result.Success);
+        var source = await _fx.QueryAsync(db => db.Seedlings.Include(s => s.SeedlingInfos).SingleAsync(s => s.Id == seedlingId));
+        Assert.Equal(3, source.PlantedOut);
+        Assert.Equal(0, source.Quantity);
+        Assert.Equal(3, source.Weight);
+        Assert.Equal("История", source.SeedlingInfos.Single(i => i.IsDead == true).DeathNote);
+        Assert.Equal(2, await _fx.QueryAsync(db => db.Seedlings.Where(s => s.Id != seedlingId).Select(s => s.Quantity).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task PlantAsync_SaveRejected_RollsBackSourceBatchAndSpot()
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(germinated: 3);
+        await _fx.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectPlanting BEFORE UPDATE ON PlantingSpots BEGIN SELECT RAISE(ABORT, 'planting rejected'); END;"));
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2)));
+
+        Assert.Equal(0, await _fx.QueryAsync(db => db.Seedlings.Where(s => s.Id == seedlingId).Select(s => s.PlantedOut).SingleAsync()));
+        Assert.Equal(1, await _fx.QueryAsync(db => db.Seedlings.CountAsync()));
+        Assert.Equal(3, await _fx.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+        var spot = await _fx.QueryAsync(db => db.PlantingSpots.SingleAsync(s => s.Id == spotId));
+        Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
+        Assert.Null(spot.SeedlingInfoId);
+        Assert.Null(spot.PlantedDate);
+    }
+
     [Fact]
     public async Task PlantAsync_FromGerminatedSeedling_ReducesSourceAndCreatesPlantedBatch()
     {

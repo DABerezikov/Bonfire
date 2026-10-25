@@ -918,3 +918,34 @@ AddSeedlingInfo/UpdateSeedlingInfo/MarkSeedlingInfosDeadAsync и ReturnSeedsFrom
 оставлены этапу 7. Существующие сценарии этапа 5 завершены; новые продуктовые
 сценарии урожая/получения семян не добавлялись. Следующий этап плана — посадки
 и план огорода. Чужой DbSeedEditWriter.cs и .claude/worktrees не включались.
+
+## 25.10.2026 — начало этапа 6: чистая высадка рассады
+
+Сохранён пошаговый план в refactoring-stage-6.md. SeedlingBatch.PlantOut возвращает
+SeedlingPlanting с новым снимком и фактическим количеством штук. Доступность берётся
+из существующей модели: живые всходы минус PlantedOut. Количество сначала ограничено
+доступным, затем округлено Math.Round (ToEven), как в прежнем PlantingService.
+Посеяно, вес, записи и исходный снимок не меняются. Неконечный, неположительный и
+округлённый в ноль расход отклонён: прежний сервис допускал пустую партию либо
+уменьшение PlantedOut при отрицательном запросе.
+
+PlantingService использует существующий SeedlingBatchDbMapper и Result.Bind/Match.
+Одна транзакция SaveChanges сохранена: счётчик источника, новая партия и ячейка.
+Публичный PlantResult и обработка исключений пока прежние; перенос на Application,
+явные ошибки и DTO фактического расхода запланированы следующим шагом. UI сейчас
+вычитает введённое количество, что расходится с ограниченным/округлённым расходом;
+этот дефект зафиксирован, но не объявляется исправленным в первом шаге.
+
+Red: 6/14 доменных проверок упали на явной заглушке PlantOut; 4/4 SQLite-регрессии
+упали на исходном сервисе (0, -1, 0.5, Infinity). Артефакты:
+artifacts/refactoring-stage-6-planting-domain-red и ...-storage-red.
+Green: общий dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false
+-p:UseSharedCompilation=false --logger trx --results-directory artifacts/refactoring-stage-6-planting-final:
+1032/1032 (Models 475, Services 337, ViewModels 179, Repository 35, DTO 6), без
+пропусков. 20 новых тестов. Дополнительные характеристические проверки подтверждают
+свежий PlantedOut, погибшие всходы, историю и полный откат при триггере отказа UPDATE
+ячейки. Исходные исключения DbUpdateException пока сохраняются.
+
+Схема, XAML и DI не менялись; визуальный и startup smoke в этом шаге не повторялись.
+Предупреждения NuGet остаются прежними; покрытие строк не измерялось. Чужие
+DbSeedEditWriter.cs и .claude/worktrees не включены. Этап 6 в целом ещё не завершён.
