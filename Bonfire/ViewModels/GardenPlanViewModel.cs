@@ -524,17 +524,25 @@ public class GardenPlanViewModel(
 
     private async Task DeleteGardenAsync()
     {
-        if (SelectedGarden is null) return;
+        if (SelectedGarden is not { } garden) return;
+        var gardens = Gardens;
         if (!userDialog.YesNoQuestion(
-                $"Удалить участок «{SelectedGarden.Name}»? Все элементы и посадки будут удалены.",
+                $"Удалить участок «{garden.Name}»? Все элементы и посадки будут удалены.",
                 "Удаление участка")) return;
 
-        var entity = await gardenService.GetGardenByIdAsync(SelectedGarden.Id);
-        if (entity is null) return;
-
-        await gardenService.DeleteGardenAsync(entity);
-        Gardens.Remove(SelectedGarden);
-        SelectedGarden = Gardens.FirstOrDefault();
+        var result = await gardenService.DeleteGardenByIdAsync(new(garden.Id));
+        result.Match(_ =>
+        {
+            gardens.Remove(garden);
+            if (EditingGridElement is { } grid && garden.Elements.Contains(grid)) CloseGridFor(grid);
+            if (SelectedGreenhouse is { } house && garden.Greenhouses.Contains(house))
+            {
+                IsEditingGreenhouse = false;
+                SelectedGreenhouse = null;
+            }
+            if (ReferenceEquals(SelectedGarden, garden)) SelectedGarden = Gardens.FirstOrDefault();
+            return true;
+        }, error => { userDialog.Warning(error, "Удаление участка"); return false; });
     }
 
     [field: AllowNull, MaybeNull]

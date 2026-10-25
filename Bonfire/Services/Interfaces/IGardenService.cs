@@ -44,6 +44,7 @@ public interface IGardenService
         double widthMeters, double heightMeters, double scale = 150);
     Task<Garden> UpdateGardenAsync(Garden garden);
     Task DeleteGardenAsync(Garden garden);
+    Task<Result<GardenDeletionResultFromViewModel>> DeleteGardenByIdAsync(DeleteGardenFromViewModel request);
 
     // --- Теплицы (наследники GardenPlot) ---
     Task<Greenhouse> AddGreenhouseAsync(int parentPlotId, string name,

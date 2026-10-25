@@ -16,12 +16,11 @@ public partial class GardenPlanWorkflowTests
     public void DeleteGarden_OnlyRemovesAfterConfirmation(bool confirmed)
     {
         var vm = CreateVm(); var garden = GardenVm(); vm.Gardens = [garden]; vm.SelectedGarden = garden;
-        var entity = new Garden { Id = garden.Id };
-        _gardens.GetGardenByIdAsync(garden.Id).Returns(entity);
+        _gardens.DeleteGardenByIdAsync(Arg.Any<DeleteGardenFromViewModel>()).Returns(Result.Success(new GardenDeletionResultFromViewModel(garden.Id)));
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirmed);
         vm.DeleteGardenCommand.Execute(null);
         Assert.Equal(confirmed ? 0 : 1, vm.Gardens.Count);
-        _gardens.Received(confirmed ? 1 : 0).DeleteGardenAsync(entity);
+        _gardens.Received(confirmed ? 1 : 0).DeleteGardenByIdAsync(Arg.Is<DeleteGardenFromViewModel>(r => r.GardenId == garden.Id));
     }
 
     [Fact]

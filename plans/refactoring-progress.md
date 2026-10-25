@@ -1683,3 +1683,31 @@ Models 671, Services 482, ViewModels 272, Repository 35, SeedsFromViewModel 6;
 удаление участка с проверкой каскадов/Restrict до реализации. Остальные CRUD и аудит
 ещё впереди, этап 6 не завершён. .claude/worktrees не затрагивалась, push/merge
 не выполнялись.
+
+## 2026-10-25 — этап 6, 4в4в: удаление участка по ID
+
+Прослежены XAML, DeleteGardenAsync, GardenRepository, Remove со stub в коротком
+Uow и связи SQLite. Baseline 2/2: Cascade элементов/ячеек, сохранность плана,
+соседнего участка, общей истории рассады/пересадок/обработок; Restrict при теплице.
+UI Red воспроизвёл удаление неверной модели при смене выбора во время await.
+Артефакты: artifacts/stage6-garden-delete-baseline. Red порта: 6 failed / 7 passed;
+artifacts/stage6-garden-delete-red. Первичная ошибка компиляции теста (явный
+ICommand.Execute) исправлена до доказательного UI Red.
+
+Green: GardenId, DeleteGarden и DbGardenDeletionWriter. Свежая проекция проверяет
+существование и теплицы без материализации графа; один SaveChanges удаляет участок,
+БД выполняет прежние каскады. Проверены отсутствующая/неверная TPH-цель, новое
+вложение после чтения UI и полный откат по триггеру дочерней ячейки. Схема не менялась.
+UI сохраняет прежнее подтверждение, захватывает коллекцию и модель, применяет
+только успех. Смена участка/плана сохраняет новый выбор и черновик, отказ сохраняет
+ввод/сетку/ячейку. Успех закрывает собственную сетку; повторная команда блокируется.
+Прежний EF-API остаётся для этапа 7, производственных вызовов из UI нет.
+
+Общий dotnet test Bonfire.sln: **1484/1484**, failed/skipped нет (Models 671,
+Services 495, ViewModels 277, Repository 35, SeedsFromViewModel 6), 18 новых проверок.
+TRX: artifacts/stage6-garden-delete-green. Полный ручной UI/DPI-прогон и Coverlet
+не повторялись, защита от межпроцессного изменения между чтением и записью не
+расширялась. Предупреждения NuGet/PRAGMA прежние. Следующий шаг — удаление плана;
+создание и итоговый аудит остаются. Push/merge не выполнялись.
+
+Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; БД — Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/069bed97827343e8aad5d16f1dae5c73/smoke.db. Рабочая БД не использовалась.
