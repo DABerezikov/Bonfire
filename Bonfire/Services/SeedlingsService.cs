@@ -11,12 +11,15 @@ using Bonfire.Application.Seedlings;
 
 namespace Bonfire.Services;
 
-internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar, ISowSeeds sowing) : ISeedlingsService
+internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar, ISowSeeds sowing, IDeleteSeedling deletion) : ISeedlingsService
 {
     public MoonPhase Lunar { get; } = lunar;
 
     public Task<Result<SowingReceipt>> SowAsync(SowingRequest request)
         => sowing.ExecuteAsync(request);
+
+    public Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(DeleteSeedlingFromViewModel request)
+        => deletion.ExecuteAsync(request);
 
     public async Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync()
     {

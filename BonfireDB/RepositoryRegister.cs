@@ -17,6 +17,7 @@ public static class RepositoryRegister
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
+        .AddSingleton<ISeedlingDeletionWriter, DbSeedlingDeletionWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

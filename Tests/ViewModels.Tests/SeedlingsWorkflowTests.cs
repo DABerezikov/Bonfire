@@ -2,6 +2,7 @@ using MoonCalendar;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Seedlings;
 
 namespace ViewModels.Tests;
 
@@ -177,16 +178,63 @@ public class SeedlingsWorkflowTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void DeleteSeedling_ConfirmationControlsRemovalAndReturnToSeedStock(bool confirm)
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void DeleteSeedling_ChoiceControlsRemovalAndReturnToSeedStock(int choice)
     {
         var batch = Batch(); var vm = CreateVm(batch);
-        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirm);
-        _service.DeleteSeedling(batch).Returns(batch);
+        SeedlingRemoval removal = choice == 1 ? new SeedlingRemoval.CorrectSowing() : new SeedlingRemoval.Discard();
+        _dialog.RequestSeedlingRemoval(Arg.Any<string>()).Returns(choice == 0 ? Option.None<SeedlingRemoval>() : Option.Some(removal));
+        var stock = choice == 1 ? Option.Some(new ReturnedSeedStockFromViewModel(1, 13, Option.Some(0.5))) : Option.None<ReturnedSeedStockFromViewModel>();
+        _service.DeleteAsync(Arg.Any<DeleteSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingDeletionResultFromViewModel(1, stock)));
         vm.DeleteSeedlingCommand.Execute(null);
-        Assert.Equal(confirm ? 0 : 1, vm.Seedlings!.Count);
-        _seeds.Received(confirm ? 1 : 0).ReturnSeedsFromSeedling(1, 3, 0);
+        Assert.Equal(choice == 0 ? 1 : 0, vm.Seedlings!.Count);
+        _service.Received(choice == 0 ? 0 : 1).DeleteAsync(Arg.Is<DeleteSeedlingFromViewModel>(request => request.SeedlingId == 1 && request.Removal == removal));
+        _seeds.DidNotReceive().ReturnSeedsFromSeedling(Arg.Any<int>(), Arg.Any<double>(), Arg.Any<double?>());
+        if (choice != 0) Assert.Null(vm.SelectedItem);
+        Assert.Contains("-Выбрать все-", vm.ListCulture);
+    }
+
+    [Fact]
+    public void DeleteSeedling_Failure_PreservesBatchSelectionAndDraft()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        var draft = vm.EditedItem;
+        _dialog.RequestSeedlingRemoval(Arg.Any<string>()).Returns(Option.Some<SeedlingRemoval>(new SeedlingRemoval.CorrectSowing()));
+        _service.DeleteAsync(Arg.Any<DeleteSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingDeletionResultFromViewModel>("Исходный пакет удалён"));
+        vm.DeleteSeedlingCommand.Execute(null);
+        Assert.Same(batch, Assert.Single(vm.Seedlings!));
+        Assert.Same(batch, vm.SelectedItem);
+        Assert.Same(draft, vm.EditedItem);
+        _dialog.Received(1).Warning("Исходный пакет удалён", "Удаление рассады");
+    }
+
+    [Fact]
+    public void DeleteSeedling_Correction_UpdatesStockAndRestoresDepletedPackageToSuggestions()
+    {
+        var batch = Batch();
+        var seed = SeedsWorkflowTests.Seed(1);
+        seed.SeedsInfo.AmountSeeds = 0;
+        seed.SeedsInfo.AmountSeedsWeight = 0;
+        _seeds.GetAllSeedsAsync().Returns(new[] { seed });
+        _service.GetAllSeedlingsAsync().Returns(new[] { batch });
+        _service.Lunar.Returns(new MoonPhase());
+        var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
+        vm.LoadDataCommand.Execute(null);
+        vm.SelectedSeedlingViewItem = Assert.Single(vm.SeedlingsView!.Cast<SeedlingFromViewModel>());
+        Assert.Empty(vm.AddPlantList);
+        _dialog.RequestSeedlingRemoval(Arg.Any<string>()).Returns(Option.Some<SeedlingRemoval>(new SeedlingRemoval.CorrectSowing()));
+        _service.DeleteAsync(Arg.Any<DeleteSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingDeletionResultFromViewModel(1,
+            Option.Some(new ReturnedSeedStockFromViewModel(1, 3, Option.Some(0.0))))));
+
+        vm.DeleteSeedlingCommand.Execute(null);
+
+        Assert.Empty(vm.Seedlings!);
+        Assert.Equal(3, seed.SeedsInfo.AmountSeeds);
+        Assert.Equal(1, Assert.Single(vm.AddPlantList).Id);
+        Assert.Single(vm.AddSortList);
+        Assert.Single(vm.AddCultureList);
     }
 
     [Fact]

@@ -1,0 +1,19 @@
+<Window x:Class="Bonfire.Views.Windows.DeleteSeedlingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Удаление рассады" Width="540"
+        SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        DataContextChanged="OnDataContextChanged">
+    <StackPanel Margin="18">
+        <TextBlock Text="{Binding Prompt}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+        <TextBlock Margin="0,12,0,16" TextWrapping="Wrap"
+                   Text="Если посев записан по ошибке, верните семена в исходный пакет. При удалении по другим причинам остаток семян не меняется. Несохранённые изменения рассады будут сброшены."/>
+        <Button Content="Ошибка посева — вернуть семена и удалить"
+                Command="{Binding CorrectSowingCommand}" Padding="10,8" Margin="0,0,0,10"/>
+        <Button Content="Удалить без возврата семян"
+                Command="{Binding DiscardCommand}" Padding="10,8"/>
+        <Button Content="Отмена" IsCancel="True" MinWidth="100"
+                Padding="10,5" HorizontalAlignment="Right" Margin="0,16,0,0"/>
+    </StackPanel>
+</Window>

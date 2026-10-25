@@ -779,15 +779,44 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnDeleteSeedlingCommandExecuted()
     {
-        if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите удалить рассаду сорта - {SelectedItem!.Plant.PlantSort.Name}",
-                "Удаление рассады")) return;
-
-        var seedId = SelectedItem.SeedId;
-        var deleteSeedling = await _seedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
-        await _seedsService.ReturnSeedsFromSeedling(seedId, deleteSeedling!.Quantity, deleteSeedling.Weight).ConfigureAwait(false);
-        Seedlings!.Remove(deleteSeedling!);
-        UpdateCollectionViewSource();
+        if (SelectedItem is not { } selected || Seedlings is not { } seedlings) return;
+        await _userDialog.RequestSeedlingRemoval(selected.Plant.PlantSort.Name).Match(async removal =>
+        {
+            var result = await _seedlingsService.DeleteAsync(new(selected.Id, removal));
+            result.Match(receipt =>
+            {
+                var cached = seedlings.FirstOrDefault(batch => batch.Id == receipt.SeedlingId);
+                if (cached is not null) seedlings.Remove(cached);
+                receipt.ReturnedStock.Match(stock =>
+                {
+                    var seed = _seeds.FirstOrDefault(seed => seed.Id == stock.SeedId);
+                    if (seed is not null)
+                    {
+                        seed.SeedsInfo.AmountSeeds = stock.Pieces;
+                        seed.SeedsInfo.AmountSeedsWeight = stock.Grams.ToNullable();
+                        if (CurrentSeed?.Id == seed.Id)
+                            Plantable = AddSize == Units.GramsAbbr ? stock.Grams.ToNullable() : stock.Pieces;
+                    }
+                    return true;
+                }, () => false);
+                SelectedSeedlingViewItem = null;
+                SelectedItem = null;
+                AddCultureList.Clear();
+                AddPlantList.Clear();
+                AddSortList.Clear();
+                ListCulture.Clear();
+                ListCulture.Add("-Выбрать все-");
+                LoadListCulture();
+                LoadListPlant();
+                LoadListSort();
+                UpdateCollectionViewSource();
+                return true;
+            }, error =>
+            {
+                _userDialog.Warning(error, "Удаление рассады");
+                return false;
+            });
+        }, () => Task.CompletedTask);
     }
 
     public ICommand GerminateSeedlingCommand => field

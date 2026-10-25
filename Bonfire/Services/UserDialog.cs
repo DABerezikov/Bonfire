@@ -6,11 +6,19 @@ using System;
 using System.Linq;
 using Bonfire.ViewModels;
 using Bonfire.Views.Windows;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seedlings;
 
 namespace Bonfire.Services;
 
 public class UserDialog : IUserDialog
 {
+    public virtual Option<SeedlingRemoval> RequestSeedlingRemoval(string sortName)
+    {
+        var model = new DeleteSeedlingDialogViewModel(sortName);
+        var dialog = new DeleteSeedlingDialog { DataContext = model, Owner = CurrentWindow };
+        return dialog.ShowDialog() == true ? model.Choice : Option.None<SeedlingRemoval>();
+    }
     public virtual string? RequestDeleteReason(string sortName, string? previousReason = null)
     {
         var model = new DeleteSeedDialogViewModel(sortName, previousReason);

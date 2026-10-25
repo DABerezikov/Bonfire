@@ -1,9 +1,13 @@
 ﻿using System.IO;
 
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seedlings;
+
 namespace Bonfire.Services.Interfaces;
 
 public interface IUserDialog
 {
+    Option<SeedlingRemoval> RequestSeedlingRemoval(string sortName);
     /// <summary>Подтверждение удаления с причиной; null означает отмену.</summary>
     string? RequestDeleteReason(string sortName, string? previousReason = null);
         
