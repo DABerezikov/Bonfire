@@ -455,10 +455,18 @@ public class GardenPlanViewModel(
 
     private async Task LoadGardensAsync()
     {
-        if (SelectedPlan is null) { Gardens.Clear(); return; }
+        var plan = SelectedPlan;
+        if (plan is null)
+        {
+            foreach (var garden in Gardens) CloseEditorsFor(garden);
+            Gardens = [];
+            SelectedGarden = null;
+            return;
+        }
+        var gardens = await gardenService.GetGardensByPlanAsync(plan.Id);
+        if (!ReferenceEquals(SelectedPlan, plan)) return;
 
-        var gardens = await gardenService.GetGardensByPlanAsync(SelectedPlan.Id);
-
+        foreach (var garden in Gardens) CloseEditorsFor(garden);
         Gardens = new ObservableCollection<GardenFromViewModel>(
             gardens.Select(GardenPlanMapper.MapGarden));
         SelectedGarden = Gardens.FirstOrDefault();
