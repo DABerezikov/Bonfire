@@ -507,41 +507,6 @@ public class SeedsViewModel : SourceSelectionViewModel
         OnPropertyChanged(nameof(SelectedItem));
     }
 
-    private void UpdateCollectionSeedsViewModel(Seed newSeed)
-    {
-        Seeds!.Add(newSeed);
-
-        if (!AddCultureList.Contains(c => c.Name == newSeed.Plant.PlantCulture.Name))
-        {
-            AddCultureList.Add(new CultureFromViewModel
-            {
-                Id = newSeed.Plant.PlantCulture.Id,
-                Name = newSeed.Plant.PlantCulture.Name
-            });
-            ListCulture.Add(newSeed.Plant.PlantCulture.Name);
-            ListCulture = new List<string>(ListCulture.OrderBy(c => c));
-            AddCultureList = new ObservableCollection<CultureFromViewModel>(AddCultureList.OrderBy(c => c.Name));
-        }
-
-        if (!AddProducerList.Contains(p => p.Name == newSeed.Plant.PlantSort.Producer.Name))
-        {
-            AddProducerList.Add(new ProducerFromViewModel
-            {
-                Id = newSeed.Plant.PlantSort.Producer.Id,
-                Name = newSeed.Plant.PlantSort.Producer.Name
-            });
-            AddProducerList = new ObservableCollection<ProducerFromViewModel>(AddProducerList.OrderBy(c => c.Name));
-        }
-
-        if (AddSortList.Contains(s => s.Name == newSeed.Plant.PlantSort.Name)) return;
-        AddSortList.Add(new SortFromSeedsViewModel
-        {
-            Id = newSeed.Plant.PlantSort.Id,
-            Name = newSeed.Plant.PlantSort.Name
-        });
-        AddSortList = new ObservableCollection<SortFromSeedsViewModel>(AddSortList.OrderBy(c => c.Name));
-    }
-
     private void RemoveOfAddLists(Seed deleteSeed)
     {
         if (!Seeds!.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
@@ -615,10 +580,11 @@ public class SeedsViewModel : SourceSelectionViewModel
     }
 
     public ICommand AddOrCorrectSeedCommand => field
-        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, Verification);
+        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, () => !_isSaving && Verification());
 
     private async Task OnAddOrCorrectSeedCommandExecuted()
     {
+        if (!TryDiscardSeedChanges()) return;
         var request = new AddSeedRequest(
             AddCulture, AddSort, AddProducer, AddClass,
             SeedSource, AddSize,
@@ -627,13 +593,27 @@ public class SeedsViewModel : SourceSelectionViewModel
             AddCostPack.DecimalParseAdvanced(),
             AddBestBy, AddNote);
 
-        var (seed, isNew) = await _seedsService.AddOrUpdateSeedAsync(request, Seeds!).ConfigureAwait(false);
-
-        if (isNew)
-            UpdateCollectionSeedsViewModel(seed);
-
-        ClearFieldSeedView();
-        UpdateCollectionViewSource(seed.Id);
+        SetSaving(true);
+        try
+        {
+            var result = await _seedsService.AddOrUpdateSeedAsync(request);
+            await result.Match(async receipt =>
+            {
+                _ignoreDiscard = true;
+                await RefreshSeedsAsync();
+                EditorOptions = await _seedsService.GetEditorOptionsAsync();
+                AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
+                ListCulture = ["-Выбрать все-"];
+                LoadListCulture(); LoadListSort(); LoadListProducer();
+                ClearFieldSeedView();
+                UpdateCollectionViewSource(receipt.SeedId);
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return Task.CompletedTask;
+            });
+        }
+        finally { _ignoreDiscard = false; SetSaving(false); }
     }
 
     public ICommand DeleteSeedCommand => field

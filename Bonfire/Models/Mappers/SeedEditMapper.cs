@@ -1,7 +1,7 @@
 using System;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
-using Bonfire.Domain.Seeds;
+using BonfireDB.SeedEditing;
 using BonfireDB.Entities;
 
 namespace Bonfire.Models.Mappers;
@@ -12,19 +12,7 @@ internal static class SeedEditMapper
     {
         ArgumentNullException.ThrowIfNull(seed);
         return new SeedEditorDraft(seed.Id, seed.Plant.PlantCulture.Name, seed.Plant.PlantSort.Name,
-            seed.Plant.PlantSort.Producer.Id, new SeedPackageValues
-            {
-                WeightPack = seed.SeedsInfo.WeightPack,
-                QuantityPack = seed.SeedsInfo.QuantityPack,
-                AmountSeeds = seed.SeedsInfo.AmountSeeds,
-                AmountSeedsWeight = ToOption(seed.SeedsInfo.AmountSeedsWeight),
-                CostPack = seed.SeedsInfo.CostPack,
-                PurchaseDate = seed.SeedsInfo.PurchaseDate,
-                ExpirationDate = seed.SeedsInfo.ExpirationDate,
-                Note = ToOption(seed.SeedsInfo.Note),
-                SeedSource = ToOption(seed.SeedsInfo.SeedSource),
-                DisposeComment = ToOption(seed.SeedsInfo.DisposeComment)
-            });
+            seed.Plant.PlantSort.Producer.Id, SeedPackageDbMapper.Read(seed.SeedsInfo));
     }
 
     public static Result<EditSeedFromViewModel> ToRequest(SeedEditorDraft draft, SortEditModel sort, int producerId)

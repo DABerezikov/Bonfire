@@ -21,6 +21,7 @@ public static class RepositoryRegister
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()
         .AddSingleton<ISeedEditWriter, DbSeedEditWriter>()
+        .AddSingleton<ISeedAcquisitionWriter, DbSeedAcquisitionWriter>()
         .AddScoped<IRepository<Plant>, PlantRepository>()
         .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
         .AddScoped<IRepository<PlantSort>, PlantSortRepository>()

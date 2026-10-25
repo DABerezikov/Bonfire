@@ -20,7 +20,7 @@ public sealed class DbSeedEditWriter(IUnitOfWorkFactory units) : ISeedEditWriter
         var producer = await unit.Repository<Producer>().GetAsync(edit.ProducerId.Value, cancellationToken).ConfigureAwait(false);
         if (producer is null) return Result.Failure<SeedEditResultFromViewModel>("Производитель не найден");
 
-        ApplyPackage(edit.Package.Values, saved.SeedsInfo);
+        SeedPackageDbMapper.Apply(edit.Package.Values, saved.SeedsInfo);
         ApplyCharacteristics(edit.Characteristics, saved.Plant.PlantSort);
         saved.Plant.PlantSort.Producer = producer;
         try
@@ -39,20 +39,6 @@ public sealed class DbSeedEditWriter(IUnitOfWorkFactory units) : ISeedEditWriter
         {
             return Result.Failure<SeedEditResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
-    }
-
-    private static void ApplyPackage(SeedPackageValues values, SeedsInfo target)
-    {
-        target.WeightPack = values.WeightPack;
-        target.QuantityPack = values.QuantityPack;
-        target.AmountSeeds = values.AmountSeeds;
-        target.AmountSeedsWeight = ToNullable(values.AmountSeedsWeight);
-        target.CostPack = values.CostPack;
-        target.PurchaseDate = values.PurchaseDate;
-        target.ExpirationDate = values.ExpirationDate;
-        target.Note = ToNullable(values.Note);
-        target.SeedSource = ToNullable(values.SeedSource);
-        target.DisposeComment = ToNullable(values.DisposeComment);
     }
 
     private static void ApplyCharacteristics(SortCharacteristics details, PlantSort target)

@@ -84,21 +84,60 @@ public class SeedsWorkflowTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void AddOrCorrect_PassesParsedRequestAndOnlyAppendsNewRecords(bool isNew)
+    public void AddOrCorrect_PassesParsedRequestAndReloadsSavedInventory(bool isNew)
     {
         var existing = Seed(1);
         var vm = CreateVm(existing);
         var returned = isNew ? Seed(2, "Астра", "Новая", "Цветы") : existing;
-        _service.AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>(), Arg.Any<IReadOnlyList<Seed>>()).Returns((returned, isNew));
+        AcquisitionResultFromViewModel receipt = isNew ? new AcquisitionResultFromViewModel.Created(returned.Id)
+            : new AcquisitionResultFromViewModel.Replenished(returned.Id);
+        _service.AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>()).Returns(Result.Success(receipt));
+        _service.GetAllSeedsAsync().Returns(isNew ? new[] { existing, returned } : new[] { existing });
+        _service.GetEditorOptionsAsync().Returns(new SeedEditorOptions([], [], [returned.Plant.PlantSort.Producer]));
         vm.SeedSource = "Куплено"; vm.AddClass = "Цветы"; vm.AddCulture = "Астра";
         vm.AddSort = "Новая"; vm.AddProducer = "Фирма"; vm.AddSize = Units.GramsOption;
         vm.AddQuantityInPac = "0,5"; vm.AddQuantityPac = "2"; vm.AddCostPack = "10,50";
         vm.AddNote = "Заметка";
         vm.AddOrCorrectSeedCommand.Execute(null);
         Assert.Equal(isNew ? 2 : 1, vm.Seeds!.Count);
-        _service.Received(1).AddOrUpdateSeedAsync(Arg.Is<AddSeedRequest>(r => r.QuantityInPack == 0.5 && r.PackCount == 2 && r.CostPack == 10.5m && r.Note == "Заметка"), Arg.Any<IReadOnlyList<Seed>>());
+        _service.Received(1).AddOrUpdateSeedAsync(Arg.Is<AddSeedRequest>(r => r.QuantityInPack == 0.5 && r.PackCount == 2 && r.CostPack == 10.5m && r.Note == "Заметка"));
         Assert.Equal(string.Empty, vm.AddCulture);
         Assert.Equal(string.Empty, vm.AddQuantityInPac);
+        Assert.Contains(vm.EditorOptions.Producers, producer => producer.Id == returned.Plant.PlantSort.Producer.Id);
+    }
+
+    [Fact]
+    public void AddOrCorrect_RefusedDiscard_DoesNotSendRequestOrLoseDraft()
+    {
+        var source = Seed(1);
+        var vm = CreateVm(source);
+        vm.SelectedItem = source;
+        vm.EditedItem!.Package.Note = "Не терять";
+        vm.SeedSource = "Куплено"; vm.AddClass = "Овощи"; vm.AddCulture = "Томат";
+        vm.AddSort = "Черри"; vm.AddProducer = "Фирма"; vm.AddSize = Units.PiecesOption;
+        vm.AddQuantityInPac = "2"; vm.AddQuantityPac = "1"; vm.AddCostPack = "10";
+        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
+        _service.AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>()).Returns(Result.Success<AcquisitionResultFromViewModel>(new AcquisitionResultFromViewModel.Replenished(source.Id)));
+        vm.AddOrCorrectSeedCommand.Execute(null);
+        _service.DidNotReceive().AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>());
+        Assert.Equal("Не терять", vm.EditedItem.Package.Note);
+    }
+
+    [Fact]
+    public void AddOrCorrect_ResultFailure_KeepsInputAndDoesNotReloadCache()
+    {
+        var vm = CreateVm(Seed(1));
+        vm.SeedSource = "Куплено"; vm.AddClass = "Цветы"; vm.AddCulture = "Астра";
+        vm.AddSort = "Новая"; vm.AddProducer = "Фирма"; vm.AddSize = Units.GramsOption;
+        vm.AddQuantityInPac = "0,5"; vm.AddQuantityPac = "2"; vm.AddCostPack = "10";
+        _service.AddOrUpdateSeedAsync(Arg.Any<AddSeedRequest>()).Returns(Result.Failure<AcquisitionResultFromViewModel>("Ошибка добавления"));
+        _service.ClearReceivedCalls();
+        vm.AddOrCorrectSeedCommand.Execute(null);
+        Assert.Equal("Астра", vm.AddCulture);
+        Assert.Equal("0,5", vm.AddQuantityInPac);
+        Assert.True(vm.CanEditSeedDetails);
+        _dialog.Received(1).Error("Ошибка добавления", Arg.Any<string>());
+        _service.DidNotReceive().GetAllSeedsAsync();
     }
 
     [Fact]

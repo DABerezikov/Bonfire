@@ -38,6 +38,9 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<ISortWriter>());
         Assert.NotNull(provider.GetRequiredService<IEditSeed>());
         Assert.NotNull(provider.GetRequiredService<ISeedEditWriter>());
+        Assert.NotNull(provider.GetRequiredService<IAcquireSeeds>());
+        Assert.NotNull(provider.GetRequiredService<ISeedAcquisitionWriter>());
+        Assert.NotNull(provider.GetRequiredService<TimeProvider>());
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
     }
 

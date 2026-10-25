@@ -2,6 +2,7 @@ using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.GardenPlanning.SpotStates;
 using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
+using Bonfire.Application.Seeds;
 
 namespace Services.Tests;
 
@@ -35,13 +36,13 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             QuantityInPack: 50, PackCount: 1, CostPack: 0m,
             BestBy: new DateTime(2027, 12, 31), Note: null);
 
-        var (seed, isNew) = await Seeds().AddOrUpdateSeedAsync(request, new List<Seed>());
+        var receipt = (await Seeds().AddOrUpdateSeedAsync(request)).ValueOrThrow();
 
-        Assert.True(isNew);
+        Assert.IsType<AcquisitionResultFromViewModel.Created>(receipt);
         Assert.Equal(1, await _fx.QueryAsync(db => db.Seeds.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Plants.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Producers.CountAsync()));
-        var saved = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == seed.Id));
+        var saved = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == receipt.SeedId));
         Assert.Equal(50, saved.SeedsInfo.AmountSeeds);
     }
 
@@ -64,9 +65,6 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             await db.SaveChangesAsync();
         });
 
-        // VM-кэш: отсоединённый список существующих семян.
-        var existing = await Seeds().GetAllSeedsAsync();
-
         // Тот же сорт/культура/производитель, но другой год → новый пакет на том же Plant.
         var request = new AddSeedRequest(
             "Томат", "Чёрный принц", "Гавриш", "Овощи",
@@ -74,9 +72,9 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             QuantityInPack: 30, PackCount: 1, CostPack: 0m,
             BestBy: new DateTime(2027, 12, 31), Note: null);
 
-        var (_, isNew) = await Seeds().AddOrUpdateSeedAsync(request, existing);
+        var receipt = (await Seeds().AddOrUpdateSeedAsync(request)).ValueOrThrow();
 
-        Assert.True(isNew);
+        Assert.IsType<AcquisitionResultFromViewModel.Created>(receipt);
         Assert.Equal(2, await _fx.QueryAsync(db => db.Seeds.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Plants.CountAsync()));     // НЕ продублировано
         Assert.Equal(1, await _fx.QueryAsync(db => db.PlantsCulture.CountAsync()));

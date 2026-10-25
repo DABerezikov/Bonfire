@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Models;
+using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
@@ -12,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed) : ISeedsService
+internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed, IAcquireSeeds acquireSeeds) : ISeedsService
 {
     public Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request)
         => editSeed.ExecuteAsync(request);
@@ -44,64 +45,10 @@ internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed) :
         return await uow.Repository<Seed>().GetAsync(id);
     }
 
-    public async Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest r, IReadOnlyList<Seed> existingSeeds)
-    {
-        var plant = ResolveOrCreatePlant(r, existingSeeds);
-        var quantity = r.SizeUnit != Units.GramsOption ? r.QuantityInPack : 0;
-        var weight   = r.SizeUnit == Units.GramsOption  ? r.QuantityInPack : 0;
-
-        // Обновление существующего пакета семян
-        if (ExistsProducer(r, existingSeeds))
-        {
-            var existing = existingSeeds.FirstOrDefault(s =>
-                s.SeedsInfo.ExpirationDate.Year == r.BestBy.Year
-                && s.Plant.PlantSort.Producer.Name == r.Producer
-                && s.Plant.PlantCulture.Name == r.Culture
-                && s.Plant.PlantSort.Name == r.Sort);
-
-            if (existing != null)
-            {
-                if (r.SizeUnit != Units.GramsOption)
-                    existing.SeedsInfo.AmountSeeds += quantity * r.PackCount;
-                else
-                    existing.SeedsInfo.AmountSeedsWeight += weight * r.PackCount;
-
-                existing.SeedsInfo.PurchaseDate = DateTime.Now;
-                existing.SeedsInfo.Note = r.Note;
-                existing.SeedsInfo.CostPack = r.CostPack;
-
-                var updated = await UpdateSeed(existing);
-                return (updated, false);
-            }
-        }
-
-        // Новый пакет семян
-        var seedsInfo = new SeedsInfo
-        {
-            ExpirationDate = r.BestBy,
-            Note = r.Note,
-            PurchaseDate = DateTime.Now,
-            SeedSource = r.SeedSource,
-            CostPack = r.CostPack
-        };
-
-        if (r.SizeUnit != Units.GramsOption)
-        {
-            seedsInfo.QuantityPack = quantity;
-            seedsInfo.AmountSeeds  = quantity * r.PackCount;
-        }
-        else
-        {
-            seedsInfo.WeightPack        = weight;
-            seedsInfo.AmountSeedsWeight = weight * r.PackCount;
-        }
-
-        // Граф нового семени строится несколькими Add в рамках ОДНОГО UoW.
-        await using var uow = uowFactory.Create();
-        var newSeed = await MakeASeed(uow, plant, seedsInfo);
-        await uow.SaveChangesAsync();
-        return (newSeed, true);
-    }
+    public Task<Result<AcquisitionResultFromViewModel>> AddOrUpdateSeedAsync(AddSeedRequest request)
+        => SeedAcquisitionMapper.ToRequest(request).Match(
+            acquisition => acquireSeeds.ExecuteAsync(acquisition),
+            error => Task.FromResult(Result.Failure<AcquisitionResultFromViewModel>(error)));
 
     public async Task ReturnSeedsFromSeedling(int seedId, double quantity, double? weight)
     {
@@ -112,45 +59,6 @@ internal class SeedsService(IUnitOfWorkFactory uowFactory, IEditSeed editSeed) :
         seed.SeedsInfo.AmountSeedsWeight += weight;
         await seeds.UpdateAsync(seed);
         await uow.SaveChangesAsync();
-    }
-
-    private static bool ExistsProducer(AddSeedRequest r, IReadOnlyList<Seed> existing) =>
-        existing.Any(s => s.Plant.PlantSort.Producer.Name == r.Producer);
-
-    private static Plant ResolveOrCreatePlant(AddSeedRequest r, IReadOnlyList<Seed> existing)
-    {
-        // Точное совпадение culture+sort+producer — берём существующий Plant
-        var exactMatch = existing.FirstOrDefault(s =>
-            s.Plant.PlantCulture.Name == r.Culture
-            && s.Plant.PlantSort.Name == r.Sort
-            && s.Plant.PlantSort.Producer.Name == r.Producer);
-        if (exactMatch != null)
-            return exactMatch.Plant;
-
-        var plantCulture = existing.FirstOrDefault(s => s.Plant.PlantCulture.Name == r.Culture)?.Plant.PlantCulture
-                           ?? new PlantCulture { Name = r.Culture, Class = r.Class };
-
-        var producerEntity = existing.FirstOrDefault(s => s.Plant.PlantSort.Producer.Name == r.Producer)?.Plant.PlantSort.Producer
-                             ?? new Producer { Name = r.Producer };
-
-        PlantSort? plantSort = null;
-        var sortMatch = existing.FirstOrDefault(s =>
-            s.Plant.PlantSort.Name == r.Sort && s.Plant.PlantSort.Producer.Name == r.Producer);
-        if (sortMatch != null)
-            plantSort = sortMatch.Plant.PlantSort;
-        else
-        {
-            var sortAny = existing.FirstOrDefault(s => s.Plant.PlantSort.Name == r.Sort);
-            if (sortAny != null)
-            {
-                plantSort = sortAny.Plant.PlantSort;
-                plantSort.Producer = producerEntity;
-            }
-            else
-                plantSort = new PlantSort { Name = r.Sort, Producer = producerEntity };
-        }
-
-        return new Plant { PlantCulture = plantCulture, PlantSort = plantSort };
     }
 
     // Строит граф нового семени в рамках переданного UoW (без SaveChanges — его делает вызывающий).

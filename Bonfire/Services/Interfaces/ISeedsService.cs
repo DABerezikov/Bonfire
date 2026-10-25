@@ -12,7 +12,7 @@ public interface ISeedsService
 {
     Task<IReadOnlyList<Seed>> GetAllSeedsAsync();
     Task<Seed?> GetSeedAsync(int id);
-    Task<(Seed seed, bool isNew)> AddOrUpdateSeedAsync(AddSeedRequest request, IReadOnlyList<Seed> existingSeeds);
+    Task<Result<AcquisitionResultFromViewModel>> AddOrUpdateSeedAsync(AddSeedRequest request);
     Task<Seed> UpdateSeed(Seed seed);
     Task<Result<SeedEditResultFromViewModel>> SaveSeedEditAsync(EditSeedFromViewModel request);
     Task<SeedEditorOptions> GetEditorOptionsAsync();

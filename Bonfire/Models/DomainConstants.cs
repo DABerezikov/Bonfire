@@ -1,3 +1,6 @@
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
+
 namespace Bonfire.Models;
 
 /// <summary>
@@ -25,6 +28,13 @@ public static class Units
     /// <summary>Варианты выпадающего списка при добавлении семян.</summary>
     public const string GramsOption  = "Граммы";
     public const string PiecesOption = "Штуки";
+
+    public static Result<SeedUnit> ResolveSeedUnit(string value) => value switch
+    {
+        GramsOption => Result.Success(SeedUnit.Grams),
+        PiecesOption => Result.Success(SeedUnit.Pieces),
+        _ => Result.Failure<SeedUnit>("Выберите единицу количества семян")
+    };
 
     /// <summary>Краткая подпись грамм при добавлении рассады.</summary>
     public const string GramsAbbr = "гр.";

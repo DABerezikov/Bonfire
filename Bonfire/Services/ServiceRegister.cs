@@ -1,4 +1,5 @@
-﻿using Bonfire.Services.Interfaces;
+﻿using System;
+using Bonfire.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using MoonCalendar;
 using Bonfire.Application.Seedlings;
@@ -24,6 +25,8 @@ namespace Bonfire.Services
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()
             .AddSingleton<IUpdateSort, UpdateSort>()
-            .AddSingleton<IEditSeed, EditSeed>();
+            .AddSingleton<IEditSeed, EditSeed>()
+            .AddSingleton<IAcquireSeeds, AcquireSeeds>()
+            .AddSingleton(TimeProvider.System);
     }
 }
