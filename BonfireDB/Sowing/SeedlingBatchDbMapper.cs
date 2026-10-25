@@ -15,7 +15,7 @@ public static class SeedlingBatchDbMapper
             DeathNote = info.DeathNote.ToOption(),
             Replants = (info.Replants ?? []).Select(replant => new ReplantingEntry(Option.Some(replant.Id),
                 replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToImmutableArray()
-        }));
+        }), batch.PlantedOut);
 
     public static void Apply(SeedlingBatch model, Seedling target)
     {
@@ -56,5 +56,5 @@ public static class SeedlingBatchDbMapper
             DeathNote = info.DeathNote.ToOption(),
             Replants = (info.Replants ?? []).Select(replant => new ReplantingEntryFromViewModel(replant.Id,
                 replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToArray()
-        }).ToArray());
+        }).ToArray()) { PlantedOut = batch.PlantedOut };
 }

@@ -10,7 +10,10 @@ public sealed record SeedlingEntryFromViewModel(int Id, int Number, Option<DateT
     public Option<string> DeathNote { get; init; } = Option.None<string>();
     public IReadOnlyList<ReplantingEntryFromViewModel> Replants { get; init; } = [];
 }
-public sealed record SeedlingChangeResultFromViewModel(int SeedlingId, IReadOnlyList<SeedlingEntryFromViewModel> Entries);
+public sealed record SeedlingChangeResultFromViewModel(int SeedlingId, IReadOnlyList<SeedlingEntryFromViewModel> Entries)
+{
+    public int PlantedOut { get; init; }
+}
 
 public interface ISeedlingChangeWriter
 {

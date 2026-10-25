@@ -65,6 +65,6 @@ public sealed class SeedlingEdit
             id => changes.TryGetValue(id, out var edit)
                 ? entry with { Number = edit.Number, GerminationDate = edit.GerminationDate, DeathNote = edit.DeathNote }
                 : entry,
-            () => entry)));
+            () => entry)), current.PlantedOut);
     }
 }

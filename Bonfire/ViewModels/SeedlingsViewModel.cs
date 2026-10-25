@@ -832,6 +832,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private void ApplySeedlingChange(Seedling selected, SeedlingChangeResultFromViewModel receipt, Option<SeedlingDetails> details)
     {
+        selected.PlantedOut = receipt.PlantedOut;
         foreach (var entry in receipt.Entries)
         {
             var info = selected.SeedlingInfos.FirstOrDefault(info => info.Id == entry.Id);

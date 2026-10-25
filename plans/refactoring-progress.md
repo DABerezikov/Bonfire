@@ -888,3 +888,33 @@ Green: общий `dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:f
 Дополнительный WPF-прогон 1/1 сохранил offscreen-рендер в bin/.../artifacts/seedling-editor.png;
 он просмотрен визуально. Проверка всех DPI и ручной прогон модальных ошибок не выполнены.
 Схема БД не менялась; старые модели чтения/низкоуровневые методы остаются для этапа 7.
+
+## 25.10.2026 — доступность и закрытие блока рассады
+
+SeedlingBatch сохраняет PlantedOut при каждом иммутабельном переходе и редактировании;
+AvailableCount выводится как AliveCount − PlantedOut. Отрицательный исторический
+дефицит сохранён по прежней формуле модели чтения и не подменяется нулём. Отрицательное
+само количество высаженных отклоняется явно. Маппер читает PlantedOut из свежей БД,
+DTO возвращает его для синхронизации кэша. Расчёт нумерации всходов использует один
+снимок GerminatedCount вместо повторного обхода на каждый добавляемый всход.
+
+Red: четыре из шести проверок доступности/сохранения счётчика падают ожидаемо.
+Green: `dotnet test Bonfire.sln --no-restore --nologo -v q -m:1 -nr:false -p:UseSharedCompilation=false --logger trx --results-directory artifacts/refactoring-stage-5-final`:
+**1012/1012**, без пропусков (Models 461, Services 331, ViewModels 179,
+Repository 35, DTO 6). С начала этого продолжения добавлено 64 проверки к 948.
+Покрытие строк повторно не измерялось.
+
+`dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj --no-restore -p:UseSharedCompilation=false`
+завершился STARTUP_SMOKE_OK, WindowLoaded=True, HostDisposed=True. БД создана в
+Tests/Startup.Smoke/bin/.../isolated/55206f5da76a4e5b8b2a9624ea21c677/smoke.db;
+рабочая БД не использовалась. Сохраняются предупреждения NuGet и старых миграций
+о PRAGMA foreign_keys вне транзакции; новых миграций в этом блоке нет.
+
+Аудит rg подтвердил: SeedlingsViewModel вызывает только SowAsync, DeleteAsync,
+ChangeAsync и EditAsync для записи. MakeASeedling/UpdateSeedling/DeleteSeedling,
+AddSeedlingInfo/UpdateSeedlingInfo/MarkSeedlingInfosDeadAsync и ReturnSeedsFromSeedling
+больше не имеют вызовов из UI. Они и SeedlingMapper.CopyInto остаются как прежние
+контракты совместимости с тестами; их удаление — этап 7. EF-модели чтения также
+оставлены этапу 7. Существующие сценарии этапа 5 завершены; новые продуктовые
+сценарии урожая/получения семян не добавлялись. Следующий этап плана — посадки
+и план огорода. Чужой DbSeedEditWriter.cs и .claude/worktrees не включались.

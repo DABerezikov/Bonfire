@@ -13,13 +13,16 @@ public sealed record SeedlingEntry(Option<int> Id, int Number, Option<DateTime> 
 public sealed class SeedlingBatch
 {
     public double Quantity { get; }
+    public int PlantedOut { get; }
+    public int AvailableCount => AliveCount - PlantedOut;
     public ImmutableArray<SeedlingEntry> Entries { get; }
     public int GerminatedCount => Entries.Count(entry => entry.GerminationDate is Option<DateTime>.Some);
     public int AliveCount => Entries.Count(entry => entry.GerminationDate is Option<DateTime>.Some && entry.IsDead is not Option<bool>.Some { Value: true });
 
-    private SeedlingBatch(double quantity, ImmutableArray<SeedlingEntry> entries) => (Quantity, Entries) = (quantity, entries);
+    private SeedlingBatch(double quantity, ImmutableArray<SeedlingEntry> entries, int plantedOut)
+        => (Quantity, Entries, PlantedOut) = (quantity, entries, plantedOut);
 
-    public static Result<SeedlingBatch> Create(double quantity, IEnumerable<SeedlingEntry> entries)
+    public static Result<SeedlingBatch> Create(double quantity, IEnumerable<SeedlingEntry> entries, int plantedOut = 0)
     {
         ArgumentNullException.ThrowIfNull(entries);
         var snapshot = entries.ToImmutableArray();
@@ -27,7 +30,9 @@ public sealed class SeedlingBatch
             ? Result.Failure<SeedlingBatch>("Количество рассады должно быть конечным и неотрицательным")
             : snapshot.Any(entry => entry.Id.Match(id => id <= 0, () => false))
                 ? Result.Failure<SeedlingBatch>("Некорректный идентификатор записи рассады")
-                : Result.Success(new SeedlingBatch(quantity, snapshot));
+                : plantedOut < 0
+                    ? Result.Failure<SeedlingBatch>("Количество высаженной рассады не может быть отрицательным")
+                    : Result.Success(new SeedlingBatch(quantity, snapshot, plantedOut));
     }
 
     public Result<SeedlingBatch> WithGermination(int count, DateTime date)
@@ -38,14 +43,15 @@ public sealed class SeedlingBatch
                 ? Result.Failure<SeedlingBatch>("В партии нет записи для отметки отсутствия всходов")
                 : Result.Success(new SeedlingBatch(Quantity, Entries.Length == 1
                     ? [Entries[0] with { IsDead = Option.Some(true) }]
-                    : Entries));
+                    : Entries, PlantedOut));
 
-        var added = Quantity == 0 ? count : (int)Math.Min(count, Math.Max(0, Math.Floor(Quantity) - GerminatedCount));
-        if (added > int.MaxValue - GerminatedCount)
+        var germinated = GerminatedCount;
+        var added = Quantity == 0 ? count : (int)Math.Min(count, Math.Max(0, Math.Floor(Quantity) - germinated));
+        if (added > int.MaxValue - germinated)
             return Result.Failure<SeedlingBatch>("Число всходов превышает допустимый диапазон");
         var newEntries = Enumerable.Range(0, added).Select(index => new SeedlingEntry(
-            Option.None<int>(), GerminatedCount + index + 1, Option.Some(date), Option.None<bool>()));
-        return Result.Success(new SeedlingBatch(Quantity, Entries.AddRange(newEntries)));
+            Option.None<int>(), germinated + index + 1, Option.Some(date), Option.None<bool>()));
+        return Result.Success(new SeedlingBatch(Quantity, Entries.AddRange(newEntries), PlantedOut));
     }
 
     public Result<SeedlingBatch> Apply(SeedlingAction action) => action switch
@@ -63,7 +69,7 @@ public sealed class SeedlingBatch
             : Result.Success(new SeedlingBatch(Quantity, Entries.SetItem(0, Entries[0] with
             {
                 Replants = [new(Option.None<int>(), date, Option.None<double>(), Option.None<string>())]
-            })));
+            }), PlantedOut));
 
     public Result<SeedlingBatch> WithDeadSprouts(int count, Option<string> reason)
     {
@@ -73,7 +79,7 @@ public sealed class SeedlingBatch
             .OrderByDescending(entry => entry.Number).Take(count).ToHashSet();
         return Result.Success(new SeedlingBatch(Quantity, Entries.Select(entry => selected.Contains(entry)
             ? entry with { IsDead = Option.Some(true), DeathNote = reason }
-            : entry).ToImmutableArray()));
+            : entry).ToImmutableArray(), PlantedOut));
     }
 }
 
