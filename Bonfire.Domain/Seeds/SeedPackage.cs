@@ -33,4 +33,21 @@ public sealed class SeedPackage
                             () => Result.Success(new SeedPackage(values))))));
     }
     public Result<SeedPackage> WithDetails(SeedPackageValues values) => Create(values);
+
+    public Result<SeedPackage> WithReturned(SeedAmount returned)
+    {
+        ArgumentNullException.ThrowIfNull(returned);
+        if (returned.Value == 0) return WithDetails(Values);
+
+        var available = returned.Unit == SeedUnit.Pieces
+            ? SeedAmount.Create(Values.AmountSeeds, SeedUnit.Pieces)
+            : Values.AmountSeedsWeight.Match(
+                weight => SeedAmount.Create(weight, SeedUnit.Grams),
+                () => Result.Failure<SeedAmount>("Вес остатка семян не указан"));
+
+        return available.Bind(amount => new SeedStock(amount).WithReturned(returned))
+            .Bind(stock => WithDetails(returned.Unit == SeedUnit.Pieces
+                ? Values with { AmountSeeds = stock.Available.Value }
+                : Values with { AmountSeedsWeight = Option.Some(stock.Available.Value) }));
+    }
 }

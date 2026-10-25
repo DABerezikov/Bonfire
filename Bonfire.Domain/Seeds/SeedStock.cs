@@ -12,6 +12,15 @@ public sealed class SeedStock
         Available = available;
     }
 
+    public Result<SeedStock> WithReturned(SeedAmount returned)
+    {
+        ArgumentNullException.ThrowIfNull(returned);
+        return returned.Unit != Available.Unit
+            ? Result.Failure<SeedStock>("Единицы остатка и возврата должны совпадать")
+            : SeedAmount.Create(Available.Value + returned.Value, Available.Unit)
+                .Bind(amount => Result.Success(new SeedStock(amount)));
+    }
+
     public Result<SowingChange> Sow(SeedAmount requested)
     {
         ArgumentNullException.ThrowIfNull(requested);
