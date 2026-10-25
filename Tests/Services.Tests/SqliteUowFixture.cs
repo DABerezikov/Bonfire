@@ -32,7 +32,7 @@ internal sealed class SqliteUowFixture : IDisposable
     public SeedlingsService CreateSeedlingsService()
     {
         var lunar = new MoonPhase();
-        return new SeedlingsService(Factory, lunar, new SowSeeds(new DbSowingSessionFactory(Factory), new MoonPhaseCalendar(lunar)), new DeleteSeedling(new DbSeedlingDeletionWriter(Factory)));
+        return new SeedlingsService(Factory, lunar, new SowSeeds(new DbSowingSessionFactory(Factory), new MoonPhaseCalendar(lunar)), new DeleteSeedling(new DbSeedlingDeletionWriter(Factory)), new ChangeSeedling(new DbSeedlingChangeWriter(Factory)));
     }
 
     public SqliteUowFixture()

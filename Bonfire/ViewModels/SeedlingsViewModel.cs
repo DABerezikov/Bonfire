@@ -16,6 +16,7 @@ using BonfireDB.Entities;
 using Bonfire.Domain.Seeds;
 using Bonfire.Domain.Functional;
 using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Seedlings;
 
 namespace Bonfire.ViewModels;
 
@@ -824,39 +825,37 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnGerminateSeedlingCommandExecuted()
     {
-        switch (Germinate)
+        if (SelectedItem is not { } selected || Germinate < 0) return;
+        var count = Germinate;
+        var result = await _seedlingsService.ChangeAsync(new(selected.Id, new SeedlingAction.Germinate(count, GerminationDate)));
+        result.Match(receipt =>
         {
-            case < 0:
-                return;
-            case 0:
-                if (SelectedItem!.SeedlingInfos.Count > 1) return;
-                SelectedItem.SeedlingInfos[0].IsDead = true;
-                await _seedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]).ConfigureAwait(false);
-                UpdateCollectionViewSource();
-                return;
-        }
-
-        var germCount = SelectedItem!.SeedlingInfos.Count(i => i.GerminationDate.HasValue);
-        if (SelectedItem.Quantity > 0)
-            Germinate = Germinate + germCount > (int)SelectedItem.Quantity
-                ? (int)SelectedItem.Quantity - germCount
-                : Germinate;
-
-        for (var i = 0; i < Germinate; i++)
-        {
-            var info = new SeedlingInfo
+            ApplySeedlingChange(selected, receipt);
+            if (count > 0)
             {
-                GerminationDate = GerminationDate,
-                SeedlingNumber  = germCount + i + 1
-            };
-            SelectedItem.SeedlingInfos.Add(info);
-            await _seedlingsService.AddSeedlingInfo(info);
-        }
+                Germinate = 0;
+                GerminationDate = DateTime.Now;
+            }
+            return true;
+        }, error => { _userDialog.Warning(error, "Всходы рассады"); return false; });
+    }
 
-        await _seedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
-        Germinate = 0;
-        GerminationDate = DateTime.Now;
+    private void ApplySeedlingChange(Seedling selected, SeedlingChangeResultFromViewModel receipt)
+    {
+        foreach (var entry in receipt.Entries)
+        {
+            var info = selected.SeedlingInfos.FirstOrDefault(info => info.Id == entry.Id);
+            if (info is null)
+            {
+                info = new SeedlingInfo { Id = entry.Id };
+                selected.SeedlingInfos.Add(info);
+            }
+            info.SeedlingNumber = entry.Number;
+            info.GerminationDate = entry.GerminationDate.ToNullable();
+            info.IsDead = entry.IsDead.ToNullable();
+        }
+        if (SelectedItem?.Id == selected.Id) CopySeedlingToEditItem(selected, EditedItem);
+        UpdateCollectionViewSource(selected.Id);
     }
 
     public ICommand ReplantsSeedlingCommand => field

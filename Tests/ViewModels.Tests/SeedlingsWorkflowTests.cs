@@ -241,14 +241,20 @@ public class SeedlingsWorkflowTests
     public void Germination_CapsNewSproutsAtSownQuantityAndNumbersThem()
     {
         var batch = Batch();
-        batch.SeedlingInfos.Add(new() { SeedlingNumber = 1, GerminationDate = DateTime.Today });
+        batch.SeedlingInfos.Add(new() { Id = 2, SeedlingNumber = 1, GerminationDate = DateTime.Today });
         var vm = CreateVm(batch);
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingChangeResultFromViewModel(batch.Id,
+            [new(1, 0, Option.None<DateTime>(), Option.None<bool>()),
+             new(2, 1, Option.Some(DateTime.Today), Option.None<bool>()),
+             new(3, 2, Option.Some(new DateTime(2026, 3, 7)), Option.None<bool>()),
+             new(4, 3, Option.Some(new DateTime(2026, 3, 7)), Option.None<bool>())])));
         vm.Germinate = 20; vm.GerminationDate = new DateTime(2026, 3, 7);
         vm.GerminateSeedlingCommand.Execute(null);
         Assert.Equal(3, batch.SeedlingInfos.Count(i => i.GerminationDate.HasValue));
         Assert.Equal(new[] { 1, 2, 3 }, batch.SeedlingInfos.Where(i => i.GerminationDate.HasValue).Select(i => i.SeedlingNumber));
         Assert.Equal(0, vm.Germinate);
-        _service.Received(2).AddSeedlingInfo(Arg.Any<SeedlingInfo>());
+        _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.Germinate(20, new DateTime(2026, 3, 7))));
+        _service.DidNotReceive().AddSeedlingInfo(Arg.Any<SeedlingInfo>());
     }
 
     [Theory]
@@ -257,9 +263,26 @@ public class SeedlingsWorkflowTests
     public void Germination_NonPositiveCount_LeavesBatchOrMarksUnsproutedDead(int count, bool dead)
     {
         var batch = Batch(); var vm = CreateVm(batch); vm.Germinate = count;
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingChangeResultFromViewModel(batch.Id,
+            [new(1, 0, Option.None<DateTime>(), Option.Some(true))])));
         vm.GerminateSeedlingCommand.Execute(null);
         Assert.Equal(dead, batch.SeedlingInfos[0].IsDead == true);
         _service.DidNotReceive().AddSeedlingInfo(Arg.Any<SeedlingInfo>());
+    }
+
+    [Fact]
+    public void Germination_SaveFailure_PreservesBatchInputAndDraft()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        vm.Germinate = 3;
+        var date = vm.GerminationDate;
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingChangeResultFromViewModel>("Ошибка всходов"));
+        vm.GerminateSeedlingCommand.Execute(null);
+        Assert.Single(batch.SeedlingInfos);
+        Assert.Equal(3, vm.Germinate);
+        Assert.Equal(date, vm.GerminationDate);
+        Assert.Single(vm.EditedItem.SeedlingInfos);
+        _dialog.Received(1).Warning("Ошибка всходов", "Всходы рассады");
     }
 
     [Fact]

@@ -12,6 +12,7 @@ public interface ISeedlingsService
     MoonPhase Lunar { get; }
     Task<Result<SowingReceipt>> SowAsync(SowingRequest request);
     Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(DeleteSeedlingFromViewModel request);
+    Task<Result<SeedlingChangeResultFromViewModel>> ChangeAsync(ChangeSeedlingFromViewModel request);
     Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync();
     Task<Seedling?> GetSeedlingAsync(int id);
     Task<Seedling> MakeASeedling(Seedling seedling);

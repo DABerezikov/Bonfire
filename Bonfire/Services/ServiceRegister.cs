@@ -16,6 +16,7 @@ namespace Bonfire.Services
             .AddSingleton<ISeedlingsService, SeedlingsService>()
             .AddSingleton<ISowSeeds, SowSeeds>()
             .AddSingleton<IDeleteSeedling, DeleteSeedling>()
+            .AddSingleton<IChangeSeedling, ChangeSeedling>()
             .AddSingleton<ILunarCalendar, MoonPhaseCalendar>()
             .AddSingleton<IUserDialog, UserDialog>()
             .AddSingleton<IReportService, ReportService>()

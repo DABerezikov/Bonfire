@@ -18,6 +18,7 @@ public static class RepositoryRegister
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
         .AddSingleton<ISeedlingDeletionWriter, DbSeedlingDeletionWriter>()
+        .AddSingleton<ISeedlingChangeWriter, DbSeedlingChangeWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()
