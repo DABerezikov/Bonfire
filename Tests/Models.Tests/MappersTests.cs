@@ -1,3 +1,4 @@
+using BonfireDB.Planting;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
@@ -177,7 +178,7 @@ public class MappersTests
             Note = "Томат Черри"
         };
 
-        var dto = GardenPlanMapper.MapSpot(spot);
+        var dto = GardenPlanMapper.MapSpot(DbGridMapper.Receipt(spot));
 
         Assert.Equal(5, dto.Id);
         Assert.Equal(2, dto.Row);
@@ -208,7 +209,7 @@ public class MappersTests
             ]
         };
 
-        var dto = GardenPlanMapper.MapElement(bed, containerW: 800, containerH: 600);
+        var dto = GardenPlanMapper.MapElement(GardenReadDbMapper.ReadElement(bed).ValueOrThrow(), containerW: 800, containerH: 600);
 
         Assert.Equal("Bed", dto.ElementType);
         Assert.Equal("Грядка 1", dto.Name);
@@ -241,7 +242,7 @@ public class MappersTests
             Greenhouses = []
         };
 
-        var dto = GardenPlanMapper.MapGarden(garden);
+        var dto = GardenPlanMapper.MapGarden(GardenReadDbMapper.ReadGarden(garden).ValueOrThrow());
 
         Assert.Single(dto.Elements);
         // Каждый элемент получает ссылки на коллекции братьев для проверки коллизий

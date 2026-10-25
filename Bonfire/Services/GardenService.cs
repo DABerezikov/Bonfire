@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties, IEditGreenhouseProperties editGreenhouseProperties, IEditGardenProperties editGardenProperties, ISetGardenLock setGardenLock, IDeleteGardenElement deleteGardenElement, IDeleteGreenhouse deleteGreenhouse, IDeleteGarden deleteGarden, IDeleteGardenPlan deleteGardenPlan, ICreateGardenPlan createGardenPlan, ICreateGarden createGarden, ICreateGardenObjects createGardenObjects) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry, IEditElementProperties editElementProperties, IEditGreenhouseProperties editGreenhouseProperties, IEditGardenProperties editGardenProperties, ISetGardenLock setGardenLock, IDeleteGardenElement deleteGardenElement, IDeleteGreenhouse deleteGreenhouse, IDeleteGarden deleteGarden, IDeleteGardenPlan deleteGardenPlan, ICreateGardenPlan createGardenPlan, ICreateGarden createGarden, ICreateGardenObjects createGardenObjects, IGardenReader gardenReader) : IGardenService
 {
     public Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request)
         => saveGardenGeometry.ExecuteAsync(request);
@@ -51,6 +52,11 @@ internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGr
 
     public Task<Result<ElementCreationResultFromViewModel>> CreateElementFromRequestAsync(CreateGardenElementFromViewModel request) => createGardenObjects.CreateElementAsync(request);
     public Task<Result<GreenhouseCreationResultFromViewModel>> CreateGreenhouseFromRequestAsync(CreateGreenhouseFromViewModel request) => createGardenObjects.CreateGreenhouseAsync(request);
+
+    public Task<Result<ImmutableArray<GardenPlanResultFromViewModel>>> ReadPlansAsync() => gardenReader.ReadPlansAsync(default);
+    public Task<Result<ImmutableArray<GardenReadFromViewModel>>> ReadGardensAsync(int planId)
+        => GardenPlanId.Create(planId).Match(id => gardenReader.ReadGardensAsync(id, default),
+            error => Task.FromResult(Result.Failure<ImmutableArray<GardenReadFromViewModel>>(error)));
 
     // --- Чтение ---
 

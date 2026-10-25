@@ -10,7 +10,7 @@ public partial class GardenPlanWorkflowTests
     [Fact]
     public async Task DeletePlan_SelectionChanges_RemovesCapturedPlanAndPreservesCurrentGarden()
     {
-        var vm = CreateVm(); var plan = new GardenPlan { Id = 1 }; var next = new GardenPlan { Id = 2 };
+        var vm = CreateVm(); var plan = new GardenPlanFromViewModel { Id = 1 }; var next = new GardenPlanFromViewModel { Id = 2 };
         vm.Plans = [plan, next]; vm.SelectedPlan = plan;
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         var pending = new TaskCompletionSource<Result<GardenPlanDeletionResultFromViewModel>>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -29,7 +29,7 @@ public partial class GardenPlanWorkflowTests
     [Fact]
     public void DeletePlan_LastPlan_ClosesGridAndClearsGardenDraft()
     {
-        var vm = CreateVm(); var plan = new GardenPlan { Id = 1 }; vm.Plans = [plan]; vm.SelectedPlan = plan;
+        var vm = CreateVm(); var plan = new GardenPlanFromViewModel { Id = 1 }; vm.Plans = [plan]; vm.SelectedPlan = plan;
         var garden = GardenVm(); vm.Gardens = [garden]; vm.SelectedGarden = garden;
         var element = new GardenElementFromViewModel { Id = 3 }; garden.Elements.Add(element); vm.SelectedElement = element;
         vm.OpenPlantingGridCommand.Execute(null); vm.SelectedSpot = new() { Id = 4 };
@@ -44,7 +44,7 @@ public partial class GardenPlanWorkflowTests
     [Fact]
     public void DeletePlan_Failure_KeepsPlanGardenDraftAndGrid()
     {
-        var vm = CreateVm(); var plan = new GardenPlan { Id = 1 }; vm.Plans = [plan]; vm.SelectedPlan = plan;
+        var vm = CreateVm(); var plan = new GardenPlanFromViewModel { Id = 1 }; vm.Plans = [plan]; vm.SelectedPlan = plan;
         var garden = GardenVm(); vm.Gardens = [garden]; vm.SelectedGarden = garden;
         var draft = vm.GardenEditor!; draft.Name = "Черновик";
         var element = new GardenElementFromViewModel { Id = 3 }; garden.Elements.Add(element); vm.SelectedElement = element;

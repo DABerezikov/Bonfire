@@ -13,7 +13,6 @@ using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities.GardenPlanning;
 using Bonfire.Domain.Garden.SpotStates;
 using Bonfire.Domain.Garden.States;
 
@@ -42,13 +41,13 @@ public class GardenPlanViewModel(
 
     // --- Планы ---
 
-    public ObservableCollection<GardenPlan> Plans
+    public ObservableCollection<GardenPlanFromViewModel> Plans
     {
         get;
         set => Set(ref field, value);
     } = [];
 
-    public GardenPlan? SelectedPlan
+    public GardenPlanFromViewModel? SelectedPlan
     {
         get;
         set
@@ -383,9 +382,9 @@ public class GardenPlanViewModel(
 
     private async Task LoadDataAsync()
     {
-        var planList = await gardenService.GetPlansOrderedByYearDescAsync();
-
-        Plans = new ObservableCollection<GardenPlan>(planList);
+        var result = await gardenService.ReadPlansAsync();
+        if (result.IsFailure) { userDialog.Warning(result.Match(_ => "", e => e), "Загрузка планов"); return; }
+        Plans = new(result.ValueOrThrow().Select(GardenPlanMapper.MapPlan));
         SelectedPlan = Plans.FirstOrDefault();
 
         await LoadPlantLabelsAsync();
@@ -463,12 +462,11 @@ public class GardenPlanViewModel(
             SelectedGarden = null;
             return;
         }
-        var gardens = await gardenService.GetGardensByPlanAsync(plan.Id);
+        var result = await gardenService.ReadGardensAsync(plan.Id);
         if (!ReferenceEquals(SelectedPlan, plan)) return;
-
+        if (result.IsFailure) { userDialog.Warning(result.Match(_ => "", e => e), "Загрузка участков"); return; }
         foreach (var garden in Gardens) CloseEditorsFor(garden);
-        Gardens = new ObservableCollection<GardenFromViewModel>(
-            gardens.Select(GardenPlanMapper.MapGarden));
+        Gardens = new(result.ValueOrThrow().Select(GardenPlanMapper.MapGarden));
         SelectedGarden = Gardens.FirstOrDefault();
     }
 

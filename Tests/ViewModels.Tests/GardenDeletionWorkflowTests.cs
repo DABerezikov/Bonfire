@@ -23,7 +23,7 @@ public partial class GardenPlanWorkflowTests
         command.ExecutableChanged += (_, _) => { if (command.Executable) completed.TrySetResult(); };
         vm.DeleteGardenCommand.Execute(null);
         var originalGardens = vm.Gardens;
-        if (changePlan) { vm.SelectedPlan = new GardenPlan { Id = 3 }; vm.Gardens = [next]; }
+        if (changePlan) { vm.SelectedPlan = new GardenPlanFromViewModel { Id = 3 }; vm.Gardens = [next]; }
         vm.SelectedGarden = next; var draft = vm.GardenEditor!; draft.Name = "Новый ввод";
         Assert.False(vm.DeleteGardenCommand.CanExecute(null));
         vm.DeleteGardenCommand.Execute(null);

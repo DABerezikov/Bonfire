@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using BonfireDB.Planting;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
@@ -20,8 +22,8 @@ public partial class GardenPlanWorkflowTests
 
     private GardenPlanViewModel CreateVm()
     {
-        _gardens.GetPlansOrderedByYearDescAsync().Returns(Array.Empty<GardenPlan>());
-        _gardens.GetGardensByPlanAsync(Arg.Any<int>()).Returns(Array.Empty<Garden>());
+        _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray<GardenPlanResultFromViewModel>.Empty));
+        _gardens.ReadGardensAsync(Arg.Any<int>()).Returns(Result.Success(ImmutableArray<GardenReadFromViewModel>.Empty));
         _seeds.GetAllSeedsAsync().Returns(Array.Empty<Seed>());
         _seedlings.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
         return new(_gardens, _dialog, _seedlings, _seeds, _planting);
@@ -37,9 +39,9 @@ public partial class GardenPlanWorkflowTests
     public void LoadData_SelectsFirstPlanAndGardenAndBuildsAvailableInventory()
     {
         var vm = CreateVm();
-        var plan = new GardenPlan { Id = 1, Name = "План" };
-        _gardens.GetPlansOrderedByYearDescAsync().Returns(new[] { plan });
-        _gardens.GetGardensByPlanAsync(1).Returns(new[] { new Garden { Id = 2, Name = "Участок", CanvasWidth = 3000, CanvasHeight = 2000 } });
+        var plan = new GardenPlanFromViewModel { Id = 1, Name = "План" };
+        _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray.Create(new GardenPlanResultFromViewModel(plan.Id, plan.Name, plan.Year, plan.Description))));
+        _gardens.ReadGardensAsync(1).Returns(Result.Success(ImmutableArray.Create(GardenReadDbMapper.ReadGarden(new Garden { Id = 2, Name = "Участок", CanvasWidth = 3000, CanvasHeight = 2000 }).ValueOrThrow())));
         var plant = new Plant { PlantCulture = new PlantCulture { Name = "Томат" }, PlantSort = new PlantSort { Name = "Черри" } };
         _seeds.GetAllSeedsAsync().Returns(new[]
         {
@@ -55,7 +57,7 @@ public partial class GardenPlanWorkflowTests
 
         vm.LoadDataCommand.Execute(null);
 
-        Assert.Same(plan, vm.SelectedPlan);
+        Assert.Equal(plan.Id, vm.SelectedPlan!.Id);
         Assert.Equal(2, vm.SelectedGarden!.Id);
         Assert.Equal(2, vm.AvailableSeedItems.Count);
         Assert.Equal(0.5, vm.AvailableSeedItems.Single(s => s.EntityId == 4).AvailableQty);
@@ -68,12 +70,12 @@ public partial class GardenPlanWorkflowTests
     public void CreatePlan_SelectsNewPlanAndLoadsItsGardens()
     {
         var vm = CreateVm();
-        var plan = new GardenPlan { Id = 3, Name = "Новый" };
+        var plan = new GardenPlanFromViewModel { Id = 3, Name = "Новый" };
         _gardens.CreateCurrentPlanAsync().Returns(Result.Success(new GardenPlanResultFromViewModel(plan.Id, plan.Name, plan.Year, Option.None<string>())));
         vm.CreatePlanCommand.Execute(null);
         Assert.Equal(plan.Id, vm.SelectedPlan!.Id);
         Assert.Equal(plan.Name, Assert.Single(vm.Plans).Name);
-        _gardens.Received().GetGardensByPlanAsync(3);
+        _gardens.Received().ReadGardensAsync(3);
     }
 
     [Theory]
@@ -82,8 +84,8 @@ public partial class GardenPlanWorkflowTests
     public void DeletePlan_RequiresConfirmationAndSelectsRemainingPlan(bool confirm)
     {
         var vm = CreateVm();
-        var first = new GardenPlan { Id = 1, Name = "Первый" };
-        var second = new GardenPlan { Id = 2, Name = "Второй" };
+        var first = new GardenPlanFromViewModel { Id = 1, Name = "Первый" };
+        var second = new GardenPlanFromViewModel { Id = 2, Name = "Второй" };
         vm.Plans = [first, second]; vm.SelectedPlan = first;
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirm);
         _gardens.DeletePlanByIdAsync(Arg.Any<DeleteGardenPlanFromViewModel>()).Returns(Result.Success(new GardenPlanDeletionResultFromViewModel(1)));
@@ -96,7 +98,7 @@ public partial class GardenPlanWorkflowTests
     [Fact]
     public void CreateGarden_UsesPlanAndDisplayScaleAndSelectsCreatedGarden()
     {
-        var vm = CreateVm(); vm.SelectedPlan = new GardenPlan { Id = 3 };
+        var vm = CreateVm(); vm.SelectedPlan = new GardenPlanFromViewModel { Id = 3 };
         _gardens.CreateGardenFromRequestAsync(Arg.Is<CreateGardenFromViewModel>(r => r.PlanId == 3 && r.Name == "Новый участок" && r.WidthMeters == 20 && r.HeightMeters == 15 && r.PixelsPerMeter == CanvasConstants.PixelsPerMeter))
             .Returns(Result.Success(new GardenPropertiesResultFromViewModel(4, new("Новый участок", Option.None<string>(), Option.None<string>(), 20, 15), CanvasRectangle.Create(0, 0, 3000, 2250).ValueOrThrow())));
         vm.CreateGardenCommand.Execute(null);

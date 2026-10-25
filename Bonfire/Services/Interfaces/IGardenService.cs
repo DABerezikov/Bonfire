@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -28,6 +29,8 @@ public interface IGardenService
     Task<Result<GreenhouseDeletionResultFromViewModel>> DeleteGreenhouseByIdAsync(DeleteGreenhouseFromViewModel request);
 
     // --- Чтение ---
+    Task<Result<ImmutableArray<GardenPlanResultFromViewModel>>> ReadPlansAsync();
+    Task<Result<ImmutableArray<GardenReadFromViewModel>>> ReadGardensAsync(int planId);
     Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync();
     Task<IReadOnlyList<Garden>> GetGardensByPlanAsync(int planId);
     Task<Garden?> GetGardenByIdAsync(int id);

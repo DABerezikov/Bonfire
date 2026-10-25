@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using Bonfire.Domain.Functional;
+using BonfireDB.Planting;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -43,17 +46,18 @@ public partial class CanvasInteractionTests
             await db.SaveChangesAsync();
         }
         var service = provider.GetRequiredService<IGardenService>();
-        var plan = Assert.Single(await service.GetPlansOrderedByYearDescAsync());
-        var saved = Assert.Single(await service.GetGardensByPlanAsync(plan.Id));
+        var plan = Assert.Single((await service.ReadPlansAsync()).ValueOrThrow());
+        var saved = Assert.Single((await service.ReadGardensAsync(plan.Id)).ValueOrThrow());
         var model = GardenPlanMapper.MapGarden(saved);
         Assert.Equal(2, model.Elements.Count); Assert.Single(model.Greenhouses);
         var bed = model.Elements.Single(e => e.Name == "Томаты"); Assert.Equal("Черри", Assert.Single(bed.PlantingSpots).PlantLabel);
         runtime.Invoke(() =>
         {
-            var reads = Substitute.For<IGardenService>(); reads.GetGardensByPlanAsync(plan.Id).Returns(new[] { saved });
+            var reads = Substitute.For<IGardenService>(); reads.ReadGardensAsync(plan.Id).Returns(Result.Success(ImmutableArray.Create(saved)));
             var vm = new GardenPlanViewModel(reads, Substitute.For<IUserDialog>(), Substitute.For<ISeedlingsService>(),
                 Substitute.For<ISeedsService>(), Substitute.For<IPlantingService>());
-            vm.Plans = [plan]; vm.SelectedPlan = plan; vm.Gardens = [model]; vm.SelectedGarden = model;
+            var planModel = GardenPlanMapper.MapPlan(plan);
+            vm.Plans = [planModel]; vm.SelectedPlan = planModel; vm.Gardens = [model]; vm.SelectedGarden = model;
             var view = new GardenPlanView { DataContext = vm, Background = Brushes.White };
             Interaction.GetTriggers(view).Clear();
             WpfRuntime.Layout(view, 1600, 900);
