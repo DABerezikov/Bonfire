@@ -8,6 +8,8 @@ using Bonfire.Application.Seedlings;
 using Bonfire.Infrastructure;
 using BonfireDB.Sowing;
 using MoonCalendar;
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 
 namespace Services.Tests;
 
@@ -20,6 +22,8 @@ internal sealed class SqliteUowFixture : IDisposable
     private readonly ServiceProvider _provider;
 
     public IUnitOfWorkFactory Factory { get; }
+
+    public LibraryService CreateLibraryService() => new(Factory, new UpdateCulture(new DbCultureWriter(Factory)));
 
     public SeedlingsService CreateSeedlingsService()
     {

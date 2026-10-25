@@ -4,6 +4,8 @@ using BonfireDB.Entities.GardenPlanning;
 using Microsoft.Extensions.DependencyInjection;
 using Bonfire.Application.Seedlings;
 using BonfireDB.Sowing;
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 
 namespace BonfireDB;
 
@@ -13,6 +15,7 @@ public static class RepositoryRegister
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
+        .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddScoped<IRepository<Plant>, PlantRepository>()
         .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
         .AddScoped<IRepository<PlantSort>, PlantSortRepository>()

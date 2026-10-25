@@ -123,7 +123,7 @@ public class SeedEditorIntegrationTests : IDisposable
             return culture.Id;
         });
         var sortId = (await new SeedsService(_fx.Factory).GetSeedAsync(id))!.Plant.PlantSort.Id;
-        var result = await new LibraryService(_fx.Factory).UpdateSortAsync(
+        var result = await _fx.CreateLibraryService().UpdateSortAsync(
             new SortEditModel { Id = sortId, Name = "Черри", CultureId = cultureId });
         Assert.True(result.IsSuccess);
         var seed = (await new SeedsService(_fx.Factory).GetSeedAsync(id))!;

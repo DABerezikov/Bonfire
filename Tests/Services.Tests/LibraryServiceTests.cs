@@ -1,5 +1,7 @@
 using Bonfire.Models;
 using Bonfire.Services.Interfaces;
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 
 namespace Services.Tests;
 
@@ -17,7 +19,11 @@ public class LibraryServiceTests
         _uow.Repository<Producer>().Returns(_producers);
     }
 
-    private LibraryService CreateService() => new(_uow.ToFactory());
+    private LibraryService CreateService()
+    {
+        var factory = _uow.ToFactory();
+        return new(factory, new UpdateCulture(new DbCultureWriter(factory)));
+    }
 
     // ── GetSortAsync ──────────────────────────────────────────────────────────
 

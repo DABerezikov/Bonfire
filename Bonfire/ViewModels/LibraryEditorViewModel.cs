@@ -113,8 +113,15 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadCultureDetailAsync(int id)
     {
         var result = await _libraryService.GetCultureAsync(id);
-        if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-        CultureDetail = LibraryMapper.ToEditModel(result.Value!);
+        result.Match(culture =>
+        {
+            CultureDetail = LibraryMapper.ToEditModel(culture);
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
     }
 
     private async Task LoadProducerDetailAsync(int id)
@@ -214,12 +221,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var detail = CultureDetail!;
+                if (CultureDetail is not { } detail) return;
                 var result = await _libraryService.UpdateCultureAsync(detail);
-                if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-                SyncAfterCultureUpdate(result.Value!);
-                detail.ResetDirty();
-                _userDialog.Information("Сохранено");
+                result.Match(saved =>
+                {
+                    SyncAfterCultureUpdate(saved);
+                    detail.ResetDirty();
+                    _userDialog.Information("Сохранено");
+                    return true;
+                }, error =>
+                {
+                    _userDialog.Error(error);
+                    return false;
+                });
             }
             catch (Exception ex)
             {

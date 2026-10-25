@@ -76,6 +76,12 @@ python Tests/summarize_coverage.py artifacts/coverage-new --output artifacts/cov
 
 ## Риски для следующего этапа
 
+Первая часть этапа библиотек проверяется в `CultureDefinitionTests`,
+`CultureApplicationTests`, `CultureEditingIntegrationTests`: инварианты, новое
+состояние без изменения оригинала, связанные семена/рассада и отказ SQLite.
+Общий гейт после переноса культуры — 724/724. Остальные операции библиотек и пакета
+семян остаются следующими частями рефакторинга.
+
 После этапа DI/startup общий гейт составляет 701/701. `ApplicationLifetimeTests`,
 `WindowShutdownTests`, `WindowShutdownWpfTests` и `ApplicationStartupIntegrationTests`
 проверяют порядок, отмену и освобождение. Настоящий WPF smoke запускается отдельно:

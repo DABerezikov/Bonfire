@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MoonCalendar;
 using Bonfire.Application.Seedlings;
 using Bonfire.Infrastructure;
+using Bonfire.Application.Libraries;
 
 namespace Bonfire.Services
 {
@@ -18,6 +19,7 @@ namespace Bonfire.Services
             .AddSingleton(typeof(MoonPhase))
             .AddSingleton<IGardenService, GardenService>()
             .AddSingleton<IPlantingService, PlantingService>()
-            .AddSingleton<ILibraryService, LibraryService>();
+            .AddSingleton<ILibraryService, LibraryService>()
+            .AddSingleton<IUpdateCulture, UpdateCulture>();
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Bonfire.Application.Seedlings;
+using Bonfire.Application.Libraries;
 
 namespace Services.Tests;
 
@@ -28,6 +29,8 @@ public class CompositionBehaviorTests
         Assert.NotSame(initializer, second.ServiceProvider.GetRequiredService<DbInitializer>());
         Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<DbInitializer>());
         Assert.NotNull(provider.GetRequiredService<ISowSeeds>());
+        Assert.NotNull(provider.GetRequiredService<IUpdateCulture>());
+        Assert.NotNull(provider.GetRequiredService<ICultureWriter>());
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
     }
 

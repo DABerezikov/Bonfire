@@ -8,10 +8,11 @@ using Bonfire.Services.Interfaces;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using Microsoft.EntityFrameworkCore;
+using Bonfire.Application.Libraries;
 
 namespace Bonfire.Services;
 
-internal class LibraryService(IUnitOfWorkFactory uowFactory) : ILibraryService
+internal class LibraryService(IUnitOfWorkFactory uowFactory, IUpdateCulture updateCulture) : ILibraryService
 {
     public async Task<Result<PlantSort>> GetSortAsync(int id)
     {
@@ -81,26 +82,15 @@ internal class LibraryService(IUnitOfWorkFactory uowFactory) : ILibraryService
 
     public async Task<Result<PlantCulture>> UpdateCultureAsync(CultureEditModel model)
     {
-        await using var uow = uowFactory.Create();
-        var entity = await uow.Repository<PlantCulture>().GetAsync(model.Id);
-        if (entity is null)
-            return Result.Failure<PlantCulture>("Культура не найдена (удалёна?)");
-
-        LibraryMapper.ApplyTo(model, entity);
-        try
+        ArgumentNullException.ThrowIfNull(model);
+        if (model.Name is not { } name)
+            return Result.Failure<PlantCulture>("Название не может быть пустым");
+        var result = await updateCulture.ExecuteAsync(new UpdateCultureFromViewModel(model.Id, name, model.Class));
+        // Совместимость прежнего UI: EF-тип появляется только на внешней границе, не в Application.
+        return result.Bind(saved => Result.Success(new PlantCulture
         {
-            await uow.Repository<PlantCulture>().UpdateAsync(entity);
-            await uow.SaveChangesAsync();
-            return Result.Success(entity);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Result.Failure<PlantCulture>("Запись изменена другим процессом");
-        }
-        catch (DbUpdateException ex)
-        {
-            return Result.Failure<PlantCulture>($"Ошибка БД: {ex.InnerException?.Message ?? ex.Message}");
-        }
+            Id = saved.Id, Name = saved.Name, Class = saved.Class
+        }));
     }
 
     public async Task<Result<Producer>> UpdateProducerAsync(int id, string name)
