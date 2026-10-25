@@ -62,4 +62,28 @@ public class SeedlingLifecycleIntegrationTests : IDisposable
     [Fact]
     public async Task Germinate_MissingBatch_ReturnsFailure() => Assert.True(
         (await ApplyAsync(999, new SeedlingAction.Germinate(1, DateTime.Today))).IsFailure);
+
+    [Fact]
+    public async Task Replant_RecordsDateOnceAndPreservesOtherRecords()
+    {
+        var id = await PrepareAsync();
+        var date = new DateTime(2026, 4, 1);
+        Assert.True((await ApplyAsync(id, new SeedlingAction.Replant(date))).IsSuccess);
+        Assert.Equal(date, await _fixture.QueryAsync(db => db.Replants.Select(replant => replant.ReplantingDate).SingleAsync()));
+        Assert.True((await ApplyAsync(id, new SeedlingAction.Replant(date.AddDays(1)))).IsFailure);
+        Assert.Equal(1, await _fixture.QueryAsync(db => db.Replants.CountAsync()));
+        Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Replant_InsertRejected_PreservesBatchAndRetry()
+    {
+        var id = await PrepareAsync();
+        await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectReplant BEFORE INSERT ON Replants BEGIN SELECT RAISE(ABORT, 'replant rejected'); END;"));
+        var result = await ApplyAsync(id, new SeedlingAction.Replant(DateTime.Today));
+        Assert.Contains("replant rejected", result.Match(_ => "не ожидалось", error => error));
+        Assert.Equal(0, await _fixture.QueryAsync(db => db.Replants.CountAsync()));
+        Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+    }
 }

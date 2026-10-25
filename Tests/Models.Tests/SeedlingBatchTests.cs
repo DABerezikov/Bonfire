@@ -64,4 +64,20 @@ public class SeedlingBatchTests
         entries.Clear();
         Assert.Single(batch.Entries);
     }
+
+    [Fact]
+    public void WithReplanting_RecordsOnlyFirstEntryWithoutMutatingOriginal()
+    {
+        var original = SeedlingBatch.Create(3, [Entry(1, false), Entry(2, true)]).ValueOrThrow();
+        var date = new DateTime(2026, 4, 1);
+        var updated = original.WithReplanting(date).ValueOrThrow();
+        Assert.Equal(date, Assert.Single(updated.Entries[0].Replants).Date);
+        Assert.Empty(updated.Entries[1].Replants);
+        Assert.Empty(original.Entries[0].Replants);
+        Assert.True(updated.WithReplanting(date.AddDays(1)).IsFailure);
+    }
+
+    [Fact]
+    public void WithReplanting_MissingMetadata_ReturnsFailure() => Assert.True(
+        SeedlingBatch.Create(3, []).ValueOrThrow().WithReplanting(DateTime.Today).IsFailure);
 }

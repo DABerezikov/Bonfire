@@ -290,10 +290,26 @@ public class SeedlingsWorkflowTests
     {
         var batch = Batch(); var vm = CreateVm(batch);
         vm.ReplantsDate = new DateTime(2026, 4, 1);
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingChangeResultFromViewModel(batch.Id,
+            [new(1, 0, Option.None<DateTime>(), Option.None<bool>())
+            { Replants = [new(1, new DateTime(2026, 4, 1), Option.None<double>(), Option.None<string>())] }])));
         vm.ReplantsSeedlingCommand.Execute(null);
         Assert.Equal(new DateTime(2026, 4, 1), Assert.Single(batch.SeedlingInfos[0].Replants!).ReplantingDate);
         Assert.False(vm.ReplantsSeedlingCommand.CanExecute(null));
-        _service.Received(1).UpdateSeedlingInfo(batch.SeedlingInfos[0]);
+        _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.Replant(new DateTime(2026, 4, 1))));
+    }
+
+    [Fact]
+    public void Replanting_SaveFailure_PreservesBatchAndDate()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        vm.ReplantsDate = new DateTime(2026, 4, 1);
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingChangeResultFromViewModel>("Ошибка пересадки"));
+        vm.ReplantsSeedlingCommand.Execute(null);
+        Assert.Empty(batch.SeedlingInfos[0].Replants!);
+        Assert.Equal(new DateTime(2026, 4, 1), vm.ReplantsDate);
+        Assert.True(vm.ReplantsSeedlingCommand.CanExecute(null));
+        _dialog.Received(1).Warning("Ошибка пересадки", "Пересадка рассады");
     }
 
     [Fact]

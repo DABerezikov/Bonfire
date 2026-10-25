@@ -3,7 +3,11 @@ using Bonfire.Domain.Functional;
 
 namespace Bonfire.Domain.Seedlings;
 
-public sealed record SeedlingEntry(Option<int> Id, int Number, Option<DateTime> GerminationDate, Option<bool> IsDead);
+public sealed record ReplantingEntry(Option<int> Id, DateTime Date, Option<double> PotVolume, Option<string> Note);
+public sealed record SeedlingEntry(Option<int> Id, int Number, Option<DateTime> GerminationDate, Option<bool> IsDead)
+{
+    public ImmutableArray<ReplantingEntry> Replants { get; init; } = [];
+}
 
 public sealed class SeedlingBatch
 {
@@ -46,12 +50,23 @@ public sealed class SeedlingBatch
     public Result<SeedlingBatch> Apply(SeedlingAction action) => action switch
     {
         SeedlingAction.Germinate germinate => WithGermination(germinate.Count, germinate.Date),
+        SeedlingAction.Replant replant => WithReplanting(replant.Date),
         _ => throw new System.Diagnostics.UnreachableException()
     };
+
+    public Result<SeedlingBatch> WithReplanting(DateTime date) => Entries.Length == 0
+        ? Result.Failure<SeedlingBatch>("В партии нет записи для пересадки")
+        : !Entries[0].Replants.IsEmpty
+            ? Result.Failure<SeedlingBatch>("Пересадка партии уже записана")
+            : Result.Success(new SeedlingBatch(Quantity, Entries.SetItem(0, Entries[0] with
+            {
+                Replants = [new(Option.None<int>(), date, Option.None<double>(), Option.None<string>())]
+            })));
 }
 
 public abstract record SeedlingAction
 {
     private SeedlingAction() { }
     public sealed record Germinate(int Count, DateTime Date) : SeedlingAction;
+    public sealed record Replant(DateTime Date) : SeedlingAction;
 }

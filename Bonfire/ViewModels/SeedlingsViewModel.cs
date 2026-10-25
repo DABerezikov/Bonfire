@@ -853,6 +853,11 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             info.SeedlingNumber = entry.Number;
             info.GerminationDate = entry.GerminationDate.ToNullable();
             info.IsDead = entry.IsDead.ToNullable();
+            info.Replants = entry.Replants.Select(replant => new Replanting
+            {
+                Id = replant.Id, ReplantingDate = replant.Date, PotVolume = replant.PotVolume.ToNullable(),
+                ReplantingNote = replant.Note.ToNullable(), SeedlingInfo = info
+            }).ToList();
         }
         if (SelectedItem?.Id == selected.Id) CopySeedlingToEditItem(selected, EditedItem);
         UpdateCollectionViewSource(selected.Id);
@@ -860,18 +865,18 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     public ICommand ReplantsSeedlingCommand => field
         ??= new LambdaCommandAsync(OnReplantsSeedlingCommandExecuted,
-            () => SelectedItem != null && (SelectedItem.SeedlingInfos[0].Replants?.Count == 0 || SelectedItem.SeedlingInfos[0].Replants == null));
+            () => SelectedItem is { SeedlingInfos.Count: > 0 } selected && selected.SeedlingInfos[0].Replants is not { Count: > 0 });
 
     private async Task OnReplantsSeedlingCommandExecuted()
     {
-        SelectedItem!.SeedlingInfos[0].Replants =
-        [
-            new Replanting { ReplantingDate = ReplantsDate }
-        ];
-        await _seedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]);
-        await _seedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
-        ReplantsDate = DateTime.Now;
+        if (SelectedItem is not { } selected) return;
+        var result = await _seedlingsService.ChangeAsync(new(selected.Id, new SeedlingAction.Replant(ReplantsDate)));
+        result.Match(receipt =>
+        {
+            ApplySeedlingChange(selected, receipt);
+            ReplantsDate = DateTime.Now;
+            return true;
+        }, error => { _userDialog.Warning(error, "Пересадка рассады"); return false; });
     }
 
     public ICommand CreateSeedlingsReportCommand => field
