@@ -16,11 +16,11 @@ public sealed class DbSeedEditorOptionsReader(IUnitOfWorkFactory units) : ISeedE
         await using var unit = units.Create();
         try
         {
-            var sorts = await unit.Repository<PlantSort>().Items.Select(sort => new { sort.PlantColor, sort.Maturity })
+            var sorts = await unit.Repository<PlantSort>().Rows.Select(sort => new { sort.PlantColor, sort.Maturity })
                 .ToArrayAsync(cancellationToken).ConfigureAwait(false);
-            var options = await unit.Repository<SortOption>().Items.Select(option => new { option.Category, option.Name })
+            var options = await unit.Repository<SortOption>().Rows.Select(option => new { option.Category, option.Name })
                 .ToArrayAsync(cancellationToken).ConfigureAwait(false);
-            var producers = await unit.Repository<Producer>().Items.OrderBy(producer => producer.Name)
+            var producers = await unit.Repository<Producer>().Rows.OrderBy(producer => producer.Name)
                 .Select(producer => new ProducerDetailsFromViewModel(producer.Id, producer.Name)).ToArrayAsync(cancellationToken).ConfigureAwait(false);
             static ImmutableArray<string> Values(IEnumerable<string?> values) => values
                 .Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!.Trim())

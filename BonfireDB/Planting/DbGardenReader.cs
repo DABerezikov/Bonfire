@@ -13,7 +13,7 @@ public sealed class DbGardenReader(IUnitOfWorkFactory units) : IGardenReader
     public async Task<Result<ImmutableArray<GardenPlanResultFromViewModel>>> ReadPlansAsync(CancellationToken cancellationToken)
     {
         await using var unit = units.Create();
-        var plans = await unit.Repository<GardenPlan>().Items.AsNoTracking().OrderByDescending(p => p.Year)
+        var plans = await unit.Repository<GardenPlan>().Rows.AsNoTracking().OrderByDescending(p => p.Year)
             .ToArrayAsync(cancellationToken).ConfigureAwait(false);
         return Result.Success(plans.Select(GardenReadDbMapper.ReadPlan).ToImmutableArray());
     }
@@ -22,7 +22,10 @@ public sealed class DbGardenReader(IUnitOfWorkFactory units) : IGardenReader
     {
         ArgumentNullException.ThrowIfNull(planId);
         await using var unit = units.Create();
-        var gardens = await unit.Repository<Garden>().Items.AsNoTracking().AsSplitQuery().Where(g => g.GardenPlanId == planId.Value)
+        var gardens = await unit.Repository<Garden>().Rows
+            .Include(g => g.Elements).ThenInclude(element => element.PlantingSpots)
+            .Include(g => g.Greenhouses).ThenInclude(house => house.Elements).ThenInclude(element => element.PlantingSpots)
+            .AsNoTracking().AsSplitQuery().Where(g => g.GardenPlanId == planId.Value)
             .ToArrayAsync(cancellationToken).ConfigureAwait(false);
         return gardens.Traverse(GardenReadDbMapper.ReadGarden);
     }

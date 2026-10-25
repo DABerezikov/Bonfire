@@ -15,7 +15,8 @@ public class DbRepository<T> : IRepository<T> where T : Entity, new()
         _set = _db.Set<T>();
     }
 
-    public virtual IQueryable<T> Items => _set;
+    public IQueryable<T> Rows => _set;
+    public virtual IQueryable<T> Items => Rows;
 
     // Attach отслеживает граф по значению ключа: сущности с Id == 0 → Added,
     // существующие (Id != 0) → Unchanged. Это позволяет добавлять новый корень,

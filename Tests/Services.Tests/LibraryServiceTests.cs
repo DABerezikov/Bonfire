@@ -30,10 +30,11 @@ public class LibraryServiceTests
     [Fact]
     public async Task GetSortAsync_ExistingId_ReturnsSuccess()
     {
+        using var fixture = new SqliteUowFixture();
         var sort = new PlantSort { Id = 1, Name = "Черри", Producer = new Producer() };
-        _sorts.GetAsync(1).Returns(sort);
+        await fixture.PrepareAsync(sort);
 
-        var result = await CreateService().GetSortAsync(1);
+        var result = await fixture.CreateLibraryService().GetSortAsync(1);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Черри", result.Value!.Name);
@@ -42,9 +43,10 @@ public class LibraryServiceTests
     [Fact]
     public async Task GetSortAsync_MissingId_ReturnsFailure()
     {
-        _sorts.GetAsync(99).Returns((PlantSort?)null);
+        using var fixture = new SqliteUowFixture();
 
-        var result = await CreateService().GetSortAsync(99);
+
+        var result = await fixture.CreateLibraryService().GetSortAsync(99);
 
         Assert.True(result.IsFailure);
         Assert.NotNull(result.Error);
@@ -96,10 +98,11 @@ public class LibraryServiceTests
     [Fact]
     public async Task GetCultureAsync_ExistingId_ReturnsSuccess()
     {
+        using var fixture = new SqliteUowFixture();
         var culture = new PlantCulture { Id = 2, Name = "Томат", Class = "Овощи" };
-        _cultures.GetAsync(2).Returns(culture);
+        await fixture.PrepareAsync(culture);
 
-        var result = await CreateService().GetCultureAsync(2);
+        var result = await fixture.CreateLibraryService().GetCultureAsync(2);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Томат", result.Value!.Name);
@@ -108,9 +111,10 @@ public class LibraryServiceTests
     [Fact]
     public async Task GetCultureAsync_MissingId_ReturnsFailure()
     {
-        _cultures.GetAsync(99).Returns((PlantCulture?)null);
+        using var fixture = new SqliteUowFixture();
 
-        var result = await CreateService().GetCultureAsync(99);
+
+        var result = await fixture.CreateLibraryService().GetCultureAsync(99);
 
         Assert.True(result.IsFailure);
     }
@@ -148,10 +152,11 @@ public class LibraryServiceTests
     [Fact]
     public async Task GetProducerAsync_ExistingId_ReturnsSuccess()
     {
+        using var fixture = new SqliteUowFixture();
         var producer = new Producer { Id = 3, Name = "Гавриш" };
-        _producers.GetAsync(3).Returns(producer);
+        await fixture.PrepareAsync(producer);
 
-        var result = await CreateService().GetProducerAsync(3);
+        var result = await fixture.CreateLibraryService().GetProducerAsync(3);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Гавриш", result.Value!.Name);
@@ -160,9 +165,10 @@ public class LibraryServiceTests
     [Fact]
     public async Task GetProducerAsync_MissingId_ReturnsFailure()
     {
-        _producers.GetAsync(99).Returns((Producer?)null);
+        using var fixture = new SqliteUowFixture();
 
-        var result = await CreateService().GetProducerAsync(99);
+
+        var result = await fixture.CreateLibraryService().GetProducerAsync(99);
 
         Assert.True(result.IsFailure);
     }

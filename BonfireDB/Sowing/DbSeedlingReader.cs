@@ -9,7 +9,9 @@ namespace BonfireDB.Sowing;
 
 public sealed class DbSeedlingReader(IUnitOfWorkFactory units) : ISeedlingReader
 {
-    private static IQueryable<Seedling> Query(IUnitOfWork unit) => unit.Repository<Seedling>().Items
+    private static IQueryable<Seedling> Query(IUnitOfWork unit) => unit.Repository<Seedling>().Rows
+        .Include(batch => batch.Plant.PlantCulture).Include(batch => batch.Plant.PlantSort.Producer)
+        .Include(batch => batch.SeedlingInfos).ThenInclude(info => info.Replants)
         .Include(batch => batch.SeedlingInfos).ThenInclude(info => info.Treatments).AsNoTracking().AsSplitQuery();
 
     public async Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> ReadAsync(CancellationToken cancellationToken)

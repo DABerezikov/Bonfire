@@ -5,6 +5,8 @@ namespace BonfireDB.Entities.Base;
 // Поэтому контекст живёт коротко (одна операция), а не всё время работы приложения.
 public interface IRepository<T> where T : class, IEntity
 {
+    /// <summary>Запрос строк без скрытых Include; адаптер явно задаёт необходимый граф.</summary>
+    IQueryable<T> Rows { get; }
     IQueryable<T> Items { get; }
     T? Get(int id);
     Task<T?> GetAsync(int id, CancellationToken cancel = default);
