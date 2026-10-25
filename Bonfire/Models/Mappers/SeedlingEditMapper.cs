@@ -2,15 +2,11 @@ using System.Linq;
 using Bonfire.Application.Seedlings;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
-using BonfireDB.Entities;
 
 namespace Bonfire.Models.Mappers;
 
 public static class SeedlingEditMapper
 {
-    public static SeedlingEditorDraft Create(Seedling batch)
-        => Create(new SeedlingReadModel(BonfireDB.Sowing.SeedlingReadDbMapper.Read(batch).ValueOrThrow()));
-
     public static SeedlingEditorDraft Create(SeedlingReadModel batch)
     {
         var metadata = batch.SeedlingInfos.FirstOrDefault();

@@ -1,3 +1,6 @@
+using Bonfire.Models;
+using Bonfire.Domain.Functional;
+using BonfireDB.Sowing;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities;
 
@@ -13,7 +16,7 @@ public class SeedlingEditorDraftTests
     {
         var source = new Seedling { Id = 7, Quantity = 3, Plant = MakePlant(),
             SeedlingInfos = [new() { Id = 1, Note = "Исходная", LandingDate = new(2026, 3, 1), SeedlingSource = "Из семян" }] };
-        var draft = SeedlingEditMapper.Create(source);
+        var draft = SeedlingEditMapper.Create(new SeedlingReadModel(SeedlingReadDbMapper.Read(source).ValueOrThrow()));
         var request = SeedlingEditMapper.ToRequest(draft);
         draft.Quantity = 5;
         draft.Note = "Новая";
@@ -33,7 +36,7 @@ public class SeedlingEditorDraftTests
     {
         var source = new Seedling { Id = 7, Plant = MakePlant(), LandingDate = new(2026, 4, 1), SeedlingSource = "Подарено",
             SeedlingInfos = [new() { Id = 1, LandingDate = new(2026, 3, 1), SeedlingSource = "Из семян" }] };
-        var draft = SeedlingEditMapper.Create(source);
+        var draft = SeedlingEditMapper.Create(new SeedlingReadModel(SeedlingReadDbMapper.Read(source).ValueOrThrow()));
         Assert.Equal(source.LandingDate, draft.LandingDate);
         Assert.Equal("Подарено", draft.Source);
         Assert.Null(draft.Place);

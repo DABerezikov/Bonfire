@@ -1,3 +1,6 @@
+using Bonfire.Models;
+using Bonfire.Domain.Functional;
+using BonfireDB.Sowing;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities;
 
@@ -6,7 +9,7 @@ namespace Models.Tests;
 public class SeedlingDraftTests
 {
     [Fact]
-    public void CopyInto_EditingNestedDraft_LeavesOriginalUnchanged()
+    public void ReadAndDraft_KeepNestedHistoryIndependent()
     {
         var info = new SeedlingInfo
         {
@@ -18,25 +21,19 @@ public class SeedlingDraftTests
         info.Treatments[0].SeedlingInfo = info;
         var original = Batch();
         original.SeedlingInfos.Add(info);
-        var draft = Batch();
-
-        SeedlingMapper.CopyInto(original, draft);
-        var edited = Assert.Single(draft.SeedlingInfos);
-        edited.Note = "Правка";
-        edited.Replants![0].ReplantingNote = "Правка";
-        edited.Treatments![0].Product = "Правка";
-        draft.SeedlingInfos.Clear();
-
-        Assert.Single(original.SeedlingInfos);
+        var snapshot = new SeedlingReadModel(SeedlingReadDbMapper.Read(original).ValueOrThrow());
+        var draft = SeedlingEditMapper.Create(snapshot);
+        draft.Note = "Правка";
+        info.Replants[0].ReplantingNote = "Внешняя правка";
+        info.Treatments[0].Product = "Внешняя правка";
+        Assert.Equal("Исходная запись", snapshot.SeedlingInfos[0].Note);
+        Assert.Equal("Исходная пересадка", snapshot.SeedlingInfos[0].Replants[0].ReplantingNote);
+        Assert.Equal("Исходный препарат", snapshot.Snapshot.SeedlingInfos[0].Treatments.Match(v => v[0].Product.ToNullable(), () => null));
         Assert.Equal("Исходная запись", info.Note);
-        Assert.Equal("Исходная пересадка", info.Replants[0].ReplantingNote);
-        Assert.Equal("Исходный препарат", info.Treatments[0].Product);
-        Assert.Same(edited, edited.Replants[0].SeedlingInfo);
-        Assert.Same(edited, edited.Treatments[0].SeedlingInfo);
     }
 
     [Fact]
-    public void CopyInto_BatchMetadata_PreservesValuesAndOptionalCollections()
+    public void Read_BatchMetadata_PreservesValuesAndOptionalCollections()
     {
         var original = Batch();
         original.LandingDate = new DateTime(2026, 3, 1);
@@ -46,9 +43,7 @@ public class SeedlingDraftTests
         original.PlantedOut = 2;
         original.IsPlantedInBed = true;
         original.SeedlingInfos.Add(new() { Id = 7, MotherPlantId = 3, IsDead = false });
-        var draft = Batch();
-
-        SeedlingMapper.CopyInto(original, draft);
+        var draft = new SeedlingReadModel(SeedlingReadDbMapper.Read(original).ValueOrThrow());
 
         Assert.Equal(original.LandingDate, draft.LandingDate);
         Assert.Equal(original.LunarPhase, draft.LunarPhase);
@@ -56,8 +51,8 @@ public class SeedlingDraftTests
         Assert.Equal(original.PlantPlace, draft.PlantPlace);
         Assert.Equal(2, draft.PlantedOut);
         Assert.True(draft.IsPlantedInBed);
-        Assert.Null(draft.SeedlingInfos[0].Replants);
-        Assert.Null(draft.SeedlingInfos[0].Treatments);
+        Assert.Empty(draft.SeedlingInfos[0].Replants);
+        Assert.IsType<Option<System.Collections.Immutable.ImmutableArray<Bonfire.Application.Seedlings.TreatmentReadFromViewModel>>.None>(draft.Snapshot.SeedlingInfos[0].Treatments);
         Assert.Equal(3, draft.SeedlingInfos[0].MotherPlantId);
     }
 

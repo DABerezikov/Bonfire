@@ -1,3 +1,5 @@
+using BonfireDB.SeedEditing;
+using BonfireDB.Libraries;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -23,7 +25,7 @@ public class SeedEditorDraftTests
     public void Draft_PackageEditAndRestore_PreservesSourceAndDistinguishesOptionalValues()
     {
         var source = Seed();
-        var draft = SeedEditMapper.FromSeed(source);
+        var draft = SeedEditMapper.FromSeed(SeedReadDbMapper.Read(source).ValueOrThrow());
         Assert.False(draft.HasPackageChanges);
         draft.Package.AmountSeeds = 8;
         draft.Package.Note = "";
@@ -44,8 +46,8 @@ public class SeedEditorDraftTests
     public void Mapper_RequestSnapshot_DoesNotChangeWhenDraftOrSourceChanges()
     {
         var source = Seed();
-        var draft = SeedEditMapper.FromSeed(source);
-        var sort = LibraryMapper.ToEditModel(source.Plant.PlantSort);
+        var draft = SeedEditMapper.FromSeed(SeedReadDbMapper.Read(source).ValueOrThrow());
+        var sort = LibraryMapper.ToEditModel(LibraryReadDbMapper.Read(source.Plant.PlantSort).ValueOrThrow());
         draft.Package.Note = "Сохранить";
         sort.PlantHeight = 30;
         var request = SeedEditMapper.ToRequest(draft, sort, 3).ValueOrThrow();
@@ -65,7 +67,7 @@ public class SeedEditorDraftTests
     [Fact]
     public void Package_ValueChange_NotifiesBindingsValidationAndDraftState()
     {
-        var draft = SeedEditMapper.FromSeed(Seed());
+        var draft = SeedEditMapper.FromSeed(SeedReadDbMapper.Read(Seed()).ValueOrThrow());
         var packageChanges = new List<string?>();
         var draftChanges = new List<string?>();
         draft.Package.PropertyChanged += (_, change) => packageChanges.Add(change.PropertyName);

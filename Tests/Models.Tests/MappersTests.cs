@@ -1,3 +1,7 @@
+using BonfireDB.SeedEditing;
+using BonfireDB.Sowing;
+using Bonfire.Domain.Functional;
+using Bonfire.Models;
 using BonfireDB.Planting;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities;
@@ -33,22 +37,12 @@ public class MappersTests
         }
     };
 
-    private static Seed MakeEmptySeed() => new()
-    {
-        Plant = new Plant
-        {
-            PlantCulture = new PlantCulture(),
-            PlantSort = new PlantSort { Producer = new Producer() }
-        },
-        SeedsInfo = new SeedsInfo()
-    };
-
     // ── SeedMapper.ToViewModel ────────────────────────────────────────────────
 
     [Fact]
     public void SeedMapper_ToViewModel_MapsAllFields()
     {
-        var dto = SeedMapper.ToViewModel(MakeSeed());
+        var dto = SeedMapper.ToViewModel(SeedReadDbMapper.Read(MakeSeed()).ValueOrThrow());
 
         Assert.Equal(7, dto.Id);
         Assert.Equal("Томат", dto.Culture);
@@ -61,15 +55,13 @@ public class MappersTests
         Assert.Equal(2.2, dto.AmountSeedsWeight);
     }
 
-    // ── SeedMapper.CopyInto ───────────────────────────────────────────────────
+    // ── SeedReadDbMapper.Read ───────────────────────────────────────────────────
 
     [Fact]
-    public void SeedMapper_CopyInto_CopiesScalarAndNestedFields()
+    public void SeedRead_MapsScalarAndNestedFields()
     {
         var from = MakeSeed();
-        var to = MakeEmptySeed();
-
-        SeedMapper.CopyInto(from, to);
+        var to = SeedReadDbMapper.Read(from).ValueOrThrow();
 
         Assert.Equal(7, to.Id);
         Assert.Equal(3, to.SeedsInfoId);
@@ -77,32 +69,25 @@ public class MappersTests
         Assert.Equal("Овощи", to.Plant.PlantCulture.Class);
         Assert.Equal("Черри", to.Plant.PlantSort.Name);
         Assert.Equal("Гавриш", to.Plant.PlantSort.Producer.Name);
-        Assert.Equal(150, to.Plant.PlantSort.PlantHeight);
+        Assert.Equal(150, to.Plant.PlantSort.Characteristics.PlantHeight.ToNullable());
         Assert.Equal(18, to.SeedsInfo.AmountSeeds);
-        Assert.Equal(2.2, to.SeedsInfo.AmountSeedsWeight);
-        Assert.Equal("Куплено", to.SeedsInfo.SeedSource);
-        Assert.Equal("примечание", to.SeedsInfo.Note);
+        Assert.Equal(2.2, to.SeedsInfo.AmountSeedsWeight.ToNullable());
+        Assert.Equal("Куплено", to.SeedsInfo.SeedSource.ToNullable());
+        Assert.Equal("примечание", to.SeedsInfo.Note.ToNullable());
     }
 
     [Fact]
-    public void SeedMapper_CopyInto_KeepsTargetInstances()
+    public void SeedRead_IsDetachedFromMutableEntityGraph()
     {
-        var from = MakeSeed();
-        var to = MakeEmptySeed();
-        var targetPlant = to.Plant;
-        var targetInfo = to.SeedsInfo;
-
-        SeedMapper.CopyInto(from, to);
-
-        // Копируются поля, а не ссылки на вложенные объекты-источники
-        Assert.Same(targetPlant, to.Plant);
-        Assert.Same(targetInfo, to.SeedsInfo);
+        var from = MakeSeed(); var to = SeedReadDbMapper.Read(from).ValueOrThrow();
+        from.Plant.PlantSort.Name = "Другое"; from.SeedsInfo.AmountSeeds = 0;
+        Assert.Equal("Черри", to.Plant.PlantSort.Name); Assert.Equal(18, to.SeedsInfo.AmountSeeds);
     }
 
-    // ── SeedlingMapper.CopyInto ───────────────────────────────────────────────
+    // ── SeedlingReadDbMapper.Read ───────────────────────────────────────────────
 
     [Fact]
-    public void SeedlingMapper_CopyInto_PreservesExtendedSharedSortCharacteristics()
+    public void SeedlingRead_PreservesExtendedSharedSortCharacteristics()
     {
         var from = new Seedling { Plant = MakeSeed().Plant };
         from.Plant.PlantSort.MaxGrowingSeason = 120;
@@ -113,22 +98,20 @@ public class MappersTests
         from.Plant.PlantSort.MinFruitWeight = 15;
         from.Plant.PlantSort.MaxFruitWeight = 25;
         from.Plant.PlantSort.YieldKg = 3;
-        var to = new Seedling { Plant = MakeSeed().Plant };
+        var to = LibraryMapper.ToEditModel(SeedlingReadDbMapper.Read(from).ValueOrThrow().Plant.PlantSort);
 
-        SeedlingMapper.CopyInto(from, to);
-
-        Assert.Equal(120, to.Plant.PlantSort.MaxGrowingSeason);
-        Assert.Equal("Среднеспелый", to.Plant.PlantSort.Maturity);
-        Assert.Equal(180, to.Plant.PlantSort.MaxPlantHeight);
-        Assert.Equal(70, to.Plant.PlantSort.MaxAgeOfSeedlings);
-        Assert.Equal(50, to.Plant.PlantSort.LandingRowSpacing);
-        Assert.Equal(15, to.Plant.PlantSort.MinFruitWeight);
-        Assert.Equal(25, to.Plant.PlantSort.MaxFruitWeight);
-        Assert.Equal(3, to.Plant.PlantSort.YieldKg);
+        Assert.Equal(120, to.MaxGrowingSeason);
+        Assert.Equal("Среднеспелый", to.Maturity);
+        Assert.Equal(180, to.MaxPlantHeight);
+        Assert.Equal(70, to.MaxAgeOfSeedlings);
+        Assert.Equal(50, to.LandingRowSpacing);
+        Assert.Equal(15, to.MinFruitWeight);
+        Assert.Equal(25, to.MaxFruitWeight);
+        Assert.Equal(3, to.YieldKg);
     }
 
     [Fact]
-    public void SeedlingMapper_CopyInto_CopiesFieldsAndInfos()
+    public void SeedlingRead_CopiesFieldsAndInfos()
     {
         var infos = new List<SeedlingInfo> { new() { Id = 1 }, new() { Id = 2 } };
         var from = new Seedling
@@ -142,16 +125,7 @@ public class MappersTests
             },
             SeedlingInfos = infos
         };
-        var to = new Seedling
-        {
-            Plant = new Plant
-            {
-                PlantCulture = new PlantCulture(),
-                PlantSort = new PlantSort { Producer = new Producer() }
-            }
-        };
-
-        SeedlingMapper.CopyInto(from, to);
+        var to = new SeedlingReadModel(SeedlingReadDbMapper.Read(from).ValueOrThrow());
 
         Assert.Equal(9, to.Id);
         Assert.Equal(3.3, to.Weight);

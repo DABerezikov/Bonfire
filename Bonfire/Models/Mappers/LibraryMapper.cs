@@ -1,15 +1,10 @@
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
-using BonfireDB.Entities;
-using System.Linq;
 
 namespace Bonfire.Models.Mappers;
 
 internal static class LibraryMapper
 {
-    public static SortEditModel ToEditModel(PlantSort sort)
-        => ToEditModel(sort.Id, sort.Name, (sort.Plants.FirstOrDefault()?.PlantCulture.Id).ToOption(), BonfireDB.SeedEditing.SortCharacteristicsDbMapper.Read(sort));
-
     public static SortEditModel ToEditModel(SortReadFromViewModel sort)
         => ToEditModel(sort.Id, sort.Name, sort.CultureId, sort.Characteristics);
 
@@ -41,9 +36,6 @@ internal static class LibraryMapper
         return model;
     }
 
-    public static CultureEditModel ToEditModel(PlantCulture culture)
-        => ToEditModel(new CultureDetailsFromViewModel(culture.Id, culture.Name, culture.Class));
-
     public static CultureEditModel ToEditModel(CultureDetailsFromViewModel culture)
     {
         var model = new CultureEditModel
@@ -56,30 +48,4 @@ internal static class LibraryMapper
         return model;
     }
 
-    public static void ApplyTo(SortEditModel model, PlantSort sort)
-    {
-        sort.Name = model.Name!;
-        sort.Description = model.Description;
-        sort.MinGerminationTime = model.MinGerminationTime;
-        sort.MaxGerminationTime = model.MaxGerminationTime;
-        sort.AgeOfSeedlings = model.AgeOfSeedlings;
-        sort.GrowingSeason = model.GrowingSeason;
-        sort.MaxGrowingSeason = model.MaxGrowingSeason;
-        sort.LandingPattern = model.LandingPattern;
-        sort.PlantHeight = model.PlantHeight;
-        sort.PlantColor = model.PlantColor;
-        sort.Maturity = model.Maturity;
-        sort.MaxAgeOfSeedlings = model.MaxAgeOfSeedlings;
-        sort.MaxPlantHeight = model.MaxPlantHeight;
-        sort.LandingRowSpacing = model.LandingRowSpacing;
-        sort.YieldKg = model.YieldKg;
-        sort.MinFruitWeight = model.MinFruitWeight;
-        sort.MaxFruitWeight = model.MaxFruitWeight;
-    }
-
-    public static void ApplyTo(CultureEditModel model, PlantCulture culture)
-    {
-        culture.Name = model.Name!;
-        culture.Class = model.Class;
-    }
 }

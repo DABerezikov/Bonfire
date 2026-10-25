@@ -1,3 +1,5 @@
+using BonfireDB.SeedEditing;
+using BonfireDB.Libraries;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
@@ -11,7 +13,7 @@ public class SeedEditorIntegrationTests : IDisposable
     public void Dispose() => _fx.Dispose();
 
     private static Task<Result<SeedEditResultFromViewModel>> SaveAsync(SeedsService service, Seed edited, SortEditModel sort, int producer)
-        => SeedEditMapper.ToRequest(SeedEditMapper.FromSeed(edited), sort, producer).Match(
+        => SeedEditMapper.ToRequest(SeedEditMapper.FromSeed(SeedReadDbMapper.Read(edited).ValueOrThrow()), sort, producer).Match(
             service.SaveSeedEditAsync,
             error => Task.FromResult(Result.Failure<SeedEditResultFromViewModel>(error)));
 
@@ -117,7 +119,7 @@ public class SeedEditorIntegrationTests : IDisposable
         };
         await SaveAsync(service, edit, sort, producer);
         var saved = (await service.GetSeedAsync(id))!;
-        Assert.True(Bonfire.Models.Mappers.SeedMapper.SamePackage(edit.SeedsInfo, saved.SeedsInfo));
+        Assert.Equal(SeedPackageDbMapper.Read(edit.SeedsInfo), SeedPackageDbMapper.Read(saved.SeedsInfo));
         Assert.Equal(" Черри ", saved.Plant.PlantSort.Name);
         Assert.Equal("", saved.Plant.PlantSort.Description);
         Assert.Null(saved.Plant.PlantSort.MinGerminationTime);
