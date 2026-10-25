@@ -281,7 +281,7 @@ public class SeedlingsWorkflowTests
         Assert.Single(batch.SeedlingInfos);
         Assert.Equal(3, vm.Germinate);
         Assert.Equal(date, vm.GerminationDate);
-        Assert.Single(vm.EditedItem.SeedlingInfos);
+        Assert.Single(vm.EditedItem!.Entries);
         _dialog.Received(1).Warning("Ошибка всходов", "Всходы рассады");
     }
 
@@ -352,5 +352,54 @@ public class SeedlingsWorkflowTests
         vm.CreateFilteredSeedlingsReportCommand.Execute(null);
         _reports.Received().CreateSeedlingsReport(Arg.Is<IEnumerable<SeedlingReportItem>>(rows => rows.Single().CountGerminate == 1 && rows.Single().Balance == 1), "Рассада");
         _reports.Received().CreateSeedlingsReport(Arg.Is<IEnumerable<SeedlingReportItem>>(rows => rows.Single().Culture == "Томат"), "Рассада_выборка");
+    }
+
+    [Fact]
+    public void Edit_Cancel_RestoresDraftWithoutChangingOriginal()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        vm.EditedItem!.Quantity = 7;
+        vm.CancelUpdateSeedlingInfoCommand.Execute(null);
+        Assert.Equal(3, batch.Quantity);
+        Assert.Equal(3, vm.EditedItem!.Quantity);
+    }
+
+    [Fact]
+    public void Edit_SaveFailure_PreservesOriginalAndDraft()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        vm.EditedItem!.Quantity = 7;
+        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        _service.EditAsync(Arg.Any<EditSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingEditResultFromViewModel>("Ошибка сохранения"));
+        vm.UpdateSeedlingInfoCommand.Execute(null);
+        Assert.Equal(3, batch.Quantity);
+        Assert.Equal(7, vm.EditedItem!.Quantity);
+        _dialog.Received(1).Warning("Ошибка сохранения", "Редактирование рассады");
+    }
+
+    [Fact]
+    public void Edit_LandingDate_KeepsMetadataAndDisplayedDateConsistent()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        var date = new DateTime(2026, 4, 1);
+        vm.EditedItem!.LandingDate = date;
+        var details = SeedlingDetails.Create(vm.EditedItem.Values with { LunarPhase = "Фаза" }).ValueOrThrow();
+        _service.EditAsync(Arg.Any<EditSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingEditResultFromViewModel(details,
+            new(batch.Id, [new(1, 0, Option.None<DateTime>(), Option.None<bool>())]))));
+        _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        vm.UpdateSeedlingInfoCommand.Execute(null);
+        Assert.Equal(date, batch.LandingDate);
+        Assert.Equal(date, batch.SeedlingInfos[0].LandingDate);
+    }
+
+    [Fact]
+    public void Edit_ConfirmationDeclined_PreservesDraftAndDoesNotWrite()
+    {
+        var batch = Batch(); var vm = CreateVm(batch);
+        vm.EditedItem!.Quantity = 7;
+        vm.UpdateSeedlingInfoCommand.Execute(null);
+        Assert.Equal(3, batch.Quantity);
+        Assert.Equal(7, vm.EditedItem.Quantity);
+        _service.DidNotReceive().EditAsync(Arg.Any<EditSeedlingFromViewModel>());
     }
 }

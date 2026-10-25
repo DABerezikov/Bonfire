@@ -11,7 +11,7 @@ using Bonfire.Application.Seedlings;
 
 namespace Bonfire.Services;
 
-internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar, ISowSeeds sowing, IDeleteSeedling deletion, IChangeSeedling changes) : ISeedlingsService
+internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar, ISowSeeds sowing, IDeleteSeedling deletion, IChangeSeedling changes, IEditSeedling editing) : ISeedlingsService
 {
     public MoonPhase Lunar { get; } = lunar;
 
@@ -23,6 +23,9 @@ internal class SeedlingsService(IUnitOfWorkFactory uowFactory, MoonPhase lunar, 
 
     public Task<Result<SeedlingChangeResultFromViewModel>> ChangeAsync(ChangeSeedlingFromViewModel request)
         => changes.ExecuteAsync(request);
+
+    public Task<Result<SeedlingEditResultFromViewModel>> EditAsync(EditSeedlingFromViewModel request)
+        => editing.ExecuteAsync(request);
 
     public async Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync()
     {

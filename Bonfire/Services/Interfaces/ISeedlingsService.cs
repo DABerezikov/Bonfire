@@ -13,6 +13,7 @@ public interface ISeedlingsService
     Task<Result<SowingReceipt>> SowAsync(SowingRequest request);
     Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(DeleteSeedlingFromViewModel request);
     Task<Result<SeedlingChangeResultFromViewModel>> ChangeAsync(ChangeSeedlingFromViewModel request);
+    Task<Result<SeedlingEditResultFromViewModel>> EditAsync(EditSeedlingFromViewModel request);
     Task<IReadOnlyList<Seedling>> GetAllSeedlingsAsync();
     Task<Seedling?> GetSeedlingAsync(int id);
     Task<Seedling> MakeASeedling(Seedling seedling);

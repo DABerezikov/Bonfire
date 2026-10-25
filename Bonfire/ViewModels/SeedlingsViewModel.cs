@@ -17,6 +17,7 @@ using Bonfire.Domain.Seeds;
 using Bonfire.Domain.Functional;
 using Bonfire.Application.Seedlings;
 using Bonfire.Domain.Seedlings;
+using BonfireDB.Sowing;
 
 namespace Bonfire.ViewModels;
 
@@ -164,33 +165,27 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         set
         {
             if (Set(ref field, value))
-                CopySeedlingToEditItem(SelectedItem, EditedItem);
+                EditedItem = value is { } selected ? SeedlingEditMapper.Create(selected) : null;
         }
     }
 
-    public Seedling EditedItem
+    public SeedlingEditorDraft? EditedItem
     {
         get;
-        set => Set(ref field, value);
-    } = new()
-    {
-        Plant = new Plant
+        private set
         {
-            PlantCulture = new PlantCulture(),
-            PlantSort = new PlantSort
-            {
-                Producer = new Producer()
-            }
-        },
-        SeedlingInfos =
-        [
-            new SeedlingInfo
-            {
-                Replants = [],
-                Treatments = []
-            }
-        ]
-    };
+            if (Set(ref field, value)) EditorHasBindingErrors = false;
+        }
+    }
+
+    public bool EditorHasBindingErrors
+    {
+        get;
+        set
+        {
+            if (Set(ref field, value)) CommandManager.InvalidateRequerySuggested();
+        }
+    }
 
     public List<string> ListCulture
     {
@@ -651,14 +646,6 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             .Select(CreateSeedlingFromViewModel)
             .SortSeedlings();
 
-    private void CopySeedlingToEditItem(Seedling? seedlingFrom, Seedling seedlingTo)
-    {
-        if (seedlingFrom == null) return;
-        SeedlingMapper.CopyInto(seedlingFrom, seedlingTo);
-        OnPropertyChanged(nameof(EditedItem));
-        OnPropertyChanged(nameof(SelectedItem));
-    }
-
     private void CreateSeedlingReport()
     {
         var items = Seedlings!.Select(s =>
@@ -841,6 +828,9 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     }
 
     private void ApplySeedlingChange(Seedling selected, SeedlingChangeResultFromViewModel receipt)
+        => ApplySeedlingChange(selected, receipt, Option.None<SeedlingDetails>());
+
+    private void ApplySeedlingChange(Seedling selected, SeedlingChangeResultFromViewModel receipt, Option<SeedlingDetails> details)
     {
         foreach (var entry in receipt.Entries)
         {
@@ -860,7 +850,8 @@ public class SeedlingsViewModel : SourceSelectionViewModel
                 ReplantingNote = replant.Note.ToNullable(), SeedlingInfo = info
             }).ToList();
         }
-        if (SelectedItem?.Id == selected.Id) CopySeedlingToEditItem(selected, EditedItem);
+        details.Match(value => { SeedlingDetailsDbMapper.Apply(value, selected); return true; }, () => false);
+        if (SelectedItem?.Id == selected.Id) EditedItem = SeedlingEditMapper.Create(selected);
         UpdateCollectionViewSource(selected.Id);
     }
 
@@ -887,21 +878,25 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         ??= new LambdaCommand(CreateFilteredSeedlingReport, () => SeedlingsView != null && IsActive);
 
     public ICommand UpdateSeedlingInfoCommand => field
-        ??= new LambdaCommandAsync(OnUpdateSeedlingInfoCommandExecuted, () => EditedItem != null);
+        ??= new LambdaCommandAsync(OnUpdateSeedlingInfoCommandExecuted, () => SelectedItem != null && EditedItem != null && !EditorHasBindingErrors);
 
     private async Task OnUpdateSeedlingInfoCommandExecuted()
     {
+        if (SelectedItem is not { } selected || EditedItem is not { } draft || EditorHasBindingErrors) return;
         if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите изменить информацию о рассаде сорта - {EditedItem.Plant.PlantSort.Name}",
+                $"Вы уверены, что хотите изменить информацию о рассаде сорта - {selected.Plant.PlantSort.Name}",
                 "Редактирование рассады")) return;
 
-        CopySeedlingToEditItem(EditedItem, SelectedItem!);
-        await _seedlingsService.UpdateSeedling(SelectedItem!).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedItem!.Id);
+        var result = await _seedlingsService.EditAsync(SeedlingEditMapper.ToRequest(draft));
+        result.Match(receipt =>
+        {
+            ApplySeedlingChange(selected, receipt.Change, Option.Some(receipt.Details));
+            return true;
+        }, error => { _userDialog.Warning(error, "Редактирование рассады"); return false; });
     }
 
     public ICommand CancelUpdateSeedlingInfoCommand => field
-        ??= new LambdaCommandAsync(async () => UpdateCollectionViewSource(SelectedItem?.Id ?? -1));
+        ??= new LambdaCommand(() => EditedItem = SelectedItem is { } selected ? SeedlingEditMapper.Create(selected) : null);
 
     public ICommand DeathSeedlingCommand => field
         ??= new LambdaCommandAsync(OnDeathSeedlingCommandExecuted,
