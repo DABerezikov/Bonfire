@@ -1958,3 +1958,23 @@ TRX: artifacts/stage7-seedling-read-green. WPF-редактор/жесты/об�
 Далее отчёты и очистка; этап 7 ещё не завершён.
 
 Startup/exit smoke: STARTUP_SMOKE_OK; WindowLoaded=True; HostDisposed=True; изолированная БД Tests/Startup.Smoke/bin/Debug/net10.0-windows/isolated/865c1f2977414d35bb29070ee9e79fd2/smoke.db. Рабочая БД не использовалась.
+
+## 2026-10-25 — этап 7, шаг 4: отчёты и внешние эффекты
+
+Прослежены обе команды отчётов, IUserDialog.SaveFile, файл Reports и тесты Excel.
+Подтверждено: отчёт всегда сохранялся в Reports без диалога и без открытия файла.
+Это поведение сохранено; новый Process.Start/диалог не введён. Выбор пути выделен
+в ReportPathPolicy, запись — ReportFileWriter, EPPlus/формат — ReportWorkbookBuilder.
+Книга создаётся в памяти и возвращается immutable-байтами внутри Result; сервис
+только координирует и сообщает результат. TimeProvider задаёт локальные год/дату.
+Стили/заголовки/порядок/группы/пустые нули/имена сохранены прежними проверками.
+
+Red: некорректный срок годности выбрасывал исключение вне SaveReport; 1 failed,
+artifacts/stage7-report-red. Теперь TryParse на границе, диагностируемый отказ
+до файла. Пакеты/лицензия EPPlus прежние. Добавлены проверки создания без файлов,
+стилей по переданному году, координации локального времени и отказа книги/пути
+без записи. Общий гейт **1558/1558**, failed/skipped нет: Models 679, Services 543,
+ViewModels 295, Repository 35, SeedsFromViewModel 6. Пять новых проверок.
+TRX: artifacts/stage7-report-green. Старые Excel-проверки проходят до/после.
+Следующий шаг — очистка совместимости/запросов и архитектурный гейт. Этап 7 открыт.
+Схема и рабочая БД не менялись, push/merge не выполнялись.

@@ -1,3 +1,4 @@
+using Bonfire.Services.Reports;
 using System;
 using Bonfire.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,9 @@ namespace Bonfire.Services
             .AddSingleton<ILunarCalendar, MoonPhaseCalendar>()
             .AddSingleton<IUserDialog, UserDialog>()
             .AddSingleton<IReportService, ReportService>()
+            .AddSingleton<IReportWorkbookBuilder, ReportWorkbookBuilder>()
+            .AddSingleton<IReportPathPolicy, ReportPathPolicy>()
+            .AddSingleton<IReportFileWriter, ReportFileWriter>()
             .AddSingleton(typeof(MoonPhase))
             .AddSingleton<IGardenService, GardenService>()
             .AddSingleton<IPlantingService, PlantingService>()

@@ -1,3 +1,6 @@
+using Bonfire.Services.Reports;
+using Bonfire.Domain.Functional;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
 using Bonfire.Services.Interfaces;
@@ -33,12 +36,14 @@ public class ReportServiceBehaviorTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
+    private ReportService CreateService() => new(_dialog, new ReportWorkbookBuilder(), new ReportPathPolicy(), new ReportFileWriter(), TimeProvider.System);
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void EmptyReport_WarnsWithoutCreatingFiles(bool seeds)
     {
-        var service = new ReportService(_dialog);
+        var service = CreateService();
         if (seeds) service.CreateSeedsReport([]);
         else service.CreateSeedlingsReport([]);
         _dialog.Received(1).Warning("Нет данных для формирования отчёта", "Предупреждение");
@@ -49,7 +54,7 @@ public class ReportServiceBehaviorTests : IDisposable
     public void SeedsReport_WritesGroupsAmountsAndExpirationStyles()
     {
         var year = DateTime.Now.Year;
-        new ReportService(_dialog).CreateSeedsReport([
+        CreateService().CreateSeedsReport([
             new("Астра", "Старый", "Фирма", $"31.12.{year - 1}", 0.8, 0),
             new("Астра", "Текущий", "Фирма", $"31.12.{year}", 0, 20),
             new("Томат", "Свежий", "Партнёр", $"31.12.{year + 1}", 1.5, 10)
@@ -77,7 +82,7 @@ public class ReportServiceBehaviorTests : IDisposable
     [Fact]
     public void SeedlingsReport_WritesCountsAndLeavesZeroValuesBlank()
     {
-        new ReportService(_dialog).CreateSeedlingsReport([
+        CreateService().CreateSeedlingsReport([
             new("Томат", "Черри", "Фирма", "01.03.2026", 0, 10, 8, 6),
             new("Перец", "Красный", "Партнёр", "02.03.2026", 0.5, 0, 0, 0)
         ]);
@@ -102,7 +107,7 @@ public class ReportServiceBehaviorTests : IDisposable
     public void Report_WriteFailure_WarnsInsteadOfReportingSuccess()
     {
         File.WriteAllText(Path.Combine(_directory, "Reports"), "Блокируем создание каталога");
-        new ReportService(_dialog).CreateSeedlingsReport([
+        CreateService().CreateSeedlingsReport([
             new("Томат", "Черри", "Фирма", "01.03.2026", 0, 1, 1, 1)
         ]);
         _dialog.Received(1).Warning("Что-то пошло не так...", "Предупреждение");
@@ -111,4 +116,61 @@ public class ReportServiceBehaviorTests : IDisposable
 
     private ExcelPackage OpenOnlyReport()
         => new(new FileInfo(Assert.Single(Directory.GetFiles(Path.Combine(_directory, "Reports"), "*.xlsx"))));
+
+    [Fact]
+    public void SeedsReport_InvalidExpiration_ReportsReasonWithoutFileOrException()
+    {
+        var error = Record.Exception(() => CreateService().CreateSeedsReport([
+            new("Томат", "Черри", "Фирма", "не дата", 1, 2)
+        ]));
+        Assert.Null(error);
+        _dialog.Received(1).Warning(Arg.Is<string>(message => message.Contains("срок годности")), "Предупреждение");
+        _dialog.DidNotReceive().Information(Arg.Any<string>(), Arg.Any<string>());
+        Assert.Empty(Directory.GetFileSystemEntries(_directory));
+    }
+
+    [Fact]
+    public void Workbook_InMemory_UsesProvidedYearWithoutWritingFiles()
+    {
+        var result = new ReportWorkbookBuilder().BuildSeeds([new("Томат", "Черри", "Фирма", "31.12.2040", 1, 2)], 2041);
+        using var stream = new MemoryStream(result.ValueOrThrow().ToArray());
+        using var workbook = new ExcelPackage(stream);
+        var sheet = workbook.Workbook.Worksheets["Семена"];
+        Assert.True(sheet.Cells[3, 3].Style.Font.Bold); Assert.Equal("2040", sheet.Cells[3, 3].Text);
+        Assert.Equal("Черри", sheet.Cells[3, 1].Text); Assert.Empty(Directory.GetFileSystemEntries(_directory));
+    }
+
+    [Fact]
+    public void Report_LocalClock_CoordinatesBuilderPathAndWriter()
+    {
+        var builder = Substitute.For<IReportWorkbookBuilder>(); var paths = Substitute.For<IReportPathPolicy>();
+        var files = Substitute.For<IReportFileWriter>(); var clock = Substitute.For<TimeProvider>();
+        clock.GetUtcNow().Returns(new DateTimeOffset(2026, 12, 31, 22, 0, 0, TimeSpan.Zero));
+        clock.LocalTimeZone.Returns(TimeZoneInfo.CreateCustomTimeZone("Test", TimeSpan.FromHours(3), "Test", "Test"));
+        var date = new DateTime(2027, 1, 1, 1, 0, 0); var path = Path.Combine(_directory, "Результат.xlsx");
+        var bytes = ImmutableArray.Create<byte>(1, 2, 3);
+        builder.BuildSeeds(Arg.Any<IReadOnlyList<SeedReportItem>>(), 2027).Returns(Result.Success(bytes));
+        paths.Resolve("Семена", date).Returns(Result.Success(path)); files.Save(path, bytes).Returns(Result.Success(path));
+        new ReportService(_dialog, builder, paths, files, clock).CreateSeedsReport([]);
+        builder.Received(1).BuildSeeds(Arg.Any<IReadOnlyList<SeedReportItem>>(), 2027);
+        files.Received(1).Save(path, bytes);
+        _dialog.Received(1).Information("Отчет Результат.xlsx сформирован", "Информация");
+        Assert.Empty(Directory.GetFileSystemEntries(_directory));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Report_BuilderOrPathRefuses_DoesNotWrite(bool builderRefuses)
+    {
+        var builder = Substitute.For<IReportWorkbookBuilder>(); var paths = Substitute.For<IReportPathPolicy>();
+        var files = Substitute.For<IReportFileWriter>();
+        builder.BuildSeedlings(Arg.Any<IReadOnlyList<SeedlingReportItem>>()).Returns(builderRefuses
+            ? Result.Failure<ImmutableArray<byte>>("Отказ книги") : Result.Success(ImmutableArray.Create<byte>(1)));
+        paths.Resolve(Arg.Any<string>(), Arg.Any<DateTime>()).Returns(Result.Failure<string>("Отказ пути"));
+        new ReportService(_dialog, builder, paths, files, TimeProvider.System).CreateSeedlingsReport([]);
+        files.DidNotReceive().Save(Arg.Any<string>(), Arg.Any<ImmutableArray<byte>>());
+        _dialog.Received(1).Warning(builderRefuses ? "Отказ книги" : "Отказ пути", "Предупреждение");
+        _dialog.DidNotReceive().Information(Arg.Any<string>(), Arg.Any<string>());
+    }
 }
