@@ -141,6 +141,14 @@ public class ReportServiceBehaviorTests : IDisposable
     }
 
     [Fact]
+    public void SeedsReport_EarlyExpirationYear_PreservesFourDigits()
+    {
+        CreateService().CreateSeedsReport([new("Томат", "Черри", "Фирма", "01.01.0001", 1, 2)]);
+        using var report = OpenOnlyReport();
+        Assert.Equal("0001", report.Workbook.Worksheets["Семена"].Cells[3, 3].Text);
+    }
+
+    [Fact]
     public void Report_LocalClock_CoordinatesBuilderPathAndWriter()
     {
         var builder = Substitute.For<IReportWorkbookBuilder>(); var paths = Substitute.For<IReportPathPolicy>();

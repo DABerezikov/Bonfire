@@ -71,7 +71,7 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
 
             sheet.Cells[row, 1].Value = list[i].Sort;
             sheet.Cells[row, 2].Value = list[i].Producer;
-            sheet.Cells[row, 3].Value = dates[i].Year.ToString(CultureInfo.CurrentCulture);
+            sheet.Cells[row, 3].Value = dates[i].Year.ToString("D4", CultureInfo.CurrentCulture);
 
             var yearDiff = currentYear - dates[i].Year;
             if (yearDiff > 0)
