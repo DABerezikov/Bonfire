@@ -2114,3 +2114,26 @@ SeedsFromViewModel 6; пять TRX artifacts/stage7-null-api-green, 0 failed/not
 Заключительный аудит XAML обнаружил отдельную проблему информационных панелей:
 старые пути характеристик и отображение Option ещё требуют адаптации. Это следующий
 шаг до финального WPF-гейта; этап пока не объявляется завершённым.
+
+## 2026-10-26 — этап 7, шаг 5з: информационные панели WPF
+
+Финальный аудит обнаружил старые пути PlantSort.* и вывод Option как строки после
+перехода на независимые снимки. Red проверяет настоящий путь SQLite → production
+readers/DI → ViewModel → XAML: 6 failed с BindingStatus.PathError,
+artifacts/stage7-information-status-red (первоначально 5 failed/1 passed без проверки
+статуса; это выявило недостаточность одного перехвата Trace). Добавлена обязательная
+проверка BindingStatus.Active всех текстовых SelectedItem-привязок панели.
+
+XAML использует Characteristics.*, общий OptionValueConverter раскрывает строковые/
+числовые Option существующим ToNullable только на WPF-границе. Поля источника/заметки
+пакета также раскрыты; Some(0), Some("") и None не смешиваются в снимке, в панели
+сохраняется прежнее отображение. Новых моделей/дублирующих характеристик нет.
+Шесть SQLite/WPF-проверок покрывают два экрана и три состояния значений.
+
+Гейт **1532/1532**: Models 689, Services 500, ViewModels 302, Repository 35,
+SeedsFromViewModel 6. Все пять TRX artifacts/stage7-information-final без failed/
+notExecuted. Четыре PNG 96/144 DPI: Tests/ViewModels.Tests/bin/Debug/net10.0-windows/
+visual/stage7. Вручную просмотрены seeds-96 и seedlings-144: значения/описание/заметка
+видны, технических Some/None нет. Это WPF bitmap-render с белым фоном окна, не
+реальное переключение монитора; исходный прозрачный фон исправлен в тестовом render.
+Далее финальный архитектурный/startup гейт и актуальная документация. Этап открыт.

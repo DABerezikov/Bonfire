@@ -417,3 +417,8 @@ Result.Value/Error и nullable CollisionHelper.FindFreeSpot удалены. Ис
 Match/Bind, ValueOrThrow при доказанном успехе, явный fallback ValueOrDefault при
 необходимости. Размещение — только FindPlacement с Result<Option>; None и Failure
 не смешиваются. Не возвращайте молчаливые default/null аксессоры в функциональное ядро.
+
+Информационные панели читают SortReadFromViewModel.Characteristics; Option текста/
+чисел раскрывайте общим OptionValueConverter в XAML (внутри общий ToNullable).
+Не привязывайтесь к удалённым полям EF-сорта и не показывайте ToString Some/None.
+WPF-проверяйте не только текст, но и BindingStatus для отсутствующих значений.

@@ -267,7 +267,7 @@
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="100" HorizontalAlignment="Left" Margin="25, 90, 20, 0" VerticalAlignment="Top" 
                    Text="Источник семян - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 90, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.SeedsInfo.SeedSource}" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.SeedsInfo.SeedSource, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="120" HorizontalAlignment="Left" Margin="25, 110, 20, 0" VerticalAlignment="Top" 
                    Text="Вес в упаковке, г - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 110, 20, 0" VerticalAlignment="Top"
@@ -289,7 +289,7 @@
         <Border Grid.Column="3" Grid.Row="1" BorderBrush="LightGray" BorderThickness="1"
                 Height="105" Margin="230, 85, 30, 0" VerticalAlignment="Top" HorizontalAlignment="Stretch"
                 CornerRadius="5">
-            <TextBlock Text="{Binding SelectedItem.SeedsInfo.Note }" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding SelectedItem.SeedsInfo.Note, Converter={StaticResource OptionValue}}" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
         </Border>
 
 
@@ -300,37 +300,37 @@
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 250, 20, 0" VerticalAlignment="Top"
                    Text="Цвет - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 250, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.PlantColor }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.PlantColor, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 270, 20, 0" VerticalAlignment="Top"
                    Text="Высота растения, см - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 270, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.PlantHeight }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.PlantHeight, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 290, 20, 0" VerticalAlignment="Top"
                    Text="Схема посадки, см - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 290, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.LandingPattern }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.LandingPattern, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 310, 20, 0" VerticalAlignment="Top"
                    Text="Возраст рассады, дн - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 310, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.AgeOfSeedlings }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.AgeOfSeedlings, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 330, 20, 0" VerticalAlignment="Top"
                    Text="Вегетация, дн - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 330, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.GrowingSeason }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.GrowingSeason, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="35, 350, 20, 0" VerticalAlignment="Top"
                    Text="Прорастание, мин - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 350, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.MinGerminationTime }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.MinGerminationTime, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="35, 370, 20, 0" VerticalAlignment="Top"
                    Text="Прорастание, макс - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 370, 20, 0" VerticalAlignment="Top"
-                   Text="{Binding SelectedItem.Plant.PlantSort.MaxGerminationTime }" TextAlignment="Left"  />
+                   Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.MaxGerminationTime, Converter={StaticResource OptionValue}}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="240, 270, 20, 0" VerticalAlignment="Top"
                    Text="Описание" TextAlignment="Left"  FontWeight="DemiBold" />
         <Border Grid.Column="3" Grid.Row="1" BorderBrush="LightGray" BorderThickness="1"
                 Height="100" Margin="230, 290, 30, 0" VerticalAlignment="Top" HorizontalAlignment="Stretch"
                 CornerRadius="5">
-            <TextBlock Text="{Binding SelectedItem.Plant.PlantSort.Description }" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding SelectedItem.Plant.PlantSort.Characteristics.Description, Converter={StaticResource OptionValue}}" TextAlignment="Left" Margin="5" TextWrapping="Wrap"/>
         </Border>
 
 
