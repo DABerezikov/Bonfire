@@ -906,10 +906,21 @@ public class GardenPlanViewModel(
 
     [field: AllowNull, MaybeNull]
     public ICommand SaveElementPositionCommand => field
-        ??= new LambdaCommandAsync(SaveElementPositionAsync,
-            () => SelectedElement is not null);
+        ??= new LambdaCommandAsync(async parameter =>
+        {
+            if ((parameter as GardenElementFromViewModel ?? SelectedElement) is { IsLocked: false } model)
+                await SaveElementGeometryAsync(model);
+        }, parameter => (parameter as GardenElementFromViewModel ?? SelectedElement) is { IsLocked: false });
 
-    private async Task SaveElementPositionAsync()
+    private Task SaveElementGeometryAsync(GardenElementFromViewModel model)
+        => SaveGeometryAsync(new(model.Id, new GeometryTarget.Element(CanvasConstants.PixelsPerMeter), model.X, model.Y, model.Width, model.Height),
+            rectangle => CanvasGeometryMapper.Apply(rectangle, model));
+
+    [field: AllowNull, MaybeNull]
+    public ICommand SaveElementPropertiesCommand => field
+        ??= new LambdaCommandAsync(SaveElementPropertiesAsync, () => SelectedElement is not null);
+
+    private async Task SaveElementPropertiesAsync()
     {
         if (SelectedElement is null) return;
         var entity = await gardenService.GetElementByIdAsync(SelectedElement.Id);
@@ -939,24 +950,21 @@ public class GardenPlanViewModel(
 
     [field: AllowNull, MaybeNull]
     public ICommand SaveGreenhousePositionCommand => field
-        ??= new LambdaCommandAsync(
-            async p => await SaveGreenhousePositionAsync(p as GreenhouseFromViewModel),
-            _ => true);
+        ??= new LambdaCommandAsync(async parameter =>
+        {
+            if (parameter is GreenhouseFromViewModel { IsLocked: false } model)
+                await SaveGreenhouseGeometryAsync(model);
+        }, parameter => parameter is GreenhouseFromViewModel { IsLocked: false });
 
-    private async Task SaveGreenhousePositionAsync(GreenhouseFromViewModel? vm)
+    private Task SaveGreenhouseGeometryAsync(GreenhouseFromViewModel model)
+        => SaveGeometryAsync(new(model.Id, new GeometryTarget.Greenhouse(), model.X, model.Y, model.DisplayWidth, model.DisplayHeight),
+            rectangle => CanvasGeometryMapper.Apply(rectangle, model));
+
+    private async Task SaveGeometryAsync(SaveGardenGeometryFromViewModel request, Action<CanvasRectangle> apply)
     {
-        if (vm is null) return;
-        var entity = await gardenService.GetGreenhouseByIdAsync(vm.Id);
-        if (entity is null) return;
-
-        entity.X = vm.X;
-        entity.Y = vm.Y;
-        entity.DisplayWidth = vm.DisplayWidth;
-        entity.DisplayHeight = vm.DisplayHeight;
-        entity.Name = vm.Name;
-        entity.Note = vm.Note;
-
-        await gardenService.UpdateGreenhouseAsync(entity);
+        var result = await gardenService.SaveGeometryAsync(request);
+        result.Match(saved => { apply(saved.Rectangle); return true; },
+            error => { userDialog.Warning(error, "Сохранение геометрии"); return false; });
     }
 
     // ─────────────────────────────────────

@@ -370,7 +370,7 @@
                         </UniformGrid>
 
                         <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
-                                Command="{Binding DataContext.SaveElementPositionCommand,
+                                Command="{Binding DataContext.SaveElementPropertiesCommand,
                                     RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
                         <Separator Margin="0,6,0,10"/>
@@ -797,7 +797,7 @@
                                         </UniformGrid>
 
                                         <Button Content="Сохранить" HorizontalAlignment="Stretch" Margin="0,0,0,4"
-                                                Command="{Binding DataContext.SaveElementPositionCommand,
+                                                Command="{Binding DataContext.SaveElementPropertiesCommand,
                                                     RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
                                         <Separator Margin="0,6,0,10"/>

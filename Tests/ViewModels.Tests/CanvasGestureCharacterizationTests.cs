@@ -69,8 +69,9 @@ public partial class CanvasInteractionTests
         house.ContainerElements = [other];
         var controls = Controls(greenhouse ? house : element);
         var saved = 0;
-        var command = new LambdaCommand(() =>
+        var command = new LambdaCommand(parameter =>
         {
+            Assert.Same(greenhouse ? (object)house : element, parameter);
             Assert.Equal(0, greenhouse ? house.X : element.X);
             Assert.Equal(greenhouse ? 150 : 90, greenhouse ? house.DisplayWidth : element.Width);
             saved++;

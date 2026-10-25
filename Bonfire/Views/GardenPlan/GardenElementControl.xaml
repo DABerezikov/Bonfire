@@ -184,7 +184,8 @@
                 <i:EventTrigger EventName="DragCompleted">
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SaveElementPositionCommand,
-                            RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"/>
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </Thumb>
@@ -225,7 +226,8 @@
                 <i:EventTrigger EventName="DragCompleted">
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SaveElementPositionCommand,
-                            RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"/>
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </Thumb>

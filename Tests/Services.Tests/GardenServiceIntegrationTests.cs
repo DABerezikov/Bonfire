@@ -32,7 +32,7 @@ public class GardenServiceIntegrationTests : IDisposable
     private GardenService CreateService()
     {
         var factory = _sp.GetRequiredService<IUnitOfWorkFactory>();
-        return new(factory, new ResizeGrid(new DbGridWriter(factory)), new ChangeGardenState(new DbGardenStateWriter(factory)));
+        return new(factory, new ResizeGrid(new DbGridWriter(factory)), new ChangeGardenState(new DbGardenStateWriter(factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(factory)));
     }
 
     private async Task<(int planId, int gardenId, int bedId)> SeedAsync(int year = 2026)

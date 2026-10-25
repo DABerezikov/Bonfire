@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Bonfire.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using MoonCalendar;
@@ -28,6 +28,7 @@ namespace Bonfire.Services
             .AddSingleton<IPlantInSpot, PlantInSpot>()
             .AddSingleton<IResizeGrid, ResizeGrid>()
             .AddSingleton<IChangeGardenState, ChangeGardenState>()
+            .AddSingleton<ISaveGardenGeometry, SaveGardenGeometry>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()

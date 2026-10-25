@@ -11,6 +11,16 @@ ViewModel — с **22,8% до 94,4%**. Это не заявление о пол�
 
 ## Порядок работы
 
+Геометрия жестов через Application: **1276/1276**, добавлено 37 проверок
+GardenGeometryEditTests, GardenGeometryApplicationTests, GardenGeometryWritingIntegrationTests
+и GardenGeometryWorkflowTests. Проверены область записи, площадь, свежие блокировки
+и пересечения, одинаковые ID разных таблиц, Composite/история, откат SQLite,
+смена выбора во время await и отсутствие лишних INPC. Четыре прежних WPF-проверки
+усилены проверкой объекта в CommandParameter. Red воспроизвёл запись черновика
+свойств при жесте; отдельные Red — блокировку/новую коллизию и переполнение масштаба.
+Процессный startup/exit smoke прошёл. TRX: artifacts/refactoring-stage-6-geometry-save-gate.
+Coverlet и ручной DPI-прогон не повторялись; редакторы ещё используют прежние EF-API.
+
 Жесты и масштаб: **1239/1239**, добавлено 46 проверок. CanvasGestureTests проверяет
 чистые move/resize/drop и инварианты; CanvasGestureCharacterizationTests — оба WPF
 контрола, блокировку, минимумы, исходные коллизии, реальный scale=2, отсутствие

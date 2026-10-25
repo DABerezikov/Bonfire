@@ -1,4 +1,4 @@
-﻿using BonfireDB.Entities;
+using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +25,7 @@ public static class RepositoryRegister
         .AddSingleton<IPlantingWriter, DbPlantingWriter>()
         .AddSingleton<IGridWriter, DbGridWriter>()
         .AddSingleton<IGardenStateWriter, DbGardenStateWriter>()
+        .AddSingleton<IGardenGeometryWriter, DbGardenGeometryWriter>()
         .AddSingleton<ICultureWriter, DbCultureWriter>()
         .AddSingleton<IProducerWriter, DbProducerWriter>()
         .AddSingleton<ISortWriter, DbSortWriter>()

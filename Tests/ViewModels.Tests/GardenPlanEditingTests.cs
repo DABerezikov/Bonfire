@@ -91,13 +91,13 @@ public partial class GardenPlanWorkflowTests
     [Theory]
     [InlineData("Bed")]
     [InlineData("ColdFrame")]
-    public void SaveElementPosition_PreservesGeometryAndSubtypeProperties(string type)
+    public void SaveElementProperties_PreservesGeometryAndSubtypeProperties(string type)
     {
         var vm = CreateVm();
         GardenElement entity = type == "Bed" ? new Bed { Id = 1 } : new ColdFrame { Id = 1 };
         _gardens.GetElementByIdAsync(1).Returns(entity);
         vm.SelectedElement = new() { Id = 1, X = 30, Y = 45, Width = 180, Height = 90, Name = "Новое", Note = "Заметка", SoilType = "Суглинок", Orientation = "Север", CoverMaterial = "Плёнка" };
-        vm.SaveElementPositionCommand.Execute(null);
+        vm.SaveElementPropertiesCommand.Execute(null);
         Assert.Equal(30, entity.X); Assert.Equal(45, entity.Y);
         Assert.Equal(180, entity.DisplayWidth); Assert.Equal(90, entity.DisplayHeight);
         Assert.Equal("Новое", entity.Name); Assert.Equal("Суглинок", entity.SoilType);
@@ -107,13 +107,11 @@ public partial class GardenPlanWorkflowTests
     }
 
     [Fact]
-    public void SaveAndLockGreenhouse_PersistsDisplayGeometryAndLockState()
+    public void ToggleLockGreenhouse_PersistsLockState()
     {
         var vm = CreateVm(); var model = new GreenhouseFromViewModel { Id = 1, X = 30, Y = 45, DisplayWidth = 300, DisplayHeight = 150, Name = "Новая", Note = "Заметка" };
         var entity = new Greenhouse { Id = 1 };
         _gardens.GetGreenhouseByIdAsync(1).Returns(entity);
-        vm.SaveGreenhousePositionCommand.Execute(model);
-        Assert.Equal(30, entity.X); Assert.Equal(300, entity.DisplayWidth); Assert.Equal("Новая", entity.Name);
         vm.ToggleLockGreenhouseCommand.Execute(model);
         Assert.True(model.IsLocked); Assert.True(entity.IsLocked);
         vm.ToggleLockGreenhouseCommand.Execute(model);

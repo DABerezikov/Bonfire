@@ -66,6 +66,15 @@ public sealed record CanvasRectangle
         return isColliding && !wasColliding ? original : this;
     }
 
+    public Result<double> MeasureArea(double pixelsPerMeter)
+    {
+        var squaredScale = pixelsPerMeter * pixelsPerMeter;
+        var area = Math.Round(Width * Height / squaredScale, 1);
+        return double.IsFinite(pixelsPerMeter) && pixelsPerMeter > 0 && double.IsFinite(squaredScale) && squaredScale > 0 && double.IsFinite(area)
+            ? Result.Success(area)
+            : Result.Failure<double>("Масштаб площади и вычисленная площадь должны быть конечными, масштаб — положительным");
+    }
+
     private static bool ValidDelta(double horizontal, double vertical, double scale)
         => double.IsFinite(horizontal) && double.IsFinite(vertical) && double.IsFinite(scale) && scale > 0;
 }
@@ -98,6 +107,11 @@ public sealed class PlotLayout
     }
 
     public bool CollidesWith(CanvasRectangle rectangle) => Obstacles.Any(rectangle.Overlaps);
+
+    public static Result<PlotLayout> Create(IEnumerable<Result<CanvasRectangle>> obstacles)
+        => obstacles.Aggregate(Result.Success(ImmutableList<CanvasRectangle>.Empty),
+                (snapshot, obstacle) => snapshot.Bind(items => obstacle.Bind(rectangle => Result.Success(items.Add(rectangle)))))
+            .Bind(items => Result.Success(new PlotLayout(items)));
 
     public Result<Option<CanvasRectangle>> FindFreeSpot(double width, double height, double canvasWidth, double canvasHeight)
         => CanvasRectangle.Create(0, 0, width, height).Bind(shape =>

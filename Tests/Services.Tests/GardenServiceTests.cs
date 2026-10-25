@@ -23,7 +23,7 @@ public class GardenServiceTests
         _uow.Repository<PlantingSpot>().Returns(_spots);
     }
 
-    private GardenService CreateService() => new(_uow.ToFactory(), Substitute.For<IResizeGrid>(), Substitute.For<IChangeGardenState>());
+    private GardenService CreateService() => new(_uow.ToFactory(), Substitute.For<IResizeGrid>(), Substitute.For<IChangeGardenState>(), Substitute.For<ISaveGardenGeometry>());
 
     // ── CreatePlanAsync ───────────────────────────────────────────────────────
 

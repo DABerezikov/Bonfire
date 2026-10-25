@@ -17,8 +17,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonfire.Services;
 
-internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState) : IGardenService
+internal class GardenService(IUnitOfWorkFactory uowFactory, IResizeGrid resizeGrid, IChangeGardenState changeGardenState, ISaveGardenGeometry saveGardenGeometry) : IGardenService
 {
+    public Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request)
+        => saveGardenGeometry.ExecuteAsync(request);
+
     // --- Чтение ---
 
     public async Task<IReadOnlyList<GardenPlan>> GetPlansOrderedByYearDescAsync()
