@@ -316,12 +316,30 @@ public class SeedlingsWorkflowTests
     public void MarkDead_SelectsLastAliveSproutsAndPassesReason()
     {
         var batch = Batch();
-        for (var number = 1; number <= 3; number++) batch.SeedlingInfos.Add(new() { SeedlingNumber = number, GerminationDate = DateTime.Today });
+        for (var number = 1; number <= 3; number++) batch.SeedlingInfos.Add(new() { Id = number + 1, SeedlingNumber = number, GerminationDate = DateTime.Today });
         var vm = CreateVm(batch); vm.DeadNumbers = 2; vm.DeathNote = "Засохли";
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Success(new SeedlingChangeResultFromViewModel(batch.Id,
+            [new(1, 0, Option.None<DateTime>(), Option.None<bool>()),
+             new(2, 1, Option.Some(DateTime.Today), Option.None<bool>()),
+             new(3, 2, Option.Some(DateTime.Today), Option.Some(true)) { DeathNote = Option.Some("Засохли") },
+             new(4, 3, Option.Some(DateTime.Today), Option.Some(true)) { DeathNote = Option.Some("Засохли") }])));
         vm.DeathSeedlingCommand.Execute(null);
-        _service.Received(1).MarkSeedlingInfosDeadAsync(batch,
-            Arg.Is<IReadOnlyList<SeedlingInfo>>(infos => infos.Select(i => i.SeedlingNumber).SequenceEqual(new[] { 3, 2 })), "Засохли");
+        _service.Received(1).ChangeAsync(Arg.Is<ChangeSeedlingFromViewModel>(request => request.Action == new SeedlingAction.MarkDead(2, Option.Some("Засохли"))));
         Assert.Equal(0, vm.DeadNumbers); Assert.Equal(string.Empty, vm.DeathNote);
+        Assert.Equal(new[] { 2, 3 }, batch.SeedlingInfos.Where(info => info.IsDead == true).Select(info => info.SeedlingNumber));
+    }
+
+    [Fact]
+    public void MarkDead_SaveFailure_PreservesInputAndRecords()
+    {
+        var batch = Batch(); batch.SeedlingInfos.Add(new() { Id = 2, SeedlingNumber = 1, GerminationDate = DateTime.Today });
+        var vm = CreateVm(batch); vm.DeadNumbers = 1; vm.DeathNote = "Причина";
+        _service.ChangeAsync(Arg.Any<ChangeSeedlingFromViewModel>()).Returns(Result.Failure<SeedlingChangeResultFromViewModel>("Ошибка гибели"));
+        vm.DeathSeedlingCommand.Execute(null);
+        Assert.Equal(1, vm.DeadNumbers);
+        Assert.Equal("Причина", vm.DeathNote);
+        Assert.Null(batch.SeedlingInfos[1].IsDead);
+        _dialog.Received(1).Warning("Ошибка гибели", "Гибель рассады");
     }
 
     [Fact]

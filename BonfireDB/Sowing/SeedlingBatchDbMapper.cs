@@ -12,6 +12,7 @@ public static class SeedlingBatchDbMapper
         batch.SeedlingInfos.Select(info => new SeedlingEntry(Option.Some(info.Id), info.SeedlingNumber,
             info.GerminationDate.ToOption(), info.IsDead.ToOption())
         {
+            DeathNote = info.DeathNote.ToOption(),
             Replants = (info.Replants ?? []).Select(replant => new ReplantingEntry(Option.Some(replant.Id),
                 replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToImmutableArray()
         }));
@@ -30,6 +31,7 @@ public static class SeedlingBatchDbMapper
             info.SeedlingNumber = entry.Number;
             info.GerminationDate = entry.GerminationDate.ToNullable();
             info.IsDead = entry.IsDead.ToNullable();
+            info.DeathNote = entry.DeathNote.ToNullable();
             var replants = (info.Replants ?? []).ToDictionary(replant => replant.Id);
             info.Replants ??= [];
             foreach (var replant in entry.Replants)
@@ -51,6 +53,7 @@ public static class SeedlingBatchDbMapper
         batch.SeedlingInfos.Select(info => new SeedlingEntryFromViewModel(info.Id, info.SeedlingNumber,
             info.GerminationDate.ToOption(), info.IsDead.ToOption())
         {
+            DeathNote = info.DeathNote.ToOption(),
             Replants = (info.Replants ?? []).Select(replant => new ReplantingEntryFromViewModel(replant.Id,
                 replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToArray()
         }).ToArray());

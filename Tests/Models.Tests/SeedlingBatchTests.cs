@@ -80,4 +80,25 @@ public class SeedlingBatchTests
     [Fact]
     public void WithReplanting_MissingMetadata_ReturnsFailure() => Assert.True(
         SeedlingBatch.Create(3, []).ValueOrThrow().WithReplanting(DateTime.Today).IsFailure);
+
+    [Theory]
+    [InlineData(0, 2)]
+    [InlineData(1, 1)]
+    [InlineData(20, 0)]
+    public void WithDeadSprouts_SelectsLastAliveAndPreservesExistingHistory(int requested, int alive)
+    {
+        var original = SeedlingBatch.Create(4, [Entry(1, false), Entry(2, true),
+            Entry(3, true, true) with { DeathNote = Option.Some("Старая причина") }, Entry(4, true)]).ValueOrThrow();
+        var updated = original.WithDeadSprouts(requested, Option.Some(" Засохли ")).ValueOrThrow();
+        Assert.Equal(alive, updated.AliveCount);
+        Assert.Equal(3, updated.GerminatedCount);
+        Assert.Equal(2, original.AliveCount);
+        Assert.Null(updated.Entries[0].IsDead.ToNullable());
+        Assert.Equal("Старая причина", updated.Entries[2].DeathNote.ToNullable());
+        if (requested > 0) Assert.Equal(" Засохли ", updated.Entries[3].DeathNote.ToNullable());
+    }
+
+    [Fact]
+    public void WithDeadSprouts_NegativeCount_ReturnsFailure() => Assert.True(
+        SeedlingBatch.Create(3, [Entry(1, true)]).ValueOrThrow().WithDeadSprouts(-1, Option.None<string>()).IsFailure);
 }

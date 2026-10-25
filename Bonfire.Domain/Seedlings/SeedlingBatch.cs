@@ -6,6 +6,7 @@ namespace Bonfire.Domain.Seedlings;
 public sealed record ReplantingEntry(Option<int> Id, DateTime Date, Option<double> PotVolume, Option<string> Note);
 public sealed record SeedlingEntry(Option<int> Id, int Number, Option<DateTime> GerminationDate, Option<bool> IsDead)
 {
+    public Option<string> DeathNote { get; init; } = Option.None<string>();
     public ImmutableArray<ReplantingEntry> Replants { get; init; } = [];
 }
 
@@ -51,6 +52,7 @@ public sealed class SeedlingBatch
     {
         SeedlingAction.Germinate germinate => WithGermination(germinate.Count, germinate.Date),
         SeedlingAction.Replant replant => WithReplanting(replant.Date),
+        SeedlingAction.MarkDead death => WithDeadSprouts(death.Count, death.Reason),
         _ => throw new System.Diagnostics.UnreachableException()
     };
 
@@ -62,6 +64,17 @@ public sealed class SeedlingBatch
             {
                 Replants = [new(Option.None<int>(), date, Option.None<double>(), Option.None<string>())]
             })));
+
+    public Result<SeedlingBatch> WithDeadSprouts(int count, Option<string> reason)
+    {
+        ArgumentNullException.ThrowIfNull(reason);
+        if (count < 0) return Result.Failure<SeedlingBatch>("Число погибших всходов не может быть отрицательным");
+        var selected = Entries.Where(entry => entry.GerminationDate is Option<DateTime>.Some && entry.IsDead is not Option<bool>.Some { Value: true })
+            .OrderByDescending(entry => entry.Number).Take(count).ToHashSet();
+        return Result.Success(new SeedlingBatch(Quantity, Entries.Select(entry => selected.Contains(entry)
+            ? entry with { IsDead = Option.Some(true), DeathNote = reason }
+            : entry).ToImmutableArray()));
+    }
 }
 
 public abstract record SeedlingAction
@@ -69,4 +82,5 @@ public abstract record SeedlingAction
     private SeedlingAction() { }
     public sealed record Germinate(int Count, DateTime Date) : SeedlingAction;
     public sealed record Replant(DateTime Date) : SeedlingAction;
+    public sealed record MarkDead(int Count, Option<string> Reason) : SeedlingAction;
 }

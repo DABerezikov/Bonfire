@@ -86,4 +86,37 @@ public class SeedlingLifecycleIntegrationTests : IDisposable
         Assert.Equal(0, await _fixture.QueryAsync(db => db.Replants.CountAsync()));
         Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync()));
     }
+
+    private async Task<int> PrepareSproutsAsync()
+    {
+        var id = await PrepareAsync();
+        await _fixture.ExecuteAsync(async db =>
+        {
+            var batch = await db.Seedlings.Include(batch => batch.SeedlingInfos).SingleAsync();
+            batch.SeedlingInfos.AddRange([new() { SeedlingNumber = 2, GerminationDate = DateTime.Today }, new() { SeedlingNumber = 3, GerminationDate = DateTime.Today }]);
+            await db.SaveChangesAsync();
+        });
+        return id;
+    }
+
+    [Fact]
+    public async Task MarkDead_UpdatesLastAliveWithReasonAndPreservesMetadata()
+    {
+        var id = await PrepareSproutsAsync();
+        Assert.True((await ApplyAsync(id, new SeedlingAction.MarkDead(2, Option.Some(" Засохли ")))).IsSuccess);
+        Assert.Equal(new[] { 2, 3 }, await _fixture.QueryAsync(db => db.SeedlingInfos.Where(info => info.IsDead == true).OrderBy(info => info.SeedlingNumber).Select(info => info.SeedlingNumber).ToArrayAsync()));
+        Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync(info => info.DeathNote == " Засохли ")));
+        Assert.Equal("Метаданные", await _fixture.QueryAsync(db => db.SeedlingInfos.Where(info => info.SeedlingNumber == 0).Select(info => info.Note).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task MarkDead_SaveRejected_RollsBackAllChanges()
+    {
+        var id = await PrepareSproutsAsync();
+        await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectDeath BEFORE UPDATE ON SeedlingInfos WHEN NEW.IsDead = 1 AND NEW.SeedlingNumber = 3 BEGIN SELECT RAISE(ABORT, 'death rejected'); END;"));
+        var result = await ApplyAsync(id, new SeedlingAction.MarkDead(2, Option.Some("Причина")));
+        Assert.Contains("death rejected", result.Match(_ => "не ожидалось", error => error));
+        Assert.Equal(0, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync(info => info.IsDead == true || info.DeathNote != null)));
+    }
 }

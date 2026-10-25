@@ -853,6 +853,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             info.SeedlingNumber = entry.Number;
             info.GerminationDate = entry.GerminationDate.ToNullable();
             info.IsDead = entry.IsDead.ToNullable();
+            info.DeathNote = entry.DeathNote.ToNullable();
             info.Replants = entry.Replants.Select(replant => new Replanting
             {
                 Id = replant.Id, ReplantingDate = replant.Date, PotVolume = replant.PotVolume.ToNullable(),
@@ -908,16 +909,14 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnDeathSeedlingCommandExecuted()
     {
-        var toMark = SelectedItem!.SeedlingInfos
-            .Where(i => i.GerminationDate.HasValue && i.IsDead != true)
-            .OrderByDescending(i => i.SeedlingNumber)
-            .Take(DeadNumbers)
-            .ToList();
-
-        await _seedlingsService.MarkSeedlingInfosDeadAsync(SelectedItem, toMark, DeathNote);
-
-        UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
-        DeathNote = string.Empty;
-        DeadNumbers = 0;
+        if (SelectedItem is not { } selected) return;
+        var result = await _seedlingsService.ChangeAsync(new(selected.Id, new SeedlingAction.MarkDead(DeadNumbers, DeathNote.ToOption())));
+        result.Match(receipt =>
+        {
+            ApplySeedlingChange(selected, receipt);
+            DeathNote = string.Empty;
+            DeadNumbers = 0;
+            return true;
+        }, error => { _userDialog.Warning(error, "Гибель рассады"); return false; });
     }
 }

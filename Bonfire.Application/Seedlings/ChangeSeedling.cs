@@ -7,6 +7,7 @@ public sealed record ChangeSeedlingFromViewModel(int SeedlingId, SeedlingAction 
 public sealed record ReplantingEntryFromViewModel(int Id, DateTime Date, Option<double> PotVolume, Option<string> Note);
 public sealed record SeedlingEntryFromViewModel(int Id, int Number, Option<DateTime> GerminationDate, Option<bool> IsDead)
 {
+    public Option<string> DeathNote { get; init; } = Option.None<string>();
     public IReadOnlyList<ReplantingEntryFromViewModel> Replants { get; init; } = [];
 }
 public sealed record SeedlingChangeResultFromViewModel(int SeedlingId, IReadOnlyList<SeedlingEntryFromViewModel> Entries);
