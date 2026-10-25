@@ -104,7 +104,9 @@ nullable через `!`. На входе из WPF, EF и внешних API null
 TransitionTo возвращает Result, EF делегирует ему. Сетка перенесена через чистый
 GardenGrid, ResizeGrid и атомарный DbGridWriter; UI принимает DTO только после успеха.
 Запись переходов и очистки перенесена через ChangeGardenState/DbGardenStateWriter:
-читаются свежие данные, UI принимает DTO только после успеха. Далее — геометрия.
+читаются свежие данные, UI принимает DTO только после успеха. Пересечения и поиск
+места вынесены в CanvasRectangle/PlotLayout; UI различает ошибку и отсутствие места.
+Далее — drag/resize/масштаб и разделение взаимодействий/редакторов.
 Последовательность оставшихся шагов — [план этапа 6](refactoring-stage-6.md).
 
 Затрагивается: `GardenPlanViewModel`, `GardenService`, `PlantingService`, модели

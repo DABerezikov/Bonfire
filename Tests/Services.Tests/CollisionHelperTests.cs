@@ -4,6 +4,35 @@ namespace Services.Tests;
 
 public class CollisionHelperTests
 {
+    [Fact]
+    public void Overlaps_LegacyNaNInput_PreservesFalse()
+        => Assert.False(CollisionHelper.Overlaps(0, 0, double.NaN, 80, 0, 0, 100, 80));
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CollidesWithAny_LegacyNaNObstacle_PreservesFalse(bool greenhouse)
+    {
+        if (greenhouse)
+            Assert.False(CollisionHelper.CollidesWithAny(0, 0, 100, 80,
+                new[] { new GreenhouseFromViewModel { DisplayWidth = double.NaN, DisplayHeight = 80 } }));
+        else
+            Assert.False(CollisionHelper.CollidesWithAny(0, 0, 100, 80,
+                new[] { new GardenElementFromViewModel { Width = double.NaN, Height = 80 } }));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CollidesWithSiblings_Greenhouse_ExcludesOnlySameReference(bool addIdenticalSibling)
+    {
+        var self = new GreenhouseFromViewModel { X = 0, Y = 0, DisplayWidth = 120, DisplayHeight = 80 };
+        self.ContainerGreenhouses = [self];
+        if (addIdenticalSibling)
+            self.ContainerGreenhouses.Add(new() { X = 0, Y = 0, DisplayWidth = 120, DisplayHeight = 80 });
+        Assert.Equal(addIdenticalSibling, CollisionHelper.CollidesWithSiblings(0, 0, 120, 80, self));
+    }
+
     // ── Overlaps ──────────────────────────────────────────────────────────────
 
     [Fact]

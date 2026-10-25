@@ -757,9 +757,16 @@ public class GardenPlanViewModel(
             _                => (ppm, ppm)
         };
 
-        var spot = CollisionHelper.FindFreeSpot(
+        var placement = CollisionHelper.FindPlacement(
             activeElements, activeGreenhouses, exclude: null,
             defaultW, defaultH, canvasW, canvasH);
+
+        if (placement.IsFailure)
+        {
+            userDialog.Warning(placement.Match(_ => "", error => error), "Добавление элемента");
+            return;
+        }
+        var spot = placement.ValueOrThrow().ToNullable();
 
         if (spot is null)
         {
@@ -813,9 +820,16 @@ public class GardenPlanViewModel(
         var ghScale = CanvasConstants.PixelsPerMeter;
         double ghW = 6 * ghScale, ghH = 3 * ghScale; // 6×3 м
 
-        var spot = CollisionHelper.FindFreeSpot(
+        var placement = CollisionHelper.FindPlacement(
             SelectedGarden.Elements, SelectedGarden.Greenhouses, exclude: null,
             ghW, ghH, SelectedGarden.CanvasWidth, SelectedGarden.CanvasHeight);
+
+        if (placement.IsFailure)
+        {
+            userDialog.Warning(placement.Match(_ => "", error => error), "Добавление теплицы");
+            return;
+        }
+        var spot = placement.ValueOrThrow().ToNullable();
 
         if (spot is null)
         {
