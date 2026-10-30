@@ -472,7 +472,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private void ClearFieldSeedView()
     {
-        AddBestBy = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
+        AddBestBy = new DateTime(DateTime.Now.Year + 1, 12, 31);
         AddClass = "Овощи";
         AddCostPack = "0";
         AddCulture = string.Empty;
