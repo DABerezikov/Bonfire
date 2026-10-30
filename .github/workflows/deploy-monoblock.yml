@@ -39,7 +39,9 @@ jobs:
       - name: Проверка запуска и завершения
         run: dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj -c Release
       - name: Публикация Windows x64
-        run: dotnet publish Bonfire/Bonfire.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/publish --nologo
+        run: dotnet publish Bonfire/Bonfire.csproj -p:PublishProfile=FolderProfile -o artifacts/publish --nologo
+      - name: Проверка единого исполняемого файла
+        run: ./Tests/Deployment/SingleFile.Tests.ps1 -PublishDirectory artifacts/publish
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: bonfire-win-x64

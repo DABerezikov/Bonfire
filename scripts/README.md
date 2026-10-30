@@ -15,6 +15,11 @@
 .\scripts\Deploy-Bonfire.ps1 -PublishDirectory .\artifacts\my-publish
 ```
 
+CI и скрипт используют общий профиль `FolderProfile`: Release, win-x64,
+self-contained, единый `Bonfire.exe` с библиотеками .NET, WPF и SQLite.
+Устанавливать .NET на целевом компьютере не требуется. Нативные библиотеки
+распаковываются средой .NET при запуске; настройки остаются внешними файлами.
+
 Скрипт сначала публикует приложение в уникальный локальный каталог
 `artifacts/deploy-publish/`, затем сохраняет прежние файлы в
 `\\MONOBLOCK\Bonfire\backups\yyyyMMdd-HHmmss-fff-<id>\`.
