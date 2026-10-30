@@ -55,3 +55,10 @@ Release-публикация и установка 459 файлов в изол�
 
 Установка GitHub runner с запуском при входе пользователя на MONOBLOCK:
 [Install-BonfireRunner.md](Install-BonfireRunner.md).
+
+Workflow `Bonfire — MONOBLOCK` запускается при push в `master` или вручную через
+GitHub Actions. Сборка, полный тест-гейт и публикация выполняются на GitHub.
+На MONOBLOCK `Update-BonfireInteractive.ps1` показывает XAML-подтверждение на
+5 минут; согласие разрешает штатно закрыть приложение и вызвать Deploy-Bonfire.
+Отказ/тайм-аут отменяют установку. После успеха `.bonfire-version.json` содержит
+commit и путь резервной копии. Автоматического запуска новой версии нет.

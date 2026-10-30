@@ -1,0 +1,79 @@
+name: Bonfire — MONOBLOCK
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bonfire-monoblock
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Проверки и публикация
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Полный тест-гейт
+        run: dotnet test Bonfire.sln -c Release --nologo --logger trx --results-directory artifacts/tests
+      - name: Проверки развёртывания
+        run: |
+          & ./Tests/Deployment/Deploy.Tests.ps1
+          & ./Tests/Deployment/Runner.Tests.ps1
+          & ./Tests/Deployment/InteractiveUpdate.Tests.ps1
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File ./Tests/Deployment/Confirmation.Wpf.Tests.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Проверка диалога не прошла.' }
+      - name: Проверка запуска и завершения
+        run: dotnet run --project Tests/Startup.Smoke/Startup.Smoke.csproj -c Release
+      - name: Публикация Windows x64
+        run: dotnet publish Bonfire/Bonfire.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/publish --nologo
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bonfire-win-x64
+          path: artifacts/publish/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: test-results
+          path: artifacts/tests/*.trx
+          if-no-files-found: warn
+
+  deploy:
+    name: Обновление с подтверждением
+    if: github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: [self-hosted, Windows, X64, bonfire-monoblock, interactive]
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Проверка компьютера
+        run: |
+          if ($env:COMPUTERNAME -ne 'MONOBLOCK') { throw 'Неверный компьютер runner.' }
+          Write-Host "Runner: $env:RUNNER_NAME; компьютер: $env:COMPUTERNAME"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: bonfire-win-x64
+          path: artifacts/publish
+      - name: Подтверждение и установка
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File ./scripts/Update-BonfireInteractive.ps1 -PublishDirectory ./artifacts/publish -Version $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) { throw "Обновление не выполнено, код $LASTEXITCODE." }
+          "Обновлён MONOBLOCK, commit $env:GITHUB_SHA. БД сохранена. Резервная копия находится в папке backups установки." | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
