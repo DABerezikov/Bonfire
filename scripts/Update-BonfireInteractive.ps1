@@ -38,17 +38,34 @@ function Request-BonfireUpdateApproval($Destination, $Version, $TimeoutSeconds) 
     finally { $timer.Stop() }
 }
 
-function Close-BonfireForUpdate($Destination) {
+function Test-BonfireProcessMatches($Process, $Destination) {
     $executable = [IO.Path]::GetFullPath((Join-Path $Destination 'Bonfire.exe'))
+    if ($Process.HasExited) { return $false }
+    try { $processPath = $Process.MainModule.FileName }
+    catch {
+        if ($Process.HasExited) { return $false }
+        throw 'Не удалось проверить путь работающего Bonfire. Закройте приложение вручную.'
+    }
+    # Запуск с UNC и локального пути относится к одной установке.
+    $processPath = Resolve-BonfireUpdateDirectory $processPath
+    return $processPath.Equals($executable, [StringComparison]::OrdinalIgnoreCase)
+}
+
+function Test-BonfireRunning($Destination) {
+    foreach ($process in [Diagnostics.Process]::GetProcessesByName('Bonfire')) {
+        try {
+            if (Test-BonfireProcessMatches $process $Destination) { return $true }
+        }
+        finally { $process.Dispose() }
+    }
+    return $false
+}
+
+function Close-BonfireForUpdate($Destination) {
     $session = [Diagnostics.Process]::GetCurrentProcess().SessionId
     foreach ($process in [Diagnostics.Process]::GetProcessesByName('Bonfire')) {
         try {
-            if ($process.HasExited) { continue }
-            try { $processPath = $process.MainModule.FileName }
-            catch { throw 'Не удалось проверить путь работающего Bonfire. Закройте приложение вручную.' }
-            # Запуск с UNC и локального пути относится к одной установке.
-            $processPath = Resolve-BonfireUpdateDirectory $processPath
-            if (-not $processPath.Equals($executable, [StringComparison]::OrdinalIgnoreCase)) { continue }
+            if (-not (Test-BonfireProcessMatches $process $Destination)) { continue }
             if ($process.SessionId -ne $session) { throw 'Bonfire открыт в другом сеансе Windows. Закройте его перед обновлением.' }
             if (-not $process.CloseMainWindow() -or -not $process.WaitForExit(30000)) {
                 throw 'Bonfire не завершился штатно за 30 секунд. Обновление отменено; процесс принудительно не завершается.'
@@ -72,13 +89,19 @@ function Invoke-BonfireInteractiveUpdate {
     )
     $ErrorActionPreference = 'Stop'
     if (-not (Test-Path -LiteralPath (Join-Path $PublishDirectory 'Bonfire.exe') -PathType Leaf)) { throw 'Нет полной публикации Bonfire.exe.' }
-    if (-not (Test-BonfireInteractiveSession)) { throw 'Нужен интерактивный сеанс пользователя для подтверждения обновления.' }
     $directory = Resolve-BonfireUpdateDirectory $Destination
-    if (-not $PSCmdlet.ShouldProcess($directory, 'Запросить подтверждение, штатно закрыть Bonfire, создать бэкап и обновить')) { return }
-    if (-not (Request-BonfireUpdateApproval $directory $Version $TimeoutSeconds)) {
-        return [pscustomobject]@{ Status = 'Cancelled'; Destination = $directory }
+    if (-not $PSCmdlet.ShouldProcess($directory, 'Проверить состояние Bonfire, при необходимости запросить закрытие, создать бэкап и обновить')) { return }
+    if (Test-BonfireRunning $directory) {
+        if (-not (Test-BonfireInteractiveSession)) { throw 'Нужен интерактивный сеанс пользователя для подтверждения закрытия Bonfire.' }
+        if (-not (Request-BonfireUpdateApproval $directory $Version $TimeoutSeconds)) {
+            return [pscustomobject]@{ Status = 'Cancelled'; Destination = $directory }
+        }
+        Close-BonfireForUpdate $directory
     }
-    Close-BonfireForUpdate $directory
+    else {
+        Write-Host 'Bonfire закрыт: подтверждение обновления не требуется.'
+    }
+    if (Test-BonfireRunning $directory) { throw 'Bonfire запущен во время подготовки. Файлы не изменены; повторите обновление.' }
     $result = Invoke-BonfireDeployment $PublishDirectory $directory
     $manifest = @{ Commit = $Version; InstalledAt = [DateTimeOffset]::Now.ToString('O'); BackupPath = $result.BackupPath }
     $manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $directory '.bonfire-version.json') -Encoding UTF8
