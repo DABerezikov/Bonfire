@@ -1,16 +1,7 @@
-namespace Bonfire.Models;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 
-/// <summary>
-/// Источники получения семян и рассады. Значения хранятся в БД
-/// (SeedsInfo.SeedSource / Seedling.SeedlingSource) и привязаны к радиокнопкам UI.
-/// </summary>
-public static class PlantSources
-{
-    public const string Purchased = "Куплено";
-    public const string Donated   = "Подарено";
-    public const string FromSeeds = "Из семян";
-    public const string Collected = "Собрано";
-}
+namespace Bonfire.Models;
 
 /// <summary>Особые значения производителя.</summary>
 public static class Producers
@@ -25,6 +16,13 @@ public static class Units
     /// <summary>Варианты выпадающего списка при добавлении семян.</summary>
     public const string GramsOption  = "Граммы";
     public const string PiecesOption = "Штуки";
+
+    public static Result<SeedUnit> ResolveSeedUnit(string value) => value switch
+    {
+        GramsOption => Result.Success(SeedUnit.Grams),
+        PiecesOption => Result.Success(SeedUnit.Pieces),
+        _ => Result.Failure<SeedUnit>("Выберите единицу количества семян")
+    };
 
     /// <summary>Краткая подпись грамм при добавлении рассады.</summary>
     public const string GramsAbbr = "гр.";

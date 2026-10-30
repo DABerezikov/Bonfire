@@ -24,7 +24,7 @@ internal static class DbRegistrator
                     break;
             }
         })
-        .AddSingleton<DbInitializer>()
+        .AddScoped<DbInitializer>()
         .AddRepositoriesInDb()
     ;
 }

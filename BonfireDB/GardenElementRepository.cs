@@ -11,7 +11,8 @@ class GardenElementRepository(DbBonfire db) : IRepository<GardenElement>
 {
     private readonly DbSet<GardenElement> _set = db.GardenElements;
 
-    public IQueryable<GardenElement> Items => _set
+    public IQueryable<GardenElement> Rows => _set;
+    public IQueryable<GardenElement> Items => Rows
         .Include(e => e.Plot)
         .Include(e => e.PlantingSpots)
             .ThenInclude(s => s.SeedlingInfo);

@@ -1,61 +1,38 @@
-﻿using Bonfire.Services.Interfaces;
+using Bonfire.Services.Interfaces;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
 using System;
 using System.Linq;
-using System.Windows.Controls;
+using Bonfire.ViewModels;
+using Bonfire.Views.Windows;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seedlings;
 
 namespace Bonfire.Services;
 
 public class UserDialog : IUserDialog
 {
+    public virtual Option<SeedlingRemoval> RequestSeedlingRemoval(string sortName)
+    {
+        var model = new DeleteSeedlingDialogViewModel(sortName);
+        var dialog = new DeleteSeedlingDialog { DataContext = model, Owner = CurrentWindow };
+        return dialog.ShowDialog() == true ? model.Choice : Option.None<SeedlingRemoval>();
+    }
     public virtual string? RequestDeleteReason(string sortName, string? previousReason = null)
     {
-        var dialog = new Window
-        {
-            Title = "Удаление семян", Width = 460, SizeToContent = SizeToContent.Height,
-            ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Owner = CurrentWindow
-        };
-        var panel = new StackPanel { Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"Удалить запись семян сорта «{sortName}»? Несохранённые изменения будут сброшены.",
-            TextWrapping = TextWrapping.Wrap
-        });
-        panel.Children.Add(new TextBlock { Text = "Причина удаления", Margin = new Thickness(0, 14, 0, 5) });
-        var reason = new TextBox
-        {
-            Text = previousReason ?? string.Empty, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap,
-            Height = 85, VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-        };
-        panel.Children.Add(reason);
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 16, 0, 0)
-        };
-        var yes = new Button { Content = "Да, удалить", MinWidth = 100, Padding = new Thickness(8, 4, 8, 4) };
-        yes.Click += (_, _) => dialog.DialogResult = true;
-        buttons.Children.Add(yes);
-        buttons.Children.Add(new Button
-        {
-            Content = "Нет", IsCancel = true, MinWidth = 80,
-            Margin = new Thickness(10, 0, 0, 0), Padding = new Thickness(8, 4, 8, 4)
-        });
-        panel.Children.Add(buttons);
-        dialog.Content = panel;
-        return dialog.ShowDialog() == true ? reason.Text : null;
+        var model = new DeleteSeedDialogViewModel(sortName, previousReason);
+        var dialog = new DeleteSeedDialog { DataContext = model, Owner = CurrentWindow };
+        return dialog.ShowDialog() == true ? model.Reason : null;
     }
 
     /// <summary>Активное окно приложения</summary>
     protected static Window? ActiveWindow =>
-        Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
+        System.Windows.Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
 
     /// <summary>Окно с фокусом ввода</summary>
     protected static Window? FocusedWindow =>
-        Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsFocused);
+        System.Windows.Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsFocused);
 
     /// <summary>Текущее окно приложения</summary>
     protected static Window? CurrentWindow => FocusedWindow ?? ActiveWindow;

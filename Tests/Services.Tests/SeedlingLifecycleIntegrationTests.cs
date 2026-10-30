@@ -1,0 +1,122 @@
+using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Seedlings;
+using Bonfire.Domain.Functional;
+using BonfireDB.Sowing;
+using Microsoft.EntityFrameworkCore;
+
+namespace Services.Tests;
+
+public class SeedlingLifecycleIntegrationTests : IDisposable
+{
+    private readonly SqliteUowFixture _fixture = new();
+    public void Dispose() => _fixture.Dispose();
+
+    private Task<int> PrepareAsync(bool sprout = true, double quantity = 4) => _fixture.QueryAsync(async db =>
+    {
+        var batch = new Seedling { Quantity = quantity, Plant = new() { PlantCulture = new() { Name = "Томат" },
+            PlantSort = new() { Name = "Черри", Producer = new() { Name = "Фирма" } } },
+            SeedlingInfos = [new() { SeedlingNumber = 0, Note = "Метаданные" }] };
+        if (sprout) batch.SeedlingInfos.Add(new() { SeedlingNumber = 1, GerminationDate = new(2026, 3, 1) });
+        db.Seedlings.Add(batch);
+        await db.SaveChangesAsync();
+        return batch.Id;
+    });
+
+    private Task<Result<SeedlingChangeResultFromViewModel>> ApplyAsync(int id, SeedlingAction action)
+        => new ChangeSeedling(new DbSeedlingChangeWriter(_fixture.Factory)).ExecuteAsync(new(id, action));
+
+    [Fact]
+    public async Task Germinate_CapsAtFreshQuantityAndPreservesMetadata()
+    {
+        var id = await PrepareAsync();
+        var date = new DateTime(2026, 3, 7);
+        var result = await ApplyAsync(id, new SeedlingAction.Germinate(20, date));
+        Assert.Equal(5, result.ValueOrThrow().Entries.Count);
+        Assert.Equal(4, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync(info => info.GerminationDate != null)));
+        Assert.Equal(3, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync(info => info.GerminationDate == date)));
+        Assert.Equal("Метаданные", await _fixture.QueryAsync(db => db.SeedlingInfos.Where(info => info.SeedlingNumber == 0).Select(info => info.Note).SingleAsync()));
+        Assert.Equal(new[] { 1, 2, 3, 4 }, await _fixture.QueryAsync(db => db.SeedlingInfos.Where(info => info.GerminationDate != null).OrderBy(info => info.SeedlingNumber).Select(info => info.SeedlingNumber).ToArrayAsync()));
+        Assert.Equal(0, await _fixture.QueryAsync(db => db.Seeds.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Germinate_SecondInsertRejected_RollsBackAllNewSprouts()
+    {
+        var id = await PrepareAsync(false);
+        await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectSprout BEFORE INSERT ON SeedlingInfos WHEN NEW.SeedlingNumber = 2 BEGIN SELECT RAISE(ABORT, 'sprout rejected'); END;"));
+        var result = await ApplyAsync(id, new SeedlingAction.Germinate(3, DateTime.Today));
+        Assert.Contains("sprout rejected", result.Match(_ => "не ожидалось", error => error));
+        Assert.Equal(1, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+        Assert.Equal(1, await _fixture.QueryAsync(db => db.Seedlings.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Germinate_Zero_PreservesExistingMarkDeadBehavior()
+    {
+        var id = await PrepareAsync(false);
+        Assert.True((await ApplyAsync(id, new SeedlingAction.Germinate(0, DateTime.Today))).IsSuccess);
+        Assert.True(await _fixture.QueryAsync(db => db.SeedlingInfos.Select(info => info.IsDead == true).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task Germinate_MissingBatch_ReturnsFailure() => Assert.True(
+        (await ApplyAsync(999, new SeedlingAction.Germinate(1, DateTime.Today))).IsFailure);
+
+    [Fact]
+    public async Task Replant_RecordsDateOnceAndPreservesOtherRecords()
+    {
+        var id = await PrepareAsync();
+        var date = new DateTime(2026, 4, 1);
+        Assert.True((await ApplyAsync(id, new SeedlingAction.Replant(date))).IsSuccess);
+        Assert.Equal(date, await _fixture.QueryAsync(db => db.Replants.Select(replant => replant.ReplantingDate).SingleAsync()));
+        Assert.True((await ApplyAsync(id, new SeedlingAction.Replant(date.AddDays(1)))).IsFailure);
+        Assert.Equal(1, await _fixture.QueryAsync(db => db.Replants.CountAsync()));
+        Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Replant_InsertRejected_PreservesBatchAndRetry()
+    {
+        var id = await PrepareAsync();
+        await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectReplant BEFORE INSERT ON Replants BEGIN SELECT RAISE(ABORT, 'replant rejected'); END;"));
+        var result = await ApplyAsync(id, new SeedlingAction.Replant(DateTime.Today));
+        Assert.Contains("replant rejected", result.Match(_ => "не ожидалось", error => error));
+        Assert.Equal(0, await _fixture.QueryAsync(db => db.Replants.CountAsync()));
+        Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+    }
+
+    private async Task<int> PrepareSproutsAsync()
+    {
+        var id = await PrepareAsync();
+        await _fixture.ExecuteAsync(async db =>
+        {
+            var batch = await db.Seedlings.Include(batch => batch.SeedlingInfos).SingleAsync();
+            batch.SeedlingInfos.AddRange([new() { SeedlingNumber = 2, GerminationDate = DateTime.Today }, new() { SeedlingNumber = 3, GerminationDate = DateTime.Today }]);
+            await db.SaveChangesAsync();
+        });
+        return id;
+    }
+
+    [Fact]
+    public async Task MarkDead_UpdatesLastAliveWithReasonAndPreservesMetadata()
+    {
+        var id = await PrepareSproutsAsync();
+        Assert.True((await ApplyAsync(id, new SeedlingAction.MarkDead(2, Option.Some(" Засохли ")))).IsSuccess);
+        Assert.Equal(new[] { 2, 3 }, await _fixture.QueryAsync(db => db.SeedlingInfos.Where(info => info.IsDead == true).OrderBy(info => info.SeedlingNumber).Select(info => info.SeedlingNumber).ToArrayAsync()));
+        Assert.Equal(2, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync(info => info.DeathNote == " Засохли ")));
+        Assert.Equal("Метаданные", await _fixture.QueryAsync(db => db.SeedlingInfos.Where(info => info.SeedlingNumber == 0).Select(info => info.Note).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task MarkDead_SaveRejected_RollsBackAllChanges()
+    {
+        var id = await PrepareSproutsAsync();
+        await _fixture.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectDeath BEFORE UPDATE ON SeedlingInfos WHEN NEW.IsDead = 1 AND NEW.SeedlingNumber = 3 BEGIN SELECT RAISE(ABORT, 'death rejected'); END;"));
+        var result = await ApplyAsync(id, new SeedlingAction.MarkDead(2, Option.Some("Причина")));
+        Assert.Contains("death rejected", result.Match(_ => "не ожидалось", error => error));
+        Assert.Equal(0, await _fixture.QueryAsync(db => db.SeedlingInfos.CountAsync(info => info.IsDead == true || info.DeathNote != null)));
+    }
+}

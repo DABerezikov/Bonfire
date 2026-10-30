@@ -20,6 +20,21 @@ namespace Bonfire.Views;
 /// </summary>
 public partial class SeedlingsWindow : UserControl
 {
+    private readonly HashSet<ValidationError> _editorErrors = [];
+
+    private void OnEditorValidationError(object sender, ValidationErrorEventArgs e)
+    {
+        if (e.Action == ValidationErrorEventAction.Added) _editorErrors.Add(e.Error);
+        else _editorErrors.Remove(e.Error);
+        if (DataContext is ViewModels.SeedlingsViewModel vm) vm.EditorHasBindingErrors = _editorErrors.Count > 0;
+    }
+
+    private void OnEditorUnloaded(object sender, RoutedEventArgs e)
+    {
+        _editorErrors.Clear();
+        if (DataContext is ViewModels.SeedlingsViewModel vm) vm.EditorHasBindingErrors = false;
+    }
+
     public SeedlingsWindow()
     {
         InitializeComponent();

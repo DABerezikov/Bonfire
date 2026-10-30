@@ -1,3 +1,7 @@
+using System.Collections.Immutable;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
+using BonfireDB.Libraries;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -14,11 +18,11 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     private static SeedsViewModel SeedsVm(IUserDialog? dialog = null, params Seed[] seeds)
     {
         var service = Substitute.For<ISeedsService>();
-        service.GetAllSeedsAsync().Returns(seeds);
-        service.GetEditorOptionsAsync().Returns(new SeedEditorOptions(["Красный"], ["Ранний"], seeds.Select(s => s.Plant.PlantSort.Producer).ToArray()));
+        service.ReadSeedsAsync().Returns(seeds.ReadSeeds());
+        service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel(["Красный"], ["Ранний"], seeds.Select(s => LibraryReadDbMapper.Read(s.Plant.PlantSort.Producer)).ToImmutableArray())));
         var vm = new SeedsViewModel(service, dialog ?? Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
         vm.LoadDataCommand.Execute(null);
-        if (seeds.Length > 0) vm.SelectedItem = seeds[0];
+        if (seeds.Length > 0) vm.SelectedItem = vm.Seeds![0];
         return vm;
     }
 
@@ -32,10 +36,10 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     {
         var seeds = SeedsVm();
         var seedlingService = Substitute.For<ISeedlingsService>();
-        seedlingService.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
+        seedlingService.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
         seedlingService.Lunar.Returns(new MoonPhase());
-        var seedService = Substitute.For<ISeedsService>(); seedService.GetAllSeedsAsync().Returns(Array.Empty<Seed>());
-        var gardenService = Substitute.For<IGardenService>(); gardenService.GetPlansOrderedByYearDescAsync().Returns(Array.Empty<BonfireDB.Entities.GardenPlanning.GardenPlan>());
+        var seedService = Substitute.For<ISeedsService>(); seedService.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
+        var gardenService = Substitute.For<IGardenService>(); gardenService.ReadPlansAsync().Returns(Bonfire.Domain.Functional.Result.Success(System.Collections.Immutable.ImmutableArray<Bonfire.Application.Garden.GardenPlanResultFromViewModel>.Empty));
         var garden = new GardenPlanViewModel(gardenService, Substitute.For<IUserDialog>(), seedlingService, seedService, Substitute.For<IPlantingService>());
         FrameworkElement view = screen switch
         {
@@ -68,6 +72,25 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     });
 
     [Fact]
+    public void SeedEditor_PackageBinding_UpdatesDraftAndReflectsModelNotifications() => runtime.Invoke(() =>
+    {
+        var source = SeedsWorkflowTests.Seed(1);
+        var vm = SeedsVm(null, source);
+        var editor = new SeedDetailsEditor { DataContext = vm };
+        WpfRuntime.Layout(editor, 1060, 500);
+        var input = WpfRuntime.Descendants<TextBox>(editor).Single(box =>
+            BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == "EditedItem.Package.AmountSeeds");
+        input.Text = "8";
+        input.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();
+        Assert.Equal(8, vm.EditedItem!.Package.AmountSeeds);
+        Assert.Equal(10, source.SeedsInfo.AmountSeeds);
+        Assert.True(vm.HasUnsavedSeedChanges);
+        vm.EditedItem.Package.AmountSeeds = 7;
+        WpfRuntime.Layout(editor, 1060, 500);
+        Assert.Equal("7", input.Text);
+    });
+
+    [Fact]
     public void SeedEditor_HeaderAndInputsPreserveAgreedPresentation() => runtime.Invoke(() =>
     {
         var vm = SeedsVm(null, SeedsWorkflowTests.Seed(1));
@@ -94,10 +117,10 @@ public class WpfBehaviorTests(WpfRuntime runtime)
         var row = Assert.IsType<DataGridRow>(grid.ItemContainerGenerator.ContainerFromIndex(0));
         grid.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Control.MouseDoubleClickEvent, Source = row });
         Assert.Equal(Visibility.Visible, row.DetailsVisibility);
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         grid.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Control.MouseDoubleClickEvent, Source = row });
         Assert.Equal(Visibility.Visible, row.DetailsVisibility);
-        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
+        Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
     });
 
     [Fact]

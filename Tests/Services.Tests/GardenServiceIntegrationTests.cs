@@ -4,6 +4,8 @@ using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Bonfire.Application.Garden;
+using BonfireDB.Planting;
 
 namespace Services.Tests;
 
@@ -27,7 +29,11 @@ public class GardenServiceIntegrationTests : IDisposable
 
     public void Dispose() => _sp.Dispose();
 
-    private GardenService CreateService() => new(_sp.GetRequiredService<IUnitOfWorkFactory>());
+    private GardenService CreateService()
+    {
+        var factory = _sp.GetRequiredService<IUnitOfWorkFactory>();
+        return new(new ResizeGrid(new DbGridWriter(factory)), new ChangeGardenState(new DbGardenStateWriter(factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(factory)), new EditElementProperties(new DbElementPropertiesWriter(factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(factory)), new EditGardenProperties(new DbGardenPropertiesWriter(factory)), new SetGardenLock(new DbGardenLockWriter(factory)), new DeleteGardenElement(new DbElementDeletionWriter(factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(factory)), new DeleteGarden(new DbGardenDeletionWriter(factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(factory)), new DbGardenReader(factory));
+    }
 
     private async Task<(int planId, int gardenId, int bedId)> SeedAsync(int year = 2026)
     {
@@ -58,7 +64,7 @@ public class GardenServiceIntegrationTests : IDisposable
         await SeedAsync(2026);
         await SeedAsync(2025);
 
-        var plans = await CreateService().GetPlansOrderedByYearDescAsync();
+        var plans = (await CreateService().ReadPlansAsync()).ValueOrThrow();
 
         Assert.Equal([2026, 2025, 2024], plans.Select(p => p.Year));
     }
@@ -69,41 +75,41 @@ public class GardenServiceIntegrationTests : IDisposable
         var (planId, gardenId, _) = await SeedAsync();
         await SeedAsync(2030); // другой план — не должен попасть
 
-        var gardens = await CreateService().GetGardensByPlanAsync(planId);
+        var gardens = (await CreateService().ReadGardensAsync(planId)).ValueOrThrow();
 
         Assert.Single(gardens);
-        Assert.Equal(gardenId, gardens[0].Id);
+        Assert.Equal(gardenId, gardens[0].Properties.Id);
     }
 
     [Fact]
     public async Task GetGardenByIdAsync_ReturnsGardenWithElements()
     {
-        var (_, gardenId, bedId) = await SeedAsync();
+        var (planId, gardenId, bedId) = await SeedAsync();
 
-        var garden = await CreateService().GetGardenByIdAsync(gardenId);
+        var garden = Assert.Single((await CreateService().ReadGardensAsync(planId)).ValueOrThrow());
 
         Assert.NotNull(garden);
-        Assert.Equal(gardenId, garden!.Id);
-        Assert.Contains(garden.Elements, e => e.Id == bedId);
+        Assert.Equal(gardenId, garden!.Properties.Id);
+        Assert.Contains(garden.Elements, e => e.Properties.Id == bedId);
     }
 
     [Fact]
     public async Task GetGardenByIdAsync_UnknownId_ReturnsNull()
     {
         await SeedAsync();
-        var garden = await CreateService().GetGardenByIdAsync(99999);
-        Assert.Null(garden);
+        var gardens = (await CreateService().ReadGardensAsync(99999)).ValueOrThrow();
+        Assert.Empty(gardens);
     }
 
     [Fact]
     public async Task GetElementByIdAsync_ReturnsElementWithPlantingSpots()
     {
-        var (_, _, bedId) = await SeedAsync();
+        var (planId, _, bedId) = await SeedAsync();
 
-        var element = await CreateService().GetElementByIdAsync(bedId);
+        var element = Assert.Single(Assert.Single((await CreateService().ReadGardensAsync(planId)).ValueOrThrow()).Elements);
 
         Assert.NotNull(element);
-        Assert.IsType<Bed>(element);
-        Assert.Single(element!.PlantingSpots);
+        Assert.Equal("Bed", element.ElementType); Assert.Equal(bedId, element.Properties.Id);
+        Assert.Single(element!.Spots);
     }
 }

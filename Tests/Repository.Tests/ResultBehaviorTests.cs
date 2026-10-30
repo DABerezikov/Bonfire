@@ -1,4 +1,4 @@
-using BonfireDB.Entities.Base;
+using Bonfire.Domain.Functional;
 
 namespace Repository.Tests;
 
@@ -11,7 +11,7 @@ public class ResultBehaviorTests
         var result = Result.Success(value);
         Assert.True(result.IsSuccess);
         Assert.False(result.IsFailure);
-        Assert.Null(result.Error);
+        Assert.True(result.Match(_ => true, _ => false));
         Assert.Same(value, result.ValueOrThrow());
         Assert.Same(value, result.ValueOrDefault(new object()));
         Assert.Equal("ok", result.Match(_ => "ok", _ => throw new Exception("Wrong branch")));
@@ -26,8 +26,8 @@ public class ResultBehaviorTests
         Assert.Equal("Ошибка сохранения", Assert.Throws<InvalidOperationException>(() => result.ValueOrThrow()).Message);
         var bound = result.Bind<string>(_ => throw new Exception("Must not run"));
         Assert.True(bound.IsFailure);
-        Assert.Equal(result.Error, bound.Error);
-        Assert.Equal(result.Error, result.Match(_ => throw new Exception("Wrong branch"), error => error));
+        Assert.Equal(result.Match(_ => string.Empty, error => error), bound.Match(_ => string.Empty, error => error));
+        Assert.Equal(result.Match(_ => string.Empty, error => error), result.Match(_ => throw new Exception("Wrong branch"), error => error));
     }
 
     [Theory]
@@ -40,8 +40,8 @@ public class ResultBehaviorTests
     [Fact]
     public void Bind_Success_CanTransformOrReturnFailure()
     {
-        Assert.Equal("7", Result.Success(7).Bind(n => Result.Success(n.ToString())).Value);
-        Assert.Equal("нет", Result.Success(7).Bind(_ => Result.Failure<int>("нет")).Error);
+        Assert.Equal("7", Result.Success(7).Bind(n => Result.Success(n.ToString())).ValueOrThrow());
+        Assert.Equal("нет", Result.Success(7).Bind(_ => Result.Failure<int>("нет")).Match(_ => string.Empty, error => error));
     }
 
     [Fact]
@@ -54,10 +54,13 @@ public class ResultBehaviorTests
     }
 
     [Fact]
-    public void From_ErrorDeterminesOutcome_IncludingNullableSuccess()
+    public void From_MissingValue_ReturnsFailureInsteadOfNullableSuccess()
     {
-        Assert.True(Result.From<string>(null!).IsSuccess);
-        Assert.Null(Result.From<string>(null!).ValueOrThrow());
-        Assert.Equal("ошибка", Result.From(10, "ошибка").Error);
+        Assert.True(Result.From<string>(null!).IsFailure);
+        Assert.Equal("ошибка", Result.From(10, "ошибка").Match(_ => string.Empty, error => error));
     }
+
+    [Fact]
+    public void Success_NullValue_IsRejected()
+        => Assert.Throws<ArgumentNullException>(() => Result.Success<string>(null!));
 }

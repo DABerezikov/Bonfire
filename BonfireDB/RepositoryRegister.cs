@@ -1,7 +1,15 @@
-﻿using BonfireDB.Entities;
+using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
 using Microsoft.Extensions.DependencyInjection;
+using Bonfire.Application.Seedlings;
+using BonfireDB.Sowing;
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
+using Bonfire.Application.Seeds;
+using BonfireDB.SeedEditing;
+using Bonfire.Application.Garden;
+using BonfireDB.Planting;
 
 namespace BonfireDB;
 
@@ -10,6 +18,36 @@ public static class RepositoryRegister
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
+        .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
+        .AddSingleton<ISeedlingDeletionWriter, DbSeedlingDeletionWriter>()
+        .AddSingleton<ISeedlingChangeWriter, DbSeedlingChangeWriter>()
+        .AddSingleton<ISeedlingEditWriter, DbSeedlingEditWriter>()
+        .AddSingleton<ISeedlingReader, DbSeedlingReader>()
+        .AddSingleton<IPlantingWriter, DbPlantingWriter>()
+        .AddSingleton<IGridWriter, DbGridWriter>()
+        .AddSingleton<IGardenStateWriter, DbGardenStateWriter>()
+        .AddSingleton<IGardenGeometryWriter, DbGardenGeometryWriter>()
+        .AddSingleton<IElementPropertiesWriter, DbElementPropertiesWriter>()
+        .AddSingleton<IGreenhousePropertiesWriter, DbGreenhousePropertiesWriter>()
+        .AddSingleton<IGardenPropertiesWriter, DbGardenPropertiesWriter>()
+        .AddSingleton<IGardenLockWriter, DbGardenLockWriter>()
+        .AddSingleton<IElementDeletionWriter, DbElementDeletionWriter>()
+        .AddSingleton<IGreenhouseDeletionWriter, DbGreenhouseDeletionWriter>()
+        .AddSingleton<IGardenDeletionWriter, DbGardenDeletionWriter>()
+        .AddSingleton<IGardenPlanDeletionWriter, DbGardenPlanDeletionWriter>()
+        .AddSingleton<IGardenPlanCreationWriter, DbGardenPlanCreationWriter>()
+        .AddSingleton<IGardenCreationWriter, DbGardenCreationWriter>()
+        .AddSingleton<IGardenObjectCreationWriter, DbGardenObjectCreationWriter>()
+        .AddSingleton<IGardenReader, DbGardenReader>()
+        .AddSingleton<ILibraryReader, DbLibraryReader>()
+        .AddSingleton<ICultureWriter, DbCultureWriter>()
+        .AddSingleton<IProducerWriter, DbProducerWriter>()
+        .AddSingleton<ISortWriter, DbSortWriter>()
+        .AddSingleton<ISeedReader, DbSeedReader>()
+        .AddSingleton<ISeedEditorOptionsReader, DbSeedEditorOptionsReader>()
+        .AddSingleton<ISeedEditWriter, DbSeedEditWriter>()
+        .AddSingleton<ISeedAcquisitionWriter, DbSeedAcquisitionWriter>()
+        .AddSingleton<ISeedDeletionWriter, DbSeedDeletionWriter>()
         .AddScoped<IRepository<Plant>, PlantRepository>()
         .AddScoped<IRepository<PlantCulture>, DbRepository<PlantCulture>>()
         .AddScoped<IRepository<PlantSort>, PlantSortRepository>()

@@ -6,12 +6,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Bonfire.Data;
+using Bonfire.Application.Libraries;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities;
 
 namespace Bonfire.ViewModels;
 
@@ -106,77 +106,52 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     private async Task LoadSortDetailAsync(int id)
     {
         var result = await _libraryService.GetSortAsync(id);
-        if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-        SortDetail = LibraryMapper.ToEditModel(result.Value!);
+        if (SelectedSort?.Id != id) return;
+        result.Match(sort =>
+        {
+            SortDetail = LibraryMapper.ToEditModel(sort);
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
     }
 
     private async Task LoadCultureDetailAsync(int id)
     {
         var result = await _libraryService.GetCultureAsync(id);
-        if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-        CultureDetail = LibraryMapper.ToEditModel(result.Value!);
+        if (SelectedCulture?.Id != id) return;
+        result.Match(culture =>
+        {
+            CultureDetail = LibraryMapper.ToEditModel(culture);
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
     }
 
     private async Task LoadProducerDetailAsync(int id)
     {
         var result = await _libraryService.GetProducerAsync(id);
-        if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-        _originalProducerName = result.Value!.Name;
-        ProducerDetailName = result.Value!.Name;
-        ProducerDetailIsDirty = false;
+        if (SelectedProducer?.Id != id) return;
+        result.Match(producer =>
+        {
+            _originalProducerName = producer.Name;
+            ProducerDetailName = producer.Name;
+            ProducerDetailIsDirty = false;
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
     }
 
     // Синхронизация с SeedsViewModel
 
-    private void SyncAfterSortUpdate(PlantSort updated)
-    {
-        if (_seedsViewModel.Seeds != null)
-            foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantSort.Id == updated.Id))
-            {
-                seed.Plant.PlantSort.Name = updated.Name;
-                var plant = updated.Plants.FirstOrDefault(p => p.Id == seed.Plant.Id);
-                if (plant != null) seed.Plant.PlantCulture = plant.PlantCulture;
-            }
-
-        var sortItem = _seedsViewModel.AddSortList.FirstOrDefault(s => s.Id == updated.Id);
-        if (sortItem is not null)
-            _seedsViewModel.AddSortList[_seedsViewModel.AddSortList.IndexOf(sortItem)] =
-                new SortFromSeedsViewModel { Id = updated.Id, Name = updated.Name };
-
-        _seedsViewModel.UpdateCollectionViewSource();
-    }
-
-    private void SyncAfterCultureUpdate(PlantCulture updated)
-    {
-        if (_seedsViewModel.Seeds != null)
-            foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantCulture.Id == updated.Id))
-            {
-                seed.Plant.PlantCulture.Name = updated.Name;
-                seed.Plant.PlantCulture.Class = updated.Class;
-            }
-
-        var cultureItem = _seedsViewModel.AddCultureList.FirstOrDefault(c => c.Id == updated.Id);
-        if (cultureItem is not null)
-            _seedsViewModel.AddCultureList[_seedsViewModel.AddCultureList.IndexOf(cultureItem)] =
-                new CultureFromViewModel { Id = updated.Id, Name = updated.Name };
-
-        _seedsViewModel.UpdateCollectionViewSource();
-    }
-
-    private void SyncAfterProducerUpdate(Producer updated)
-    {
-        if (_seedsViewModel.Seeds != null)
-            foreach (var seed in _seedsViewModel.Seeds.Where(s => s.Plant.PlantSort.Producer.Id == updated.Id))
-                seed.Plant.PlantSort.Producer.Name = updated.Name;
-
-        var producerItem = _seedsViewModel.AddProducerList.FirstOrDefault(p => p.Id == updated.Id);
-        if (producerItem is not null)
-            _seedsViewModel.AddProducerList[_seedsViewModel.AddProducerList.IndexOf(producerItem)] =
-                new ProducerFromViewModel { Id = updated.Id, Name = updated.Name };
-
-        _seedsViewModel.UpdateCollectionViewSource();
-    }
-    
     // Команды — Сорт
 
     [field: AllowNull, MaybeNull]
@@ -185,12 +160,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var detail = SortDetail!;
+                if (SortDetail is not { } detail) return;
                 var result = await _libraryService.UpdateSortAsync(detail);
-                if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-                SyncAfterSortUpdate(result.Value!);
-                detail.ResetDirty();
-                _userDialog.Information("Сохранено");
+                result.Match(saved =>
+                {
+                    _seedsViewModel.SyncAfterSortUpdate(saved);
+                    detail.ResetDirty();
+                    _userDialog.Information("Сохранено");
+                    return true;
+                }, error =>
+                {
+                    _userDialog.Error(error);
+                    return false;
+                });
             }
             catch (Exception ex)
             {
@@ -214,12 +196,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var detail = CultureDetail!;
+                if (CultureDetail is not { } detail) return;
                 var result = await _libraryService.UpdateCultureAsync(detail);
-                if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-                SyncAfterCultureUpdate(result.Value!);
-                detail.ResetDirty();
-                _userDialog.Information("Сохранено");
+                result.Match(saved =>
+                {
+                    _seedsViewModel.SyncAfterCultureUpdate(saved);
+                    detail.ResetDirty();
+                    _userDialog.Information("Сохранено");
+                    return true;
+                }, error =>
+                {
+                    _userDialog.Error(error);
+                    return false;
+                });
             }
             catch (Exception ex)
             {
@@ -243,14 +232,21 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         {
             try
             {
-                var producerId = SelectedProducer!.Id;
-                var savedName = ProducerDetailName!;
-                var result = await _libraryService.UpdateProducerAsync(producerId, savedName);
-                if (result.IsFailure) { _userDialog.Error(result.Error!); return; }
-                SyncAfterProducerUpdate(result.Value!);
-                _originalProducerName = savedName;
-                ProducerDetailIsDirty = false;
-                _userDialog.Information("Сохранено");
+                if (SelectedProducer is not { } producer || ProducerDetailName is not { } name) return;
+                var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
+                result.Match(saved =>
+                {
+                    _seedsViewModel.SyncAfterProducerUpdate(saved);
+                    _originalProducerName = saved.Name;
+                    ProducerDetailName = saved.Name;
+                    ProducerDetailIsDirty = false;
+                    _userDialog.Information("Сохранено");
+                    return true;
+                }, error =>
+                {
+                    _userDialog.Error(error);
+                    return false;
+                });
             }
             catch (Exception ex)
             {

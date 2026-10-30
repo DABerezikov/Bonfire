@@ -8,5 +8,7 @@
     <BooleanToVisibilityConverter          x:Key="BoolToVisibility"/>
     <conv:NotBoolToVisibilityConverter     x:Key="NotBoolToVisibility"/>
     <conv:PxToMetersConverter              x:Key="PxToMeters"/>
+    <conv:PxToMetersConverter              x:Key="CheckedPxToMeters" RejectInvalidInput="True"/>
+    <conv:OptionValueConverter             x:Key="OptionValue"/>
 
 </ResourceDictionary>

@@ -1,3 +1,5 @@
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
 namespace ViewModels.Tests;
 
 public class SeedsViewModelTests
@@ -8,7 +10,6 @@ public class SeedsViewModelTests
 
     private SeedsViewModel CreateVm()
     {
-        _seedsService.GetAllSeedsAsync().Returns(new List<Seed>());
         return new SeedsViewModel(_seedsService, _userDialog, _reportService);
     }
 
@@ -127,7 +128,7 @@ public class SeedsViewModelTests
                 PlantSort = new PlantSort { Name = "Черри", Producer = new Producer { Name = "Г" } }
             },
             SeedsInfo = new SeedsInfo()
-        };
+        }.Read();
 
         Assert.True(vm.DeleteSeedCommand.CanExecute(null));
     }
@@ -140,12 +141,12 @@ public class SeedsViewModelTests
         var vm = CreateVm();
         var first = MakeSeed(1);
         vm.SelectedItem = first;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
         vm.SelectedItem = MakeSeed(2);
         Assert.Same(first, vm.SelectedItem);
-        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
-        Assert.Null(first.SeedsInfo.Note);
+        Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
+        Assert.Null(first.SeedsInfo.Note.ToNullable());
     }
 
     [Fact]
@@ -155,16 +156,16 @@ public class SeedsViewModelTests
         var first = MakeSeed(1);
         var second = MakeSeed(2);
         vm.SelectedItem = first;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
         vm.SelectedItem = second;
         Assert.Same(second, vm.SelectedItem);
-        Assert.Null(vm.EditedItem.SeedsInfo.Note);
-        Assert.Null(first.SeedsInfo.Note);
+        Assert.Null(vm.EditedItem!.Package.Note);
+        Assert.Null(first.SeedsInfo.Note.ToNullable());
         _userDialog.Received(1).YesNoQuestion(Arg.Any<string>(), Arg.Any<string>());
     }
 
-    private static Seed MakeSeed(int id) => new()
+    private static SeedReadFromViewModel MakeSeed(int id) => new Seed()
     {
         Id = id,
         Plant = new Plant
@@ -173,17 +174,17 @@ public class SeedsViewModelTests
             PlantSort = new PlantSort { Id = 1, Name = "Черри", Producer = new Producer { Id = 1, Name = "Гавриш" } }
         },
         SeedsInfo = new SeedsInfo()
-    };
+    }.Read();
 
     [Fact]
-    public void DeleteSeedCommand_Confirmed_RemovesCachedRecordReturnedFromAnotherContext()
+    public void DeleteSeedCommand_Confirmed_RemovesCachedRecordBySavedId()
     {
         var vm = CreateVm();
         var first = MakeSeed(1);
         vm.Seeds = [first, MakeSeed(2)];
         vm.SelectedItem = first;
         _userDialog.RequestDeleteReason(Arg.Any<string>(), Arg.Any<string?>()).Returns("Истёк срок");
-        _seedsService.DeleteSeedWithReasonAsync(1, "Истёк срок").Returns(MakeSeed(1));
+        _seedsService.DeleteSeedWithReasonAsync(1, "Истёк срок").Returns(Result.Success(new SeedDeletionResultFromViewModel(1)));
 
         vm.DeleteSeedCommand.Execute(null);
 
@@ -198,18 +199,18 @@ public class SeedsViewModelTests
         var vm = CreateVm();
         var seed = MakeSeed(1);
         vm.SelectedItem = seed;
-        vm.EditedItem.SeedsInfo.Note = "Черновик";
+        vm.EditedItem!.Package.Note = "Черновик";
         vm.SeedSortDetail!.Description = "Общее описание";
         vm.EditedProducerId = 2;
         _userDialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(false);
 
         vm.UpdateSeedsInfoCommand.Execute(null);
 
-        Assert.Null(seed.SeedsInfo.Note);
-        Assert.Null(seed.Plant.PlantSort.Description);
+        Assert.Null(seed.SeedsInfo.Note.ToNullable());
+        Assert.Null(seed.Plant.PlantSort.Characteristics.Description.ToNullable());
         Assert.Equal(1, seed.Plant.PlantSort.Producer.Id);
-        Assert.Equal("Черновик", vm.EditedItem.SeedsInfo.Note);
-        _seedsService.DidNotReceive().SaveSeedEditAsync(Arg.Any<Seed>(), Arg.Any<SortEditModel>(), Arg.Any<int>());
+        Assert.Equal("Черновик", vm.EditedItem!.Package.Note);
+        _seedsService.DidNotReceive().SaveSeedEditAsync(Arg.Any<Bonfire.Application.Seeds.EditSeedFromViewModel>());
     }
 
     private static void SetAllVerificationFields(SeedsViewModel vm)

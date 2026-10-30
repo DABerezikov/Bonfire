@@ -1,8 +1,14 @@
+using System.Collections.Immutable;
+using BonfireDB.Planting;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
+using Bonfire.Domain.Garden;
 using Bonfire.Infrastructure;
 using Bonfire.Models.Mappers;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.States;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.States;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace ViewModels.Tests;
 
@@ -16,10 +22,10 @@ public partial class GardenPlanWorkflowTests
 
     private GardenPlanViewModel CreateVm()
     {
-        _gardens.GetPlansOrderedByYearDescAsync().Returns(Array.Empty<GardenPlan>());
-        _gardens.GetGardensByPlanAsync(Arg.Any<int>()).Returns(Array.Empty<Garden>());
-        _seeds.GetAllSeedsAsync().Returns(Array.Empty<Seed>());
-        _seedlings.GetAllSeedlingsAsync().Returns(Array.Empty<Seedling>());
+        _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray<GardenPlanResultFromViewModel>.Empty));
+        _gardens.ReadGardensAsync(Arg.Any<int>()).Returns(Result.Success(ImmutableArray<GardenReadFromViewModel>.Empty));
+        _seeds.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
+        _seedlings.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
         return new(_gardens, _dialog, _seedlings, _seeds, _planting);
     }
 
@@ -33,25 +39,25 @@ public partial class GardenPlanWorkflowTests
     public void LoadData_SelectsFirstPlanAndGardenAndBuildsAvailableInventory()
     {
         var vm = CreateVm();
-        var plan = new GardenPlan { Id = 1, Name = "План" };
-        _gardens.GetPlansOrderedByYearDescAsync().Returns(new[] { plan });
-        _gardens.GetGardensByPlanAsync(1).Returns(new[] { new Garden { Id = 2, Name = "Участок", CanvasWidth = 3000, CanvasHeight = 2000 } });
-        var plant = new Plant { PlantCulture = new PlantCulture { Name = "Томат" }, PlantSort = new PlantSort { Name = "Черри" } };
-        _seeds.GetAllSeedsAsync().Returns(new[]
+        var plan = new GardenPlanFromViewModel { Id = 1, Name = "План" };
+        _gardens.ReadPlansAsync().Returns(Result.Success(ImmutableArray.Create(new GardenPlanResultFromViewModel(plan.Id, plan.Name, plan.Year, plan.Description))));
+        _gardens.ReadGardensAsync(1).Returns(Result.Success(ImmutableArray.Create(GardenReadDbMapper.ReadGarden(new Garden { Id = 2, Name = "Участок", CanvasWidth = 3000, CanvasHeight = 2000 }).ValueOrThrow())));
+        var plant = new Plant { PlantCulture = new PlantCulture { Name = "Томат" }, PlantSort = new PlantSort { Name = "Черри", Producer = new Producer { Name = "Фирма" } } };
+        _seeds.ReadSeedsAsync().Returns(new[]
         {
             new Seed { Id = 3, Plant = plant, SeedsInfo = new SeedsInfo { AmountSeeds = 5 } },
             new Seed { Id = 4, Plant = plant, SeedsInfo = new SeedsInfo { AmountSeedsWeight = 0.5 } },
             new Seed { Id = 5, Plant = plant, SeedsInfo = new SeedsInfo() }
-        });
-        _seedlings.GetAllSeedlingsAsync().Returns(new[]
+        }.ReadSeeds());
+        _seedlings.ReadSeedlingsAsync().Returns(new[]
         {
             new Seedling { Id = 6, Plant = plant, SeedlingInfos = [new() { GerminationDate = DateTime.Today }, new() { GerminationDate = DateTime.Today, IsDead = true }] },
             new Seedling { Id = 7, Plant = plant, IsPlantedInBed = true, SeedlingInfos = [new() { GerminationDate = DateTime.Today }] }
-        });
+        }.ReadSeedlings());
 
         vm.LoadDataCommand.Execute(null);
 
-        Assert.Same(plan, vm.SelectedPlan);
+        Assert.Equal(plan.Id, vm.SelectedPlan!.Id);
         Assert.Equal(2, vm.SelectedGarden!.Id);
         Assert.Equal(2, vm.AvailableSeedItems.Count);
         Assert.Equal(0.5, vm.AvailableSeedItems.Single(s => s.EntityId == 4).AvailableQty);
@@ -64,12 +70,12 @@ public partial class GardenPlanWorkflowTests
     public void CreatePlan_SelectsNewPlanAndLoadsItsGardens()
     {
         var vm = CreateVm();
-        var plan = new GardenPlan { Id = 3, Name = "Новый" };
-        _gardens.CreatePlanAsync(Arg.Any<string>(), DateTime.Now.Year).Returns(plan);
+        var plan = new GardenPlanFromViewModel { Id = 3, Name = "Новый" };
+        _gardens.CreateCurrentPlanAsync().Returns(Result.Success(new GardenPlanResultFromViewModel(plan.Id, plan.Name, plan.Year, Option.None<string>())));
         vm.CreatePlanCommand.Execute(null);
-        Assert.Same(plan, vm.SelectedPlan);
-        Assert.Same(plan, Assert.Single(vm.Plans));
-        _gardens.Received().GetGardensByPlanAsync(3);
+        Assert.Equal(plan.Id, vm.SelectedPlan!.Id);
+        Assert.Equal(plan.Name, Assert.Single(vm.Plans).Name);
+        _gardens.Received().ReadGardensAsync(3);
     }
 
     [Theory]
@@ -78,22 +84,23 @@ public partial class GardenPlanWorkflowTests
     public void DeletePlan_RequiresConfirmationAndSelectsRemainingPlan(bool confirm)
     {
         var vm = CreateVm();
-        var first = new GardenPlan { Id = 1, Name = "Первый" };
-        var second = new GardenPlan { Id = 2, Name = "Второй" };
+        var first = new GardenPlanFromViewModel { Id = 1, Name = "Первый" };
+        var second = new GardenPlanFromViewModel { Id = 2, Name = "Второй" };
         vm.Plans = [first, second]; vm.SelectedPlan = first;
         _dialog.YesNoQuestion(Arg.Any<string>(), Arg.Any<string>()).Returns(confirm);
+        _gardens.DeletePlanByIdAsync(Arg.Any<DeleteGardenPlanFromViewModel>()).Returns(Result.Success(new GardenPlanDeletionResultFromViewModel(1)));
         vm.DeletePlanCommand.Execute(null);
         Assert.Equal(confirm ? 1 : 2, vm.Plans.Count);
         Assert.Same(confirm ? second : first, vm.SelectedPlan);
-        _gardens.Received(confirm ? 1 : 0).DeletePlanAsync(first);
+        _gardens.Received(confirm ? 1 : 0).DeletePlanByIdAsync(Arg.Is<DeleteGardenPlanFromViewModel>(r => r.GardenPlanId == first.Id));
     }
 
     [Fact]
     public void CreateGarden_UsesPlanAndDisplayScaleAndSelectsCreatedGarden()
     {
-        var vm = CreateVm(); vm.SelectedPlan = new GardenPlan { Id = 3 };
-        _gardens.CreateGardenAsync(3, "Новый участок", 20, 15, CanvasConstants.PixelsPerMeter)
-            .Returns(new Garden { Id = 4, Name = "Новый участок", CanvasWidth = 3000, CanvasHeight = 2250 });
+        var vm = CreateVm(); vm.SelectedPlan = new GardenPlanFromViewModel { Id = 3 };
+        _gardens.CreateGardenFromRequestAsync(Arg.Is<CreateGardenFromViewModel>(r => r.PlanId == 3 && r.Name == "Новый участок" && r.WidthMeters == 20 && r.HeightMeters == 15 && r.PixelsPerMeter == CanvasConstants.PixelsPerMeter))
+            .Returns(Result.Success(new GardenPropertiesResultFromViewModel(4, new("Новый участок", Option.None<string>(), Option.None<string>(), 20, 15), CanvasRectangle.Create(0, 0, 3000, 2250).ValueOrThrow())));
         vm.CreateGardenCommand.Execute(null);
         Assert.Equal(4, vm.SelectedGarden!.Id);
         Assert.Single(vm.Gardens);
@@ -107,7 +114,7 @@ public partial class GardenPlanWorkflowTests
     public void AddElement_EachType_UsesCorrectSizeAndContainer(string type, double width, double height)
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm(); vm.SelectedElementType = type;
-        _gardens.AddElementAsync(Arg.Any<GardenElement>()).Returns(c => { var e = c.Arg<GardenElement>(); e.Id = 12; return e; });
+        _gardens.CreateElementFromRequestAsync(Arg.Any<CreateGardenElementFromViewModel>()).Returns(c => Result.Success(CreatedElement(c.Arg<CreateGardenElementFromViewModel>())));
         vm.AddElementCommand.Execute(null);
         var added = Assert.Single(vm.SelectedGarden.Elements);
         Assert.Equal(type, added.ElementType);
@@ -124,7 +131,7 @@ public partial class GardenPlanWorkflowTests
         vm.AddElementCommand.Execute(null);
         Assert.Empty(vm.SelectedGarden.Elements);
         _dialog.Received(1).Warning(Arg.Any<string>(), "Добавление элемента");
-        _gardens.DidNotReceive().AddElementAsync(Arg.Any<GardenElement>());
+        _gardens.DidNotReceive().CreateElementFromRequestAsync(Arg.Any<CreateGardenElementFromViewModel>());
     }
 
     [Fact]
@@ -176,40 +183,42 @@ public partial class GardenPlanWorkflowTests
     public void SaveGardenSize_RejectsOutOfBoundsElementsOrGreenhouses(bool greenhouse)
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
-        vm.SelectedGarden.WidthMeters = 1;
+        vm.GardenEditor!.WidthMeters = 1;
         if (greenhouse) vm.SelectedGarden.Greenhouses.Add(new() { X = 10000, DisplayWidth = 200 });
         else vm.SelectedGarden.Elements.Add(new() { X = 10000, Width = 200 });
+        _gardens.EditGardenPropertiesAsync(Arg.Any<EditGardenPropertiesFromViewModel>()).Returns(Result.Failure<GardenPropertiesResultFromViewModel>("Свежий объект за границами"));
         vm.SaveGardenSizeCommand.Execute(null);
-        _dialog.Received(1).Warning(Arg.Any<string>(), "Изменение размера участка");
-        _gardens.DidNotReceive().UpdateGardenAsync(Arg.Any<Garden>());
+        _dialog.Received(1).Warning("Свежий объект за границами", "Изменение размера участка");
+        Assert.Equal(1, vm.GardenEditor.WidthMeters);
+        Assert.Equal(20, vm.SelectedGarden.WidthMeters);
     }
 
     [Fact]
     public void SaveGardenSize_PersistsDimensionsAndUpdatesChildrenLimits()
     {
         var vm = CreateVm(); vm.SelectedGarden = GardenVm();
-        vm.SelectedGarden.Elements.Add(new() { Width = 10, Height = 10 });
+        vm.SelectedGarden.Elements.Add(new() { X = 10000, Width = 10, Height = 10 });
         vm.SelectedGarden.Greenhouses.Add(new() { DisplayWidth = 10, DisplayHeight = 10 });
-        var entity = new Garden { Id = 1 };
-        _gardens.GetGardenByIdAsync(1).Returns(entity);
+        vm.GardenEditor!.WidthMeters = 21;
+        _gardens.EditGardenPropertiesAsync(Arg.Any<EditGardenPropertiesFromViewModel>()).Returns(Result.Success(
+            new GardenPropertiesResultFromViewModel(1, vm.GardenEditor.Values, CanvasRectangle.Create(0, 0, 3150, 1500).ValueOrThrow())));
         vm.SaveGardenSizeCommand.Execute(null);
-        Assert.Equal(20 * CanvasConstants.PixelsPerMeter, entity.CanvasWidth);
-        Assert.Equal(entity.CanvasWidth, vm.SelectedGarden.Elements[0].ContainerCanvasWidth);
-        Assert.Equal(entity.CanvasHeight, vm.SelectedGarden.Greenhouses[0].ContainerCanvasHeight);
-        _gardens.Received(1).UpdateGardenAsync(entity);
+        Assert.Equal(3150, vm.SelectedGarden.CanvasWidth);
+        Assert.Equal(3150, vm.SelectedGarden.Elements[0].ContainerCanvasWidth);
+        Assert.Equal(1500, vm.SelectedGarden.Greenhouses[0].ContainerCanvasHeight);
     }
 
     [Fact]
     public void ElementState_ValidTransitionSavesAndInvalidTransitionDoesNothing()
     {
         var vm = CreateVm(); vm.SelectedElement = new() { Id = 1, StateTypeName = nameof(PlannedState) };
-        var entity = new Bed { Id = 1 };
-        _gardens.GetElementByIdAsync(1).Returns(entity);
+        _gardens.ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>()).Returns(Result.Success<GardenStateResultFromViewModel>(
+            new GardenStateResultFromViewModel.Element(1, new PreparedState())));
         vm.ChangeElementStateCommand.Execute(nameof(PreparedState));
         Assert.Equal(nameof(PreparedState), vm.SelectedElement.StateTypeName);
-        _gardens.Received(1).ChangeElementStateAsync(entity, Arg.Is<GardenElementState>(s => s is PreparedState));
+        _gardens.Received(1).ChangeStateAsync(Arg.Is<ChangeGardenStateFromViewModel>(request => request.EntityId == 1));
         vm.ChangeElementStateCommand.Execute(nameof(PlannedState));
-        _gardens.Received(1).ChangeElementStateAsync(entity, Arg.Any<GardenElementState>());
+        _gardens.Received(1).ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>());
     }
 
     [Fact]
@@ -219,7 +228,7 @@ public partial class GardenPlanWorkflowTests
         var spot = new PlantingSpotFromViewModel { Id = 4 };
         var source = new PlantSourceItem { Kind = PlantSourceKind.Seed, EntityId = 7, PlantName = "Томат Черри", AvailableQty = 2 };
         vm.AvailableSeedItems = [source]; vm.SelectedPlantSource = source; vm.PlantingAmount = 2;
-        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(new PlantResult(true, 9));
+        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(Result.Success(new PlantingResultFromViewModel(4, 9, SeedAmount.Create(2, SeedUnit.Pieces).ValueOrThrow(), SeedAmount.Create(0, SeedUnit.Pieces).ValueOrThrow())));
         vm.PlantSpotCommand.Execute(spot);
         Assert.Empty(vm.AvailableSeedItems); Assert.Null(vm.SelectedPlantSource);
         Assert.Equal(nameof(PlantedSpotState), spot.StateTypeName);
@@ -232,7 +241,7 @@ public partial class GardenPlanWorkflowTests
     {
         var vm = CreateVm(); var source = new PlantSourceItem { AvailableQty = 3 };
         vm.SelectedPlantSource = source;
-        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(new PlantResult(false, null));
+        _planting.PlantAsync(Arg.Any<PlantRequest>()).Returns(Result.Failure<PlantingResultFromViewModel>("Нет остатка"));
         var spot = new PlantingSpotFromViewModel { Id = 1 };
         vm.PlantSpotCommand.Execute(spot);
         Assert.Same(source, vm.SelectedPlantSource); Assert.Equal(3, source.AvailableQty);
@@ -242,12 +251,13 @@ public partial class GardenPlanWorkflowTests
     [Fact]
     public void ClearSpot_ClearsDisplayedPlantAndDate()
     {
-        var vm = CreateVm(); var entity = new PlantingSpot { Id = 1 };
-        _gardens.GetSpotAsync(1).Returns(entity);
+        var vm = CreateVm();
+        _gardens.ChangeStateAsync(Arg.Any<ChangeGardenStateFromViewModel>()).Returns(Result.Success<GardenStateResultFromViewModel>(
+            new GardenStateResultFromViewModel.Spot(new(1, 0, 0, nameof(EmptySpotState), Option.None<int>(), Option.None<DateTime>(), Option.None<DateTime>(), Option.None<string>()))));
         var spot = new PlantingSpotFromViewModel { Id = 1, PlantLabel = "Томат", PlantedDate = DateTime.Today };
         vm.ClearSpotCommand.Execute(spot);
         Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
         Assert.Null(spot.PlantLabel); Assert.Null(spot.PlantedDate);
-        _gardens.Received(1).ClearSpotAsync(entity);
+        _gardens.Received(1).ChangeStateAsync(Arg.Is<ChangeGardenStateFromViewModel>(request => request.EntityId == 1 && request.Target.Equals(new StateChangeTarget.Spot(new SpotChange.Clear()))));
     }
 }

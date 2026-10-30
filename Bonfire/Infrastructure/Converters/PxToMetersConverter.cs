@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
+using System.Windows;
 
 namespace Bonfire.Infrastructure.Converters;
 
@@ -12,6 +13,7 @@ namespace Bonfire.Infrastructure.Converters;
 [ValueConversion(typeof(double), typeof(string))]
 public class PxToMetersConverter : IValueConverter
 {
+    public bool RejectInvalidInput { get; set; }
     private static readonly double Scale = CanvasConstants.PixelsPerMeter;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -24,7 +26,10 @@ public class PxToMetersConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (double.TryParse(value?.ToString(), NumberStyles.Any, culture, out var meters))
-            return Math.Round(meters * Scale);
-        return 0.0;
+        {
+            var pixels = Math.Round(meters * Scale);
+            if (!RejectInvalidInput || double.IsFinite(pixels)) return pixels;
+        }
+        return RejectInvalidInput ? DependencyProperty.UnsetValue : 0.0;
     }
 }

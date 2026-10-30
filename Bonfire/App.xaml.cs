@@ -1,6 +1,5 @@
-﻿using Bonfire.Services;
+using Bonfire.Services;
 using Bonfire.ViewModels;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,104 +11,123 @@ using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
 using Bonfire.Data;
+using Bonfire.Infrastructure;
 using Bonfire.Infrastructure.Commands.Base;
 using Bonfire.Services.Interfaces;
 
 namespace Bonfire;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
+    private readonly Lazy<ApplicationLifetime> _lifetime = new(() =>
+        new ApplicationLifetime(Host, token => Program.InitializeDatabaseAsync(Services, token)));
+    private Action<Exception>? _previousCommandHandler;
+    private Action<Exception>? _commandHandler;
+    private bool _errorHandlersInstalled;
+
     public static Window? ActiveWindow => Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
-
     public static Window? FocusedWindow => Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsFocused);
-
-    public static IHost Host => field ??= Microsoft.Extensions.Hosting.Host
-        .CreateDefaultBuilder(Environment.GetCommandLineArgs())
-        .ConfigureAppConfiguration(cfg => cfg.AddJsonFile("appsettings.json", true, true))
-        .ConfigureServices((host, services) => services
-            .AddViews()
-            .AddServices()
-            .AddDatabase(host.Configuration.GetSection("Database"))
-        )
-        .Build();
-
+    public static IHost Host => field ??= Program.CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
     public static IServiceProvider Services => Host.Services;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        // WPF по умолчанию использует en-US для биндингов (десятичный разделитель ".").
-        // Переопределяем Language всех FrameworkElement на текущую культуру системы,
-        // чтобы биндинги double/decimal корректно работали с запятой.
-        FrameworkElement.LanguageProperty.OverrideMetadata(
-            typeof(FrameworkElement),
-            new FrameworkPropertyMetadata(
-                XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
-
-        var host = Host;
-
-        SetupGlobalExceptionHandling();
-
-        using (var scope = Services.CreateScope())
+        try
         {
-            scope.ServiceProvider.GetRequiredService<DbInitializer>().InitializeAsync().Wait();
+            FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
+                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+            SetupGlobalExceptionHandling();
+            base.OnStartup(e);
+            await _lifetime.Value.StartAsync();
+
+            var window = new MainWindow();
+            MainWindow = window;
+            var shutdown = new WindowShutdown(async () =>
+            {
+                window.IsEnabled = false;
+                await CompleteExitAsync();
+            }, window.CompleteShutdown, error =>
+            {
+                Console.Error.WriteLine(error);
+                MessageBox.Show(window, error.Message, "Ошибка завершения", MessageBoxButton.OK, MessageBoxImage.Error);
+            });
+            window.Closing += async (_, args) => await shutdown.OnClosingAsync(args);
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+            window.Show();
         }
-
-
-        base.OnStartup(e);
-        await host.StartAsync();
+        catch (Exception error)
+        {
+            Console.Error.WriteLine(error);
+            try { await CompleteExitAsync(); }
+            catch (Exception cleanupError) { Console.Error.WriteLine(cleanupError); }
+            MessageBox.Show(error.Message, "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+        }
     }
 
-    /// <summary>
-    /// Единая точка обработки необработанных исключений: команды (через
-    /// <see cref="CommandExceptionHandler"/>), UI-поток (Dispatcher), фоновые
-    /// потоки (AppDomain) и неотслеженные задачи (TaskScheduler). Везде — лог + диалог,
-    /// чтобы приложение не падало молча.
-    /// </summary>
+    internal async Task CompleteExitAsync()
+    {
+        RemoveGlobalExceptionHandling();
+        if (_lifetime.IsValueCreated) await _lifetime.Value.DisposeAsync().ConfigureAwait(false);
+    }
+
+    private void HandleException(Exception error, string source)
+    {
+        Services.GetRequiredService<ILogger<App>>().LogError(error, "Необработанное исключение ({Source})", source);
+        Services.GetRequiredService<IUserDialog>().Error(error.Message, "Ошибка");
+    }
+
     private void SetupGlobalExceptionHandling()
     {
-        var logger = Services.GetRequiredService<ILogger<App>>();
-        var dialog = Services.GetRequiredService<IUserDialog>();
-
-        void Handle(Exception ex, string source)
-        {
-            logger.LogError(ex, "Необработанное исключение ({Source})", source);
-            dialog.Error(ex.Message, "Ошибка");
-        }
-
-        CommandExceptionHandler.OnException = ex => Handle(ex, "Команда");
-
-        DispatcherUnhandledException += (_, args) =>
-        {
-            Handle(args.Exception, "UI-поток");
-            args.Handled = true;
-        };
-
-        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
-        {
-            if (args.ExceptionObject is Exception ex)
-                Dispatcher.Invoke(() => Handle(ex, "Фоновый поток"));
-        };
-
-        TaskScheduler.UnobservedTaskException += (_, args) =>
-        {
-            Dispatcher.Invoke(() => Handle(args.Exception, "Задача"));
-            args.SetObserved();
-        };
+        // Проверяем зависимости до подписки, чтобы ошибка сборки не оставила частичные обработчики.
+        _ = Services.GetRequiredService<ILogger<App>>();
+        _ = Services.GetRequiredService<IUserDialog>();
+        _previousCommandHandler = CommandExceptionHandler.OnException;
+        _commandHandler = error => HandleException(error, "Команда");
+        CommandExceptionHandler.OnException = _commandHandler;
+        DispatcherUnhandledException += OnDispatcherError;
+        AppDomain.CurrentDomain.UnhandledException += OnDomainError;
+        TaskScheduler.UnobservedTaskException += OnTaskError;
+        _errorHandlersInstalled = true;
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    private void RemoveGlobalExceptionHandling()
     {
+        if (!_errorHandlersInstalled) return;
+        DispatcherUnhandledException -= OnDispatcherError;
+        AppDomain.CurrentDomain.UnhandledException -= OnDomainError;
+        TaskScheduler.UnobservedTaskException -= OnTaskError;
+        if (CommandExceptionHandler.OnException == _commandHandler)
+            CommandExceptionHandler.OnException = _previousCommandHandler;
+        _errorHandlersInstalled = false;
+    }
+
+    private void OnDispatcherError(object sender, DispatcherUnhandledExceptionEventArgs args)
+    {
+        HandleException(args.Exception, "UI-поток");
+        args.Handled = true;
+    }
+
+    private void OnDomainError(object sender, UnhandledExceptionEventArgs args)
+    {
+        if (args.ExceptionObject is Exception error)
+            Dispatcher.Invoke(() => HandleException(error, "Фоновый поток"));
+    }
+
+    private void OnTaskError(object? sender, UnobservedTaskExceptionEventArgs args)
+    {
+        Dispatcher.Invoke(() => HandleException(args.Exception, "Задача"));
+        args.SetObserved();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        RemoveGlobalExceptionHandling();
         base.OnExit(e);
-        using var host = Host;
-        await host.StopAsync();
     }
 
     internal static void ConfigureServices(HostBuilderContext host, IServiceCollection services) => services
         .AddViews()
         .AddServices()
-        .AddDatabase(host.Configuration.GetSection("Database"))
-    ;
+        .AddDatabase(host.Configuration.GetSection("Database"));
 }

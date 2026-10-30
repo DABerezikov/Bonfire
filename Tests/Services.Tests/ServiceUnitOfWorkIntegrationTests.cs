@@ -1,7 +1,12 @@
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
+using Bonfire.Domain.Seedlings;
+using BonfireDB.SeedEditing;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
+using Bonfire.Application.Seeds;
 
 namespace Services.Tests;
 
@@ -14,9 +19,9 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
 
     public void Dispose() => _fx.Dispose();
 
-    private SeedsService Seeds() => new(_fx.Factory);
-    private SeedlingsService Seedlings() => new(_fx.Factory, new MoonPhase());
-    private GardenService Gardens() => new(_fx.Factory);
+    private SeedsService Seeds() => _fx.CreateSeedsService();
+    private SeedlingsService Seedlings() => _fx.CreateSeedlingsService();
+    private GardenService Gardens() => _fx.CreateGardenService();
 
     private static Plant MakePlant(string culture = "Томат", string sort = "Чёрный принц", string producer = "Гавриш") => new()
     {
@@ -35,13 +40,13 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             QuantityInPack: 50, PackCount: 1, CostPack: 0m,
             BestBy: new DateTime(2027, 12, 31), Note: null);
 
-        var (seed, isNew) = await Seeds().AddOrUpdateSeedAsync(request, new List<Seed>());
+        var receipt = (await Seeds().AddOrUpdateSeedAsync(request)).ValueOrThrow();
 
-        Assert.True(isNew);
+        Assert.IsType<AcquisitionResultFromViewModel.Created>(receipt);
         Assert.Equal(1, await _fx.QueryAsync(db => db.Seeds.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Plants.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Producers.CountAsync()));
-        var saved = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == seed.Id));
+        var saved = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == receipt.SeedId));
         Assert.Equal(50, saved.SeedsInfo.AmountSeeds);
     }
 
@@ -64,9 +69,6 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             await db.SaveChangesAsync();
         });
 
-        // VM-кэш: отсоединённый список существующих семян.
-        var existing = await Seeds().GetAllSeedsAsync();
-
         // Тот же сорт/культура/производитель, но другой год → новый пакет на том же Plant.
         var request = new AddSeedRequest(
             "Томат", "Чёрный принц", "Гавриш", "Овощи",
@@ -74,9 +76,9 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             QuantityInPack: 30, PackCount: 1, CostPack: 0m,
             BestBy: new DateTime(2027, 12, 31), Note: null);
 
-        var (_, isNew) = await Seeds().AddOrUpdateSeedAsync(request, existing);
+        var receipt = (await Seeds().AddOrUpdateSeedAsync(request)).ValueOrThrow();
 
-        Assert.True(isNew);
+        Assert.IsType<AcquisitionResultFromViewModel.Created>(receipt);
         Assert.Equal(2, await _fx.QueryAsync(db => db.Seeds.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Plants.CountAsync()));     // НЕ продублировано
         Assert.Equal(1, await _fx.QueryAsync(db => db.PlantsCulture.CountAsync()));
@@ -87,7 +89,7 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
     //    Критично: правка навигационного свойства отсоединённой сущности.
 
     [Fact]
-    public async Task UpdateSeed_MutateNavigationOnDetachedEntity_PersistsAcrossUnitsOfWork()
+    public async Task EditSeed_IndependentSnapshot_PersistsAcrossUnitsOfWork()
     {
         await _fx.ExecuteAsync(async db =>
         {
@@ -105,12 +107,15 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
         var id = loaded.Id;
 
         // UoW#1 — загрузка (сущность отсоединена после dispose).
-        var seedFromService = await Seeds().GetSeedAsync(id);
+        var seedFromService = await _fx.LoadAsync<Seed>(id);
         Assert.NotNull(seedFromService);
 
         // Правим навигационное свойство и сохраняем в UoW#2.
         seedFromService!.SeedsInfo.AmountSeeds = 42;
-        await Seeds().UpdateSeed(seedFromService);
+        var read = SeedReadDbMapper.Read(seedFromService).ValueOrThrow();
+        Assert.True((await Seeds().SaveSeedEditAsync(new(read.Id, read.Plant.PlantSort.Id,
+            read.Plant.PlantSort.Producer.Id, read.Plant.PlantSort.Name, read.SeedsInfo,
+            read.Plant.PlantSort.Characteristics))).IsSuccess);
 
         var reloaded = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == id));
         Assert.Equal(42, reloaded.SeedsInfo.AmountSeeds);
@@ -119,29 +124,17 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
     // ── MakeASeedling со ссылкой на существующее отсоединённое растение ────────
 
     [Fact]
-    public async Task MakeASeedling_ReferencesExistingDetachedPlant_PersistsWithoutDuplicate()
+    public async Task Sow_ReferencesExistingPlant_PersistsWithoutDuplicate()
     {
-        var plantId = await _fx.QueryAsync(async db =>
+        var seedId = await _fx.QueryAsync(async db =>
         {
-            var plant = MakePlant();
-            db.Plants.Add(plant);
-            await db.SaveChangesAsync();
-            return plant.Id;
+            var seed = new Seed { Plant = MakePlant(), SeedsInfo = new() { AmountSeeds = 10 } };
+            db.Add(seed); await db.SaveChangesAsync(); return seed.Id;
         });
-
-        var detachedPlant = await _fx.QueryAsync(db => db.Plants
-            .Include(p => p.PlantCulture)
-            .Include(p => p.PlantSort).ThenInclude(s => s.Producer)
-            .FirstAsync(p => p.Id == plantId));
-
-        var seedling = new Seedling
-        {
-            Plant = detachedPlant,
-            Quantity = 5,
-            SeedlingInfos = [new SeedlingInfo { LandingDate = DateTime.Today, SeedlingNumber = 0 }]
-        };
-
-        await Seedlings().MakeASeedling(seedling);
+        var cached = (await Seeds().ReadSeedsAsync()).ValueOrThrow();
+        Assert.Single(cached);
+        Assert.True((await Seedlings().SowAsync(new(seedId, 5, SeedUnit.Pieces, DateTime.Today,
+            "Из семян", Option.None<string>()))).IsSuccess);
 
         Assert.Equal(1, await _fx.QueryAsync(db => db.Seedlings.CountAsync()));
         Assert.Equal(1, await _fx.QueryAsync(db => db.Plants.CountAsync())); // растение не продублировано
@@ -152,7 +145,7 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
     // ── Germinate-сценарий: добавить запись всходов в отсоединённую рассаду ────
 
     [Fact]
-    public async Task UpdateSeedling_AddNewInfoToDetachedSeedling_PersistsWithForeignKey()
+    public async Task Germinate_IndependentSnapshot_PersistsWithForeignKey()
     {
         await _fx.ExecuteAsync(async db =>
         {
@@ -166,10 +159,8 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             await db.SaveChangesAsync();
         });
 
-        var detached = (await Seedlings().GetAllSeedlingsAsync()).Single();
-        detached.SeedlingInfos.Add(new SeedlingInfo { GerminationDate = DateTime.Today, SeedlingNumber = 1 });
-
-        await Seedlings().UpdateSeedling(detached);
+        var detached = (await Seedlings().ReadSeedlingsAsync()).ValueOrThrow().Single();
+        Assert.True((await Seedlings().ChangeAsync(new(detached.Id, new SeedlingAction.Germinate(1, DateTime.Today)))).IsSuccess);
 
         var reloaded = await _fx.QueryAsync(db => db.Seedlings.Include(s => s.SeedlingInfos).FirstAsync());
         Assert.Equal(2, reloaded.SeedlingInfos.Count);
@@ -196,10 +187,10 @@ public class ServiceUnitOfWorkIntegrationTests : IDisposable
             return bed.Id;
         });
 
-        var detached = await Gardens().GetElementByIdAsync(elementId);
+        var detached = await _fx.LoadAsync<BonfireDB.Entities.GardenPlanning.GardenElement>(elementId);
         Assert.NotNull(detached);
 
-        await Gardens().RebuildGridAsync(detached!, rows: 2, cols: 2);
+        Assert.True((await Gardens().ResizeGridAsync(new(detached!.Id, 2, 2))).IsSuccess);
 
         var spotCount = await _fx.QueryAsync(db => db.PlantingSpots.CountAsync(s => s.GardenElementId == elementId));
         Assert.Equal(4, spotCount);

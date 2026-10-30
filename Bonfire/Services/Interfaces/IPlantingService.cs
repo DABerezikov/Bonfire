@@ -1,5 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using System.Threading;
+using Bonfire.Application.Garden;
+using Bonfire.Domain.Functional;
 using Bonfire.Models;
 
 namespace Bonfire.Services.Interfaces;
@@ -23,17 +26,11 @@ public sealed record PlantRequest(
     string PlantName,
     string? PlantPlace);
 
-/// <summary>Результат посадки.</summary>
-/// <param name="Success">False — посадка не выполнена (ячейка не найдена,
-/// недопустимый переход состояния или источник не найден).</param>
-/// <param name="SeedlingInfoId">Id созданной/привязанной записи о рассаде.</param>
-public sealed record PlantResult(bool Success, int? SeedlingInfoId);
-
 /// <summary>
 /// Бизнес-операция «посадить в ячейку»: списание инвентаря (рассада/семена),
 /// создание записи о рассаде и перевод ячейки в состояние «Посажено».
 /// </summary>
 public interface IPlantingService
 {
-    Task<PlantResult> PlantAsync(PlantRequest request);
+    Task<Result<PlantingResultFromViewModel>> PlantAsync(PlantRequest request, CancellationToken cancellationToken = default);
 }

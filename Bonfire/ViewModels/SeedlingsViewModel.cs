@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using Bonfire.Application.Seeds;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,7 +14,10 @@ using Bonfire.Models.Mappers;
 using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities;
+using Bonfire.Domain.Seeds;
+using Bonfire.Domain.Functional;
+using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Seedlings;
 
 namespace Bonfire.ViewModels;
 
@@ -24,7 +29,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private readonly IReportService _reportService;
 
     // Кэш загруженных семян: источник для списков и для выбора при создании рассады.
-    private List<Seed> _seeds = [];
+    private List<SeedReadFromViewModel> _seeds = [];
 
     public SeedlingsViewModel(ISeedlingsService seedlings, ISeedsService seedsService, IUserDialog dialog, IReportService reportService)
     {
@@ -87,11 +92,16 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         }
     }
 
-    private async Task RefreshSeedlingsAsync()
+    private async Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> RefreshSeedlingsAsync()
     {
-        Seedlings = new ObservableCollection<Seedling>(
-            await _seedlingsService.GetAllSeedlingsAsync());
-        UpdateCollectionViewSource();
+        var result = await _seedlingsService.ReadSeedlingsAsync();
+        result.Match(items =>
+        {
+            Seedlings = new(items.Select(item => new SeedlingReadModel(item)));
+            UpdateCollectionViewSource();
+            return true;
+        }, error => { _userDialog.Error(error); return false; });
+        return result;
     }
 
     // Фильтрация главного списка
@@ -138,7 +148,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     // Основные данные
 
-    public ObservableCollection<Seedling>? Seedlings
+    public ObservableCollection<SeedlingReadModel>? Seedlings
     {
         get;
         set => Set(ref field, value);
@@ -154,39 +164,34 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         }
     }
 
-    public Seedling? SelectedItem
+    private SeedlingReadModel? _selectedItem;
+    public SeedlingReadModel? SelectedItem
+    {
+        get => _selectedItem;
+        set
+        {
+            if (Set(ref _selectedItem, value))
+                EditedItem = value is { } selected ? SeedlingEditMapper.Create(selected) : null;
+        }
+    }
+
+    public SeedlingEditorDraft? EditedItem
+    {
+        get;
+        private set
+        {
+            if (Set(ref field, value)) EditorHasBindingErrors = false;
+        }
+    }
+
+    public bool EditorHasBindingErrors
     {
         get;
         set
         {
-            if (Set(ref field, value))
-                CopySeedlingToEditItem(SelectedItem, EditedItem);
+            if (Set(ref field, value)) CommandManager.InvalidateRequerySuggested();
         }
     }
-
-    public Seedling EditedItem
-    {
-        get;
-        set => Set(ref field, value);
-    } = new()
-    {
-        Plant = new Plant
-        {
-            PlantCulture = new PlantCulture(),
-            PlantSort = new PlantSort
-            {
-                Producer = new Producer()
-            }
-        },
-        SeedlingInfos =
-        [
-            new SeedlingInfo
-            {
-                Replants = [],
-                Treatments = []
-            }
-        ]
-    };
 
     public List<string> ListCulture
     {
@@ -282,17 +287,18 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         }
     }
 
-    public Seed? CurrentSeed
+    private SeedReadFromViewModel? _currentSeed;
+    public SeedReadFromViewModel? CurrentSeed
     {
-        get;
+        get => _currentSeed;
         set
         {
-            if (!Set(ref field, value)) return;
+            if (!Set(ref _currentSeed, value)) return;
             if (value is null) return;
-            Plantable = CurrentSeed!.SeedsInfo.AmountSeedsWeight > 0.0
-                ? CurrentSeed.SeedsInfo.AmountSeedsWeight
+            Plantable = CurrentSeed!.SeedsInfo.AmountSeedsWeight.ToNullable() > 0.0
+                ? CurrentSeed.SeedsInfo.AmountSeedsWeight.ToNullable()
                 : CurrentSeed.SeedsInfo.AmountSeeds;
-            AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight > 0.0 ? Units.GramsAbbr : Units.PiecesAbbr;
+            AddSize = CurrentSeed.SeedsInfo.AmountSeedsWeight.ToNullable() > 0.0 ? Units.GramsAbbr : Units.PiecesAbbr;
         }
     }
 
@@ -485,16 +491,6 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     // Методы
 
-    private async Task LoadSeedling()
-    {
-        var seedlings = await _seedlingsService.GetAllSeedlingsAsync();
-        Seedlings = new ObservableCollection<Seedling>(seedlings);
-        _seedlingsView.Source = seedlings
-            .Select(CreateSeedlingFromViewModel)
-            .SortSeedlings();
-        OnPropertyChanged(nameof(SeedlingsView));
-    }
-
     private void LoadListCulture()
     {
         var listCulture = Seedlings!
@@ -520,7 +516,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private void LoadListPlant()
     {
         var plants = _seeds
-            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
+            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight.ToNullable() != 0)
             .Select(s => new PlantFromViewModel
             {
                 Id = s.Id,
@@ -538,7 +534,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private void LoadListSort()
     {
         var addListSort = _seeds
-            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight != 0)
+            .Where(seed => seed.SeedsInfo.AmountSeeds != 0 || seed.SeedsInfo.AmountSeedsWeight.ToNullable() != 0)
             .Select(s => new SortFromSeedlingsViewModel
             {
                 Id = s.Plant.PlantSort.Id,
@@ -560,8 +556,6 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         && AddQuantity > 0.0
         && AddSort != string.Empty
         && SeedlingSource != string.Empty;
-
-    private Plant GetPlant() => _seeds.First(s => s.Id == CurrentPlant!.Id).Plant;
 
     private void ClearFieldSeedlingView()
     {
@@ -602,7 +596,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         _ => "Image/MoonPhase_1.jpg"
     };
 
-    private SeedlingFromViewModel CreateSeedlingFromViewModel(Seedling seedling)
+    private SeedlingFromViewModel CreateSeedlingFromViewModel(SeedlingReadModel seedling)
     {
         // Метаданные: предпочитаем поля на Seedling (новый стиль), иначе берём из SeedlingInfo[0]
         var metaInfo   = seedling.SeedlingInfos.FirstOrDefault(i => !i.GerminationDate.HasValue);
@@ -649,14 +643,6 @@ public class SeedlingsViewModel : SourceSelectionViewModel
             .Select(CreateSeedlingFromViewModel)
             .SortSeedlings();
 
-    private void CopySeedlingToEditItem(Seedling? seedlingFrom, Seedling seedlingTo)
-    {
-        if (seedlingFrom == null) return;
-        SeedlingMapper.CopyInto(seedlingFrom, seedlingTo);
-        OnPropertyChanged(nameof(EditedItem));
-        OnPropertyChanged(nameof(SelectedItem));
-    }
-
     private void CreateSeedlingReport()
     {
         var items = Seedlings!.Select(s =>
@@ -700,8 +686,10 @@ public class SeedlingsViewModel : SourceSelectionViewModel
     private async Task OnLoadDataCommandExecuted()
     {
         if (Seedlings != null) return;
-        _seeds = (await _seedsService.GetAllSeedsAsync()).ToList();
-        await LoadSeedling();
+        var result = await _seedsService.ReadSeedsAsync();
+        if (result.IsFailure) { _userDialog.Error(result.Match(_ => "", e => e)); return; }
+        _seeds = result.ValueOrThrow().ToList();
+        if ((await RefreshSeedlingsAsync()).IsFailure) return;
         LoadListCulture();
         LoadListPlant();
         LoadListSort();
@@ -727,55 +715,56 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnAddOrCorrectSeedlingCommandExecuted()
     {
-        var plant = GetPlant();
-        var moonPhase  = _seedlingsService.Lunar.GetMoonPhase(PlantingDate);
-        var plantPlace = string.IsNullOrWhiteSpace(AddPlantPlace) ? null : AddPlantPlace;
-
-        var seedlingInfo = new SeedlingInfo
+        if (CurrentSeed is not { } selectedSeed || Seedlings is not { } seedlings) return;
+        if (AddSize is not (Units.GramsAbbr or Units.PiecesAbbr))
         {
-            LandingDate    = PlantingDate,
-            LunarPhase     = moonPhase,
-            SeedlingNumber = 0,
-            SeedlingSource = SeedlingSource,
-            PlantPlace     = plantPlace
-        };
-
-        var seedling = new Seedling
-        {
-            Plant          = plant,
-            SeedId         = CurrentSeed!.Id,
-            LandingDate    = PlantingDate,
-            LunarPhase     = moonPhase,
-            SeedlingSource = SeedlingSource,
-            PlantPlace     = plantPlace,
-            SeedlingInfos  = [seedlingInfo]
-        };
-
-        switch (AddSize)
-        {
-            case Units.GramsAbbr:
-                seedling.Weight = AddQuantity;
-                CurrentSeed.SeedsInfo.AmountSeedsWeight -= AddQuantity;
-                break;
-            case Units.PiecesAbbr:
-                seedling.Quantity = AddQuantity;
-                CurrentSeed.SeedsInfo.AmountSeeds -= AddQuantity;
-                break;
+            _userDialog.Warning("Выберите единицу семян", "Посев рассады");
+            return;
         }
-
-        seedling = await _seedlingsService.MakeASeedling(seedling).ConfigureAwait(false);
-        Seedlings!.Add(seedling);
-        var seed = await _seedsService.UpdateSeed(CurrentSeed).ConfigureAwait(false);
-        RemoveItemFromCollection(seed);
-        ClearFieldSeedlingView();
-        UpdateCollectionViewSource(seedling.Id);
+        var unit = AddSize == Units.GramsAbbr ? SeedUnit.Grams : SeedUnit.Pieces;
+        var place = string.IsNullOrWhiteSpace(AddPlantPlace) ? Option.None<string>() : Option.Some(AddPlantPlace);
+        var result = await _seedlingsService.SowAsync(new SowingRequest(
+            selectedSeed.Id, AddQuantity, unit, PlantingDate, SeedlingSource, place));
+        await result.Match(async receipt =>
+        {
+            RemoveItemFromCollection(ApplySeedStock(selectedSeed, receipt.Saved.RemainingPieces, receipt.Saved.RemainingGrams));
+            ClearFieldSeedlingView();
+            var batch = await _seedlingsService.ReadSeedlingAsync(receipt.Saved.BatchId);
+            batch.Match(option => option.Match(snapshot =>
+            {
+                seedlings.Add(new SeedlingReadModel(snapshot));
+                UpdateCollectionViewSource(snapshot.Id);
+                return true;
+            }, () =>
+            {
+                _userDialog.Warning("Посев сохранён, но партия не найдена. Обновите список рассады.", "Посев рассады");
+                UpdateCollectionViewSource(); return false;
+            }), error => { _userDialog.Warning(error, "Посев рассады"); return false; });
+        }, error =>
+        {
+            _userDialog.Warning(error, "Посев рассады");
+            return Task.CompletedTask;
+        });
     }
 
-    private void RemoveItemFromCollection(Seed seed)
+    private SeedReadFromViewModel ApplySeedStock(SeedReadFromViewModel seed, double pieces, Option<double> grams)
+    {
+        var updated = seed with { SeedsInfo = seed.SeedsInfo with { AmountSeeds = pieces, AmountSeedsWeight = grams } };
+        var index = _seeds.FindIndex(item => item.Id == seed.Id);
+        if (index >= 0) _seeds[index] = updated;
+        if (_currentSeed?.Id == seed.Id)
+        {
+            _currentSeed = updated;
+            OnPropertyChanged(nameof(CurrentSeed));
+        }
+        return updated;
+    }
+
+    private void RemoveItemFromCollection(SeedReadFromViewModel seed)
     {
         if (seed.SeedsInfo.AmountSeeds != 0) return;
-        if (seed.SeedsInfo.AmountSeedsWeight != null)
-            if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight != 0) return;
+        if (seed.SeedsInfo.AmountSeedsWeight.ToNullable() != null)
+            if (seed.SeedsInfo.AmountSeeds + seed.SeedsInfo.AmountSeedsWeight.ToNullable() != 0) return;
         AddPlantList.Remove(AddPlantList.First(s => s.Producer == seed.Plant.PlantSort.Producer.Name
                                                     && s.Culture == seed.Plant.PlantCulture.Name
                                                     && s.Sort == seed.Plant.PlantSort.Name
@@ -795,15 +784,43 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnDeleteSeedlingCommandExecuted()
     {
-        if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите удалить рассаду сорта - {SelectedItem!.Plant.PlantSort.Name}",
-                "Удаление рассады")) return;
-
-        var seedId = SelectedItem.SeedId;
-        var deleteSeedling = await _seedlingsService.DeleteSeedling(SelectedItem).ConfigureAwait(false);
-        await _seedsService.ReturnSeedsFromSeedling(seedId, deleteSeedling!.Quantity, deleteSeedling.Weight).ConfigureAwait(false);
-        Seedlings!.Remove(deleteSeedling!);
-        UpdateCollectionViewSource();
+        if (SelectedItem is not { } selected || Seedlings is not { } seedlings) return;
+        await _userDialog.RequestSeedlingRemoval(selected.Plant.PlantSort.Name).Match(async removal =>
+        {
+            var result = await _seedlingsService.DeleteAsync(new(selected.Id, removal));
+            result.Match(receipt =>
+            {
+                var cached = seedlings.FirstOrDefault(batch => batch.Id == receipt.SeedlingId);
+                if (cached is not null) seedlings.Remove(cached);
+                receipt.ReturnedStock.Match(stock =>
+                {
+                    var seed = _seeds.FirstOrDefault(seed => seed.Id == stock.SeedId);
+                    if (seed is not null)
+                    {
+                        ApplySeedStock(seed, stock.Pieces, stock.Grams);
+                        if (CurrentSeed?.Id == seed.Id)
+                            Plantable = AddSize == Units.GramsAbbr ? stock.Grams.ToNullable() : stock.Pieces;
+                    }
+                    return true;
+                }, () => false);
+                SelectedSeedlingViewItem = null;
+                SelectedItem = null;
+                AddCultureList.Clear();
+                AddPlantList.Clear();
+                AddSortList.Clear();
+                ListCulture.Clear();
+                ListCulture.Add("-Выбрать все-");
+                LoadListCulture();
+                LoadListPlant();
+                LoadListSort();
+                UpdateCollectionViewSource();
+                return true;
+            }, error =>
+            {
+                _userDialog.Warning(error, "Удаление рассады");
+                return false;
+            });
+        }, () => Task.CompletedTask);
     }
 
     public ICommand GerminateSeedlingCommand => field
@@ -811,55 +828,52 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnGerminateSeedlingCommandExecuted()
     {
-        switch (Germinate)
+        if (SelectedItem is not { } selected || Germinate < 0) return;
+        var count = Germinate;
+        var result = await _seedlingsService.ChangeAsync(new(selected.Id, new SeedlingAction.Germinate(count, GerminationDate)));
+        result.Match(receipt =>
         {
-            case < 0:
-                return;
-            case 0:
-                if (SelectedItem!.SeedlingInfos.Count > 1) return;
-                SelectedItem.SeedlingInfos[0].IsDead = true;
-                await _seedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]).ConfigureAwait(false);
-                UpdateCollectionViewSource();
-                return;
-        }
-
-        var germCount = SelectedItem!.SeedlingInfos.Count(i => i.GerminationDate.HasValue);
-        if (SelectedItem.Quantity > 0)
-            Germinate = Germinate + germCount > (int)SelectedItem.Quantity
-                ? (int)SelectedItem.Quantity - germCount
-                : Germinate;
-
-        for (var i = 0; i < Germinate; i++)
-        {
-            var info = new SeedlingInfo
+            ApplySeedlingChange(selected, receipt);
+            if (count > 0)
             {
-                GerminationDate = GerminationDate,
-                SeedlingNumber  = germCount + i + 1
-            };
-            SelectedItem.SeedlingInfos.Add(info);
-            await _seedlingsService.AddSeedlingInfo(info);
-        }
+                Germinate = 0;
+                GerminationDate = DateTime.Now;
+            }
+            return true;
+        }, error => { _userDialog.Warning(error, "Всходы рассады"); return false; });
+    }
 
-        await _seedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
-        Germinate = 0;
-        GerminationDate = DateTime.Now;
+    private void ApplySeedlingChange(SeedlingReadModel selected, SeedlingChangeResultFromViewModel receipt)
+        => ApplySeedlingChange(selected, receipt, Option.None<SeedlingDetails>());
+
+    private void ApplySeedlingChange(SeedlingReadModel selected, SeedlingChangeResultFromViewModel receipt, Option<SeedlingDetails> details)
+    {
+        var updated = SeedlingReadMapper.Apply(selected, receipt, details);
+        var index = Seedlings?.IndexOf(selected) ?? -1;
+        if (index >= 0) Seedlings![index] = updated;
+        if (_selectedItem?.Id == selected.Id)
+        {
+            _selectedItem = updated;
+            OnPropertyChanged(nameof(SelectedItem));
+            EditedItem = SeedlingEditMapper.Create(updated);
+        }
+        UpdateCollectionViewSource(selected.Id);
     }
 
     public ICommand ReplantsSeedlingCommand => field
         ??= new LambdaCommandAsync(OnReplantsSeedlingCommandExecuted,
-            () => SelectedItem != null && (SelectedItem.SeedlingInfos[0].Replants?.Count == 0 || SelectedItem.SeedlingInfos[0].Replants == null));
+            () => SelectedItem is { SeedlingInfos.Count: > 0 } selected && selected.SeedlingInfos[0].Replants is not { Count: > 0 });
 
     private async Task OnReplantsSeedlingCommandExecuted()
     {
-        SelectedItem!.SeedlingInfos[0].Replants =
-        [
-            new Replanting { ReplantingDate = ReplantsDate }
-        ];
-        await _seedlingsService.UpdateSeedlingInfo(SelectedItem.SeedlingInfos[0]);
-        await _seedlingsService.UpdateSeedling(SelectedItem).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
-        ReplantsDate = DateTime.Now;
+        if (SelectedItem is not { } selected) return;
+        var result = await _seedlingsService.ChangeAsync(new(selected.Id, new SeedlingAction.Replant(ReplantsDate)));
+        result.Match(receipt =>
+        {
+            ApplySeedlingChange(selected, receipt);
+            ReplantsDate = DateTime.Now;
+            return true;
+        }, error => { _userDialog.Warning(error, "Пересадка рассады"); return false; });
     }
 
     public ICommand CreateSeedlingsReportCommand => field
@@ -869,21 +883,25 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         ??= new LambdaCommand(CreateFilteredSeedlingReport, () => SeedlingsView != null && IsActive);
 
     public ICommand UpdateSeedlingInfoCommand => field
-        ??= new LambdaCommandAsync(OnUpdateSeedlingInfoCommandExecuted, () => EditedItem != null);
+        ??= new LambdaCommandAsync(OnUpdateSeedlingInfoCommandExecuted, () => SelectedItem != null && EditedItem != null && !EditorHasBindingErrors);
 
     private async Task OnUpdateSeedlingInfoCommandExecuted()
     {
+        if (SelectedItem is not { } selected || EditedItem is not { } draft || EditorHasBindingErrors) return;
         if (!_userDialog.YesNoQuestion(
-                $"Вы уверены, что хотите изменить информацию о рассаде сорта - {EditedItem.Plant.PlantSort.Name}",
+                $"Вы уверены, что хотите изменить информацию о рассаде сорта - {selected.Plant.PlantSort.Name}",
                 "Редактирование рассады")) return;
 
-        CopySeedlingToEditItem(EditedItem, SelectedItem!);
-        await _seedlingsService.UpdateSeedling(SelectedItem!).ConfigureAwait(false);
-        UpdateCollectionViewSource(SelectedItem!.Id);
+        var result = await _seedlingsService.EditAsync(SeedlingEditMapper.ToRequest(draft));
+        result.Match(receipt =>
+        {
+            ApplySeedlingChange(selected, receipt.Change, Option.Some(receipt.Details));
+            return true;
+        }, error => { _userDialog.Warning(error, "Редактирование рассады"); return false; });
     }
 
     public ICommand CancelUpdateSeedlingInfoCommand => field
-        ??= new LambdaCommandAsync(async () => UpdateCollectionViewSource(SelectedItem?.Id ?? -1));
+        ??= new LambdaCommand(() => EditedItem = SelectedItem is { } selected ? SeedlingEditMapper.Create(selected) : null);
 
     public ICommand DeathSeedlingCommand => field
         ??= new LambdaCommandAsync(OnDeathSeedlingCommandExecuted,
@@ -891,16 +909,14 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnDeathSeedlingCommandExecuted()
     {
-        var toMark = SelectedItem!.SeedlingInfos
-            .Where(i => i.GerminationDate.HasValue && i.IsDead != true)
-            .OrderByDescending(i => i.SeedlingNumber)
-            .Take(DeadNumbers)
-            .ToList();
-
-        await _seedlingsService.MarkSeedlingInfosDeadAsync(SelectedItem, toMark, DeathNote);
-
-        UpdateCollectionViewSource(SelectedSeedlingViewItem!.Id);
-        DeathNote = string.Empty;
-        DeadNumbers = 0;
+        if (SelectedItem is not { } selected) return;
+        var result = await _seedlingsService.ChangeAsync(new(selected.Id, new SeedlingAction.MarkDead(DeadNumbers, DeathNote.ToOption())));
+        result.Match(receipt =>
+        {
+            ApplySeedlingChange(selected, receipt);
+            DeathNote = string.Empty;
+            DeadNumbers = 0;
+            return true;
+        }, error => { _userDialog.Warning(error, "Гибель рассады"); return false; });
     }
 }

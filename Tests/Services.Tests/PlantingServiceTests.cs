@@ -1,6 +1,9 @@
+using Bonfire.Application.Garden;
+using Bonfire.Infrastructure;
+using BonfireDB.Planting;
 using Bonfire.Services.Interfaces;
 using BonfireDB.Entities.GardenPlanning;
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 using Microsoft.EntityFrameworkCore;
 using MoonCalendar;
 
@@ -8,13 +11,13 @@ namespace Services.Tests;
 
 // Интеграционные тесты PlantingService на реальном SQLite + UoW.
 // PlantAsync выполняется в одном UoW (один контекст, один SaveChanges).
-public class PlantingServiceTests : IDisposable
+public partial class PlantingServiceTests : IDisposable
 {
     private readonly SqliteUowFixture _fx = new();
 
     public void Dispose() => _fx.Dispose();
 
-    private PlantingService CreateService() => new(_fx.Factory, new MoonPhase());
+    private PlantingService CreateService() => new(new PlantInSpot(new DbPlantingWriter(_fx.Factory), new MoonPhaseCalendar(new MoonPhase())));
 
     private static readonly DateTime PlantedDate = new(2026, 5, 1);
 
@@ -84,8 +87,8 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(99999, seedlingId));
 
-        Assert.False(result.Success);
-        Assert.Null(result.SeedlingInfoId);
+        Assert.False(result.IsSuccess);
+        Assert.True(result.IsFailure);
     }
 
     [Fact]
@@ -96,7 +99,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId));
 
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
         var seedling = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
         Assert.Equal(10, seedling.Quantity); // инвентарь не тронут
     }
@@ -108,7 +111,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, 99999));
 
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
         var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
         Assert.Equal(nameof(EmptySpotState), spot.StateTypeName); // ячейка не изменена
     }
@@ -120,10 +123,72 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedRequest(spotId, 99999));
 
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
     }
 
     // ── Посадка из рассады ────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(0.5)]
+    [InlineData(double.PositiveInfinity)]
+    public async Task PlantAsync_InvalidSeedlingAmount_DoesNotChangeSourceOrSpot(double amount)
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(germinated: 3);
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: amount));
+        Assert.False(result.IsSuccess);
+        Assert.True(result.IsFailure);
+        Assert.Equal(0, await _fx.QueryAsync(db => db.Seedlings.Where(s => s.Id == seedlingId).Select(s => s.PlantedOut).SingleAsync()));
+        Assert.Equal(1, await _fx.QueryAsync(db => db.Seedlings.CountAsync()));
+        Assert.Equal(nameof(EmptySpotState), await _fx.QueryAsync(db => db.PlantingSpots.Where(s => s.Id == spotId).Select(s => s.StateTypeName).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task PlantAsync_SeedlingPlanting_UsesFreshAvailabilityAndPreservesHistory()
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(quantity: 0, weight: 3, germinated: 4);
+        await _fx.ExecuteAsync(async db =>
+        {
+            var batch = await db.Seedlings.Include(s => s.SeedlingInfos).SingleAsync();
+            batch.PlantedOut = 1;
+            var dead = batch.SeedlingInfos.Single(i => i.SeedlingNumber == 4);
+            dead.IsDead = true;
+            dead.DeathNote = "История";
+            await db.SaveChangesAsync();
+        });
+
+        var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2.5));
+
+        Assert.True(result.IsSuccess);
+        var source = await _fx.QueryAsync(db => db.Seedlings.Include(s => s.SeedlingInfos).SingleAsync(s => s.Id == seedlingId));
+        Assert.Equal(3, source.PlantedOut);
+        Assert.Equal(0, source.Quantity);
+        Assert.Equal(3, source.Weight);
+        Assert.Equal("История", source.SeedlingInfos.Single(i => i.IsDead == true).DeathNote);
+        Assert.Equal(2, await _fx.QueryAsync(db => db.Seedlings.Where(s => s.Id != seedlingId).Select(s => s.Quantity).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task PlantAsync_SaveRejected_RollsBackSourceBatchAndSpot()
+    {
+        var spotId = await SeedSpotAsync();
+        var seedlingId = await SeedSeedlingAsync(germinated: 3);
+        await _fx.ExecuteAsync(db => db.Database.ExecuteSqlRawAsync(
+            "CREATE TRIGGER RejectPlanting BEFORE UPDATE ON PlantingSpots BEGIN SELECT RAISE(ABORT, 'planting rejected'); END;"));
+
+        Assert.True((await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2))).IsFailure);
+
+        Assert.Equal(0, await _fx.QueryAsync(db => db.Seedlings.Where(s => s.Id == seedlingId).Select(s => s.PlantedOut).SingleAsync()));
+        Assert.Equal(1, await _fx.QueryAsync(db => db.Seedlings.CountAsync()));
+        Assert.Equal(3, await _fx.QueryAsync(db => db.SeedlingInfos.CountAsync()));
+        var spot = await _fx.QueryAsync(db => db.PlantingSpots.SingleAsync(s => s.Id == spotId));
+        Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
+        Assert.Null(spot.SeedlingInfoId);
+        Assert.Null(spot.PlantedDate);
+    }
 
     [Fact]
     public async Task PlantAsync_FromGerminatedSeedling_ReducesSourceAndCreatesPlantedBatch()
@@ -133,8 +198,8 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2));
 
-        Assert.True(result.Success);
-        Assert.NotNull(result.SeedlingInfoId);
+        Assert.True(result.IsSuccess);
+        Assert.True(result.ValueOrThrow().SeedlingInfoId > 0);
 
         // Источник: высажено 2 → Осталось = 3 − 2 = 1.
         var source = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
@@ -151,10 +216,10 @@ public class PlantingServiceTests : IDisposable
 
         var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
         Assert.Equal(nameof(PlantedSpotState), spot.StateTypeName);
-        Assert.Equal(result.SeedlingInfoId, spot.SeedlingInfoId);
+        Assert.Equal(result.ValueOrThrow().SeedlingInfoId, spot.SeedlingInfoId);
         Assert.Equal("Огурец Кураж", spot.Note);
 
-        var info = await _fx.QueryAsync(db => db.SeedlingInfos.FirstAsync(i => i.Id == result.SeedlingInfoId));
+        var info = await _fx.QueryAsync(db => db.SeedlingInfos.FirstAsync(i => i.Id == result.ValueOrThrow().SeedlingInfoId));
         Assert.Equal("План / Участок / Грядка", info.PlantPlace);
     }
 
@@ -166,7 +231,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 3));
 
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
         var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
         Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
     }
@@ -179,7 +244,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 5));
 
-        Assert.True(result.Success);
+        Assert.True(result.IsSuccess);
         var seedling = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
         Assert.Equal(2, seedling.PlantedOut); // не больше доступных 2
     }
@@ -193,7 +258,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2));
 
-        Assert.True(result.Success);
+        Assert.True(result.IsSuccess);
         var source = await _fx.QueryAsync(db => db.Seedlings.FirstAsync(s => s.Id == seedlingId));
         Assert.Equal(2, source.PlantedOut);  // высажено 2 из 4 взошедших
         Assert.Equal(3.0, source.Weight);    // вес источника не списывается
@@ -208,7 +273,7 @@ public class PlantingServiceTests : IDisposable
         var spotId = await SeedSpotAsync();
         var seedlingId = await SeedSeedlingAsync(germinated: 3);
         var first = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 2));
-        Assert.True(first.Success);
+        Assert.True(first.IsSuccess);
 
         // На партии регистрируем всход (рост в грядке) — но повторно сажать её нельзя.
         var batchId = await _fx.QueryAsync(async db =>
@@ -222,7 +287,7 @@ public class PlantingServiceTests : IDisposable
         var spot2 = await SeedSpotAsync();
         var result = await CreateService().PlantAsync(SeedlingRequest(spot2, batchId, amount: 1));
 
-        Assert.False(result.Success); // партия уже в грядке — не доступна к посадке
+        Assert.False(result.IsSuccess); // партия уже в грядке — не доступна к посадке
     }
 
     [Fact]
@@ -233,7 +298,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 1));
 
-        Assert.False(result.Success); // без всходов рассада к высадке недоступна
+        Assert.False(result.IsSuccess); // без всходов рассада к высадке недоступна
     }
 
     // ── Посадка из семян ──────────────────────────────────────────────────────
@@ -246,8 +311,8 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedRequest(spotId, seedId, amount: 5));
 
-        Assert.True(result.Success);
-        Assert.NotNull(result.SeedlingInfoId);
+        Assert.True(result.IsSuccess);
+        Assert.True(result.ValueOrThrow().SeedlingInfoId > 0);
 
         var seed = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == seedId));
         Assert.Equal(15, seed.SeedsInfo.AmountSeeds);
@@ -260,7 +325,7 @@ public class PlantingServiceTests : IDisposable
 
         var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
         Assert.Equal(nameof(PlantedSpotState), spot.StateTypeName);
-        Assert.Equal(result.SeedlingInfoId, spot.SeedlingInfoId);
+        Assert.Equal(result.ValueOrThrow().SeedlingInfoId, spot.SeedlingInfoId);
     }
 
     [Fact]
@@ -285,7 +350,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedRequest(spotId, seedId, amount: 5));
 
-        Assert.True(result.Success);
+        Assert.True(result.IsSuccess);
         var seed = await _fx.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo).FirstAsync(s => s.Id == seedId));
         Assert.Equal(0, seed.SeedsInfo.AmountSeeds);              // остаток не ушёл в минус
         var seedling = await _fx.QueryAsync(db => db.Seedlings.FirstAsync());
@@ -300,7 +365,7 @@ public class PlantingServiceTests : IDisposable
 
         var result = await CreateService().PlantAsync(SeedlingRequest(spotId, seedlingId, amount: 3));
 
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
         var spot = await _fx.QueryAsync(db => db.PlantingSpots.FirstAsync(s => s.Id == spotId));
         Assert.Equal(nameof(EmptySpotState), spot.StateTypeName);
         Assert.Equal(0, await _fx.QueryAsync(db => db.SeedlingInfos.CountAsync()));

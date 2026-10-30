@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Bonfire.Application.Libraries;
+using BonfireDB.Libraries;
 
 namespace Services.Tests;
 
@@ -21,12 +23,13 @@ public class LibraryFailureBehaviorTests
         producers.GetAsync(1).Returns(new Producer { Id = 1, Name = "Производитель" });
         Exception failure = concurrency ? new DbUpdateConcurrencyException() : new DbUpdateException("DB", new Exception("Причина"));
         uow.SaveChangesAsync().Returns<int>(_ => throw failure);
-        var service = new LibraryService(uow.ToFactory());
+        var factory = uow.ToFactory();
+        var service = new LibraryService(new DbLibraryReader(factory), new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)));
         var error = kind switch
         {
-            "Sort" => (await service.UpdateSortAsync(new SortEditModel { Id = 1, Name = "Новый" })).Error,
-            "Culture" => (await service.UpdateCultureAsync(new CultureEditModel { Id = 1, Name = "Новая", Class = "Овощи" })).Error,
-            _ => (await service.UpdateProducerAsync(1, "Новый")).Error
+            "Sort" => (await service.UpdateSortAsync(new SortEditModel { Id = 1, Name = "Новый" })).Match(_ => string.Empty, error => error),
+            "Culture" => (await service.UpdateCultureAsync(new CultureEditModel { Id = 1, Name = "Новая", Class = "Овощи" })).Match(_ => string.Empty, error => error),
+            _ => (await service.UpdateProducerAsync(1, "Новый")).Match(_ => string.Empty, error => error)
         };
         Assert.Contains(concurrency ? "другим процессом" : "Причина", error);
     }

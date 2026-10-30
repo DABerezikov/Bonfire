@@ -1,4 +1,4 @@
-using BonfireDB.Entities.GardenPlanning.States;
+using Bonfire.Domain.Garden.States;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BonfireDB.Entities.GardenPlanning;
@@ -25,10 +25,9 @@ public class Greenhouse : GardenPlot
 
     public void TransitionTo(GardenElementState newState)
     {
-        if (!State.CanTransitionTo(newState))
-            throw new InvalidOperationException(
-                $"Переход «{State.DisplayName}» → «{newState.DisplayName}» запрещён");
-        StateTypeName = newState.GetType().Name;
+        StateTypeName = State.TransitionTo(newState).Match(
+            state => state.GetType().Name,
+            error => throw new InvalidOperationException(error));
     }
 
     public bool IsLocked { get; set; }

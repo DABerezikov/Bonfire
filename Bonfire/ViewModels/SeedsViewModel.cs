@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,13 +8,16 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
 using Bonfire.Data;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using BonfireDB.Entities;
+using Bonfire.Application.Libraries;
 
 namespace Bonfire.ViewModels;
 
@@ -37,7 +41,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         set => Set(ref field, value);
     }
 
-    public SeedEditorOptions EditorOptions
+    public SeedEditorOptionsFromViewModel EditorOptions
     {
         get;
         private set => Set(ref field, value);
@@ -46,10 +50,10 @@ public class SeedsViewModel : SourceSelectionViewModel
     public bool EditorHasBindingErrors { get; set; }
     public bool CanEditSeedDetails => !_isSaving;
 
-    public bool HasUnsavedSeedChanges => SelectedItem != null &&
+    public bool HasUnsavedSeedChanges => EditedItem is { } draft &&
         (EditorHasBindingErrors || SeedSortDetail is { IsDirty: true }
-         || EditedProducerId != SelectedItem.Plant.PlantSort.Producer.Id
-         || !SeedMapper.SamePackage(EditedItem.SeedsInfo, SelectedItem.SeedsInfo));
+         || EditedProducerId != draft.OriginalProducerId
+         || draft.HasPackageChanges);
 
     public bool TryDiscardSeedChanges()
     {
@@ -57,7 +61,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         if (HasUnsavedSeedChanges && !_userDialog.YesNoQuestion(
                 "Сбросить несохранённые изменения семян и характеристик сорта?", "Несохранённые изменения"))
             return false;
-        CopySeedToEditItem(SelectedItem, EditedItem);
+        LoadSeedDraft(SelectedItem);
         return true;
     }
 
@@ -119,11 +123,16 @@ public class SeedsViewModel : SourceSelectionViewModel
         }
     }
 
-    private async Task RefreshSeedsAsync()
+    private async Task<Result<ImmutableArray<SeedReadFromViewModel>>> RefreshSeedsAsync()
     {
-        var seeds = await _seedsService.GetAllSeedsAsync();
-        Seeds = new ObservableCollection<Seed>(seeds);
-        UpdateCollectionViewSource();
+        var result = await _seedsService.ReadSeedsAsync();
+        result.Match(seeds =>
+        {
+            Seeds = new(seeds);
+            UpdateCollectionViewSource();
+            return true;
+        }, error => { _userDialog.Error(error); return false; });
+        return result;
     }
 
     // Фильтрация главного списка
@@ -172,7 +181,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     // Основные данные
 
-    public ObservableCollection<Seed>? Seeds
+    public ObservableCollection<SeedReadFromViewModel>? Seeds
     {
         get;
         set => Set(ref field, value);
@@ -193,36 +202,25 @@ public class SeedsViewModel : SourceSelectionViewModel
         }
     }
 
-    public Seed? SelectedItem
+    private SeedReadFromViewModel? _selectedItem;
+    public SeedReadFromViewModel? SelectedItem
     {
-        get;
+        get => _selectedItem;
         set
         {
-            if (!ReferenceEquals(field, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
-            if (Set(ref field, value))
+            if (!ReferenceEquals(_selectedItem, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
+            if (Set(ref _selectedItem, value))
             {
-                CopySeedToEditItem(SelectedItem, EditedItem);
-                if (value is null) SeedSortDetail = null;
+                LoadSeedDraft(value);
             }
         }
     }
 
-    public Seed EditedItem
+    public SeedEditorDraft? EditedItem
     {
         get;
-        set => Set(ref field, value);
-    } = new()
-    {
-        Plant = new Plant
-        {
-            PlantCulture = new PlantCulture(),
-            PlantSort = new PlantSort
-            {
-                Producer = new Producer()
-            }
-        },
-        SeedsInfo = new SeedsInfo()
-    };
+        private set => Set(ref field, value);
+    }
 
     public List<string> ListCulture
     {
@@ -407,14 +405,6 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     // Методы
 
-    private async Task LoadSeed()
-    {
-        var seeds = await _seedsService.GetAllSeedsAsync();
-        _seedsView.Source = seeds.Select(SeedMapper.ToViewModel).SortSeeds();
-        Seeds = new ObservableCollection<Seed>(seeds);
-        OnPropertyChanged(nameof(SeedsView));
-    }
-
     // Списки культур/сортов/производителей строятся из уже загруженной коллекции Seeds.
     private void LoadListCulture()
     {
@@ -508,62 +498,20 @@ public class SeedsViewModel : SourceSelectionViewModel
         OnPropertyChanged(nameof(ListCulture));
     }
 
-    private void CopySeedToEditItem(Seed? seedFrom, Seed seedTo)
+    private void LoadSeedDraft(SeedReadFromViewModel? seed)
     {
-        if (seedFrom == null) return;
-        SeedMapper.CopyInto(seedFrom, seedTo);
-        SeedSortDetail = LibraryMapper.ToEditModel(seedFrom.Plant.PlantSort);
-        EditedProducerId = seedFrom.Plant.PlantSort.Producer.Id;
+        EditedItem = seed is { } source ? SeedEditMapper.FromSeed(source) : null;
+        SeedSortDetail = seed is { } selected ? LibraryMapper.ToEditModel(selected.Plant.PlantSort) : null;
+        EditedProducerId = EditedItem is { } draft ? draft.OriginalProducerId : 0;
         EditorHasBindingErrors = false;
-        OnPropertyChanged(nameof(EditedItem));
         OnPropertyChanged(nameof(SelectedItem));
     }
 
-    private void UpdateCollectionSeedsViewModel(Seed newSeed)
+    private void RebuildSeedSuggestions()
     {
-        Seeds!.Add(newSeed);
-
-        if (!AddCultureList.Contains(c => c.Name == newSeed.Plant.PlantCulture.Name))
-        {
-            AddCultureList.Add(new CultureFromViewModel
-            {
-                Id = newSeed.Plant.PlantCulture.Id,
-                Name = newSeed.Plant.PlantCulture.Name
-            });
-            ListCulture.Add(newSeed.Plant.PlantCulture.Name);
-            ListCulture = new List<string>(ListCulture.OrderBy(c => c));
-            AddCultureList = new ObservableCollection<CultureFromViewModel>(AddCultureList.OrderBy(c => c.Name));
-        }
-
-        if (!AddProducerList.Contains(p => p.Name == newSeed.Plant.PlantSort.Producer.Name))
-        {
-            AddProducerList.Add(new ProducerFromViewModel
-            {
-                Id = newSeed.Plant.PlantSort.Producer.Id,
-                Name = newSeed.Plant.PlantSort.Producer.Name
-            });
-            AddProducerList = new ObservableCollection<ProducerFromViewModel>(AddProducerList.OrderBy(c => c.Name));
-        }
-
-        if (AddSortList.Contains(s => s.Name == newSeed.Plant.PlantSort.Name)) return;
-        AddSortList.Add(new SortFromSeedsViewModel
-        {
-            Id = newSeed.Plant.PlantSort.Id,
-            Name = newSeed.Plant.PlantSort.Name
-        });
-        AddSortList = new ObservableCollection<SortFromSeedsViewModel>(AddSortList.OrderBy(c => c.Name));
-    }
-
-    private void RemoveOfAddLists(Seed deleteSeed)
-    {
-        if (!Seeds!.Contains(s => s.Plant.PlantCulture.Name == deleteSeed.Plant.PlantCulture.Name))
-            AddCultureList.Remove(AddCultureList.Find(c => c.Name == deleteSeed.Plant.PlantCulture.Name)!);
-
-        if (!Seeds!.Contains(s => s.Plant.PlantSort.Name == deleteSeed.Plant.PlantSort.Name))
-            AddSortList.Remove(AddSortList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Name)!);
-
-        if (!Seeds!.Contains(s => s.Plant.PlantSort.Producer.Name == deleteSeed.Plant.PlantSort.Producer.Name))
-            AddProducerList.Remove(AddProducerList.Find(c => c.Name == deleteSeed.Plant.PlantSort.Producer.Name)!);
+        AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
+        ListCulture = ["-Выбрать все-"];
+        LoadListCulture(); LoadListSort(); LoadListProducer();
     }
 
     private void CreateSeedReport()
@@ -594,20 +542,87 @@ public class SeedsViewModel : SourceSelectionViewModel
         _reportService.CreateSeedsReport(items, "Семена_выборка");
     }
 
+    private void ReplaceCachedSeed(int index, SeedReadFromViewModel updated)
+    {
+        var previous = Seeds![index];
+        Seeds[index] = updated;
+        if (!ReferenceEquals(_selectedItem, previous)) return;
+        _selectedItem = updated;
+        OnPropertyChanged(nameof(SelectedItem));
+    }
+
+    internal void SyncAfterSortUpdate(SortDetailsFromViewModel updated)
+    {
+        if (Seeds is { } seeds)
+            for (var index = 0; index < seeds.Count; index++)
+            {
+                var seed = seeds[index];
+                if (seed.Plant.PlantSort.Id != updated.Id) continue;
+                var link = updated.Plants.FirstOrDefault(p => p.PlantId == seed.Plant.Id);
+                ReplaceCachedSeed(index, seed with { Plant = seed.Plant with
+                {
+                    PlantSort = seed.Plant.PlantSort with { Name = updated.Name },
+                    PlantCulture = link is not null ? link.Culture : seed.Plant.PlantCulture
+                } });
+            }
+
+        var sortItem = AddSortList.FirstOrDefault(s => s.Id == updated.Id);
+        if (sortItem is not null)
+            AddSortList[AddSortList.IndexOf(sortItem)] =
+                new SortFromSeedsViewModel { Id = updated.Id, Name = updated.Name };
+
+        UpdateCollectionViewSource();
+    }
+
+    internal void SyncAfterCultureUpdate(Bonfire.Application.Libraries.CultureDetailsFromViewModel updated)
+    {
+        if (Seeds is { } seeds)
+            for (var index = 0; index < seeds.Count; index++)
+                if (seeds[index] is { } seed && seed.Plant.PlantCulture.Id == updated.Id)
+                    ReplaceCachedSeed(index, seed with { Plant = seed.Plant with { PlantCulture = updated } });
+
+        var cultureItem = AddCultureList.FirstOrDefault(c => c.Id == updated.Id);
+        if (cultureItem is not null)
+            AddCultureList[AddCultureList.IndexOf(cultureItem)] =
+                new CultureFromViewModel { Id = updated.Id, Name = updated.Name };
+
+        UpdateCollectionViewSource();
+    }
+
+    internal void SyncAfterProducerUpdate(Bonfire.Application.Libraries.ProducerDetailsFromViewModel updated)
+    {
+        if (Seeds is { } seeds)
+            for (var index = 0; index < seeds.Count; index++)
+                if (seeds[index] is { } seed && seed.Plant.PlantSort.Producer.Id == updated.Id)
+                    ReplaceCachedSeed(index, seed with { Plant = seed.Plant with { PlantSort = seed.Plant.PlantSort with { Producer = updated } } });
+
+        var producerItem = AddProducerList.FirstOrDefault(p => p.Id == updated.Id);
+        if (producerItem is not null)
+            AddProducerList[AddProducerList.IndexOf(producerItem)] =
+                new ProducerFromViewModel { Id = updated.Id, Name = updated.Name };
+
+        UpdateCollectionViewSource();
+    }
+
+
     // Команды
 
     public ICommand LoadDataCommand => field
         ??= new LambdaCommandAsync(OnLoadDataCommandExecuted);
 
+    private async Task<bool> ReloadEditorOptionsAsync()
+        => (await _seedsService.GetEditorOptionsAsync()).Match(options => { EditorOptions = options; return true; },
+            error => { _userDialog.Error(error); return false; });
+
     private async Task OnLoadDataCommandExecuted()
     {
-        EditorOptions = await _seedsService.GetEditorOptionsAsync() ?? new([], [], []);
+        if (!await ReloadEditorOptionsAsync()) return;
         if (Seeds != null)
         {
             UpdateCollectionViewSource();
             return;
         }
-        await LoadSeed();
+        if ((await RefreshSeedsAsync()).IsFailure) return;
         LoadListCulture();
         LoadListSort();
         LoadListProducer();
@@ -627,10 +642,11 @@ public class SeedsViewModel : SourceSelectionViewModel
     }
 
     public ICommand AddOrCorrectSeedCommand => field
-        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, Verification);
+        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, () => !_isSaving && Verification());
 
     private async Task OnAddOrCorrectSeedCommandExecuted()
     {
+        if (!TryDiscardSeedChanges()) return;
         var request = new AddSeedRequest(
             AddCulture, AddSort, AddProducer, AddClass,
             SeedSource, AddSize,
@@ -639,34 +655,57 @@ public class SeedsViewModel : SourceSelectionViewModel
             AddCostPack.DecimalParseAdvanced(),
             AddBestBy, AddNote);
 
-        var (seed, isNew) = await _seedsService.AddOrUpdateSeedAsync(request, Seeds!).ConfigureAwait(false);
-
-        if (isNew)
-            UpdateCollectionSeedsViewModel(seed);
-
-        ClearFieldSeedView();
-        UpdateCollectionViewSource(seed.Id);
+        SetSaving(true);
+        try
+        {
+            var result = await _seedsService.AddOrUpdateSeedAsync(request);
+            await result.Match(async receipt =>
+            {
+                _ignoreDiscard = true;
+                if ((await RefreshSeedsAsync()).IsFailure) return;
+                await ReloadEditorOptionsAsync();
+                RebuildSeedSuggestions();
+                ClearFieldSeedView();
+                UpdateCollectionViewSource(receipt.SeedId);
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return Task.CompletedTask;
+            });
+        }
+        finally { _ignoreDiscard = false; SetSaving(false); }
     }
 
     public ICommand DeleteSeedCommand => field
-        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null);
+        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null && !_isSaving);
 
     private async Task OnDeleteSeedCommandExecuted()
     {
-        if (_isSaving || SelectedItem is null) return;
-        var reason = _userDialog.RequestDeleteReason(SelectedItem.Plant.PlantSort.Name,
-            SelectedItem.SeedsInfo.DisposeComment);
+        if (_isSaving || SelectedItem is not { } selected) return;
+        var reason = _userDialog.RequestDeleteReason(selected.Plant.PlantSort.Name,
+            selected.SeedsInfo.DisposeComment.ToNullable());
         if (reason is null) return;
         SetSaving(true);
         try
         {
-            var deleteSeed = await _seedsService.DeleteSeedWithReasonAsync(SelectedItem.Id, reason);
-            var cachedSeed = Seeds!.FirstOrDefault(s => s.Id == deleteSeed.Id);
-            if (cachedSeed != null) Seeds!.Remove(cachedSeed);
-            RemoveOfAddLists(deleteSeed);
-            _ignoreDiscard = true;
-            SelectedItem = null;
-            UpdateCollectionViewSource();
+            var result = await _seedsService.DeleteSeedWithReasonAsync(selected.Id, reason);
+            result.Match(receipt =>
+            {
+                _ignoreDiscard = true;
+                SelectedItem = null;
+                if (Seeds is { } inventory)
+                {
+                    foreach (var cached in inventory.Where(seed => seed.Id == receipt.SeedId).ToArray())
+                        inventory.Remove(cached);
+                    RebuildSeedSuggestions();
+                    UpdateCollectionViewSource();
+                }
+                return true;
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return false;
+            });
         }
         finally { _ignoreDiscard = false; SetSaving(false); }
     }
@@ -675,25 +714,33 @@ public class SeedsViewModel : SourceSelectionViewModel
         ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted,
             () => SelectedItem != null && !_isSaving && !EditorHasBindingErrors
                 && SeedSortDetail is { HasErrors: false } && EditedProducerId > 0
-                && SeedMapper.IsPackageValid(EditedItem.SeedsInfo));
+                && EditedItem is { Package.HasErrors: false });
 
     private async Task OnUpdateSeedsInfoCommandExecuted()
     {
+        if (SeedSortDetail is not { } detail || EditedItem is not { } draft) return;
         if (!_userDialog.YesNoQuestion(
-                $"Сохранить изменения упаковки? Характеристики сорта «{EditedItem.Plant.PlantSort.Name}» и выбранный производитель будут изменены у всех записей этого сорта.",
+                $"Сохранить изменения упаковки? Характеристики сорта «{draft.SortName}» и выбранный производитель будут изменены у всех записей этого сорта.",
                 "Редактирование семян")) return;
-        var id = EditedItem.Id;
+        var id = draft.Id;
         SetSaving(true);
         try
         {
-            await _seedsService.SaveSeedEditAsync(EditedItem, SeedSortDetail!, EditedProducerId);
-            _ignoreDiscard = true;
-            await RefreshSeedsAsync();
-            EditorOptions = await _seedsService.GetEditorOptionsAsync();
-            SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
-            AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
-            ListCulture = ["-Выбрать все-"];
-            LoadListCulture(); LoadListSort(); LoadListProducer();
+            var result = await SeedEditMapper.ToRequest(draft, detail, EditedProducerId).Match(
+                request => _seedsService.SaveSeedEditAsync(request),
+                error => Task.FromResult(Result.Failure<SeedEditResultFromViewModel>(error)));
+            await result.Match(async _ =>
+            {
+                _ignoreDiscard = true;
+                if ((await RefreshSeedsAsync()).IsFailure) return;
+                await ReloadEditorOptionsAsync();
+                SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
+                RebuildSeedSuggestions();
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return Task.CompletedTask;
+            });
         }
         finally { _ignoreDiscard = false; SetSaving(false); }
     }

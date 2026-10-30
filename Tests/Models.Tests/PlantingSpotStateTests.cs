@@ -1,4 +1,4 @@
-using BonfireDB.Entities.GardenPlanning.SpotStates;
+using Bonfire.Domain.Garden.SpotStates;
 
 namespace Models.Tests;
 
