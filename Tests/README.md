@@ -1,6 +1,18 @@
 # Проверки Bonfire
 
-## Текущий результат — 26.10.2026
+## Проверка CI — 30.10.2026
+
+Облачный build [run 41078147864](https://github.com/DABerezikov/Bonfire/actions/runs/41078147864)
+прошёл: **1545/1545**, ошибок и пропусков нет. Models 694, Services 501,
+ViewModels 309, Repository 35, SeedsFromViewModel 6. Добавлены проверки создания
+и сброса даты годности при ru-RU/en-US/ar-SA; ожидание размеров теплицы учитывает
+штатный экранный масштаб. Локальный гейт дал тот же результат.
+
+Дополнительно прошли 27 сценариев PowerShell, разбор шести команд workflow при
+CP1251/CP1252, XAML render/отказ по тайм-ауту и изолированный startup/exit smoke.
+Результат установки на MONOBLOCK фиксируется в [журнале](../plans/deployment.md).
+
+## Завершение рефакторинга — 26.10.2026
 
 Этапы 6 и 7 завершены: **1538/1538**, failed/notExecuted нет. Models 694,
 Services 501, ViewModels 302, Repository 35, SeedsFromViewModel 6. Пять TRX:
