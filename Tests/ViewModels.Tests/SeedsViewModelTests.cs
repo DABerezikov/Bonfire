@@ -1,5 +1,6 @@
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
+using System.Globalization;
 namespace ViewModels.Tests;
 
 public class SeedsViewModelTests
@@ -11,6 +12,25 @@ public class SeedsViewModelTests
     private SeedsViewModel CreateVm()
     {
         return new SeedsViewModel(_seedsService, _userDialog, _reportService);
+    }
+
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("ru-RU")]
+    [InlineData("ar-SA")]
+    public void Constructor_DefaultBestBy_IsLastDayOfNextYearRegardlessOfCulture(string culture)
+    {
+        var previous = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            var vm = CreateVm();
+            Assert.Equal(new DateTime(DateTime.Now.Year + 1, 12, 31), vm.AddBestBy);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 
     // ── Verification via AddOrCorrectSeedCommand.CanExecute ───────────────────
