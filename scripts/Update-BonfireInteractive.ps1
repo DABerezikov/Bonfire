@@ -89,5 +89,9 @@ if ($MyInvocation.InvocationName -ne '.') {
     $ErrorActionPreference = 'Stop'
     $result = Invoke-BonfireInteractiveUpdate -PublishDirectory $PublishDirectory -Destination $Destination -Version $Version -TimeoutSeconds $TimeoutSeconds
     if ($result.Status -eq 'Cancelled') { Write-Host 'Пользователь отложил обновление или не ответил за отведённое время.'; exit 2 }
+    if ($env:GITHUB_STEP_SUMMARY) {
+        "Обновлён MONOBLOCK, commit $Version. БД сохранена. Резервная копия: $($result.BackupPath)." |
+            Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+    }
     $result
 }
