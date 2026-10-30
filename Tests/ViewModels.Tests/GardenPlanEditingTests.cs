@@ -33,7 +33,8 @@ public partial class GardenPlanWorkflowTests
         var added = Assert.Single(vm.SelectedGarden.Greenhouses);
         Assert.Equal(12, added.Id);
         Assert.Equal(6, added.WidthMeters); Assert.Equal(3, added.HeightMeters);
-        Assert.Equal(900, added.DisplayWidth); Assert.Equal(450, added.DisplayHeight);
+        Assert.Equal(6 * CanvasConstants.PixelsPerMeter, added.DisplayWidth);
+        Assert.Equal(3 * CanvasConstants.PixelsPerMeter, added.DisplayHeight);
         Assert.Same(vm.SelectedGarden.Elements, added.ContainerElements);
         Assert.Same(vm.SelectedGarden.Greenhouses, added.ContainerGreenhouses);
         Assert.Equal(vm.GardenZoom, added.CanvasZoom);

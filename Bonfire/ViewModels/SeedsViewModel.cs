@@ -255,7 +255,7 @@ public class SeedsViewModel : SourceSelectionViewModel
     {
         get;
         set => Set(ref field, value);
-    } = DateTime.Parse($"31.12.{DateTime.Now.Year + 1}");
+    } = new DateTime(DateTime.Now.Year + 1, 12, 31);
 
     public string AddCostPack
     {
