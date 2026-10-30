@@ -66,7 +66,7 @@ if (-not $PublishDirectory) {
     $PublishDirectory = Join-Path $repository ('artifacts/deploy-publish/' + [guid]::NewGuid().ToString('N'))
     Push-Location $repository
     try {
-        & dotnet publish (Join-Path $repository 'Bonfire/Bonfire.csproj') -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o $PublishDirectory --nologo
+        & dotnet publish (Join-Path $repository 'Bonfire/Bonfire.csproj') -p:PublishProfile=FolderProfile -o $PublishDirectory --nologo
         if ($LASTEXITCODE -ne 0) { throw "dotnet publish завершился с кодом $LASTEXITCODE. Установка не изменена." }
     }
     finally { Pop-Location }
