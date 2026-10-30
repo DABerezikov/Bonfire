@@ -19,16 +19,30 @@ function New-Fixture {
     $script:written = $false
     $script:interactive = $true
     $script:closeFails = $false
+    $script:running = $true
+    $script:expectClose = $true
+    $script:approvalAsked = $false
+    $script:probeCalls = 0
+    $script:startsBeforeWrite = $false
     return @{ Source = (Join-Path $root 'publish'); Target = (Join-Path $root 'installed') }
 }
 function Test-BonfireInteractiveSession { return $script:interactive }
-function Request-BonfireUpdateApproval($Destination, $Version, $TimeoutSeconds) { return $script:approved }
+function Request-BonfireUpdateApproval($Destination, $Version, $TimeoutSeconds) {
+    $script:approvalAsked = $true
+    return $script:approved
+}
+function Test-BonfireRunning($Destination) {
+    $script:probeCalls++
+    if ($script:startsBeforeWrite -and $script:probeCalls -gt 1) { return $true }
+    return $script:running
+}
 function Close-BonfireForUpdate($Destination) {
     if ($script:closeFails) { throw 'Приложение не закрылось.' }
     $script:closed = $true
+    $script:running = $false
 }
 function Invoke-BonfireDeployment($PublishDirectory, $Destination) {
-    Assert-True $script:closed 'Установка началась до закрытия.'
+    Assert-True (-not $script:expectClose -or $script:closed) 'Установка началась до закрытия.'
     $script:written = $true
     return [pscustomobject]@{ Destination = $Destination; BackupPath = 'test-backup'; FilesUpdated = 1 }
 }
@@ -66,5 +80,31 @@ Test-Case 'WhatIf не запрашивает закрытие и не изме�
     $f = New-Fixture
     Invoke-BonfireInteractiveUpdate -PublishDirectory $f.Source -Destination $f.Target -WhatIf | Out-Null
     Assert-True (-not $script:closed -and -not $script:written) 'WhatIf изменил установку.'
+}
+Test-Case 'Закрытое приложение обновляется без диалога и без интерактивного сеанса' {
+    $f = New-Fixture
+    $script:running = $false
+    $script:expectClose = $false
+    $script:interactive = $false
+    $result = Invoke-BonfireInteractiveUpdate -PublishDirectory $f.Source -Destination $f.Target
+    Assert-True ($result.Status -eq 'Deployed' -and $script:written) 'Закрытое приложение не обновлено.'
+    Assert-True (-not $script:approvalAsked -and -not $script:closed) 'Диалог/закрытие вызваны при закрытом приложении.'
+}
+Test-Case 'Запуск приложения во время подготовки запрещает запись без согласия' {
+    $f = New-Fixture
+    $script:running = $false
+    $script:expectClose = $false
+    $script:startsBeforeWrite = $true
+    Expect-Failure { Invoke-BonfireInteractiveUpdate -PublishDirectory $f.Source -Destination $f.Target }
+    Assert-True (-not $script:written -and -not $script:closed) 'Новый процесс закрыт или файлы заменены без согласия.'
+}
+Test-Case 'Обнаружение процесса отличает установку от другой копии Bonfire' {
+    $f = New-Fixture
+    $process = [pscustomobject]@{ HasExited = $false; MainModule = [pscustomobject]@{ FileName = (Join-Path $f.Target 'Bonfire.exe').ToUpperInvariant() } }
+    Assert-True (Test-BonfireProcessMatches $process $f.Target) 'Не распознана собственная установка.'
+    $process.MainModule.FileName = Join-Path $f.Source 'Bonfire.exe'
+    Assert-True (-not (Test-BonfireProcessMatches $process $f.Target)) 'Другая копия считается этой установкой.'
+    $process.HasExited = $true
+    Assert-True (-not (Test-BonfireProcessMatches $process $f.Target)) 'Завершённый процесс считается работающим.'
 }
 Write-Host "Интерактивное обновление: $script:passed проверок пройдено."

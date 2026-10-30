@@ -32,6 +32,7 @@ jobs:
           & ./Tests/Deployment/Deploy.Tests.ps1
           & ./Tests/Deployment/Runner.Tests.ps1
           & ./Tests/Deployment/InteractiveUpdate.Tests.ps1
+          & ./Tests/Deployment/ClosedUpdate.Integration.Tests.ps1
           & ./Tests/Deployment/WorkflowEncoding.Tests.ps1
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File ./Tests/Deployment/Confirmation.Wpf.Tests.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
