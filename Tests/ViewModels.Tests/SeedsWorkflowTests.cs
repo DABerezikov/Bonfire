@@ -3,6 +3,7 @@ using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using BonfireDB.Libraries;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace ViewModels.Tests;
 
@@ -84,9 +85,27 @@ public class SeedsWorkflowTests
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void AddOrCorrect_PassesParsedRequestAndReloadsSavedInventory(bool isNew)
+    [InlineData(true, "ru-RU")]
+    [InlineData(false, "ru-RU")]
+    [InlineData(true, "en-US")]
+    [InlineData(false, "en-US")]
+    [InlineData(true, "ar-SA")]
+    [InlineData(false, "ar-SA")]
+    public void AddOrCorrect_PassesParsedRequestAndReloadsSavedInventory(bool isNew, string culture)
+    {
+        var previous = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            AddOrCorrectAndAssert(isNew);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
+    }
+
+    private void AddOrCorrectAndAssert(bool isNew)
     {
         var existing = Seed(1);
         var vm = CreateVm(existing);
@@ -105,6 +124,7 @@ public class SeedsWorkflowTests
         _service.Received(1).AddOrUpdateSeedAsync(Arg.Is<AddSeedRequest>(r => r.QuantityInPack == 0.5 && r.PackCount == 2 && r.CostPack == 10.5m && r.Note == "Заметка"));
         Assert.Equal(string.Empty, vm.AddCulture);
         Assert.Equal(string.Empty, vm.AddQuantityInPac);
+        Assert.Equal(new DateTime(DateTime.Now.Year + 1, 12, 31), vm.AddBestBy);
         Assert.Contains(vm.EditorOptions.Producers, producer => producer.Id == returned.Plant.PlantSort.Producer.Id);
     }
 
