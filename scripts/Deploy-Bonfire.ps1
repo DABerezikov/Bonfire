@@ -30,6 +30,13 @@ function Test-Database([string]$Name) {
     return $Name -match '(?i)\.(db|db3|sqlite|sqlite3)(-(wal|shm|journal))?$'
 }
 
+function Test-ApplicationFile([string]$Relative) {
+    $relativePath = $Relative.Replace('\', '/')
+    # Только бинарники установки; файлы runner, отчёты и произвольные документы сохраняются.
+    return $relativePath -match '^(?i:[^/]+\.(dll|pdb)|Bonfire\.exe|createdump\.exe|[^/]+\.(deps|runtimeconfig)\.json)$' -or
+        $relativePath -match '^(?i:[a-z]{2}(?:-[a-z]{2,4})?/[^/]+\.resources\.dll|runtimes/.+\.(dll|pdb))$'
+}
+
 function Get-Inventory([string]$Root, [switch]$Installed) {
     foreach ($entry in Get-ChildItem -LiteralPath $Root -Force) {
         if ($Installed -and ($entry.Name -eq 'backups' -or $entry.Name -eq '.bonfire-deploy.lock')) { continue }
@@ -110,7 +117,14 @@ try {
         -not (($_.Name -like 'appsettings*.json' -or $_.Extension -eq '.config') -and
             (Test-Path -LiteralPath (Join-Path $targetRoot $relative)))
     })
+    $oldApplicationFiles = @($installed | Where-Object {
+        Test-ApplicationFile $_.FullName.Substring($targetRoot.Length + 1)
+    })
     # Проверяем доступ до резервного копирования и первой замены.
+    foreach ($file in $oldApplicationFiles) {
+        $probe = [IO.File]::Open($file.FullName, 'Open', 'ReadWrite', 'None')
+        $probe.Dispose()
+    }
     foreach ($file in $files) {
         $path = Join-Path $targetRoot $file.FullName.Substring($sourceRoot.Length + 1)
         if (Test-Path -LiteralPath $path) {
@@ -134,10 +148,27 @@ try {
     }
     $attempted = [Collections.Generic.List[string]]::new()
     try {
+        foreach ($file in $oldApplicationFiles) {
+            $relative = $file.FullName.Substring($targetRoot.Length + 1)
+            $attempted.Add($relative)
+            # Проверенная копия уже находится в завершённом бэкапе; убираем оригинал.
+            [IO.File]::Delete($file.FullName)
+        }
         foreach ($file in $files) {
             $relative = $file.FullName.Substring($sourceRoot.Length + 1)
-            $attempted.Add($relative)
+            if (-not $attempted.Contains($relative)) { $attempted.Add($relative) }
             Copy-Checked $file.FullName (Join-Path $targetRoot $relative)
+        }
+        foreach ($file in $oldApplicationFiles) {
+            $directory = [IO.Path]::GetDirectoryName($file.FullName)
+            while ((Test-Inside (Get-FullPath $directory) $targetRoot) -and
+                -not (Get-FullPath $directory).Equals($targetRoot, [StringComparison]::OrdinalIgnoreCase)) {
+                if (-not [IO.Directory]::Exists($directory) -or
+                    @(Get-ChildItem -LiteralPath $directory -Force).Count -gt 0) { break }
+                # Удаляется только пустой каталог внутри проверенной папки установки.
+                [IO.Directory]::Delete($directory, $false)
+                $directory = [IO.Path]::GetDirectoryName($directory)
+            }
         }
     }
     catch {
