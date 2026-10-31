@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using Bonfire.ViewModels.Base;
 
@@ -143,6 +144,7 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         || LandingPattern < 0
         || PlantHeight < 0
         || HasRangeErrors
+        || HasIncompletePlantingScheme
         || (MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime);
 
     private bool HasRangeErrors =>
@@ -150,7 +152,12 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         || InvalidRange(PlantHeight, MaxPlantHeight)
         || InvalidRange(MinFruitWeight, MaxFruitWeight)
         || InvalidRange(GrowingSeason, MaxGrowingSeason)
-        || InvalidRange(YieldKg, null) || LandingRowSpacing < 0;
+        || InvalidRange(YieldKg, null) || HasYieldPrecisionError || LandingRowSpacing < 0;
+
+    private bool HasYieldPrecisionError => YieldKg.HasValue && double.IsFinite(YieldKg.Value)
+        && Math.Round(YieldKg.Value, 1) != YieldKg.Value;
+
+    private bool HasIncompletePlantingScheme => LandingPattern.HasValue != LandingRowSpacing.HasValue;
 
     private static bool InvalidRange(double? min, double? max) =>
         (min.HasValue && (!double.IsFinite(min.Value) || min < 0))
@@ -188,7 +195,10 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         nameof(GrowingSeason) or nameof(MaxGrowingSeason) when InvalidRange(GrowingSeason, MaxGrowingSeason)
             => "Некорректный диапазон вегетации",
         nameof(YieldKg) when InvalidRange(YieldKg, null) => NegativeError,
+        nameof(YieldKg) when HasYieldPrecisionError => "Допустим один знак после запятой",
         nameof(LandingRowSpacing) when LandingRowSpacing < 0 => NegativeError,
+        nameof(LandingPattern) or nameof(LandingRowSpacing) when HasIncompletePlantingScheme
+            => "Заполните оба значения схемы посадки или очистите оба поля",
         _ => string.Empty
     };
 
@@ -211,6 +221,8 @@ public class SortEditModel : ViewModel, IDataErrorInfo
             nameof(MaxPlantHeight) => nameof(PlantHeight),
             nameof(MinFruitWeight) => nameof(MaxFruitWeight),
             nameof(MaxFruitWeight) => nameof(MinFruitWeight),
+            nameof(LandingPattern) => nameof(LandingRowSpacing),
+            nameof(LandingRowSpacing) => nameof(LandingPattern),
             _ => null
         };
         if (pairedProperty != null) OnPropertyChanged(pairedProperty);

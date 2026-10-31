@@ -59,12 +59,13 @@ public class InventoryReadWpfTests(WpfRuntime runtime)
                 string Text(string field)
                 {
                     var block = Assert.Single(WpfRuntime.Descendants<TextBlock>(view).Where(block =>
-                        BindingOperations.GetBinding(block, TextBlock.TextProperty)?.Path.Path.Trim().EndsWith("." + field, StringComparison.Ordinal) == true));
-                    Assert.Equal(BindingStatus.Active, block.GetBindingExpression(TextBlock.TextProperty)!.Status);
+                        BindingOperations.GetBinding(block, TextBlock.TextProperty)?.Path.Path.Trim().EndsWith("." + field, StringComparison.Ordinal) == true
+                        || BindingOperations.GetMultiBinding(block, TextBlock.TextProperty)?.Bindings.OfType<Binding>().FirstOrDefault()?.Path.Path.EndsWith("." + field, StringComparison.Ordinal) == true));
+                    Assert.Equal(BindingStatus.Active, BindingOperations.GetBindingExpressionBase(block, TextBlock.TextProperty)!.Status);
                     return block.Text;
                 }
                 Assert.Equal(state == "values" ? "Красный" : "", Text("PlantColor"));
-                Assert.Equal(state == "values" ? "150" : state == "empty" ? "0" : "", Text("PlantHeight"));
+                Assert.Equal(state == "values" ? (seedlings ? "150" : "от 150") : state == "empty" ? (seedlings ? "0" : "от 0") : "", Text("PlantHeight"));
                 Assert.Equal(state == "values" ? "Описание сорта" : "", Text("Description"));
                 if (!seedlings)
                 {
