@@ -29,6 +29,8 @@ internal static class LibraryMapper
             MaxPlantHeight = values.MaxPlantHeight.ToNullable(),
             LandingRowSpacing = values.LandingRowSpacing.ToNullable(),
             YieldKg = values.YieldKg.ToNullable(),
+            MinFruitSize = values.MinFruitSize.ToNullable(),
+            MaxFruitSize = values.MaxFruitSize.ToNullable(),
             MinFruitWeight = values.MinFruitWeight.ToNullable(),
             MaxFruitWeight = values.MaxFruitWeight.ToNullable()
         };

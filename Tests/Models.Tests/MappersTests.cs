@@ -98,6 +98,8 @@ public class MappersTests
         from.Plant.PlantSort.MinFruitWeight = 15;
         from.Plant.PlantSort.MaxFruitWeight = 25;
         from.Plant.PlantSort.YieldKg = 3;
+        from.Plant.PlantSort.MinFruitSize = 2;
+        from.Plant.PlantSort.MaxFruitSize = 7;
         var to = LibraryMapper.ToEditModel(SeedlingReadDbMapper.Read(from).ValueOrThrow().Plant.PlantSort);
 
         Assert.Equal(120, to.MaxGrowingSeason);
@@ -108,6 +110,8 @@ public class MappersTests
         Assert.Equal(15, to.MinFruitWeight);
         Assert.Equal(25, to.MaxFruitWeight);
         Assert.Equal(3, to.YieldKg);
+        Assert.Equal(2, to.MinFruitSize);
+        Assert.Equal(7, to.MaxFruitSize);
     }
 
     [Fact]

@@ -18,7 +18,7 @@ public class LibraryReadingTests : IDisposable
                 MinGerminationTime = 1, MaxGerminationTime = 2, AgeOfSeedlings = 3, MaxAgeOfSeedlings = 4,
                 GrowingSeason = 5, MaxGrowingSeason = 6, LandingPattern = 7, LandingRowSpacing = 8,
                 PlantHeight = 9, MaxPlantHeight = 10, PlantColor = " ", Maturity = null, YieldKg = 0,
-                MinFruitWeight = 11, MaxFruitWeight = 12,
+                MinFruitWeight = 11, MaxFruitWeight = 12, MinFruitSize = 0, MaxFruitSize = 15,
                 Plants = [new() { PlantCulture = new() { Name = "Культура", Class = "Мой класс" } }] };
             db.PlantsSort.Add(sort); await db.SaveChangesAsync(); return sort.Id;
         });
@@ -30,6 +30,7 @@ public class LibraryReadingTests : IDisposable
             values.GrowingSeason.ToNullable(), values.MaxGrowingSeason.ToNullable(), values.LandingPattern.ToNullable(),
             values.LandingRowSpacing.ToNullable(), values.PlantHeight.ToNullable(), values.MaxPlantHeight.ToNullable() });
         Assert.Equal(" ", values.PlantColor.ToNullable()); Assert.IsType<Option<string>.None>(values.Maturity);
+        Assert.Equal(0, values.MinFruitSize.ToNullable()); Assert.Equal(15, values.MaxFruitSize.ToNullable());
         Assert.Equal(0, values.YieldKg.ToNullable()); Assert.Equal(11, values.MinFruitWeight.ToNullable()); Assert.Equal(12, values.MaxFruitWeight.ToNullable());
         Assert.Equal("Фирма", (await service.GetProducerAsync(read.Producer.Id)).ValueOrThrow().Name);
         Assert.Equal("Мой класс", (await service.GetCultureAsync(read.CultureId.Match(v => v, () => throw new Exception()))).ValueOrThrow().Class);

@@ -114,6 +114,7 @@
                         <RowDefinition Height="32"/>
                         <RowDefinition Height="32"/>
                         <RowDefinition Height="32"/>
+                        <RowDefinition Height="32"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="Созревание" VerticalAlignment="Center"/>
                     <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" IsEditable="True"
@@ -165,8 +166,37 @@
                         <TextBlock Grid.Column="1" Text="–" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="2" Text="{Binding SeedSortDetail.MaxFruitWeight, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                     </Grid>
-                    <TextBlock Grid.Row="6" Text="Возраст рассады, дн." VerticalAlignment="Center"/>
+                    <TextBlock Grid.Row="6" Text="Размер плода, см" VerticalAlignment="Center"/>
                     <Grid Grid.Row="6" Grid.Column="1" Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox>
+                            <TextBox.Text>
+                                <Binding Path="SeedSortDetail.MinFruitSize" UpdateSourceTrigger="PropertyChanged" TargetNullValue=""
+                                         ValidatesOnDataErrors="True" ValidatesOnExceptions="True" NotifyOnValidationError="True">
+                                    <Binding.ValidationRules>
+                                        <validation:OptionalIntegerRule ValidationStep="RawProposedValue"/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
+                        <TextBlock Grid.Column="1" Text="–" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="2">
+                            <TextBox.Text>
+                                <Binding Path="SeedSortDetail.MaxFruitSize" UpdateSourceTrigger="PropertyChanged" TargetNullValue=""
+                                         ValidatesOnDataErrors="True" ValidatesOnExceptions="True" NotifyOnValidationError="True">
+                                    <Binding.ValidationRules>
+                                        <validation:OptionalIntegerRule ValidationStep="RawProposedValue"/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
+                    </Grid>
+                    <TextBlock Grid.Row="7" Text="Возраст рассады, дн." VerticalAlignment="Center"/>
+                    <Grid Grid.Row="7" Grid.Column="1" Margin="0,3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="24"/>
@@ -176,8 +206,8 @@
                         <TextBlock Grid.Column="1" Text="–" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="2" Text="{Binding SeedSortDetail.MaxAgeOfSeedlings, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                     </Grid>
-                    <TextBlock Grid.Row="7" Text="Схема посадки, см" VerticalAlignment="Center"/>
-                    <Grid Grid.Row="7" Grid.Column="1" Margin="0,3">
+                    <TextBlock Grid.Row="8" Text="Схема посадки, см" VerticalAlignment="Center"/>
+                    <Grid Grid.Row="8" Grid.Column="1" Margin="0,3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="24"/>
@@ -187,8 +217,8 @@
                         <TextBlock Grid.Column="1" Text="×" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="2" Text="{Binding SeedSortDetail.LandingRowSpacing, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, NotifyOnValidationError=True, TargetNullValue=''}"/>
                     </Grid>
-                    <TextBlock Grid.Row="8" Text="Срок прорастания, дн." VerticalAlignment="Center"/>
-                    <Grid Grid.Row="8" Grid.Column="1" Margin="0,3">
+                    <TextBlock Grid.Row="9" Text="Срок прорастания, дн." VerticalAlignment="Center"/>
+                    <Grid Grid.Row="9" Grid.Column="1" Margin="0,3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="24"/>

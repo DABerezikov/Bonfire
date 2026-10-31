@@ -23,6 +23,8 @@ public static class SortCharacteristicsDbMapper
             PlantColor = sort.PlantColor.ToOption(),
             Maturity = sort.Maturity.ToOption(),
             YieldKg = sort.YieldKg.ToOption(),
+            MinFruitSize = sort.MinFruitSize.ToOption(),
+            MaxFruitSize = sort.MaxFruitSize.ToOption(),
             MinFruitWeight = sort.MinFruitWeight.ToOption(),
             MaxFruitWeight = sort.MaxFruitWeight.ToOption()
         };
@@ -43,6 +45,8 @@ public static class SortCharacteristicsDbMapper
         target.PlantColor = values.PlantColor.ToNullable();
         target.Maturity = values.Maturity.ToNullable();
         target.YieldKg = values.YieldKg.ToNullable();
+        target.MinFruitSize = values.MinFruitSize.ToNullable();
+        target.MaxFruitSize = values.MaxFruitSize.ToNullable();
         target.MinFruitWeight = values.MinFruitWeight.ToNullable();
         target.MaxFruitWeight = values.MaxFruitWeight.ToNullable();
     }

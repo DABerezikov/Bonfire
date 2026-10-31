@@ -114,6 +114,18 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         set { if (Set(ref field, value)) SetDirty(); }
     }
 
+    public int? MinFruitSize
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
+    public int? MaxFruitSize
+    {
+        get;
+        set { if (Set(ref field, value)) SetDirty(); }
+    }
+
     public double? MinFruitWeight
     {
         get;
@@ -150,6 +162,7 @@ public class SortEditModel : ViewModel, IDataErrorInfo
     private bool HasRangeErrors =>
         InvalidRange(AgeOfSeedlings, MaxAgeOfSeedlings)
         || InvalidRange(PlantHeight, MaxPlantHeight)
+        || InvalidRange(MinFruitSize, MaxFruitSize)
         || InvalidRange(MinFruitWeight, MaxFruitWeight)
         || InvalidRange(GrowingSeason, MaxGrowingSeason)
         || InvalidRange(YieldKg, null) || HasYieldPrecisionError || LandingRowSpacing < 0;
@@ -190,6 +203,8 @@ public class SortEditModel : ViewModel, IDataErrorInfo
             => "Некорректный диапазон возраста рассады",
         nameof(PlantHeight) or nameof(MaxPlantHeight) when InvalidRange(PlantHeight, MaxPlantHeight)
             => "Некорректный диапазон высоты",
+        nameof(MinFruitSize) or nameof(MaxFruitSize) when InvalidRange(MinFruitSize, MaxFruitSize)
+            => "Некорректный диапазон размера плода",
         nameof(MinFruitWeight) or nameof(MaxFruitWeight) when InvalidRange(MinFruitWeight, MaxFruitWeight)
             => "Некорректный диапазон массы плода",
         nameof(GrowingSeason) or nameof(MaxGrowingSeason) when InvalidRange(GrowingSeason, MaxGrowingSeason)
@@ -219,6 +234,8 @@ public class SortEditModel : ViewModel, IDataErrorInfo
             nameof(MaxAgeOfSeedlings) => nameof(AgeOfSeedlings),
             nameof(PlantHeight) => nameof(MaxPlantHeight),
             nameof(MaxPlantHeight) => nameof(PlantHeight),
+            nameof(MinFruitSize) => nameof(MaxFruitSize),
+            nameof(MaxFruitSize) => nameof(MinFruitSize),
             nameof(MinFruitWeight) => nameof(MaxFruitWeight),
             nameof(MaxFruitWeight) => nameof(MinFruitWeight),
             nameof(LandingPattern) => nameof(LandingRowSpacing),

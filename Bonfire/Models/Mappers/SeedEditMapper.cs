@@ -33,6 +33,8 @@ internal static class SeedEditMapper
                 PlantColor = sort.PlantColor.ToOption(),
                 Maturity = sort.Maturity.ToOption(),
                 YieldKg = sort.YieldKg.ToOption(),
+                MinFruitSize = sort.MinFruitSize.ToOption(),
+                MaxFruitSize = sort.MaxFruitSize.ToOption(),
                 MinFruitWeight = sort.MinFruitWeight.ToOption(),
                 MaxFruitWeight = sort.MaxFruitWeight.ToOption()
             }));

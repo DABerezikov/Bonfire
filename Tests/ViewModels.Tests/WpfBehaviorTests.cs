@@ -87,6 +87,44 @@ public class WpfBehaviorTests(WpfRuntime runtime)
     });
 
     [Fact]
+    public void SeedEditor_FruitSizeValidatesRangeAndIntegerInput() => runtime.Invoke(() =>
+    {
+        var vm = SeedsVm(null, SeedsWorkflowTests.Seed(1));
+        var editor = new SeedDetailsEditor { DataContext = vm };
+        WpfRuntime.Layout(editor, 1060, 540);
+        TextBox Field(string name) => WpfRuntime.Descendants<TextBox>(editor).Single(box =>
+            BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == "SeedSortDetail." + name);
+        void Enter(TextBox box, string value)
+        {
+            box.Text = value;
+            box.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();
+            WpfRuntime.Layout(editor, 1060, 540);
+        }
+        var min = Field("MinFruitSize");
+        var max = Field("MaxFruitSize");
+        Enter(min, "2");
+        Enter(max, "5");
+        Assert.Equal(2, vm.SeedSortDetail!.MinFruitSize);
+        Assert.Equal(5, vm.SeedSortDetail.MaxFruitSize);
+        Assert.True(vm.UpdateSeedsInfoCommand.CanExecute(null));
+        Enter(max, "1");
+        Assert.Equal("Некорректный диапазон размера плода", min.ToolTip);
+        Assert.Equal("Некорректный диапазон размера плода", max.ToolTip);
+        Assert.False(vm.UpdateSeedsInfoCommand.CanExecute(null));
+        Enter(max, "3");
+        Assert.Null(min.ToolTip);
+        Assert.Null(max.ToolTip);
+        InventoryReadWpfTests.Render(editor, "seed-editor-fruit-size", 96);
+        Enter(min, "2,5");
+        Assert.Equal("Введите целое число", min.ToolTip);
+        Assert.Equal(2, vm.SeedSortDetail.MinFruitSize);
+        Assert.False(vm.UpdateSeedsInfoCommand.CanExecute(null));
+        Enter(min, "");
+        Assert.Null(vm.SeedSortDetail.MinFruitSize);
+        Assert.True(vm.UpdateSeedsInfoCommand.CanExecute(null));
+    });
+
+    [Fact]
     public void SeedEditor_ErrorTooltipShowsReasonAndDisappearsAfterCorrection() => runtime.Invoke(() =>
     {
         var vm = SeedsVm(null, SeedsWorkflowTests.Seed(1));

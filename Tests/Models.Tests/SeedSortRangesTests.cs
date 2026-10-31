@@ -4,6 +4,26 @@ public class SeedSortRangesTests
 {
     [Theory]
     [InlineData(null, null, false)]
+    [InlineData(2, null, false)]
+    [InlineData(null, 5, false)]
+    [InlineData(0, 0, false)]
+    [InlineData(2, 5, false)]
+    [InlineData(5, 2, true)]
+    [InlineData(-1, 5, true)]
+    [InlineData(null, -1, true)]
+    public void HasErrors_FruitSize_ValidatesRange(int? min, int? max, bool expected)
+    {
+        var model = new SortEditModel { Name = "Сорт", MinFruitSize = min, MaxFruitSize = max };
+        Assert.Equal(expected, model.HasErrors);
+        Assert.Equal(expected, !string.IsNullOrEmpty(model[nameof(model.MinFruitSize)]));
+        Assert.Equal(expected, !string.IsNullOrEmpty(model[nameof(model.MaxFruitSize)]));
+        var values = new Bonfire.Domain.Seeds.SortCharacteristicsValues
+            { MinFruitSize = Bonfire.Domain.Functional.OptionExtensions.ToOption(min), MaxFruitSize = Bonfire.Domain.Functional.OptionExtensions.ToOption(max) };
+        Assert.Equal(expected, Bonfire.Domain.Seeds.SortCharacteristics.Create("Сорт", values).IsFailure);
+    }
+
+    [Theory]
+    [InlineData(null, null, false)]
     [InlineData(20, null, true)]
     [InlineData(null, 30, true)]
     [InlineData(20, 30, false)]

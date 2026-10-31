@@ -156,6 +156,7 @@ public class SeedEditorIntegrationTests : IDisposable
             Id = edit.Plant.PlantSort.Id, Name = "Черри", PlantColor = "Полосатый",
             Maturity = "Среднеранний", GrowingSeason = 70, MaxGrowingSeason = 90, PlantHeight = 50, MaxPlantHeight = 100,
             MinFruitWeight = 10.5, MaxFruitWeight = 20.5, YieldKg = 2.5,
+            MinFruitSize = 2, MaxFruitSize = 5,
             LandingPattern = 20, LandingRowSpacing = 40,
             MinGerminationTime = 3, MaxGerminationTime = 7, AgeOfSeedlings = 30, MaxAgeOfSeedlings = 40
         };
@@ -170,6 +171,11 @@ public class SeedEditorIntegrationTests : IDisposable
         Assert.Equal(90, saved.MaxGrowingSeason);
         Assert.Equal(100, saved.MaxPlantHeight);
         Assert.Equal(20.5, saved.MaxFruitWeight);
+        Assert.Equal(2, saved.MinFruitSize);
+        Assert.Equal(5, saved.MaxFruitSize);
+        var read = (await service.ReadSeedsAsync()).ValueOrThrow().Single(seed => seed.Id == id);
+        Assert.Equal(2, read.Plant.PlantSort.Characteristics.MinFruitSize.ToNullable());
+        Assert.Equal(5, read.Plant.PlantSort.Characteristics.MaxFruitSize.ToNullable());
         Assert.Equal(2.5, saved.YieldKg);
         Assert.Equal(40, saved.LandingRowSpacing);
         Assert.Equal(7, saved.MaxGerminationTime);
@@ -183,6 +189,30 @@ public class SeedEditorIntegrationTests : IDisposable
         Assert.Contains("Среднеранний", options.Maturities);
         Assert.Equal(2, options.Producers.Length);
         Assert.Equal(1, await _fx.QueryAsync(db => db.SortOptions.CountAsync(o => o.Category == "Цвет" && o.Name == "Полосатый")));
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData(2, null)]
+    [InlineData(null, 5)]
+    [InlineData(0, 0)]
+    public async Task SaveSeedEditAsync_FruitSize_PreservesOptionalBoundsAndClearsOldValues(int? min, int? max)
+    {
+        var (id, _, producerId) = await CreatePackages();
+        var service = _fx.CreateSeedsService();
+        var edit = (await _fx.LoadAsync<Seed>(id))!;
+        var sort = new SortEditModel { Id = edit.Plant.PlantSort.Id, Name = "Черри", MinFruitSize = 1, MaxFruitSize = 10 };
+        Assert.True((await SaveAsync(service, edit, sort, producerId)).IsSuccess);
+        sort.MinFruitSize = min;
+        sort.MaxFruitSize = max;
+        Assert.True((await SaveAsync(service, edit, sort, producerId)).IsSuccess);
+        var saved = (await _fx.LoadAsync<Seed>(id))!.Plant.PlantSort;
+        Assert.Equal(min, saved.MinFruitSize);
+        Assert.Equal(max, saved.MaxFruitSize);
+        var read = (await service.ReadSeedsAsync()).ValueOrThrow().Single(seed => seed.Id == id);
+        var draft = LibraryMapper.ToEditModel(read.Plant.PlantSort);
+        Assert.Equal(min, draft.MinFruitSize);
+        Assert.Equal(max, draft.MaxFruitSize);
     }
 
     [Theory]
