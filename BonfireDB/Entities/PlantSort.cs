@@ -73,5 +73,11 @@ public class PlantSort : NamedEntity
     /// <summary>Максимальная масса плода, г</summary>
     public double? MaxFruitWeight { get; set; }
 
+    /// <summary>Минимальный размер плода, см</summary>
+    public int? MinFruitSize { get; set; }
+
+    /// <summary>Максимальный размер плода, см</summary>
+    public int? MaxFruitSize { get; set; }
+
     public ICollection<Plant> Plants { get; set; } = [];
 }

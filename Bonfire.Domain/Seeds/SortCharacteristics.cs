@@ -19,6 +19,8 @@ public sealed record SortCharacteristicsValues
     public Option<string> PlantColor { get; init; } = Option.None<string>();
     public Option<string> Maturity { get; init; } = Option.None<string>();
     public Option<double> YieldKg { get; init; } = Option.None<double>();
+    public Option<int> MinFruitSize { get; init; } = Option.None<int>();
+    public Option<int> MaxFruitSize { get; init; } = Option.None<int>();
     public Option<double> MinFruitWeight { get; init; } = Option.None<double>();
     public Option<double> MaxFruitWeight { get; init; } = Option.None<double>();
 }
@@ -41,6 +43,7 @@ public sealed class SortCharacteristics
         && ValidRange(values.AgeOfSeedlings, values.MaxAgeOfSeedlings)
         && ValidRange(values.GrowingSeason, values.MaxGrowingSeason)
         && ValidRange(values.PlantHeight, values.MaxPlantHeight)
+        && ValidRange(values.MinFruitSize, values.MaxFruitSize)
         && ValidRange(values.MinFruitWeight, values.MaxFruitWeight)
         && ValidRange(values.LandingPattern, Option.None<int>())
         && ValidRange(values.LandingRowSpacing, Option.None<int>())
