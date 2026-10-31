@@ -59,6 +59,45 @@ function Copy-Checked([string]$Source, [string]$Target) {
     }
 }
 
+
+function Remove-OldBackups([string]$TargetRoot, [string]$CurrentBackup) {
+    $backupsRoot = Get-FullPath (Join-Path $TargetRoot 'backups')
+    if (-not (Test-Path -LiteralPath $backupsRoot -PathType Container)) { return }
+    if (-not (Test-Inside $backupsRoot $TargetRoot) -or
+        ((Get-Item -LiteralPath $backupsRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw 'Небезопасный каталог резервных копий; очистка отменена.'
+    }
+    $completed = @(Get-ChildItem -LiteralPath $backupsRoot -Directory -Force | Where-Object {
+        $_.Name -match '^\d{8}-\d{6}-\d{3}-[0-9a-fA-F]{32}$' -and
+        -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName '.backup-complete') -PathType Leaf)
+    })
+    # Текущая проверенная копия сохраняется даже при переводе часов назад.
+    $otherCopiesToKeep = if ($CurrentBackup) { 2 } else { 3 }
+    $obsolete = @($completed | Where-Object { $_.FullName -ne $CurrentBackup } |
+        Sort-Object Name -Descending | Select-Object -Skip $otherCopiesToKeep)
+    foreach ($directory in $obsolete) {
+        try {
+            $path = Get-FullPath $directory.FullName
+            if (-not (Test-Inside $path $backupsRoot) -or
+                -not ([IO.Path]::GetDirectoryName($path)).Equals($backupsRoot, [StringComparison]::OrdinalIgnoreCase)) {
+                throw "Каталог находится вне backups: $path"
+            }
+            # Проверяем всё дерево до рекурсивного удаления: ссылки и занятые файлы запрещены.
+            $inventory = @(Get-Inventory $path)
+            foreach ($file in $inventory) {
+                $probe = [IO.File]::Open($file.FullName, 'Open', 'Read', 'None')
+                $probe.Dispose()
+            }
+            Remove-Item -LiteralPath $path -Recurse -Force
+            Write-Host "Удалена старая резервная копия: $path"
+        }
+        catch {
+            Write-Warning "Не удалось удалить старую резервную копию $($directory.FullName): $_"
+        }
+    }
+}
+
 $targetRoot = Get-FullPath $Destination
 if ($targetRoot -eq ([IO.Path]::GetPathRoot($targetRoot)).TrimEnd('\', '/')) {
     throw 'Укажите папку приложения, а не корень диска или сетевого ресурса.'
@@ -66,7 +105,7 @@ if ($targetRoot -eq ([IO.Path]::GetPathRoot($targetRoot)).TrimEnd('\', '/')) {
 
 if (-not $PublishDirectory) {
     if ($WhatIfPreference) {
-        Write-Host "План: Release win-x64 (self-contained), резервная копия в $targetRoot\backups, обновление $targetRoot. БД и существующие настройки сохраняются."
+        Write-Host "План: Release win-x64 (self-contained), резервная копия в $targetRoot\backups, обновление $targetRoot; после успеха — хранение трёх последних завершённых резервных копий. БД и существующие настройки сохраняются."
         return
     }
     $repository = Get-FullPath (Join-Path $PSScriptRoot '..')
@@ -184,6 +223,8 @@ try {
         }
         throw "Обновление отменено, заменённые файлы восстановлены. Причина: $copyError"
     }
+    try { Remove-OldBackups $targetRoot $backupPath }
+    catch { Write-Warning "Обновление выполнено, но очистка старых резервных копий не завершена: $_" }
     Write-Host "Bonfire обновлён: $targetRoot"
     [pscustomobject]@{ Destination = $targetRoot; BackupPath = $backupPath; FilesUpdated = $files.Count }
 }

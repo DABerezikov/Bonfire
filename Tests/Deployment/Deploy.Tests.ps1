@@ -148,4 +148,79 @@ Test-Case 'Параллельное развёртывание отклоняе�
     Assert-True (Test-Path -LiteralPath (Join-Path $f.Target '.bonfire-deploy.lock')) 'Удалена чужая блокировка.'
     Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'Bonfire.exe')) -eq 'old executable') 'Версия изменилась.'
 }
+
+function Add-OldBackups($Target, [int]$Count = 5) {
+    $paths = @()
+    for ($index = 1; $index -le $Count; $index++) {
+        $name = ('200001{0:00}-000000-000-' -f $index) + [guid]::NewGuid().ToString('N')
+        $path = Join-Path (Join-Path $Target 'backups') $name
+        Write-FixtureFile $path 'Bonfire.exe' "version $index"
+        Write-FixtureFile $path 'BonfireDB.db' "database $index"
+        Write-FixtureFile $path '.backup-complete' 'complete'
+        $paths += $path
+    }
+    return $paths
+}
+Test-Case 'После успеха остаются три последние завершённые копии' {
+    $f = New-Fixture
+    $old = @(Add-OldBackups $f.Target)
+    $result = & $scriptPath -PublishDirectory $f.Source -Destination $f.Target
+    foreach ($path in $old[0..2]) { Assert-True (-not (Test-Path -LiteralPath $path)) 'Старая копия не удалена.' }
+    foreach ($path in @($old[3], $old[4], $result.BackupPath)) {
+        Assert-True (Test-Path -LiteralPath (Join-Path $path '.backup-complete')) 'Удалена одна из трёх последних копий.'
+    }
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'BonfireDB.db')) -eq 'user database') 'Изменена рабочая БД.'
+    Assert-True (Test-Path -LiteralPath (Join-Path $f.Target 'backups/previous/Bonfire.exe')) 'Удалён посторонний каталог.'
+}
+Test-Case 'Три копии и незавершённые каталоги сохраняются' {
+    $f = New-Fixture
+    $old = @(Add-OldBackups $f.Target 2)
+    $incomplete = Join-Path (Join-Path $f.Target 'backups') ('19990101-000000-000-' + [guid]::NewGuid().ToString('N'))
+    Write-FixtureFile $incomplete 'Bonfire.exe' 'incomplete'
+    $result = & $scriptPath -PublishDirectory $f.Source -Destination $f.Target
+    foreach ($path in @($old) + @($incomplete, $result.BackupPath)) {
+        Assert-True (Test-Path -LiteralPath $path) 'Удалена нужная или незавершённая копия.'
+    }
+}
+Test-Case 'WhatIf и неудачное обновление не запускают очистку копий' {
+    $f = New-Fixture
+    $old = @(Add-OldBackups $f.Target)
+    & $scriptPath -PublishDirectory $f.Source -Destination $f.Target -WhatIf | Out-Null
+    foreach ($path in $old) { Assert-True (Test-Path -LiteralPath $path) 'WhatIf удалил копию.' }
+    Write-FixtureFile $f.Target 'nested' 'blocks update'
+    Expect-Failure { & $scriptPath -PublishDirectory $f.Source -Destination $f.Target }
+    foreach ($path in $old) { Assert-True (Test-Path -LiteralPath $path) 'Отказ обновления удалил копию.' }
+}
+
+
+Test-Case 'Занятая старая копия сохраняется с предупреждением без отмены обновления' {
+    $f = New-Fixture
+    $old = @(Add-OldBackups $f.Target)
+    $locked = Join-Path $old[0] 'Bonfire.exe'
+    $stream = [IO.File]::Open($locked, 'Open', 'ReadWrite', 'None')
+    try { $result = & $scriptPath -PublishDirectory $f.Source -Destination $f.Target -WarningVariable cleanupWarnings }
+    finally { $stream.Dispose() }
+    Assert-True (@($cleanupWarnings).Count -gt 0) 'Нет предупреждения об ошибке очистки.'
+    Assert-True (Test-Path -LiteralPath (Join-Path $old[0] '.backup-complete')) 'Повреждён маркер занятой копии.'
+    Assert-True (Test-Path -LiteralPath $result.BackupPath) 'Удалена текущая резервная копия.'
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'Bonfire.exe')) -eq 'new executable') 'Ошибка очистки отменила обновление.'
+    & $scriptPath -PublishDirectory $f.Source -Destination $f.Target | Out-Null
+    Assert-True (-not (Test-Path -LiteralPath $old[0])) 'Освобождённая копия не удаляется при следующем обновлении.'
+}
+Test-Case 'Ссылки в backups и внутри старой копии не ведут к удалению чужих файлов' {
+    $f = New-Fixture
+    $old = @(Add-OldBackups $f.Target)
+    $external = Join-Path $testRoot ([guid]::NewGuid().ToString('N'))
+    Write-FixtureFile $external 'keep.txt' 'keep external data'
+    Write-FixtureFile $external '.backup-complete' 'complete'
+    $link = Join-Path (Join-Path $f.Target 'backups') ('19990101-000000-000-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Junction -Path $link -Target $external | Out-Null
+    New-Item -ItemType Junction -Path (Join-Path $old[0] 'external') -Target $external | Out-Null
+    & $scriptPath -PublishDirectory $f.Source -Destination $f.Target -WarningVariable cleanupWarnings | Out-Null
+    Assert-True (@($cleanupWarnings).Count -gt 0) 'Нет предупреждения о ссылке внутри копии.'
+    Assert-True (Test-Path -LiteralPath $link) 'Удалён посторонний каталог-ссылка.'
+    Assert-True (Test-Path -LiteralPath (Join-Path $old[0] '.backup-complete')) 'Начато удаление копии со ссылкой.'
+    Assert-True ([IO.File]::ReadAllText((Join-Path $external 'keep.txt')) -eq 'keep external data') 'Удалены данные за пределами backups.'
+}
+
 Write-Host "Развёртывание: $script:passed проверок пройдено. Фикстуры: $testRoot"
