@@ -10,5 +10,7 @@
     <conv:PxToMetersConverter              x:Key="PxToMeters"/>
     <conv:PxToMetersConverter              x:Key="CheckedPxToMeters" RejectInvalidInput="True"/>
     <conv:OptionValueConverter             x:Key="OptionValue"/>
+    <conv:OptionalPairConverter            x:Key="OptionalPair"/>
+    <conv:ValidationErrorConverter         x:Key="ValidationError"/>
 
 </ResourceDictionary>

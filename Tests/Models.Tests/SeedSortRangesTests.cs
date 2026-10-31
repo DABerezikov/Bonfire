@@ -3,6 +3,32 @@ namespace Models.Tests;
 public class SeedSortRangesTests
 {
     [Theory]
+    [InlineData(null, null, false)]
+    [InlineData(20, null, true)]
+    [InlineData(null, 30, true)]
+    [InlineData(20, 30, false)]
+    [InlineData(30, 20, false)]
+    [InlineData(0, 0, false)]
+    public void HasErrors_PlantingScheme_RequiresBothValues(int? spacing, int? rowSpacing, bool expected)
+    {
+        var model = new SortEditModel { Name = "Сорт", LandingPattern = spacing, LandingRowSpacing = rowSpacing };
+        Assert.Equal(expected, model.HasErrors);
+        Assert.Equal(expected, !string.IsNullOrEmpty(model[nameof(model.LandingPattern)]));
+        Assert.Equal(expected, !string.IsNullOrEmpty(model[nameof(model.LandingRowSpacing)]));
+    }
+
+    [Theory]
+    [InlineData(2.5, false)]
+    [InlineData(2.55, true)]
+    [InlineData(0, false)]
+    public void HasErrors_Yield_AllowsOneDecimalPlace(double value, bool expected)
+    {
+        var model = new SortEditModel { Name = "Сорт", YieldKg = value };
+        Assert.Equal(expected, model.HasErrors);
+        Assert.Equal(expected, !string.IsNullOrEmpty(model[nameof(model.YieldKg)]));
+    }
+
+    [Theory]
     [InlineData(50, 40, true)]
     [InlineData(-1, 40, true)]
     [InlineData(30, 40, false)]
