@@ -56,6 +56,40 @@ Test-Case 'Резервная копия предшествует замене; 
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $result.BackupPath 'backups'))) 'Бэкапы скопированы рекурсивно.'
     Assert-True (Test-Path -LiteralPath (Join-Path $result.BackupPath '.backup-complete')) 'Бэкап не подтверждён.'
 }
+Test-Case 'Старые файлы приложения переносятся в бэкап, служебные и пользовательские остаются' {
+    $f = New-Fixture
+    foreach ($relative in @('obsolete.dll', 'old.pdb', 'Bonfire.deps.json', 'Bonfire.runtimeconfig.json', 'createdump.exe', 'ru/Old.resources.dll', 'runtimes/win-x64/native/old.dll')) {
+        Write-FixtureFile $f.Target $relative 'old binary'
+    }
+    foreach ($relative in @('runner-install/runner.dll', 'Install-BonfireRunner.ps1', 'Reports/custom.dll', 'notes.txt')) {
+        Write-FixtureFile $f.Target $relative 'keep'
+    }
+    $result = & $scriptPath -PublishDirectory $f.Source -Destination $f.Target
+    foreach ($relative in @('obsolete.dll', 'old.pdb', 'Bonfire.deps.json', 'Bonfire.runtimeconfig.json', 'createdump.exe', 'ru/Old.resources.dll', 'runtimes/win-x64/native/old.dll')) {
+        Assert-True (-not (Test-Path -LiteralPath (Join-Path $f.Target $relative))) "Остался старый файл: $relative"
+        Assert-True ([IO.File]::ReadAllText((Join-Path $result.BackupPath $relative)) -eq 'old binary') "Нет файла в бэкапе: $relative"
+    }
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $f.Target 'ru'))) 'Остался пустой каталог локализации.'
+    foreach ($relative in @('runner-install/runner.dll', 'Install-BonfireRunner.ps1', 'Reports/custom.dll', 'notes.txt')) {
+        Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target $relative)) -eq 'keep') "Изменён служебный файл: $relative"
+    }
+}
+Test-Case 'Откат возвращает также устаревшие библиотеки' {
+    $f = New-Fixture
+    Write-FixtureFile $f.Target 'ru/Old.resources.dll' 'old library'
+    Write-FixtureFile $f.Target 'nested' 'blocks directory'
+    Expect-Failure { & $scriptPath -PublishDirectory $f.Source -Destination $f.Target }
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'ru/Old.resources.dll')) -eq 'old library') 'Старая библиотека не возвращена.'
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'Bonfire.exe')) -eq 'old executable') 'EXE не возвращён.'
+}
+Test-Case 'Занятая устаревшая библиотека запрещает замену версии' {
+    $f = New-Fixture
+    Write-FixtureFile $f.Target 'obsolete.dll' 'locked library'
+    $stream = [IO.File]::Open((Join-Path $f.Target 'obsolete.dll'), 'Open', 'Read', 'Read')
+    try { Expect-Failure { & $scriptPath -PublishDirectory $f.Source -Destination $f.Target } }
+    finally { $stream.Dispose() }
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'Bonfire.exe')) -eq 'old executable') 'Версия изменена при занятой старой DLL.'
+}
 Test-Case 'Повторное развёртывание сохраняет отдельные версии' {
     $f = New-Fixture
     $first = & $scriptPath -PublishDirectory $f.Source -Destination $f.Target
