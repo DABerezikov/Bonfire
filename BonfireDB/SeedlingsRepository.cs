@@ -12,7 +12,5 @@ public class SeedlingsRepository(DbBonfire db) : DbRepository<Seedling>(db)
         .Include(item => item.Plant.PlantCulture)
         .Include(item => item.Plant.PlantSort.Producer)
         .Include(item => item.SeedlingInfos)
-        .ThenInclude(item=> item.Replants)
-            
-    ;
+        .ThenInclude(item => item.Replants);
 }

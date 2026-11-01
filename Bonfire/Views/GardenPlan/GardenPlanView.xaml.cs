@@ -1,7 +1,7 @@
+using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows;
-using System.Collections.Generic;
 using Bonfire.ViewModels;
 
 namespace Bonfire.Views.GardenPlan;
@@ -9,8 +9,14 @@ namespace Bonfire.Views.GardenPlan;
 public partial class GardenPlanView : UserControl
 {
     private readonly HashSet<ValidationError> _elementEditorErrors = [];
-    private readonly HashSet<ValidationError> _greenhouseEditorErrors = [];
     private readonly HashSet<ValidationError> _gardenEditorErrors = [];
+    private readonly HashSet<ValidationError> _greenhouseEditorErrors = [];
+
+    public GardenPlanView()
+    {
+        InitializeComponent();
+        PreviewKeyDown += OnPreviewKeyDown;
+    }
 
     private void OnElementEditorValidationError(object sender, ValidationErrorEventArgs e)
     {
@@ -54,12 +60,6 @@ public partial class GardenPlanView : UserControl
     {
         _elementEditorErrors.Clear();
         if (DataContext is GardenPlanViewModel vm) vm.ElementEditorHasBindingErrors = false;
-    }
-
-    public GardenPlanView()
-    {
-        InitializeComponent();
-        PreviewKeyDown += OnPreviewKeyDown;
     }
 
     private void GardenScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

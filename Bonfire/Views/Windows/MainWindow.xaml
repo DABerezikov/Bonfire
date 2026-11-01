@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:l="clr-namespace:Bonfire"
         xmlns:fa5="http://schemas.fontawesome.com/icons/"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         DataContext="{Binding MainWindowModel, Source={StaticResource Locator}}"
@@ -11,76 +10,82 @@
         Width="1920" Height="1080" WindowState="Maximized">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
-            <i:InvokeCommandAction Command="{Binding ShowSeedViewModelCommand}"></i:InvokeCommandAction>
+            <i:InvokeCommandAction Command="{Binding ShowSeedViewModelCommand}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <DockPanel>
         <Menu DockPanel.Dock="Top" IsMainMenu="True">
             <Menu.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <DockPanel LastChildFill="False"/>
+                    <DockPanel LastChildFill="False" />
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
             <MenuItem Header="Файл">
-                <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}"/>
+                <MenuItem Header="Выход" Command="{StaticResource CloseWindowCommand}" />
             </MenuItem>
             <MenuItem Header="Отчеты">
-                <MenuItem Header="Отчет по семенам" Command="{Binding SeedsViewModel.CreateSeedsReportCommand}"/>
-                <MenuItem Header="Отчет по выбранным семенам" Command="{Binding SeedsViewModel.CreateFilteredSeedsReportCommand}"/>
-                <Separator/>
-                <MenuItem Header="Отчет по рассаде" Command="{Binding SeedlingsViewModel.CreateSeedlingsReportCommand}"/>
-                <MenuItem Header="Отчет по выбранной рассаде" Command="{Binding SeedlingsViewModel.CreateFilteredSeedlingsReportCommand}"/>
+                <MenuItem Header="Отчет по семенам" Command="{Binding SeedsViewModel.CreateSeedsReportCommand}" />
+                <MenuItem Header="Отчет по выбранным семенам"
+                          Command="{Binding SeedsViewModel.CreateFilteredSeedsReportCommand}" />
+                <Separator />
+                <MenuItem Header="Отчет по рассаде" Command="{Binding SeedlingsViewModel.CreateSeedlingsReportCommand}" />
+                <MenuItem Header="Отчет по выбранной рассаде"
+                          Command="{Binding SeedlingsViewModel.CreateFilteredSeedlingsReportCommand}" />
             </MenuItem>
             <MenuItem Command="{Binding ShowSeedViewModelCommand}" Background="{Binding SeedBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        
-                        <fa5:ImageAwesome Icon="Solid_Leaf" Height="13"  Margin="0, 0,5,0" Foreground="Green"/>
-                        <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}"/>
+
+                        <fa5:ImageAwesome Icon="Solid_Leaf" Height="13" Margin="0, 0,5,0" Foreground="Green" />
+                        <TextBlock Text="Семена" FontWeight="{Binding SeedsBold}" />
                     </StackPanel>
 
 
                 </MenuItem.Header>
-                
+
             </MenuItem>
             <MenuItem Command="{Binding ShowSeedlingsViewModelCommand}" Background="{Binding SeedlingBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <fa5:ImageAwesome Icon="Solid_Seedling" Height="13"  Margin="0, 0,5,0" Foreground="MediumSeaGreen"/>
-                        <TextBlock Text="Рассада" FontWeight="{Binding SeedlingsBold}"></TextBlock>
+                        <fa5:ImageAwesome Icon="Solid_Seedling" Height="13" Margin="0, 0,5,0"
+                                          Foreground="MediumSeaGreen" />
+                        <TextBlock Text="Рассада" FontWeight="{Binding SeedlingsBold}" />
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
             <MenuItem Command="{Binding ShowLibraryEditorViewModelCommand}" Background="{Binding LibraryBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <fa5:ImageAwesome Icon="Solid_Book" Height="13"  Margin="0, 0,5,0" Foreground="Chocolate"/>
-                        <TextBlock Text="Редактор библиотек" FontWeight="{Binding LibraryBold}"></TextBlock>
+                        <fa5:ImageAwesome Icon="Solid_Book" Height="13" Margin="0, 0,5,0" Foreground="Chocolate" />
+                        <TextBlock Text="Редактор библиотек" FontWeight="{Binding LibraryBold}" />
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-            <MenuItem Header="Планирование посадок" Command="{Binding ShowPlantingPlanningCommand}" Background="{Binding PlanningBackground}" FontWeight="{Binding PlanningBold}"/>
-            <MenuItem Header="Сборы урожая" Command="{Binding ShowHarvestJournalCommand}" Background="{Binding HarvestBackground}" FontWeight="{Binding HarvestBold}"/>
-            <MenuItem Header="Многолетние посадки" Command="{Binding ShowPerennialPlanningCommand}" Background="{Binding PerennialBackground}" FontWeight="{Binding PerennialBold}"/>
+            <MenuItem Header="Планирование посадок" Command="{Binding ShowPlantingPlanningCommand}"
+                      Background="{Binding PlanningBackground}" FontWeight="{Binding PlanningBold}" />
+            <MenuItem Header="Сборы урожая" Command="{Binding ShowHarvestJournalCommand}"
+                      Background="{Binding HarvestBackground}" FontWeight="{Binding HarvestBold}" />
+            <MenuItem Header="Многолетние посадки" Command="{Binding ShowPerennialPlanningCommand}"
+                      Background="{Binding PerennialBackground}" FontWeight="{Binding PerennialBold}" />
             <MenuItem Command="{Binding ShowGardenPlanViewModelCommand}" Background="{Binding GardenBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <fa5:ImageAwesome Icon="Solid_Map" Height="13" Margin="0,0,5,0" Foreground="#388E3C"/>
-                        <TextBlock Text="Планировка огорода" FontWeight="{Binding GardenBold}"/>
+                        <fa5:ImageAwesome Icon="Solid_Map" Height="13" Margin="0,0,5,0" Foreground="#388E3C" />
+                        <TextBlock Text="Планировка огорода" FontWeight="{Binding GardenBold}" />
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
 
         </Menu>
-        
+
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem DockPanel.Dock="Right">
-                <ResizeGrip/>
+                <ResizeGrip />
             </StatusBarItem>
-            <StatusBarItem Content="{Binding Status}"/>
+            <StatusBarItem Content="{Binding Status}" />
         </StatusBar>
         <Grid>
-            <ContentControl Content="{Binding CurrentViewModel}"/>
+            <ContentControl Content="{Binding CurrentViewModel}" />
         </Grid>
     </DockPanel>
 </Window>

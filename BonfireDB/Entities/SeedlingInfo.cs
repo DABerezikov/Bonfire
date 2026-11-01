@@ -1,11 +1,9 @@
 ﻿using BonfireDB.Entities.Base;
 
-
 namespace BonfireDB.Entities;
 
 public class SeedlingInfo : Entity
 {
-        
     /// <summary> Номер рассады </summary>
     public int SeedlingNumber { get; set; }
 
@@ -22,7 +20,7 @@ public class SeedlingInfo : Entity
     public string? PlantPlace { get; set; }
 
     /// <summary> Дата всхода рассады </summary>
-    public DateTime? GerminationDate { get;set; }
+    public DateTime? GerminationDate { get; set; }
 
     /// <summary> Дата начала карантина </summary>
     public DateTime? QuarantineStartDate { get; set; }
@@ -77,7 +75,4 @@ public class SeedlingInfo : Entity
     // Отчет:
     // Общее количество по культуре
     // Расшифровка по каждому сорту с количеством
-
-
-
 }

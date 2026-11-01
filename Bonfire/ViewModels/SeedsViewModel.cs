@@ -1,14 +1,15 @@
-using System.Collections.Immutable;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Input;
-using Bonfire.Data;
+using Bonfire.Application.Libraries;
 using Bonfire.Application.Seeds;
+using Bonfire.Data;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 using Bonfire.Infrastructure.Commands;
@@ -17,53 +18,22 @@ using Bonfire.Models.Mappers;
 using Bonfire.Services.Extensions;
 using Bonfire.Services.Interfaces;
 using Bonfire.ViewModels.Base;
-using Bonfire.Application.Libraries;
 
 namespace Bonfire.ViewModels;
 
 public class SeedsViewModel : SourceSelectionViewModel
 {
-    private readonly ISeedsService _seedsService;
-    private readonly IUserDialog _userDialog;
+    private readonly CollectionViewSource _cultureListView;
+    private readonly CollectionViewSource _producerListView;
     private readonly IReportService _reportService;
+    private readonly ISeedsService _seedsService;
+    private readonly CollectionViewSource _seedsView;
+    private readonly CollectionViewSource _sortListView;
+    private readonly IUserDialog _userDialog;
     private bool _ignoreDiscard;
     private bool _isSaving;
 
-    public SortEditModel? SeedSortDetail
-    {
-        get;
-        private set => Set(ref field, value);
-    }
-
-    public int EditedProducerId
-    {
-        get;
-        set => Set(ref field, value);
-    }
-
-    public SeedEditorOptionsFromViewModel EditorOptions
-    {
-        get;
-        private set => Set(ref field, value);
-    } = new([], [], []);
-
-    public bool EditorHasBindingErrors { get; set; }
-    public bool CanEditSeedDetails => !_isSaving;
-
-    public bool HasUnsavedSeedChanges => EditedItem is { } draft &&
-        (EditorHasBindingErrors || SeedSortDetail is { IsDirty: true }
-         || EditedProducerId != draft.OriginalProducerId
-         || draft.HasPackageChanges);
-
-    public bool TryDiscardSeedChanges()
-    {
-        if (_isSaving) return false;
-        if (HasUnsavedSeedChanges && !_userDialog.YesNoQuestion(
-                "Сбросить несохранённые изменения семян и характеристик сорта?", "Несохранённые изменения"))
-            return false;
-        LoadSeedDraft(SelectedItem);
-        return true;
-    }
+    private SeedReadFromViewModel? _selectedItem;
 
     public SeedsViewModel(ISeedsService seedsService, IUserDialog userDialog, IReportService reportService)
     {
@@ -109,6 +79,32 @@ public class SeedsViewModel : SourceSelectionViewModel
         _producerListView.Filter += _ProducerListView_Filter;
     }
 
+    public SortEditModel? SeedSortDetail
+    {
+        get;
+        private set => Set(ref field, value);
+    }
+
+    public int EditedProducerId
+    {
+        get;
+        set => Set(ref field, value);
+    }
+
+    public SeedEditorOptionsFromViewModel EditorOptions
+    {
+        get;
+        private set => Set(ref field, value);
+    } = new([], [], []);
+
+    public bool EditorHasBindingErrors { get; set; }
+    public bool CanEditSeedDetails => !_isSaving;
+
+    public bool HasUnsavedSeedChanges => EditedItem is { } draft &&
+                                         (EditorHasBindingErrors || SeedSortDetail is { IsDirty: true }
+                                                                 || EditedProducerId != draft.OriginalProducerId
+                                                                 || draft.HasPackageChanges);
+
     public bool IsActive
     {
         get;
@@ -123,22 +119,9 @@ public class SeedsViewModel : SourceSelectionViewModel
         }
     }
 
-    private async Task<Result<ImmutableArray<SeedReadFromViewModel>>> RefreshSeedsAsync()
-    {
-        var result = await _seedsService.ReadSeedsAsync();
-        result.Match(seeds =>
-        {
-            Seeds = new(seeds);
-            UpdateCollectionViewSource();
-            return true;
-        }, error => { _userDialog.Error(error); return false; });
-        return result;
-    }
-
     // Фильтрация главного списка
 
     public ICollectionView? SeedsView => _seedsView.View;
-    private readonly CollectionViewSource _seedsView;
 
     public string SeedFilter
     {
@@ -153,31 +136,6 @@ public class SeedsViewModel : SourceSelectionViewModel
             }
         }
     } = "-Выбрать все-";
-
-    private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
-    {
-        if (e.Item is not SeedsFromViewModel seed) return;
-        if (SeedFilter != "-Выбрать все-")
-        {
-            if (IsHaving)
-            {
-                if (seed.Culture != null && (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase) ||
-                                             (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)))
-                    e.Accepted = false;
-            }
-            else
-            {
-                if (seed.Culture != null && !seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
-                    e.Accepted = false;
-            }
-        }
-        else
-        {
-            if (!IsHaving) return;
-            if (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)
-                e.Accepted = false;
-        }
-    }
 
     // Основные данные
 
@@ -197,22 +155,19 @@ public class SeedsViewModel : SourceSelectionViewModel
                 OnPropertyChanged();
                 return;
             }
+
             Set(ref field, value);
             SelectedItem = value != null ? Seeds!.First(s => s.Id == value.Id) : null;
         }
     }
 
-    private SeedReadFromViewModel? _selectedItem;
     public SeedReadFromViewModel? SelectedItem
     {
         get => _selectedItem;
         set
         {
             if (!ReferenceEquals(_selectedItem, value) && !_ignoreDiscard && !TryDiscardSeedChanges()) return;
-            if (Set(ref _selectedItem, value))
-            {
-                LoadSeedDraft(value);
-            }
+            if (Set(ref _selectedItem, value)) LoadSeedDraft(value);
         }
     }
 
@@ -255,7 +210,7 @@ public class SeedsViewModel : SourceSelectionViewModel
     {
         get;
         set => Set(ref field, value);
-    } = new DateTime(DateTime.Now.Year + 1, 12, 31);
+    } = new(DateTime.Now.Year + 1, 12, 31);
 
     public string AddCostPack
     {
@@ -271,12 +226,17 @@ public class SeedsViewModel : SourceSelectionViewModel
         set => SourceValue = value;
     }
 
-    protected override void OnSourceChanged() => OnPropertyChanged(nameof(IsCollected));
-
     public bool IsCollected
     {
         get => SourceValue == PlantSources.Collected;
-        set { if (value) { SourceValue = PlantSources.Collected; AddProducer = Producers.Own; } }
+        set
+        {
+            if (value)
+            {
+                SourceValue = PlantSources.Collected;
+                AddProducer = Producers.Own;
+            }
+        }
     }
 
     // Примечание
@@ -318,14 +278,6 @@ public class SeedsViewModel : SourceSelectionViewModel
     // Выбор культуры
 
     public ICollectionView? CultureListView => _cultureListView.View;
-    private readonly CollectionViewSource _cultureListView;
-
-    private void _CultureListView_Filter(object sender, FilterEventArgs e)
-    {
-        if (e.Item is not CultureFromViewModel culture || string.IsNullOrEmpty(AddCulture)) return;
-        if (culture.Name != null && !culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
-            e.Accepted = false;
-    }
 
     public ObservableCollection<CultureFromViewModel> AddCultureList
     {
@@ -346,14 +298,6 @@ public class SeedsViewModel : SourceSelectionViewModel
     // Выбор сорта
 
     public ICollectionView SortListView => _sortListView.View;
-    private readonly CollectionViewSource _sortListView;
-
-    private void _SortListView_Filter(object sender, FilterEventArgs e)
-    {
-        if (e.Item is not SortFromSeedsViewModel sort || string.IsNullOrEmpty(AddSort)) return;
-        if (sort.Name != null && !sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
-            e.Accepted = false;
-    }
 
     public ObservableCollection<SortFromSeedsViewModel> AddSortList
     {
@@ -374,14 +318,6 @@ public class SeedsViewModel : SourceSelectionViewModel
     // Выбор производителя
 
     public ICollectionView ProducerListView => _producerListView.View;
-    private readonly CollectionViewSource _producerListView;
-
-    private void _ProducerListView_Filter(object sender, FilterEventArgs e)
-    {
-        if (!(e.Item is ProducerFromViewModel producer) || string.IsNullOrEmpty(AddProducer)) return;
-        if (producer.Name != null && !producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
-            e.Accepted = false;
-    }
 
     public ObservableCollection<ProducerFromViewModel> AddProducerList
     {
@@ -402,6 +338,110 @@ public class SeedsViewModel : SourceSelectionViewModel
             }
         }
     } = string.Empty;
+
+
+    // Команды
+
+    public ICommand LoadDataCommand => field
+        ??= new LambdaCommandAsync(OnLoadDataCommandExecuted);
+
+    public ICommand SeedsChoiceClassCommand => field
+        ??= new LambdaCommandAsync(OnSeedsChoiceClassCommandExecuted);
+
+    public ICommand AddOrCorrectSeedCommand => field
+        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, () => !_isSaving && Verification());
+
+    public ICommand DeleteSeedCommand => field
+        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null && !_isSaving);
+
+    public ICommand UpdateSeedsInfoCommand => field
+        ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted,
+            () => SelectedItem != null && !_isSaving && !EditorHasBindingErrors
+                  && SeedSortDetail is { HasErrors: false } && EditedProducerId > 0
+                  && EditedItem is { Package.HasErrors: false });
+
+    public ICommand CancelUpdateSeedsInfoCommand => field
+        ??= new LambdaCommand(() => { TryDiscardSeedChanges(); });
+
+    public ICommand CreateSeedsReportCommand => field
+        ??= new LambdaCommand(CreateSeedReport, () => Seeds != null && IsActive);
+
+    public ICommand CreateFilteredSeedsReportCommand => field
+        ??= new LambdaCommand(CreateFilteredSeedReport, () => SeedsView != null && IsActive);
+
+    public bool TryDiscardSeedChanges()
+    {
+        if (_isSaving) return false;
+        if (HasUnsavedSeedChanges && !_userDialog.YesNoQuestion(
+                "Сбросить несохранённые изменения семян и характеристик сорта?", "Несохранённые изменения"))
+            return false;
+        LoadSeedDraft(SelectedItem);
+        return true;
+    }
+
+    private async Task<Result<ImmutableArray<SeedReadFromViewModel>>> RefreshSeedsAsync()
+    {
+        var result = await _seedsService.ReadSeedsAsync();
+        result.Match(seeds =>
+        {
+            Seeds = new ObservableCollection<SeedReadFromViewModel>(seeds);
+            UpdateCollectionViewSource();
+            return true;
+        }, error =>
+        {
+            _userDialog.Error(error);
+            return false;
+        });
+        return result;
+    }
+
+    private void _SeedsViewSource_Filter(object sender, FilterEventArgs e)
+    {
+        if (e.Item is not SeedsFromViewModel seed) return;
+        if (SeedFilter != "-Выбрать все-")
+        {
+            if (IsHaving)
+            {
+                if (seed.Culture != null && (!seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase) ||
+                                             (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)))
+                    e.Accepted = false;
+            }
+            else
+            {
+                if (seed.Culture != null && !seed.Culture.Contains(SeedFilter, StringComparison.OrdinalIgnoreCase))
+                    e.Accepted = false;
+            }
+        }
+        else
+        {
+            if (!IsHaving) return;
+            if (seed.AmountSeedsQuantity == null && seed.AmountSeedsWeight == null)
+                e.Accepted = false;
+        }
+    }
+
+    protected override void OnSourceChanged() => OnPropertyChanged(nameof(IsCollected));
+
+    private void _CultureListView_Filter(object sender, FilterEventArgs e)
+    {
+        if (e.Item is not CultureFromViewModel culture || string.IsNullOrEmpty(AddCulture)) return;
+        if (culture.Name != null && !culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
+            e.Accepted = false;
+    }
+
+    private void _SortListView_Filter(object sender, FilterEventArgs e)
+    {
+        if (e.Item is not SortFromSeedsViewModel sort || string.IsNullOrEmpty(AddSort)) return;
+        if (sort.Name != null && !sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
+            e.Accepted = false;
+    }
+
+    private void _ProducerListView_Filter(object sender, FilterEventArgs e)
+    {
+        if (!(e.Item is ProducerFromViewModel producer) || string.IsNullOrEmpty(AddProducer)) return;
+        if (producer.Name != null && !producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
+            e.Accepted = false;
+    }
 
     // Методы
 
@@ -494,6 +534,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             var current = collection.FirstOrDefault(s => s.Id == id);
             _seedsView.View.MoveCurrentTo(current);
         }
+
         OnPropertyChanged(nameof(SeedsView));
         OnPropertyChanged(nameof(ListCulture));
     }
@@ -509,20 +550,24 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private void RebuildSeedSuggestions()
     {
-        AddCultureList.Clear(); AddSortList.Clear(); AddProducerList.Clear();
+        AddCultureList.Clear();
+        AddSortList.Clear();
+        AddProducerList.Clear();
         ListCulture = ["-Выбрать все-"];
-        LoadListCulture(); LoadListSort(); LoadListProducer();
+        LoadListCulture();
+        LoadListSort();
+        LoadListProducer();
     }
 
     private void CreateSeedReport()
     {
         var items = Seeds!.Select(s => new SeedReportItem(
-            s.Plant.PlantCulture.Name,
-            s.Plant.PlantSort.Name,
-            s.Plant.PlantSort.Producer.Name,
-            s.SeedsInfo.ExpirationDate.ToShortDateString(),
-            s.SeedsInfo.WeightPack,
-            s.SeedsInfo.QuantityPack))
+                s.Plant.PlantCulture.Name,
+                s.Plant.PlantSort.Name,
+                s.Plant.PlantSort.Producer.Name,
+                s.SeedsInfo.ExpirationDate.ToShortDateString(),
+                s.SeedsInfo.WeightPack,
+                s.SeedsInfo.QuantityPack))
             .OrderBy(s => s.Culture);
         _reportService.CreateSeedsReport(items);
     }
@@ -559,11 +604,14 @@ public class SeedsViewModel : SourceSelectionViewModel
                 var seed = seeds[index];
                 if (seed.Plant.PlantSort.Id != updated.Id) continue;
                 var link = updated.Plants.FirstOrDefault(p => p.PlantId == seed.Plant.Id);
-                ReplaceCachedSeed(index, seed with { Plant = seed.Plant with
+                ReplaceCachedSeed(index, seed with
                 {
-                    PlantSort = seed.Plant.PlantSort with { Name = updated.Name },
-                    PlantCulture = link is not null ? link.Culture : seed.Plant.PlantCulture
-                } });
+                    Plant = seed.Plant with
+                    {
+                        PlantSort = seed.Plant.PlantSort with { Name = updated.Name },
+                        PlantCulture = link is not null ? link.Culture : seed.Plant.PlantCulture
+                    }
+                });
             }
 
         var sortItem = AddSortList.FirstOrDefault(s => s.Id == updated.Id);
@@ -574,7 +622,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         UpdateCollectionViewSource();
     }
 
-    internal void SyncAfterCultureUpdate(Bonfire.Application.Libraries.CultureDetailsFromViewModel updated)
+    internal void SyncAfterCultureUpdate(CultureDetailsFromViewModel updated)
     {
         if (Seeds is { } seeds)
             for (var index = 0; index < seeds.Count; index++)
@@ -589,12 +637,16 @@ public class SeedsViewModel : SourceSelectionViewModel
         UpdateCollectionViewSource();
     }
 
-    internal void SyncAfterProducerUpdate(Bonfire.Application.Libraries.ProducerDetailsFromViewModel updated)
+    internal void SyncAfterProducerUpdate(ProducerDetailsFromViewModel updated)
     {
         if (Seeds is { } seeds)
             for (var index = 0; index < seeds.Count; index++)
                 if (seeds[index] is { } seed && seed.Plant.PlantSort.Producer.Id == updated.Id)
-                    ReplaceCachedSeed(index, seed with { Plant = seed.Plant with { PlantSort = seed.Plant.PlantSort with { Producer = updated } } });
+                    ReplaceCachedSeed(index,
+                        seed with
+                        {
+                            Plant = seed.Plant with { PlantSort = seed.Plant.PlantSort with { Producer = updated } }
+                        });
 
         var producerItem = AddProducerList.FirstOrDefault(p => p.Id == updated.Id);
         if (producerItem is not null)
@@ -604,15 +656,17 @@ public class SeedsViewModel : SourceSelectionViewModel
         UpdateCollectionViewSource();
     }
 
-
-    // Команды
-
-    public ICommand LoadDataCommand => field
-        ??= new LambdaCommandAsync(OnLoadDataCommandExecuted);
-
     private async Task<bool> ReloadEditorOptionsAsync()
-        => (await _seedsService.GetEditorOptionsAsync()).Match(options => { EditorOptions = options; return true; },
-            error => { _userDialog.Error(error); return false; });
+        => (await _seedsService.GetEditorOptionsAsync()).Match(options =>
+            {
+                EditorOptions = options;
+                return true;
+            },
+            error =>
+            {
+                _userDialog.Error(error);
+                return false;
+            });
 
     private async Task OnLoadDataCommandExecuted()
     {
@@ -622,14 +676,12 @@ public class SeedsViewModel : SourceSelectionViewModel
             UpdateCollectionViewSource();
             return;
         }
+
         if ((await RefreshSeedsAsync()).IsFailure) return;
         LoadListCulture();
         LoadListSort();
         LoadListProducer();
     }
-
-    public ICommand SeedsChoiceClassCommand => field
-        ??= new LambdaCommandAsync(OnSeedsChoiceClassCommandExecuted);
 
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
     {
@@ -640,9 +692,6 @@ public class SeedsViewModel : SourceSelectionViewModel
         _seedsView.Source = filteredSeeds.Select(SeedMapper.ToViewModel).SortSeeds().ToArray();
         OnPropertyChanged(nameof(SeedsView));
     }
-
-    public ICommand AddOrCorrectSeedCommand => field
-        ??= new LambdaCommandAsync(OnAddOrCorrectSeedCommandExecuted, () => !_isSaving && Verification());
 
     private async Task OnAddOrCorrectSeedCommandExecuted()
     {
@@ -673,11 +722,12 @@ public class SeedsViewModel : SourceSelectionViewModel
                 return Task.CompletedTask;
             });
         }
-        finally { _ignoreDiscard = false; SetSaving(false); }
+        finally
+        {
+            _ignoreDiscard = false;
+            SetSaving(false);
+        }
     }
-
-    public ICommand DeleteSeedCommand => field
-        ??= new LambdaCommandAsync(OnDeleteSeedCommandExecuted, () => SelectedItem != null && !_isSaving);
 
     private async Task OnDeleteSeedCommandExecuted()
     {
@@ -700,6 +750,7 @@ public class SeedsViewModel : SourceSelectionViewModel
                     RebuildSeedSuggestions();
                     UpdateCollectionViewSource();
                 }
+
                 return true;
             }, error =>
             {
@@ -707,14 +758,12 @@ public class SeedsViewModel : SourceSelectionViewModel
                 return false;
             });
         }
-        finally { _ignoreDiscard = false; SetSaving(false); }
+        finally
+        {
+            _ignoreDiscard = false;
+            SetSaving(false);
+        }
     }
-
-    public ICommand UpdateSeedsInfoCommand => field
-        ??= new LambdaCommandAsync(OnUpdateSeedsInfoCommandExecuted,
-            () => SelectedItem != null && !_isSaving && !EditorHasBindingErrors
-                && SeedSortDetail is { HasErrors: false } && EditedProducerId > 0
-                && EditedItem is { Package.HasErrors: false });
 
     private async Task OnUpdateSeedsInfoCommandExecuted()
     {
@@ -742,11 +791,12 @@ public class SeedsViewModel : SourceSelectionViewModel
                 return Task.CompletedTask;
             });
         }
-        finally { _ignoreDiscard = false; SetSaving(false); }
+        finally
+        {
+            _ignoreDiscard = false;
+            SetSaving(false);
+        }
     }
-
-    public ICommand CancelUpdateSeedsInfoCommand => field
-        ??= new LambdaCommand(() => { TryDiscardSeedChanges(); });
 
     private void SetSaving(bool value)
     {
@@ -754,10 +804,4 @@ public class SeedsViewModel : SourceSelectionViewModel
         OnPropertyChanged(nameof(CanEditSeedDetails));
         CommandManager.InvalidateRequerySuggested();
     }
-
-    public ICommand CreateSeedsReportCommand => field
-        ??= new LambdaCommand(CreateSeedReport, () => Seeds != null && IsActive);
-
-    public ICommand CreateFilteredSeedsReportCommand => field
-        ??= new LambdaCommand(CreateFilteredSeedReport, () => SeedsView != null && IsActive);
 }

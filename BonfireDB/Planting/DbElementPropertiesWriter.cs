@@ -1,15 +1,16 @@
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden;
-using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.Base;
+using BonfireDB.Entities.GardenPlanning;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.Planting;
 
 public sealed class DbElementPropertiesWriter(IUnitOfWorkFactory units) : IElementPropertiesWriter
 {
-    public async Task<Result<ElementPropertiesResultFromViewModel>> ApplyAsync(ElementPropertiesEdit edit, CancellationToken cancellationToken)
+    public async Task<Result<ElementPropertiesResultFromViewModel>> ApplyAsync(ElementPropertiesEdit edit,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edit);
         cancellationToken.ThrowIfCancellationRequested();
@@ -17,9 +18,11 @@ public sealed class DbElementPropertiesWriter(IUnitOfWorkFactory units) : IEleme
         var element = await unit.Repository<GardenElement>().GetAsync(edit.Id, cancellationToken).ConfigureAwait(false);
         if (element is null) return Result.Failure<ElementPropertiesResultFromViewModel>("Элемент уже удалён");
         var layout = edit.HasGeometryChanges
-            ? await DbCanvasSiblings.ForElementAsync(unit, element.PlotId, element.Id, cancellationToken).ConfigureAwait(false)
+            ? await DbCanvasSiblings.ForElementAsync(unit, element.PlotId, element.Id, cancellationToken)
+                .ConfigureAwait(false)
             : Result.Success(new PlotLayout([]));
-        var updated = ElementPropertiesDbMapper.Read(element).Bind(current => layout.Bind(siblings => edit.ApplyTo(current, siblings)));
+        var updated = ElementPropertiesDbMapper.Read(element)
+            .Bind(current => layout.Bind(siblings => edit.ApplyTo(current, siblings)));
         return await updated.Match(async state =>
         {
             ElementPropertiesDbMapper.Apply(state, element);
@@ -34,7 +37,8 @@ public sealed class DbElementPropertiesWriter(IUnitOfWorkFactory units) : IEleme
             }
             catch (DbUpdateException error)
             {
-                return Result.Failure<ElementPropertiesResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+                return Result.Failure<ElementPropertiesResultFromViewModel>(
+                    $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
             }
         }, error => Task.FromResult(Result.Failure<ElementPropertiesResultFromViewModel>(error))).ConfigureAwait(false);
     }

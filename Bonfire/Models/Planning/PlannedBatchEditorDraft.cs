@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using Bonfire.Application.Planning;
 using Bonfire.Domain.Functional;
@@ -31,6 +30,29 @@ public sealed record PlannedBatchDraftValues
 
 public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
 {
+    public PlannedBatchEditorDraft(int regionId) : this(regionId, new PlannedBatchDraftValues(), Option.None<int>())
+    {
+    }
+
+    public PlannedBatchEditorDraft(int regionId, PlannedBatchDraftValues values, Option<int> batchId)
+    {
+        RegionId = regionId;
+        BatchId = batchId;
+        Values = Original = values;
+        Harvest = new HarvestPlanningFields(values.Harvest);
+        Harvest.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(HarvestPlanningFields.Values))
+                Update(Values with { Harvest = Harvest.Values }, nameof(Harvest));
+        };
+        Profile = new GrowingProfileFields(values.Profile) { ShowSeedlingFields = !values.DirectSow };
+        Profile.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(GrowingProfileFields.Values))
+                Update(Values with { Profile = Profile.Values }, nameof(Profile));
+        };
+    }
+
     public int RegionId { get; }
     public Option<int> BatchId { get; private set; }
     public PlannedBatchDraftValues Values { get; private set; }
@@ -42,60 +64,144 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
     public bool IsSeedling => !DirectSow;
     public string WindowLabel => DirectSow ? "Период прямого посева" : "Период высадки рассады";
 
-    public PlannedBatchEditorDraft(int regionId) : this(regionId, new(), Option.None<int>()) { }
-    public PlannedBatchEditorDraft(int regionId, PlannedBatchDraftValues values, Option<int> batchId)
+    public PlanningChoiceFromViewModel? Choice
     {
-        RegionId = regionId;
-        BatchId = batchId;
-        Values = Original = values;
-        Harvest = new(values.Harvest);
-        Harvest.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(HarvestPlanningFields.Values)) Update(Values with { Harvest = Harvest.Values }, nameof(Harvest));
-        };
-        Profile = new(values.Profile) { ShowSeedlingFields = !values.DirectSow };
-        Profile.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(GrowingProfileFields.Values)) Update(Values with { Profile = Profile.Values }, nameof(Profile));
-        };
+        get => Values.Choice;
+        set => Update(Values with { Choice = value });
     }
 
-    public PlanningChoiceFromViewModel? Choice { get => Values.Choice; set => Update(Values with { Choice = value }); }
     public bool DirectSow
     {
         get => Values.DirectSow;
-        set { Update(Values with { DirectSow = value }); Profile.ShowSeedlingFields = !value; }
+        set
+        {
+            Update(Values with { DirectSow = value });
+            Profile.ShowSeedlingFields = !value;
+        }
     }
-    public GrowingLocation Location { get => Values.Location; set => Update(Values with { Location = value }); }
-    public PlantPlacement Placement { get => Values.Placement; set => Update(Values with { Placement = value }); }
-    public string TargetPlantsText { get => Values.TargetPlantsText; set => Update(Values with { TargetPlantsText = value }); }
-    public string SearchLimitText { get => Values.SearchLimitText; set => Update(Values with { SearchLimitText = value }); }
-    public string TransplantStartText { get => Values.TransplantStartText; set => Update(Values with { TransplantStartText = value }); }
-    public string TransplantEndText { get => Values.TransplantEndText; set => Update(Values with { TransplantEndText = value }); }
-    public string DirectStartText { get => Values.DirectStartText; set => Update(Values with { DirectStartText = value }); }
-    public string DirectEndText { get => Values.DirectEndText; set => Update(Values with { DirectEndText = value }); }
-    public string ChosenSowingText { get => Values.ChosenSowingText; set => Update(Values with { ChosenSowingText = value, SowingOrigin = PlannedDateOrigin.Manual }); }
-    public string ChosenTransplantText { get => Values.ChosenTransplantText; set => Update(Values with { ChosenTransplantText = value }); }
-    public string ManualSeedCountText { get => Values.ManualSeedCountText; set => Update(Values with { ManualSeedCountText = value }); }
+
+    public GrowingLocation Location
+    {
+        get => Values.Location;
+        set => Update(Values with { Location = value });
+    }
+
+    public PlantPlacement Placement
+    {
+        get => Values.Placement;
+        set => Update(Values with { Placement = value });
+    }
+
+    public string TargetPlantsText
+    {
+        get => Values.TargetPlantsText;
+        set => Update(Values with { TargetPlantsText = value });
+    }
+
+    public string SearchLimitText
+    {
+        get => Values.SearchLimitText;
+        set => Update(Values with { SearchLimitText = value });
+    }
+
+    public string TransplantStartText
+    {
+        get => Values.TransplantStartText;
+        set => Update(Values with { TransplantStartText = value });
+    }
+
+    public string TransplantEndText
+    {
+        get => Values.TransplantEndText;
+        set => Update(Values with { TransplantEndText = value });
+    }
+
+    public string DirectStartText
+    {
+        get => Values.DirectStartText;
+        set => Update(Values with { DirectStartText = value });
+    }
+
+    public string DirectEndText
+    {
+        get => Values.DirectEndText;
+        set => Update(Values with { DirectEndText = value });
+    }
+
+    public string ChosenSowingText
+    {
+        get => Values.ChosenSowingText;
+        set => Update(Values with { ChosenSowingText = value, SowingOrigin = PlannedDateOrigin.Manual });
+    }
+
+    public string ChosenTransplantText
+    {
+        get => Values.ChosenTransplantText;
+        set => Update(Values with { ChosenTransplantText = value });
+    }
+
+    public string ManualSeedCountText
+    {
+        get => Values.ManualSeedCountText;
+        set => Update(Values with { ManualSeedCountText = value });
+    }
+
+    public string Error => PlanningInputParser.Error(BuildInput());
+
+    public string this[string property] => property switch
+    {
+        nameof(Choice) => Choice is null ? "Выберите культуру и сорт" : "",
+        nameof(TargetPlantsText) when Harvest.IsManualPlants => PlanningInputParser.Error(
+            PlanningInputParser.Count(TargetPlantsText, "Растения")),
+        nameof(ManualSeedCountText) => PlanningInputParser.Error(
+            PlanningInputParser.OptionalCount(ManualSeedCountText, "Семена")),
+        nameof(TransplantStartText) or nameof(TransplantEndText) when !DirectSow => PlanningInputParser.Error(
+            PlanningInputParser.Window(TransplantStartText, TransplantEndText)),
+        nameof(DirectStartText) or nameof(DirectEndText) when DirectSow => PlanningInputParser.Error(
+            PlanningInputParser.Window(DirectStartText, DirectEndText)),
+        nameof(ChosenSowingText) => PlanningInputParser.Error(
+            PlanningInputParser.OptionalDate(ChosenSowingText, "Посев")),
+        nameof(ChosenTransplantText) when !DirectSow => PlanningInputParser.Error(
+            PlanningInputParser.OptionalDate(ChosenTransplantText, "Высадка")),
+        nameof(Location) or nameof(Placement) => PlanningInputParser.Error(
+            GrowingConditions.Create(Location, Placement)),
+        nameof(SearchLimitText) => int.TryParse(SearchLimitText, out var limit) && limit >= 0
+            ? ""
+            : "Укажите неотрицательное число дней",
+        _ => ""
+    };
 
     public Result<PlanningBatchInputFromViewModel> BuildInput()
     {
         if (Choice is null) return Result.Failure<PlanningBatchInputFromViewModel>("Выберите культуру и сорт");
         if (!int.TryParse(SearchLimitText, out var limit) || limit < 0)
-            return Result.Failure<PlanningBatchInputFromViewModel>("Предел сдвига должен быть целым неотрицательным числом дней");
-        var window = DirectSow ? PlanningInputParser.Window(DirectStartText, DirectEndText)
+            return Result.Failure<PlanningBatchInputFromViewModel>(
+                "Предел сдвига должен быть целым неотрицательным числом дней");
+        var window = DirectSow
+            ? PlanningInputParser.Window(DirectStartText, DirectEndText)
             : PlanningInputParser.Window(TransplantStartText, TransplantEndText);
         return Harvest.Build().Bind(harvest => GrowingConditions.Create(Location, Placement).Bind(conditions =>
-            (Harvest.IsManualPlants ? PlanningInputParser.Count(TargetPlantsText, "Количество растений") : PlantCount.Create(1)).Bind(target =>
-            window.Bind(dates => Profile.BuildOverrides(DirectSow).Bind(overrides =>
-            Profile.BuildExtras(DirectSow).Bind(extras =>
-            PlanningInputParser.OptionalCount(ManualSeedCountText, "Количество семян").Bind(seeds =>
-            PlanningInputParser.OptionalDate(ChosenSowingText, "Выбранный посев").Bind(sowing =>
-            (DirectSow ? Result.Success(Option.None<DateOnly>()) : PlanningInputParser.OptionalDate(ChosenTransplantText, "Выбранная высадка"))
-                .Bind(transplant => Result.Success(new PlanningBatchInputFromViewModel(RegionId, Choice.CultureId, Choice.SortId,
-                    conditions, DirectSow ? new GrowingMethod.DirectSow(dates) : new GrowingMethod.Transplant(dates),
-                    target, overrides, new PlanningChoices(sowing, transplant, seeds) { SowingOrigin = Values.SowingOrigin }, extras.GerminationPercentage,
-                    extras.LossPercentage, extras.LunarGroup, limit) { Harvest = harvest, LifeCycleOverride = extras.LifeCycle }))))))))));
+            (Harvest.IsManualPlants
+                ? PlanningInputParser.Count(TargetPlantsText, "Количество растений")
+                : PlantCount.Create(1)).Bind(target =>
+                window.Bind(dates => Profile.BuildOverrides(DirectSow).Bind(overrides =>
+                    Profile.BuildExtras(DirectSow).Bind(extras =>
+                        PlanningInputParser.OptionalCount(ManualSeedCountText, "Количество семян").Bind(seeds =>
+                            PlanningInputParser.OptionalDate(ChosenSowingText, "Выбранный посев").Bind(sowing =>
+                                (DirectSow
+                                    ? Result.Success(Option.None<DateOnly>())
+                                    : PlanningInputParser.OptionalDate(ChosenTransplantText, "Выбранная высадка"))
+                                .Bind(transplant => Result.Success(new PlanningBatchInputFromViewModel(RegionId,
+                                        Choice.CultureId, Choice.SortId,
+                                        conditions,
+                                        DirectSow
+                                            ? new GrowingMethod.DirectSow(dates)
+                                            : new GrowingMethod.Transplant(dates),
+                                        target, overrides,
+                                        new PlanningChoices(sowing, transplant, seeds)
+                                            { SowingOrigin = Values.SowingOrigin }, extras.GerminationPercentage,
+                                        extras.LossPercentage, extras.LunarGroup, limit)
+                                    { Harvest = harvest, LifeCycleOverride = extras.LifeCycle }))))))))));
     }
 
     public void AcceptSaved(PlannedBatchDraftValues submitted, int batchId)
@@ -111,21 +217,6 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
     {
         ChosenSowingText = PlanningInputParser.Format(date), SowingOrigin = PlannedDateOrigin.LunarRecommendation
     }, nameof(ChosenSowingText));
-
-    public string Error => PlanningInputParser.Error(BuildInput());
-    public string this[string property] => property switch
-    {
-        nameof(Choice) => Choice is null ? "Выберите культуру и сорт" : "",
-        nameof(TargetPlantsText) when Harvest.IsManualPlants => PlanningInputParser.Error(PlanningInputParser.Count(TargetPlantsText, "Растения")),
-        nameof(ManualSeedCountText) => PlanningInputParser.Error(PlanningInputParser.OptionalCount(ManualSeedCountText, "Семена")),
-        nameof(TransplantStartText) or nameof(TransplantEndText) when !DirectSow => PlanningInputParser.Error(PlanningInputParser.Window(TransplantStartText, TransplantEndText)),
-        nameof(DirectStartText) or nameof(DirectEndText) when DirectSow => PlanningInputParser.Error(PlanningInputParser.Window(DirectStartText, DirectEndText)),
-        nameof(ChosenSowingText) => PlanningInputParser.Error(PlanningInputParser.OptionalDate(ChosenSowingText, "Посев")),
-        nameof(ChosenTransplantText) when !DirectSow => PlanningInputParser.Error(PlanningInputParser.OptionalDate(ChosenTransplantText, "Высадка")),
-        nameof(Location) or nameof(Placement) => PlanningInputParser.Error(GrowingConditions.Create(Location, Placement)),
-        nameof(SearchLimitText) => int.TryParse(SearchLimitText, out var limit) && limit >= 0 ? "" : "Укажите неотрицательное число дней",
-        _ => ""
-    };
 
     private void Update(PlannedBatchDraftValues values, [CallerMemberName] string? property = null)
     {

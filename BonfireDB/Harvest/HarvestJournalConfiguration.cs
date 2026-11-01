@@ -1,7 +1,9 @@
 using BonfireDB.Entities;
 using BonfireDB.Entities.Planning;
 using Microsoft.EntityFrameworkCore;
+
 namespace BonfireDB.Harvest;
+
 internal static class HarvestJournalConfiguration
 {
     internal static void Configure(ModelBuilder model)

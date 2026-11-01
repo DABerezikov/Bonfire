@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden.SpotStates;
 using Bonfire.Domain.Garden.States;
@@ -6,28 +7,34 @@ namespace Bonfire.Domain.Garden;
 
 public abstract record SpotChange
 {
-    private SpotChange() { }
+    private SpotChange()
+    {
+    }
+
     public sealed record Transition(PlantingSpotState State, Option<string> Label) : SpotChange;
+
     public sealed record Clear : SpotChange;
 }
 
 public sealed class PlantingCell
 {
-    public PlantingSpotState State { get; }
-    public Option<int> SeedlingInfoId { get; }
-    public Option<DateTime> PlantedDate { get; }
-    public Option<DateTime> HarvestDate { get; }
-    public Option<string> Note { get; }
-
-    public PlantingCell(PlantingSpotState state, Option<int> seedlingInfoId, Option<DateTime> plantedDate, Option<DateTime> harvestDate, Option<string> note)
+    public PlantingCell(PlantingSpotState state, Option<int> seedlingInfoId, Option<DateTime> plantedDate,
+        Option<DateTime> harvestDate, Option<string> note)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(seedlingInfoId);
         ArgumentNullException.ThrowIfNull(plantedDate);
         ArgumentNullException.ThrowIfNull(harvestDate);
         ArgumentNullException.ThrowIfNull(note);
-        (State, SeedlingInfoId, PlantedDate, HarvestDate, Note) = (state, seedlingInfoId, plantedDate, harvestDate, note);
+        (State, SeedlingInfoId, PlantedDate, HarvestDate, Note) =
+            (state, seedlingInfoId, plantedDate, harvestDate, note);
     }
+
+    public PlantingSpotState State { get; }
+    public Option<int> SeedlingInfoId { get; }
+    public Option<DateTime> PlantedDate { get; }
+    public Option<DateTime> HarvestDate { get; }
+    public Option<string> Note { get; }
 
     public Result<PlantingCell> Apply(SpotChange change)
     {
@@ -37,7 +44,7 @@ public sealed class PlantingCell
             SpotChange.Transition transition => WithState(transition.State, transition.Label),
             SpotChange.Clear => Result.Success(new PlantingCell(new EmptySpotState(), Option.None<int>(),
                 Option.None<DateTime>(), Option.None<DateTime>(), Note)),
-            _ => throw new System.Diagnostics.UnreachableException()
+            _ => throw new UnreachableException()
         };
     }
 
@@ -51,17 +58,22 @@ public sealed class PlantingCell
 
 public abstract record StateChangeTarget
 {
-    private StateChangeTarget() { }
+    private StateChangeTarget()
+    {
+    }
+
     public sealed record Element(GardenElementState State) : StateChangeTarget;
+
     public sealed record Greenhouse(GardenElementState State) : StateChangeTarget;
+
     public sealed record Spot(SpotChange Change) : StateChangeTarget;
 }
 
 public sealed class GardenStateChange
 {
+    private GardenStateChange(int entityId, StateChangeTarget target) => (EntityId, Target) = (entityId, target);
     public int EntityId { get; }
     public StateChangeTarget Target { get; }
-    private GardenStateChange(int entityId, StateChangeTarget target) => (EntityId, Target) = (entityId, target);
 
     public static Result<GardenStateChange> Create(int entityId, StateChangeTarget target)
     {
@@ -77,8 +89,10 @@ public sealed class GardenStateChange
                     ArgumentNullException.ThrowIfNull(transition.State);
                     ArgumentNullException.ThrowIfNull(transition.Label);
                 }
+
                 break;
         }
+
         return entityId <= 0
             ? Result.Failure<GardenStateChange>("Некорректный идентификатор объекта планировщика")
             : Result.Success(new GardenStateChange(entityId, target));

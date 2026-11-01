@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using Bonfire.Domain.Functional;
@@ -22,17 +23,28 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
     public Result<ImmutableArray<byte>> BuildSeeds(IReadOnlyList<SeedReportItem> items, int currentYear)
     {
         if (items.Count == 0) return Result.Failure<ImmutableArray<byte>>("Нет данных для формирования отчёта");
-        return items.Traverse(item => DateTime.TryParse(item.ExpirationDate, CultureInfo.CurrentCulture, DateTimeStyles.None, out var date)
-            ? Result.Success(date) : Result.Failure<DateTime>($"Некорректный срок годности сорта «{item.Sort}»: {item.ExpirationDate}"))
+        return items.Traverse(item =>
+                DateTime.TryParse(item.ExpirationDate, CultureInfo.CurrentCulture, DateTimeStyles.None, out var date)
+                    ? Result.Success(date)
+                    : Result.Failure<DateTime>(
+                        $"Некорректный срок годности сорта «{item.Sort}»: {item.ExpirationDate}"))
             .Bind(dates => Build("Семена", sheet =>
             {
-                SetSeedsHeader(sheet); FillSeedsSheet(items, sheet, dates, currentYear); AutoFitSeedsColumns(sheet);
+                SetSeedsHeader(sheet);
+                FillSeedsSheet(items, sheet, dates, currentYear);
+                AutoFitSeedsColumns(sheet);
             }));
     }
 
     public Result<ImmutableArray<byte>> BuildSeedlings(IReadOnlyList<SeedlingReportItem> items)
-        => items.Count == 0 ? Result.Failure<ImmutableArray<byte>>("Нет данных для формирования отчёта")
-            : Build("Рассада", sheet => { SetSeedlingsHeader(sheet); FillSeedlingsSheet(items, sheet); AutoFitSeedlingsColumns(sheet); });
+        => items.Count == 0
+            ? Result.Failure<ImmutableArray<byte>>("Нет данных для формирования отчёта")
+            : Build("Рассада", sheet =>
+            {
+                SetSeedlingsHeader(sheet);
+                FillSeedlingsSheet(items, sheet);
+                AutoFitSeedlingsColumns(sheet);
+            });
 
     private static Result<ImmutableArray<byte>> Build(string name, Action<ExcelWorksheet> fill)
     {
@@ -41,17 +53,19 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
             ExcelPackage.License.SetNonCommercialPersonal("Bonfire");
             using var package = new ExcelPackage();
             var sheet = package.Workbook.Worksheets.Add(name);
-            ApplyCommonSettings(sheet); fill(sheet);
+            ApplyCommonSettings(sheet);
+            fill(sheet);
             return Result.Success(package.GetAsByteArray().ToImmutableArray());
         }
         catch (Exception error)
         {
-            System.Diagnostics.Debug.WriteLine(error);
+            Debug.WriteLine(error);
             return Result.Failure<ImmutableArray<byte>>($"Не удалось сформировать отчёт: {error.Message}");
         }
     }
 
-    private static void FillSeedsSheet(IReadOnlyList<SeedReportItem> list, ExcelWorksheet sheet, IReadOnlyList<DateTime> dates, int currentYear)
+    private static void FillSeedsSheet(IReadOnlyList<SeedReportItem> list, ExcelWorksheet sheet,
+        IReadOnlyList<DateTime> dates, int currentYear)
     {
         var tempCulture = list[0].Culture;
         var cell = sheet.Cells[2, 1, 2, 7];
@@ -75,7 +89,9 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
 
             var yearDiff = currentYear - dates[i].Year;
             if (yearDiff > 0)
+            {
                 sheet.Cells[row, 3].Style.Font.Bold = true;
+            }
             else if (yearDiff == 0)
             {
                 sheet.Cells[row, 3].Style.Font.Italic = true;
@@ -124,9 +140,9 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
     private static void ApplyBorders(ExcelWorksheet sheet, int lastRow)
     {
         var range = sheet.Cells[1, 1, lastRow, 7];
-        range.Style.Border.Top.Style    = ExcelBorderStyle.Thin;
-        range.Style.Border.Left.Style   = ExcelBorderStyle.Thin;
-        range.Style.Border.Right.Style  = ExcelBorderStyle.Thin;
+        range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+        range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+        range.Style.Border.Right.Style = ExcelBorderStyle.Thin;
         range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
     }
 
@@ -167,19 +183,19 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
         sheet.PrinterSettings.BottomMargin = 0.1;
         sheet.PrinterSettings.FooterMargin = 0;
         sheet.PrinterSettings.HeaderMargin = 0;
-        sheet.PrinterSettings.LeftMargin   = 0.2;
-        sheet.PrinterSettings.RightMargin  = 0.1;
-        sheet.PrinterSettings.TopMargin    = 0.1;
-        sheet.PrinterSettings.RepeatRows   = sheet.Cells["1:1"];
+        sheet.PrinterSettings.LeftMargin = 0.2;
+        sheet.PrinterSettings.RightMargin = 0.1;
+        sheet.PrinterSettings.TopMargin = 0.1;
+        sheet.PrinterSettings.RepeatRows = sheet.Cells["1:1"];
 
         sheet.Cells.Style.Font.Name = "Calibri";
         sheet.Cells.Style.Font.Size = 12;
 
         sheet.Columns[1, 2].Style.WrapText = true;
-        sheet.Cells["A:B"].Style.HorizontalAlignment  = ExcelHorizontalAlignment.Left;
-        sheet.Cells["C:G"].Style.HorizontalAlignment  = ExcelHorizontalAlignment.Center;
+        sheet.Cells["A:B"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+        sheet.Cells["C:G"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
         sheet.Cells["A1:G1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-        sheet.Cells["A:G"].Style.VerticalAlignment    = ExcelVerticalAlignment.Center;
+        sheet.Cells["A:G"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
     }
 
     private static void AutoFitSeedsColumns(ExcelWorksheet sheet)
@@ -203,5 +219,4 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
         sheet.Columns[6].AutoFit(9);
         sheet.Columns[7].AutoFit(9);
     }
-
 }

@@ -12,6 +12,9 @@ public static class CanvasIntersection
 
 public sealed record CanvasRectangle
 {
+    private CanvasRectangle(double x, double y, double width, double height)
+        => (X, Y, Width, Height) = (x, y, width, height);
+
     public double X { get; }
     public double Y { get; }
     public double Width { get; }
@@ -19,14 +22,11 @@ public sealed record CanvasRectangle
     public double Right => X + Width;
     public double Bottom => Y + Height;
 
-    private CanvasRectangle(double x, double y, double width, double height)
-        => (X, Y, Width, Height) = (x, y, width, height);
-
     public static Result<CanvasRectangle> Create(double x, double y, double width, double height)
         => !double.IsFinite(x) || !double.IsFinite(y) || !double.IsFinite(width) || !double.IsFinite(height)
-            || width < 0 || height < 0 || !double.IsFinite(x + width) || !double.IsFinite(y + height)
-                ? Result.Failure<CanvasRectangle>("Координаты и размеры должны быть конечными, размеры — неотрицательными")
-                : Result.Success(new CanvasRectangle(x, y, width, height));
+           || width < 0 || height < 0 || !double.IsFinite(x + width) || !double.IsFinite(y + height)
+            ? Result.Failure<CanvasRectangle>("Координаты и размеры должны быть конечными, размеры — неотрицательными")
+            : Result.Success(new CanvasRectangle(x, y, width, height));
 
     public bool Overlaps(CanvasRectangle other)
     {
@@ -46,11 +46,13 @@ public sealed record CanvasRectangle
             Math.Round(Math.Max(0, Math.Min(Y + vertical / scale, maxY)) / step) * step, Width, Height);
     }
 
-    public Result<CanvasRectangle> WithResized(double horizontal, double vertical, double scale, CanvasBounds bounds, double minimum)
+    public Result<CanvasRectangle> WithResized(double horizontal, double vertical, double scale, CanvasBounds bounds,
+        double minimum)
     {
         ArgumentNullException.ThrowIfNull(bounds);
         if (!ValidDelta(horizontal, vertical, scale) || !double.IsFinite(minimum) || minimum <= 0)
-            return Result.Failure<CanvasRectangle>("Дельта должна быть конечной, масштаб и минимальный размер — конечными и положительными");
+            return Result.Failure<CanvasRectangle>(
+                "Дельта должна быть конечной, масштаб и минимальный размер — конечными и положительными");
         var maxWidth = bounds.Width.Match(width => width - X, () => double.MaxValue);
         var maxHeight = bounds.Height.Match(height => height - Y, () => double.MaxValue);
         return Create(X, Y, Math.Round(Math.Max(minimum, Math.Min(Width + horizontal / scale, maxWidth))),
@@ -70,9 +72,11 @@ public sealed record CanvasRectangle
     {
         var squaredScale = pixelsPerMeter * pixelsPerMeter;
         var area = Math.Round(Width * Height / squaredScale, 1);
-        return double.IsFinite(pixelsPerMeter) && pixelsPerMeter > 0 && double.IsFinite(squaredScale) && squaredScale > 0 && double.IsFinite(area)
+        return double.IsFinite(pixelsPerMeter) && pixelsPerMeter > 0 && double.IsFinite(squaredScale) &&
+               squaredScale > 0 && double.IsFinite(area)
             ? Result.Success(area)
-            : Result.Failure<double>("Масштаб площади и вычисленная площадь должны быть конечными, масштаб — положительным");
+            : Result.Failure<double>(
+                "Масштаб площади и вычисленная площадь должны быть конечными, масштаб — положительным");
     }
 
     private static bool ValidDelta(double horizontal, double vertical, double scale)
@@ -81,9 +85,9 @@ public sealed record CanvasRectangle
 
 public sealed record CanvasBounds
 {
+    private CanvasBounds(Option<double> width, Option<double> height) => (Width, Height) = (width, height);
     public Option<double> Width { get; }
     public Option<double> Height { get; }
-    private CanvasBounds(Option<double> width, Option<double> height) => (Width, Height) = (width, height);
 
     public static Result<CanvasBounds> Create(Option<double> width, Option<double> height)
     {
@@ -99,23 +103,27 @@ public sealed record CanvasBounds
 
 public sealed class PlotLayout
 {
-    public ImmutableArray<CanvasRectangle> Obstacles { get; }
     public PlotLayout(IEnumerable<CanvasRectangle> obstacles)
     {
         ArgumentNullException.ThrowIfNull(obstacles);
         Obstacles = obstacles.ToImmutableArray();
     }
 
+    public ImmutableArray<CanvasRectangle> Obstacles { get; }
+
     public bool CollidesWith(CanvasRectangle rectangle) => Obstacles.Any(rectangle.Overlaps);
 
     public static Result<PlotLayout> Create(IEnumerable<Result<CanvasRectangle>> obstacles)
         => obstacles.Aggregate(Result.Success(ImmutableList<CanvasRectangle>.Empty),
-                (snapshot, obstacle) => snapshot.Bind(items => obstacle.Bind(rectangle => Result.Success(items.Add(rectangle)))))
+                (snapshot, obstacle) =>
+                    snapshot.Bind(items => obstacle.Bind(rectangle => Result.Success(items.Add(rectangle)))))
             .Bind(items => Result.Success(new PlotLayout(items)));
 
-    public Result<Option<CanvasRectangle>> FindFreeSpot(double width, double height, double canvasWidth, double canvasHeight)
+    public Result<Option<CanvasRectangle>> FindFreeSpot(double width, double height, double canvasWidth,
+        double canvasHeight)
         => CanvasRectangle.Create(0, 0, width, height).Bind(shape =>
-            CanvasRectangle.Create(0, 0, canvasWidth, canvasHeight).Bind(canvas => Result.Success(FindSpace(shape, canvas))));
+            CanvasRectangle.Create(0, 0, canvasWidth, canvasHeight)
+                .Bind(canvas => Result.Success(FindSpace(shape, canvas))));
 
     private Option<CanvasRectangle> FindSpace(CanvasRectangle shape, CanvasRectangle canvas)
     {
@@ -136,6 +144,7 @@ public sealed class PlotLayout
             var candidate = CanvasRectangle.Create(x, y, shape.Width, shape.Height).ValueOrThrow();
             if (!CollidesWith(candidate)) return Option.Some(candidate);
         }
+
         return Option.None<CanvasRectangle>();
     }
 }

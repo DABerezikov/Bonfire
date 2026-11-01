@@ -14,7 +14,8 @@ internal static class PlanningLibraryConfiguration
         region.HasIndex(x => x.StableKey).IsUnique();
         region.OwnsOne(x => x.LastSpringFrost);
         region.OwnsOne(x => x.FirstAutumnFrost);
-        region.HasData(new PlanningRegionRow { Id = 1, StableKey = "tomsk", Name = "Томск", TimeZoneId = "Asia/Tomsk" });
+        region.HasData(new PlanningRegionRow
+            { Id = 1, StableKey = "tomsk", Name = "Томск", TimeZoneId = "Asia/Tomsk" });
 
         var culture = model.Entity<CultureGrowingProfileRow>();
         culture.ToTable("PlanningCultureProfiles");

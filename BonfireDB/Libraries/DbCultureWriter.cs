@@ -9,7 +9,8 @@ namespace BonfireDB.Libraries;
 
 public sealed class DbCultureWriter(IUnitOfWorkFactory units) : ICultureWriter
 {
-    public async Task<Result<CultureDetailsFromViewModel>> SaveAsync(CultureDefinition culture, CancellationToken cancellationToken)
+    public async Task<Result<CultureDetailsFromViewModel>> SaveAsync(CultureDefinition culture,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(culture);
         await using var unit = units.Create();
@@ -31,7 +32,8 @@ public sealed class DbCultureWriter(IUnitOfWorkFactory units) : ICultureWriter
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<CultureDetailsFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<CultureDetailsFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

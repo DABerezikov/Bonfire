@@ -2,7 +2,7 @@
 
 namespace BonfireDB.Entities;
 
-public class Seedling: Entity
+public class Seedling : Entity
 {
     public Plant Plant { get; set; } = null!;
     public double Weight { get; set; }
@@ -10,14 +10,14 @@ public class Seedling: Entity
     public int SeedId { get; set; }
 
     /// <summary>
-    /// Сколько взошедших ростков уже высажено в грядки.
-    /// Доступно к высадке = (взошедшие живые) − PlantedOut. Quantity (посеяно) не меняется.
+    ///     Сколько взошедших ростков уже высажено в грядки.
+    ///     Доступно к высадке = (взошедшие живые) − PlantedOut. Quantity (посеяно) не меняется.
     /// </summary>
     public int PlantedOut { get; set; }
 
     /// <summary>
-    /// True — это «высаженная партия» (рассада уже в грядке), создаётся при посадке в ячейку.
-    /// Такая рассада не доступна к повторной посадке (только к пересадке — пока не реализовано).
+    ///     True — это «высаженная партия» (рассада уже в грядке), создаётся при посадке в ячейку.
+    ///     Такая рассада не доступна к повторной посадке (только к пересадке — пока не реализовано).
     /// </summary>
     public bool IsPlantedInBed { get; set; }
 

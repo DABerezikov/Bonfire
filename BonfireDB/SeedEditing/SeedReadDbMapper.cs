@@ -12,11 +12,14 @@ public static class SeedReadDbMapper
         => plant.PlantCulture is null || plant.PlantSort is null
             ? Result.Failure<PlantReadFromViewModel>($"Растение {plant.Id}: культура или сорт отсутствуют")
             : LibraryReadDbMapper.Read(plant.PlantSort).Bind(sort =>
-                Result.Success(new PlantReadFromViewModel(plant.Id, LibraryReadDbMapper.Read(plant.PlantCulture), sort)));
+                Result.Success(new PlantReadFromViewModel(plant.Id, LibraryReadDbMapper.Read(plant.PlantCulture),
+                    sort)));
 
     public static Result<SeedReadFromViewModel> Read(Seed seed)
-        => seed.Plant is null || seed.SeedsInfo is null ? Result.Failure<SeedReadFromViewModel>($"Семена {seed.Id}: растение или пакет отсутствуют")
+        => seed.Plant is null || seed.SeedsInfo is null
+            ? Result.Failure<SeedReadFromViewModel>($"Семена {seed.Id}: растение или пакет отсутствуют")
             : ReadPlant(seed.Plant).Bind(plant => SeedPackage.Create(SeedPackageDbMapper.Read(seed.SeedsInfo))
-                .Bind(package => Result.Success(new SeedReadFromViewModel(seed.Id, seed.SeedsInfoId, plant, package.Values))))
+                    .Bind(package =>
+                        Result.Success(new SeedReadFromViewModel(seed.Id, seed.SeedsInfoId, plant, package.Values))))
                 .Match(Result.Success, error => Result.Failure<SeedReadFromViewModel>($"Семена {seed.Id}: {error}"));
 }

@@ -9,8 +9,12 @@ using Bonfire.Services.Reports;
 
 namespace Bonfire.Services;
 
-internal sealed class ReportService(IUserDialog userDialog, IReportWorkbookBuilder workbooks,
-    IReportPathPolicy paths, IReportFileWriter files, TimeProvider clock) : IReportService
+internal sealed class ReportService(
+    IUserDialog userDialog,
+    IReportWorkbookBuilder workbooks,
+    IReportPathPolicy paths,
+    IReportFileWriter files,
+    TimeProvider clock) : IReportService
 {
     public void CreateSeedsReport(IEnumerable<SeedReportItem> items, string fileName = "Семена")
     {
@@ -24,6 +28,11 @@ internal sealed class ReportService(IUserDialog userDialog, IReportWorkbookBuild
     private void Export(Result<ImmutableArray<byte>> content, string fileName, DateTime date)
         => content.Bind(bytes => paths.Resolve(fileName, date).Bind(path => files.Save(path, bytes))).Match(path =>
         {
-            userDialog.Information($"Отчет {Path.GetFileName(path)} сформирован", "Информация"); return true;
-        }, error => { userDialog.Warning(error, "Предупреждение"); return false; });
+            userDialog.Information($"Отчет {Path.GetFileName(path)} сформирован", "Информация");
+            return true;
+        }, error =>
+        {
+            userDialog.Warning(error, "Предупреждение");
+            return false;
+        });
 }

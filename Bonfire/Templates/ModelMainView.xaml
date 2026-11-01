@@ -6,36 +6,36 @@
                     xmlns:planning="clr-namespace:Bonfire.Views.Planning">
 
     <DataTemplate DataType="{x:Type vm:SeedsViewModel}">
-        <view:SeedsWindow DataContext="{Binding}"/>
+        <view:SeedsWindow DataContext="{Binding}" />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:LibraryEditorViewModel}">
-        <view:LibraryEditorWindow DataContext="{Binding}"/>
+        <view:LibraryEditorWindow DataContext="{Binding}" />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:SeedlingsViewModel}">
-        <view:SeedlingsWindow DataContext="{Binding}"/>
+        <view:SeedlingsWindow DataContext="{Binding}" />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:GardenPlanViewModel}">
-        <gp:GardenPlanView DataContext="{Binding}"/>
+        <gp:GardenPlanView DataContext="{Binding}" />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:PlantingPlanningViewModel}">
-        <planning:PlantingPlanningView DataContext="{Binding}"/>
+        <planning:PlantingPlanningView DataContext="{Binding}" />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:HarvestJournalViewModel}">
-        <planning:HarvestJournalView DataContext="{Binding}"/>
+        <planning:HarvestJournalView DataContext="{Binding}" />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:PerennialPlanningViewModel}">
-        <planning:PerennialPlanningView DataContext="{Binding}"/>
+        <planning:PerennialPlanningView DataContext="{Binding}" />
     </DataTemplate>
 
     <!-- Общий стиль метки-подсказки (используется в GardenPlanView) -->
     <Style x:Key="LabelStyle" TargetType="TextBlock">
-        <Setter Property="FontSize"    Value="11"/>
-        <Setter Property="Foreground"  Value="#757575"/>
-        <Setter Property="Margin"      Value="0,0,0,2"/>
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="#757575" />
+        <Setter Property="Margin" Value="0,0,0,2" />
     </Style>
 
 </ResourceDictionary>

@@ -3,138 +3,248 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Bonfire.Views.Planning"
              xmlns:p="clr-namespace:Bonfire.Models.Planning">
-    <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="PlanningStyles.xaml"/>
-    </ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="PlanningStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <DockPanel Margin="12">
         <Border DockPanel.Dock="Bottom" Padding="8" Margin="0,8,0,0" Background="#F1F5EE">
-            <TextBlock Text="{Binding Status}" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
         </Border>
         <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition Width="340" MinWidth="260"/><ColumnDefinition Width="8"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340" MinWidth="260" /><ColumnDefinition Width="8" /><ColumnDefinition />
+            </Grid.ColumnDefinitions>
             <DockPanel Grid.Column="0">
                 <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Text="Сезонные планы посадок" FontSize="19" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <TextBlock Text="Сезонные планы посадок" FontSize="19" FontWeight="SemiBold" Margin="0,0,0,8" />
                     <ComboBox ItemsSource="{Binding Plans}" SelectedItem="{Binding SelectedPlan}">
-                        <ComboBox.ItemTemplate><DataTemplate><TextBlock TextWrapping="Wrap"><TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0} · {1} · {2}"><Binding Path="SeasonYear"/><Binding Path="Name"/><Binding Path="RegionName"/></MultiBinding>
-                        </TextBlock.Text></TextBlock></DataTemplate></ComboBox.ItemTemplate>
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock TextWrapping="Wrap">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="{}{0} · {1} · {2}">
+                                            <Binding Path="SeasonYear" /><Binding Path="Name" />
+                                            <Binding Path="RegionName" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
                     </ComboBox>
-                    <WrapPanel><Button Content="Обновить" Command="{Binding LoadCommand}"/><Button Content="Удалить план" Command="{Binding DeletePlanCommand}"/></WrapPanel>
-                    <WrapPanel Margin="0,5,0,8"><Button Content="Добавить партию" Command="{Binding NewBatchCommand}"/><Button Content="Удалить партию" Command="{Binding DeleteBatchCommand}"/></WrapPanel>
+                    <WrapPanel>
+                        <Button Content="Обновить" Command="{Binding LoadCommand}" />
+                        <Button Content="Удалить план" Command="{Binding DeletePlanCommand}" />
+                    </WrapPanel>
+                    <WrapPanel Margin="0,5,0,8">
+                        <Button Content="Добавить партию" Command="{Binding NewBatchCommand}" />
+                        <Button Content="Удалить партию" Command="{Binding DeleteBatchCommand}" />
+                    </WrapPanel>
                 </StackPanel>
                 <Expander DockPanel.Dock="Bottom" Header="Создать сезонный план" Margin="0,8,6,0">
                     <StackPanel Margin="0,8,0,0">
-                        <TextBlock Text="Название"/><TextBox Text="{Binding NewPlanName, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="Год сезона"/><TextBox Text="{Binding NewPlanYear, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="Регион"/>
-                        <ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding NewPlanRegion}" DisplayMemberPath="Definition.Name.Value"/>
-                        <Button Content="Создать план" Command="{Binding CreatePlanCommand}" HorizontalAlignment="Left"/>
+                        <TextBlock Text="Название" />
+                        <TextBox Text="{Binding NewPlanName, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Год сезона" />
+                        <TextBox Text="{Binding NewPlanYear, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Регион" />
+                        <ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding NewPlanRegion}"
+                                  DisplayMemberPath="Definition.Name.Value" />
+                        <Button Content="Создать план" Command="{Binding CreatePlanCommand}" HorizontalAlignment="Left" />
                     </StackPanel>
                 </Expander>
-                <ListBox ItemsSource="{Binding Batches}" SelectedItem="{Binding SelectedBatch}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                <ListBox ItemsSource="{Binding Batches}" SelectedItem="{Binding SelectedBatch}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          HorizontalContentAlignment="Stretch" Margin="0,0,6,0">
-                    <ListBox.ItemTemplate><DataTemplate><Border Padding="5" BorderBrush="#DDE5D7" BorderThickness="0,0,0,1">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                            <TextBlock TextWrapping="Wrap"><TextBlock.Text><MultiBinding StringFormat="{}{0} · {1}"><Binding Path="Method"/><Binding Path="Place"/></MultiBinding></TextBlock.Text></TextBlock>
-                            <TextBlock><TextBlock.Text><MultiBinding StringFormat="Растения: {0}; семена: {1}"><Binding Path="Plants"/><Binding Path="Seeds"/></MultiBinding></TextBlock.Text></TextBlock>
-                            <TextBlock Text="{Binding Sowing, StringFormat=Посев: {0}}" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border></DataTemplate></ListBox.ItemTemplate>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="5" BorderBrush="#DDE5D7" BorderThickness="0,0,0,1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock TextWrapping="Wrap">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} · {1}">
+                                                <Binding Path="Method" /><Binding Path="Place" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="Растения: {0}; семена: {1}">
+                                                <Binding Path="Plants" /><Binding Path="Seeds" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Sowing, StringFormat=Посев: {0}}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
                 </ListBox>
             </DockPanel>
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="#E1E5DD"/>
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="#E1E5DD" />
             <DockPanel Grid.Column="2" Margin="10,0,0,0">
                 <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                    <Button Content="Рассчитать / пересчитать" Command="{Binding CalculateCommand}"/>
-                    <Button Content="Сохранить партию" Command="{Binding SaveCommand}"/>
-                    <Button Content="Отменить изменения" Command="{Binding CancelCommand}"/>
+                    <Button Content="Рассчитать / пересчитать" Command="{Binding CalculateCommand}" />
+                    <Button Content="Сохранить партию" Command="{Binding SaveCommand}" />
+                    <Button Content="Отменить изменения" Command="{Binding CancelCommand}" />
                 </WrapPanel>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="0,0,12,10">
-                        <TextBlock Text="Плановая партия" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Text="Культура / сорт"/>
-                        <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Draft.Choice, ValidatesOnDataErrors=True}" ItemTemplate="{StaticResource PlanningPairTemplate}"/>
-                        <CheckBox Content="Прямой посев на место" IsChecked="{Binding Draft.DirectSow}" Margin="0,5,0,8"/>
+                        <TextBlock Text="Плановая партия" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="Культура / сорт" />
+                        <ComboBox ItemsSource="{Binding Choices}"
+                                  SelectedItem="{Binding Draft.Choice, ValidatesOnDataErrors=True}"
+                                  ItemTemplate="{StaticResource PlanningPairTemplate}" />
+                        <CheckBox Content="Прямой посев на место" IsChecked="{Binding Draft.DirectSow}"
+                                  Margin="0,5,0,8" />
                         <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                            <TextBlock Text="Место выращивания"/><TextBlock Grid.Column="1" Text="Размещение"/>
-                            <ComboBox Grid.Row="1" ItemsSource="{x:Static p:PlanningLookups.Locations}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Location, ValidatesOnDataErrors=True}"/>
-                            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{x:Static p:PlanningLookups.Placements}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Placement, ValidatesOnDataErrors=True}"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Место выращивания" /><TextBlock Grid.Column="1" Text="Размещение" />
+                            <ComboBox Grid.Row="1" ItemsSource="{x:Static p:PlanningLookups.Locations}"
+                                      SelectedValuePath="Value" DisplayMemberPath="Label"
+                                      SelectedValue="{Binding Draft.Location, ValidatesOnDataErrors=True}" />
+                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                      ItemsSource="{x:Static p:PlanningLookups.Placements}" SelectedValuePath="Value"
+                                      DisplayMemberPath="Label"
+                                      SelectedValue="{Binding Draft.Placement, ValidatesOnDataErrors=True}" />
                         </Grid>
-                        <TextBlock Text="{Binding Draft.WindowLabel}" FontWeight="SemiBold" Margin="0,8,0,2"/>
-                        <TextBlock Text="Включительный интервал, даты дд.мм.гггг" Foreground="#666666"/>
-                        <Grid Visibility="{Binding Draft.IsSeedling, Converter={StaticResource PlanningBoolVisibility}}">
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBox x:Name="PlanningStartInput" Text="{Binding Draft.TransplantStartText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            <TextBox x:Name="PlanningEndInput" Grid.Column="1" Text="{Binding Draft.TransplantEndText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                        <TextBlock Text="{Binding Draft.WindowLabel}" FontWeight="SemiBold" Margin="0,8,0,2" />
+                        <TextBlock Text="Включительный интервал, даты дд.мм.гггг" Foreground="#666666" />
+                        <Grid
+                            Visibility="{Binding Draft.IsSeedling, Converter={StaticResource PlanningBoolVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="PlanningStartInput"
+                                     Text="{Binding Draft.TransplantStartText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBox x:Name="PlanningEndInput" Grid.Column="1"
+                                     Text="{Binding Draft.TransplantEndText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                         </Grid>
                         <Grid Visibility="{Binding Draft.DirectSow, Converter={StaticResource PlanningBoolVisibility}}">
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <TextBox Text="{Binding Draft.DirectStartText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            <TextBox Grid.Column="1" Text="{Binding Draft.DirectEndText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                Text="{Binding Draft.DirectStartText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding Draft.DirectEndText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                         </Grid>
                         <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                            <TextBlock Text="Желаемое количество растений"/><TextBlock Grid.Column="1" Text="Семена вручную (пусто — расчёт)" TextWrapping="Wrap"/>
-                            <TextBox x:Name="PlanningTargetInput" Grid.Row="1" IsEnabled="{Binding Draft.Harvest.IsManualPlants}" Text="{Binding Draft.TargetPlantsText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Draft.ManualSeedCountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Желаемое количество растений" />
+                            <TextBlock Grid.Column="1" Text="Семена вручную (пусто — расчёт)" TextWrapping="Wrap" />
+                            <TextBox x:Name="PlanningTargetInput" Grid.Row="1"
+                                     IsEnabled="{Binding Draft.Harvest.IsManualPlants}"
+                                     Text="{Binding Draft.TargetPlantsText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBox Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding Draft.ManualSeedCountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                         </Grid>
                         <Expander Header="Грядка, вместимость и урожай, кг" Margin="0,8,0,6">
                             <StackPanel>
-                                <TextBlock Text="Режим количества растений"/>
-                                <ComboBox ItemsSource="{x:Static p:PlanningLookups.HarvestModes}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Harvest.Mode}"/>
-                                <ComboBox ItemsSource="{Binding Beds}" SelectedItem="{Binding SelectedBed}" DisplayMemberPath="Name"/>
-                                <Button Content="Взять размеры выбранной грядки" Command="{Binding UseBedCommand}" HorizontalAlignment="Left"/>
-                                <local:HarvestPlanningEditor DataContext="{Binding Draft.Harvest}"/>
-                                <Button Content="Взять шаги из схемы сорта (см → м)" Command="{Binding UseSortSpacingCommand}" HorizontalAlignment="Left"/>
-                                <Button Content="Отступы по половине шага" Command="{Binding HalfMarginsCommand}" HorizontalAlignment="Left"/>
-                                <TextBlock Text="Снимок прямоугольника партии. Совместимость размещения нескольких партий на общей грядке не проверяется; сетка грядки не меняется." TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding SeasonHarvestText}" TextWrapping="Wrap"/>
+                                <TextBlock Text="Режим количества растений" />
+                                <ComboBox ItemsSource="{x:Static p:PlanningLookups.HarvestModes}"
+                                          SelectedValuePath="Value" DisplayMemberPath="Label"
+                                          SelectedValue="{Binding Draft.Harvest.Mode}" />
+                                <ComboBox ItemsSource="{Binding Beds}" SelectedItem="{Binding SelectedBed}"
+                                          DisplayMemberPath="Name" />
+                                <Button Content="Взять размеры выбранной грядки" Command="{Binding UseBedCommand}"
+                                        HorizontalAlignment="Left" />
+                                <local:HarvestPlanningEditor DataContext="{Binding Draft.Harvest}" />
+                                <Button Content="Взять шаги из схемы сорта (см → м)"
+                                        Command="{Binding UseSortSpacingCommand}" HorizontalAlignment="Left" />
+                                <Button Content="Отступы по половине шага" Command="{Binding HalfMarginsCommand}"
+                                        HorizontalAlignment="Left" />
+                                <TextBlock
+                                    Text="Снимок прямоугольника партии. Совместимость размещения нескольких партий на общей грядке не проверяется; сетка грядки не меняется."
+                                    TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding SeasonHarvestText}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Expander>
                         <Expander Header="Параметры партии: пустые поля наследуются из справочника" Margin="0,8,0,6">
                             <StackPanel Margin="0,8,0,0">
-                                <local:GrowingProfileEditor DataContext="{Binding Draft.Profile}"/>
-                                <TextBlock Text="Предел поиска лунного сдвига, дней в каждую сторону"/>
-                                <TextBox Text="{Binding Draft.SearchLimitText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MaxWidth="180" HorizontalAlignment="Left"/>
+                                <local:GrowingProfileEditor DataContext="{Binding Draft.Profile}" />
+                                <TextBlock Text="Предел поиска лунного сдвига, дней в каждую сторону" />
+                                <TextBox
+                                    Text="{Binding Draft.SearchLimitText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                    MaxWidth="180" HorizontalAlignment="Left" />
                             </StackPanel>
                         </Expander>
                         <GroupBox Header="Региональная справка" Margin="0,5,0,8" Padding="8">
                             <StackPanel>
-                                <TextBlock Text="{Binding ReferenceText}" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <ItemsControl ItemsSource="{Binding References}"><ItemsControl.ItemTemplate><DataTemplate>
-                                    <DockPanel Margin="0,4,0,4">
-                                        <Button DockPanel.Dock="Right" Content="Использовать интервал" Command="{Binding DataContext.UseReferenceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                        <StackPanel><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/><TextBlock Text="{Binding Source}" TextWrapping="Wrap" Foreground="#666666"/></StackPanel>
-                                    </DockPanel>
-                                </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                                <TextBlock Text="{Binding ReferenceText}" TextWrapping="Wrap" Margin="0,0,0,5" />
+                                <ItemsControl ItemsSource="{Binding References}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,4,0,4">
+                                                <Button DockPanel.Dock="Right" Content="Использовать интервал"
+                                                        Command="{Binding DataContext.UseReferenceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Source}" TextWrapping="Wrap"
+                                                               Foreground="#666666" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Header="Ручной выбор дат" Padding="8" Margin="0,0,0,8">
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                <TextBlock Text="Выбранный день посева"/>
-                                <TextBlock Grid.Column="1" Text="Выбранный день высадки" Visibility="{Binding Draft.IsSeedling, Converter={StaticResource PlanningBoolVisibility}}"/>
-                                <TextBox x:Name="PlanningSowingInput" Grid.Row="1" Text="{Binding Draft.ChosenSowingText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Draft.ChosenTransplantText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Visibility="{Binding Draft.IsSeedling, Converter={StaticResource PlanningBoolVisibility}}"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition /><ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Выбранный день посева" />
+                                <TextBlock Grid.Column="1" Text="Выбранный день высадки"
+                                           Visibility="{Binding Draft.IsSeedling, Converter={StaticResource PlanningBoolVisibility}}" />
+                                <TextBox x:Name="PlanningSowingInput" Grid.Row="1"
+                                         Text="{Binding Draft.ChosenSowingText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                <TextBox Grid.Row="1" Grid.Column="1"
+                                         Text="{Binding Draft.ChosenTransplantText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                         Visibility="{Binding Draft.IsSeedling, Converter={StaticResource PlanningBoolVisibility}}" />
                             </Grid>
                         </GroupBox>
-                        <CheckBox Content="Сохранить по прежней справке, если источник изменился после расчёта" IsChecked="{Binding AcceptHistoricalSnapshot}" Margin="0,3,0,10"/>
-                        <TextBlock Text="Сроки и прогноз" FontSize="16" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="PlanningPreviewText" Text="{Binding PreviewText}" TextWrapping="Wrap" Margin="0,6,0,10"/>
-                        <ItemsControl ItemsSource="{Binding Candidates}"><ItemsControl.ItemTemplate><DataTemplate>
-                            <Border BorderBrush="#DDE5D7" BorderThickness="0,0,0,1" Padding="0,5">
-                                <DockPanel>
-                                    <Button DockPanel.Dock="Right" Content="Выбрать посев" Command="{Binding DataContext.ChooseSowingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                    <StackPanel><TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding Details}" TextWrapping="Wrap"/></StackPanel>
-                                </DockPanel>
-                            </Border>
-                        </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                        <CheckBox Content="Сохранить по прежней справке, если источник изменился после расчёта"
+                                  IsChecked="{Binding AcceptHistoricalSnapshot}" Margin="0,3,0,10" />
+                        <TextBlock Text="Сроки и прогноз" FontSize="16" FontWeight="SemiBold" />
+                        <TextBlock x:Name="PlanningPreviewText" Text="{Binding PreviewText}" TextWrapping="Wrap"
+                                   Margin="0,6,0,10" />
+                        <ItemsControl ItemsSource="{Binding Candidates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#DDE5D7" BorderThickness="0,0,0,1" Padding="0,5">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Content="Выбрать посев"
+                                                    Command="{Binding DataContext.ChooseSowingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Label}" FontWeight="SemiBold"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Details}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </ScrollViewer>
             </DockPanel>

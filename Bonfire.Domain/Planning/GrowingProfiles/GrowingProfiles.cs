@@ -22,23 +22,28 @@ public sealed record PlanningExtras
     public Option<decimal> YieldPerPlantKg { get; init; } = Option.None<decimal>();
     public Option<decimal> YieldPerM2Kg { get; init; } = Option.None<decimal>();
     public Option<LifeCycleProfile> LifeCycle { get; init; } = Option.None<LifeCycleProfile>();
-    public bool HasValidYield() => YieldPerPlantKg.Match(x => x >= 0, () => true) && YieldPerM2Kg.Match(x => x >= 0, () => true);
+
+    public bool HasValidYield() =>
+        YieldPerPlantKg.Match(x => x >= 0, () => true) && YieldPerM2Kg.Match(x => x >= 0, () => true);
 }
 
 public sealed record CultureGrowingProfile
 {
-    public CultureId CultureId { get; }
-    public GrowingProfileParameters Parameters { get; }
-    public PlanningExtras Extras { get; }
     private CultureGrowingProfile(CultureId cultureId, GrowingProfileParameters parameters, PlanningExtras extras)
         => (CultureId, Parameters, Extras) = (cultureId, parameters, extras);
 
-    public static Result<CultureGrowingProfile> Create(CultureId cultureId, GrowingProfileParameters parameters, PlanningExtras extras)
+    public CultureId CultureId { get; }
+    public GrowingProfileParameters Parameters { get; }
+    public PlanningExtras Extras { get; }
+
+    public static Result<CultureGrowingProfile> Create(CultureId cultureId, GrowingProfileParameters parameters,
+        PlanningExtras extras)
     {
         ArgumentNullException.ThrowIfNull(cultureId);
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(extras);
-        return extras.HasValidYield() && extras.LifeCycle.Match(x => x.Validate().IsSuccess, () => true) && extras.LunarGroup.Match(Enum.IsDefined, () => true)
+        return extras.HasValidYield() && extras.LifeCycle.Match(x => x.Validate().IsSuccess, () => true) &&
+               extras.LunarGroup.Match(Enum.IsDefined, () => true)
             ? Result.Success(new CultureGrowingProfile(cultureId, parameters, extras))
             : Result.Failure<CultureGrowingProfile>("Неверная лунная группа или норма урожайности");
     }
@@ -46,14 +51,16 @@ public sealed record CultureGrowingProfile
 
 public sealed record SortPlanningSettings
 {
+    private SortPlanningSettings(SortId sortId, PlanningExtras extras) => (SortId, Extras) = (sortId, extras);
     public SortId SortId { get; }
     public PlanningExtras Extras { get; }
-    private SortPlanningSettings(SortId sortId, PlanningExtras extras) => (SortId, Extras) = (sortId, extras);
+
     public static Result<SortPlanningSettings> Create(SortId sortId, PlanningExtras extras)
     {
         ArgumentNullException.ThrowIfNull(sortId);
         ArgumentNullException.ThrowIfNull(extras);
-        return extras.HasValidYield() && extras.LifeCycle.Match(x => x.Validate().IsSuccess, () => true) && extras.LunarGroup.Match(Enum.IsDefined, () => true)
+        return extras.HasValidYield() && extras.LifeCycle.Match(x => x.Validate().IsSuccess, () => true) &&
+               extras.LunarGroup.Match(Enum.IsDefined, () => true)
             ? Result.Success(new SortPlanningSettings(sortId, extras))
             : Result.Failure<SortPlanningSettings>("Неверная лунная группа или норма урожайности");
     }
@@ -61,14 +68,20 @@ public sealed record SortPlanningSettings
 
 public abstract record OperationPlan<T>
 {
-    private OperationPlan() { }
+    private OperationPlan()
+    {
+    }
+
     public sealed record Unknown : OperationPlan<T>;
+
     public sealed record Disabled(ParameterSource Source) : OperationPlan<T>;
+
     public sealed record Enabled(SourcedValue<T> Setting) : OperationPlan<T>;
 }
 
 public sealed record EffectivePlanningExtras(
-    OperationPlan<DayRange> PrickingOut, OperationPlan<DayRange> Hardening,
+    OperationPlan<DayRange> PrickingOut,
+    OperationPlan<DayRange> Hardening,
     Option<SourcedValue<GerminationPercentage>> GerminationPercentage,
     Option<SourcedValue<LossPercentage>> LossPercentage,
     Option<SourcedValue<LunarGroup>> LunarGroup,
@@ -76,5 +89,7 @@ public sealed record EffectivePlanningExtras(
 {
     public Option<SourcedValue<decimal>> YieldPerPlantKg { get; init; } = Option.None<SourcedValue<decimal>>();
     public Option<SourcedValue<decimal>> YieldPerM2Kg { get; init; } = Option.None<SourcedValue<decimal>>();
-    public Option<SourcedValue<LifeCycleProfile>> LifeCycle { get; init; } = Option.None<SourcedValue<LifeCycleProfile>>();
+
+    public Option<SourcedValue<LifeCycleProfile>> LifeCycle { get; init; } =
+        Option.None<SourcedValue<LifeCycleProfile>>();
 }

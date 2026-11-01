@@ -11,12 +11,14 @@ internal static class GreenhousePropertiesDbMapper
     public static Result<GreenhousePropertiesState> Read(Greenhouse house)
         => CanvasRectangle.Create(0, 0, house.CanvasWidth, house.CanvasHeight).Bind(canvas =>
             Result.Success(new GreenhousePropertiesState(house.Id,
-                new(house.Name, house.Note.ToOption(), house.Material.ToOption(), house.WidthMeters, house.HeightMeters), canvas)));
+                new GreenhouseEditorValues(house.Name, house.Note.ToOption(), house.Material.ToOption(),
+                    house.WidthMeters, house.HeightMeters), canvas)));
 
     public static Result<GreenhouseContents> Contents(Greenhouse house)
         => house.Elements.Aggregate(Result.Success(ImmutableList<InteriorElement>.Empty), (snapshot, element) =>
-            snapshot.Bind(elements => CanvasRectangle.Create(element.X, element.Y, element.DisplayWidth, element.DisplayHeight)
-                .Bind(rectangle => Result.Success(elements.Add(new(element.Name, rectangle))))))
+                snapshot.Bind(elements => CanvasRectangle
+                    .Create(element.X, element.Y, element.DisplayWidth, element.DisplayHeight)
+                    .Bind(rectangle => Result.Success(elements.Add(new InteriorElement(element.Name, rectangle))))))
             .Bind(elements => Result.Success(new GreenhouseContents(elements)));
 
     public static void Apply(GreenhousePropertiesState state, Greenhouse house)

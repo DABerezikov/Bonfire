@@ -1,5 +1,4 @@
 ﻿using System.IO;
-
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
 
@@ -8,9 +7,10 @@ namespace Bonfire.Services.Interfaces;
 public interface IUserDialog
 {
     Option<SeedlingRemoval> RequestSeedlingRemoval(string sortName);
+
     /// <summary>Подтверждение удаления с причиной; null означает отмену.</summary>
     string? RequestDeleteReason(string sortName, string? previousReason = null);
-        
+
     /// <summary>Открыть диалога выбора файла для чтения</summary>
     /// <param name="title">Заголовок диалогового окна</param>
     /// <param name="filter">Фильтр файлов диалога</param>
@@ -59,5 +59,4 @@ public interface IUserDialog
     //bool CreateOrEditGardener(Gardener gardener);
 
     //bool CreateOrEditParcel(Parcel parcel, IRepository<Gardener> gardenerRepository);
-        
 }

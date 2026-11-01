@@ -11,17 +11,20 @@ internal static class GardenPropertiesDbMapper
     public static Result<GardenPropertiesState> Read(Garden garden)
         => CanvasRectangle.Create(0, 0, garden.CanvasWidth, garden.CanvasHeight).Bind(canvas =>
             Result.Success(new GardenPropertiesState(garden.Id,
-                new(garden.Name, garden.Note.ToOption(), garden.Address.ToOption(), garden.WidthMeters, garden.HeightMeters), canvas)));
+                new GardenEditorValues(garden.Name, garden.Note.ToOption(), garden.Address.ToOption(),
+                    garden.WidthMeters, garden.HeightMeters), canvas)));
 
-    private static Result<ImmutableList<InteriorElement>> ReadContents(IEnumerable<(string Name, double X, double Y, double Width, double Height)> children)
+    private static Result<ImmutableList<InteriorElement>> ReadContents(
+        IEnumerable<(string Name, double X, double Y, double Width, double Height)> children)
         => children.Aggregate(Result.Success(ImmutableList<InteriorElement>.Empty), (snapshot, child) =>
             snapshot.Bind(items => CanvasRectangle.Create(child.X, child.Y, child.Width, child.Height)
-                .Bind(rectangle => Result.Success(items.Add(new(child.Name, rectangle))))));
+                .Bind(rectangle => Result.Success(items.Add(new InteriorElement(child.Name, rectangle))))));
 
     public static Result<GardenContents> Contents(Garden garden)
         => ReadContents(garden.Elements.Select(e => (e.Name, e.X, e.Y, e.DisplayWidth, e.DisplayHeight)))
-            .Bind(elements => ReadContents(garden.Greenhouses.Select(h => (h.Name, h.X, h.Y, h.DisplayWidth, h.DisplayHeight)))
-                .Bind(houses => Result.Success(new GardenContents(elements, houses))));
+            .Bind(elements =>
+                ReadContents(garden.Greenhouses.Select(h => (h.Name, h.X, h.Y, h.DisplayWidth, h.DisplayHeight)))
+                    .Bind(houses => Result.Success(new GardenContents(elements, houses))));
 
     public static void Apply(GardenPropertiesState state, Garden garden)
     {

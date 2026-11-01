@@ -18,8 +18,9 @@ public sealed record SeedPackageValues
 
 public sealed class SeedPackage
 {
-    public SeedPackageValues Values { get; }
     private SeedPackage(SeedPackageValues values) => Values = values;
+    public SeedPackageValues Values { get; }
+
     public static Result<SeedPackage> Create(SeedPackageValues values)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -29,9 +30,11 @@ public sealed class SeedPackage
                 SeedAmount.Create(values.QuantityPack, SeedUnit.Pieces).Bind(_ =>
                     SeedAmount.Create(values.AmountSeeds, SeedUnit.Pieces).Bind(_ =>
                         values.AmountSeedsWeight.Match(
-                            weight => SeedAmount.Create(weight, SeedUnit.Grams).Bind(_ => Result.Success(new SeedPackage(values))),
+                            weight => SeedAmount.Create(weight, SeedUnit.Grams)
+                                .Bind(_ => Result.Success(new SeedPackage(values))),
                             () => Result.Success(new SeedPackage(values))))));
     }
+
     public Result<SeedPackage> WithDetails(SeedPackageValues values) => Create(values);
 
     public Result<SeedPackage> WithReturned(SeedAmount returned)

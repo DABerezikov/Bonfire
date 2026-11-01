@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace BonfireDB.Context;
 
 /// <summary>
-/// Фабрика для EF-инструментов (migrations, database update).
-/// Позволяет dotnet-ef создавать DbBonfire без запуска хоста приложения.
+///     Фабрика для EF-инструментов (migrations, database update).
+///     Позволяет dotnet-ef создавать DbBonfire без запуска хоста приложения.
 /// </summary>
 internal class DbBonfireDesignTimeFactory : IDesignTimeDbContextFactory<DbBonfire>
 {

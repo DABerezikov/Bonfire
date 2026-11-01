@@ -1,28 +1,71 @@
 <UserControl x:Class="Bonfire.Views.Planning.LifeCycleEditor"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:p="clr-namespace:Bonfire.Models.Planning">
- <UserControl.Resources><ResourceDictionary Source="PlanningStyles.xaml"/></UserControl.Resources>
- <StackPanel>
-  <ComboBox ItemsSource="{x:Static p:PlanningLookups.LifeCycles}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Mode}"/>
-  <StackPanel Visibility="{Binding ShowDetails, Converter={StaticResource PlanningBoolVisibility}}">
-   <TextBlock Text="Первый сезон цветения / урожая (1 — год начала, 2 — следующий календарный год)" TextWrapping="Wrap"/>
-   <UniformGrid Columns="2"><TextBox Text="{Binding FirstFlower, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Text="{Binding FirstHarvest, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/></UniformGrid>
-   <TextBlock Text="Первый сезон: дни от всходов, минимум / максимум. Начало и окончание независимы." TextWrapping="Wrap"/>
-   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <TextBlock Grid.Row="0" Text="Начало цветения" TextWrapping="Wrap"/><TextBox Grid.Row="0" Grid.Column="1" Text="{Binding FlowerStartMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Grid.Row="0" Grid.Column="2" Text="{Binding FlowerStartMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-    <TextBlock Grid.Row="1" Text="Окончание цветения" TextWrapping="Wrap"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding FlowerEndMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Grid.Row="1" Grid.Column="2" Text="{Binding FlowerEndMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-    <TextBlock Grid.Row="2" Text="Начало плодоношения" TextWrapping="Wrap"/><TextBox Grid.Row="2" Grid.Column="1" Text="{Binding FruitStartMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Grid.Row="2" Grid.Column="2" Text="{Binding FruitStartMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-    <TextBlock Grid.Row="3" Text="Окончание плодоношения" TextWrapping="Wrap"/><TextBox Grid.Row="3" Grid.Column="1" Text="{Binding FruitEndMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Grid.Row="3" Grid.Column="2" Text="{Binding FruitEndMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-   </Grid>
-   <TextBlock Text="Последующие сезоны: ежегодные справочные оболочки дд.мм, без предположения о непрерывном цветении." TextWrapping="Wrap"/>
-   <TextBlock Text="Цветение, с / по"/>
-   <UniformGrid Columns="2"><TextBox Text="{Binding FlowerAnnualStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Text="{Binding FlowerAnnualEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/></UniformGrid>
-   <CheckBox Content="Окончание в следующем году" IsChecked="{Binding FlowerNextYear}"/>
-   <TextBlock Text="Плодоношение, с / по"/>
-   <UniformGrid Columns="2"><TextBox Text="{Binding FruitAnnualStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Text="{Binding FruitAnnualEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/></UniformGrid>
-   <CheckBox Content="Окончание в следующем году" IsChecked="{Binding FruitNextYear}"/>
-  </StackPanel>
-  <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="#A03020"/>
- </StackPanel>
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:p="clr-namespace:Bonfire.Models.Planning">
+    <UserControl.Resources>
+        <ResourceDictionary Source="PlanningStyles.xaml" />
+    </UserControl.Resources>
+    <StackPanel>
+        <ComboBox ItemsSource="{x:Static p:PlanningLookups.LifeCycles}" DisplayMemberPath="Label"
+                  SelectedValuePath="Value" SelectedValue="{Binding Mode}" />
+        <StackPanel Visibility="{Binding ShowDetails, Converter={StaticResource PlanningBoolVisibility}}">
+            <TextBlock Text="Первый сезон цветения / урожая (1 — год начала, 2 — следующий календарный год)"
+                       TextWrapping="Wrap" />
+            <UniformGrid Columns="2">
+                <TextBox Text="{Binding FirstFlower, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Text="{Binding FirstHarvest, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </UniformGrid>
+            <TextBlock Text="Первый сезон: дни от всходов, минимум / максимум. Начало и окончание независимы."
+                       TextWrapping="Wrap" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" /><ColumnDefinition /><ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Начало цветения" TextWrapping="Wrap" />
+                <TextBox Grid.Row="0" Grid.Column="1"
+                         Text="{Binding FlowerStartMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="0" Grid.Column="2"
+                         Text="{Binding FlowerStartMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBlock Grid.Row="1" Text="Окончание цветения" TextWrapping="Wrap" />
+                <TextBox Grid.Row="1" Grid.Column="1"
+                         Text="{Binding FlowerEndMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="1" Grid.Column="2"
+                         Text="{Binding FlowerEndMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBlock Grid.Row="2" Text="Начало плодоношения" TextWrapping="Wrap" />
+                <TextBox Grid.Row="2" Grid.Column="1"
+                         Text="{Binding FruitStartMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="2" Grid.Column="2"
+                         Text="{Binding FruitStartMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBlock Grid.Row="3" Text="Окончание плодоношения" TextWrapping="Wrap" />
+                <TextBox Grid.Row="3" Grid.Column="1"
+                         Text="{Binding FruitEndMin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="3" Grid.Column="2"
+                         Text="{Binding FruitEndMax, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </Grid>
+            <TextBlock
+                Text="Последующие сезоны: ежегодные справочные оболочки дд.мм, без предположения о непрерывном цветении."
+                TextWrapping="Wrap" />
+            <TextBlock Text="Цветение, с / по" />
+            <UniformGrid Columns="2">
+                <TextBox
+                    Text="{Binding FlowerAnnualStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox
+                    Text="{Binding FlowerAnnualEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </UniformGrid>
+            <CheckBox Content="Окончание в следующем году" IsChecked="{Binding FlowerNextYear}" />
+            <TextBlock Text="Плодоношение, с / по" />
+            <UniformGrid Columns="2">
+                <TextBox
+                    Text="{Binding FruitAnnualStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox
+                    Text="{Binding FruitAnnualEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </UniformGrid>
+            <CheckBox Content="Окончание в следующем году" IsChecked="{Binding FruitNextYear}" />
+        </StackPanel>
+        <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="#A03020" />
+    </StackPanel>
 </UserControl>

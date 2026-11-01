@@ -20,14 +20,20 @@ public partial class GardenElementControl : UserControl
     {
         Focus();
         _beforeDrag = DataContext is GardenElementFromViewModel model
-            ? CanvasGestureAdapter.Capture(model) : Option.None<CanvasRectangle>();
+            ? CanvasGestureAdapter.Capture(model)
+            : Option.None<CanvasRectangle>();
     }
 
     public void OnDragDelta(object sender, DragDeltaEventArgs e)
     {
         if (DataContext is not GardenElementFromViewModel model || model.IsLocked) return;
-        CanvasGestureAdapter.Apply(CanvasGestureAdapter.Move(model, e.HorizontalChange, e.VerticalChange, CanvasScale.Get(this)),
-            rectangle => { model.X = rectangle.X; model.Y = rectangle.Y; });
+        CanvasGestureAdapter.Apply(
+            CanvasGestureAdapter.Move(model, e.HorizontalChange, e.VerticalChange, CanvasScale.Get(this)),
+            rectangle =>
+            {
+                model.X = rectangle.X;
+                model.Y = rectangle.Y;
+            });
     }
 
     // XAML вызывает обработчик до команды сохранения — сохраняется скорректированная позиция.
@@ -35,20 +41,33 @@ public partial class GardenElementControl : UserControl
     {
         if (DataContext is not GardenElementFromViewModel model) return;
         CanvasGestureAdapter.Apply(CanvasGestureAdapter.CompleteMove(model, _beforeDrag),
-            rectangle => { model.X = rectangle.X; model.Y = rectangle.Y; });
+            rectangle =>
+            {
+                model.X = rectangle.X;
+                model.Y = rectangle.Y;
+            });
     }
 
     private void ResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
     {
         if (DataContext is not GardenElementFromViewModel model || model.IsLocked) return;
-        CanvasGestureAdapter.Apply(CanvasGestureAdapter.Resize(model, e.HorizontalChange, e.VerticalChange, CanvasScale.Get(this)),
-            rectangle => { model.Width = rectangle.Width; model.Height = rectangle.Height; });
+        CanvasGestureAdapter.Apply(
+            CanvasGestureAdapter.Resize(model, e.HorizontalChange, e.VerticalChange, CanvasScale.Get(this)),
+            rectangle =>
+            {
+                model.Width = rectangle.Width;
+                model.Height = rectangle.Height;
+            });
     }
 
     private void OnResizeDragCompleted(object sender, DragCompletedEventArgs e)
     {
         if (DataContext is not GardenElementFromViewModel model) return;
         CanvasGestureAdapter.Apply(CanvasGestureAdapter.CompleteResize(model, _beforeDrag),
-            rectangle => { model.Width = rectangle.Width; model.Height = rectangle.Height; });
+            rectangle =>
+            {
+                model.Width = rectangle.Width;
+                model.Height = rectangle.Height;
+            });
     }
 }

@@ -5,10 +5,9 @@ namespace Bonfire.Domain.Planning;
 /// <summary>Включительный календарный интервал, не ограниченный одним сезоном.</summary>
 public sealed record DateWindow
 {
+    private DateWindow(DateOnly start, DateOnly end) => (Start, End) = (start, end);
     public DateOnly Start { get; }
     public DateOnly End { get; }
-
-    private DateWindow(DateOnly start, DateOnly end) => (Start, End) = (start, end);
 
     public static Result<DateWindow> Create(DateOnly start, DateOnly end) => start <= end
         ? Result.Success(new DateWindow(start, end))
@@ -18,7 +17,8 @@ public sealed record DateWindow
     {
         // Сравнение до преобразования в int исключает переполнение и тихий перенос.
         if (startDays < -Start.DayNumber || startDays > DateOnly.MaxValue.DayNumber - Start.DayNumber
-            || endDays < -End.DayNumber || endDays > DateOnly.MaxValue.DayNumber - End.DayNumber)
+                                         || endDays < -End.DayNumber ||
+                                         endDays > DateOnly.MaxValue.DayNumber - End.DayNumber)
             return Result.Failure<DateWindow>("Расчёт выходит за границы календаря");
         var start = Start.DayNumber + startDays;
         var end = End.DayNumber + endDays;

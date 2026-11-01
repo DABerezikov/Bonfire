@@ -1,5 +1,5 @@
-using Bonfire.Domain.Garden.States;
 using System.ComponentModel.DataAnnotations.Schema;
+using Bonfire.Domain.Garden.States;
 
 namespace BonfireDB.Entities.GardenPlanning;
 
@@ -20,8 +20,12 @@ public class Greenhouse : GardenPlot
     // --- Состояние (полиморфное без enum) ---
     public string StateTypeName { get; set; } = nameof(PlannedState);
 
-    [NotMapped]
-    public GardenElementState State => GardenElementState.From(StateTypeName);
+    [NotMapped] public GardenElementState State => GardenElementState.From(StateTypeName);
+
+    public bool IsLocked { get; set; }
+
+    public string? Material { get; set; }
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
 
     public void TransitionTo(GardenElementState newState)
     {
@@ -29,9 +33,4 @@ public class Greenhouse : GardenPlot
             state => state.GetType().Name,
             error => throw new InvalidOperationException(error));
     }
-
-    public bool IsLocked { get; set; }
-
-    public string? Material { get; set; }
-    public DateTime CreatedDate { get; set; } = DateTime.Now;
 }

@@ -4,7 +4,9 @@ namespace Bonfire.Domain.Garden.States;
 
 public abstract class GardenElementState
 {
-    private protected GardenElementState() { }
+    private protected GardenElementState()
+    {
+    }
 
     public abstract string DisplayName { get; }
     public abstract string StatusColor { get; }
@@ -26,12 +28,12 @@ public abstract class GardenElementState
 
     public static GardenElementState From(string typeName) => typeName switch
     {
-        nameof(PlannedState)  => new PlannedState(),
+        nameof(PlannedState) => new PlannedState(),
         nameof(PreparedState) => new PreparedState(),
-        nameof(ActiveState)   => new ActiveState(),
-        nameof(FallowState)   => new FallowState(),
-        nameof(RestingState)  => new RestingState(),
+        nameof(ActiveState) => new ActiveState(),
+        nameof(FallowState) => new FallowState(),
+        nameof(RestingState) => new RestingState(),
         nameof(ArchivedState) => new ArchivedState(),
-        _                     => new PlannedState()
+        _ => new PlannedState()
     };
 }

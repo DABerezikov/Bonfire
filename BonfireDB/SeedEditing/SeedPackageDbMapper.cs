@@ -18,12 +18,13 @@ public static class SeedPackageDbMapper
     public static SeedPackageValues Read(SeedsInfo info)
     {
         ArgumentNullException.ThrowIfNull(info);
-        return new()
+        return new SeedPackageValues
         {
             WeightPack = info.WeightPack, QuantityPack = info.QuantityPack, AmountSeeds = info.AmountSeeds,
             AmountSeedsWeight = info.AmountSeedsWeight.ToOption(), CostPack = info.CostPack,
             PurchaseDate = info.PurchaseDate, ExpirationDate = info.ExpirationDate,
-            Note = info.Note.ToOption(), SeedSource = info.SeedSource.ToOption(), DisposeComment = info.DisposeComment.ToOption()
+            Note = info.Note.ToOption(), SeedSource = info.SeedSource.ToOption(),
+            DisposeComment = info.DisposeComment.ToOption()
         };
     }
 

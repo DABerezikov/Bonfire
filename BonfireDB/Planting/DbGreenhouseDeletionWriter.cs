@@ -9,7 +9,8 @@ namespace BonfireDB.Planting;
 
 public sealed class DbGreenhouseDeletionWriter(IUnitOfWorkFactory units) : IGreenhouseDeletionWriter
 {
-    public async Task<Result<GreenhouseDeletionResultFromViewModel>> DeleteAsync(GreenhouseId id, CancellationToken cancellationToken)
+    public async Task<Result<GreenhouseDeletionResultFromViewModel>> DeleteAsync(GreenhouseId id,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         cancellationToken.ThrowIfCancellationRequested();
@@ -20,7 +21,8 @@ public sealed class DbGreenhouseDeletionWriter(IUnitOfWorkFactory units) : IGree
             .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (current is null) return Result.Failure<GreenhouseDeletionResultFromViewModel>("Теплица уже удалена");
         if (current.HasNestedGreenhouses)
-            return Result.Failure<GreenhouseDeletionResultFromViewModel>("Нельзя удалить теплицу с вложенными теплицами");
+            return Result.Failure<GreenhouseDeletionResultFromViewModel>(
+                "Нельзя удалить теплицу с вложенными теплицами");
         try
         {
             await repository.RemoveAsync(id.Value, cancellationToken).ConfigureAwait(false);
@@ -33,7 +35,8 @@ public sealed class DbGreenhouseDeletionWriter(IUnitOfWorkFactory units) : IGree
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<GreenhouseDeletionResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<GreenhouseDeletionResultFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

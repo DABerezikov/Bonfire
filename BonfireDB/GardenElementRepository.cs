@@ -7,15 +7,16 @@ namespace BonfireDB;
 
 // GardenElement — абстрактный: не удовлетворяет ограничению new() у DbRepository<T>.
 // Реализуем IRepository<GardenElement> напрямую. Сохранение — за Unit of Work.
-class GardenElementRepository(DbBonfire db) : IRepository<GardenElement>
+internal class GardenElementRepository(DbBonfire db) : IRepository<GardenElement>
 {
     private readonly DbSet<GardenElement> _set = db.GardenElements;
 
     public IQueryable<GardenElement> Rows => _set;
+
     public IQueryable<GardenElement> Items => Rows
         .Include(e => e.Plot)
         .Include(e => e.PlantingSpots)
-            .ThenInclude(s => s.SeedlingInfo);
+        .ThenInclude(s => s.SeedlingInfo);
 
     public GardenElement? Get(int id) => Items.SingleOrDefault(e => e.Id == id);
 

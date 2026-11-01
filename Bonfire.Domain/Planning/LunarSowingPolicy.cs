@@ -2,7 +2,11 @@ using Bonfire.Domain.Functional;
 
 namespace Bonfire.Domain.Planning;
 
-public enum LunarTrend { Growing, Waning }
+public enum LunarTrend
+{
+    Growing,
+    Waning
+}
 
 public static class LunarSowingPolicy
 {

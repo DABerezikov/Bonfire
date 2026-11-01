@@ -22,7 +22,11 @@ public sealed record PlanningOverrides
 }
 
 /// <summary>Ручные решения хранятся отдельно от пересчитываемого прогноза.</summary>
-public enum PlannedDateOrigin { Manual, LunarRecommendation }
+public enum PlannedDateOrigin
+{
+    Manual,
+    LunarRecommendation
+}
 
 public sealed record PlanningChoices(
     Option<DateOnly> SowingDate,
@@ -30,11 +34,18 @@ public sealed record PlanningChoices(
     Option<PlantCount> ManualSeedCount)
 {
     public PlannedDateOrigin SowingOrigin { get; init; } = PlannedDateOrigin.Manual;
-    public static PlanningChoices Empty { get; } = new(Option.None<DateOnly>(), Option.None<DateOnly>(), Option.None<PlantCount>());
+
+    public static PlanningChoices Empty { get; } =
+        new(Option.None<DateOnly>(), Option.None<DateOnly>(), Option.None<PlantCount>());
 }
 
 public sealed record PlannedBatch
 {
+    private PlannedBatch(PlannedBatchId id, CultureId cultureId, SortId sortId, GrowingConditions conditions,
+        GrowingMethod method, EffectiveGrowingProfile profile, PlantCount targetPlants, PlanningChoices choices)
+        => (Id, CultureId, SortId, Conditions, Method, Profile, TargetPlants, Choices)
+            = (id, cultureId, sortId, conditions, method, profile, targetPlants, choices);
+
     public PlannedBatchId Id { get; }
     public CultureId CultureId { get; }
     public SortId SortId { get; }
@@ -44,18 +55,14 @@ public sealed record PlannedBatch
     public PlantCount TargetPlants { get; }
     public PlanningChoices Choices { get; }
 
-    private PlannedBatch(PlannedBatchId id, CultureId cultureId, SortId sortId, GrowingConditions conditions,
-        GrowingMethod method, EffectiveGrowingProfile profile, PlantCount targetPlants, PlanningChoices choices)
-        => (Id, CultureId, SortId, Conditions, Method, Profile, TargetPlants, Choices)
-            = (id, cultureId, sortId, conditions, method, profile, targetPlants, choices);
-
     public static Result<PlannedBatch> Create(PlannedBatchId id, CultureId cultureId, SortId sortId,
         GrowingConditions conditions, GrowingMethod method, EffectiveGrowingProfile profile,
         PlantCount targetPlants, PlanningChoices choices)
     {
         ArgumentNullException.ThrowIfNull(id);
         return PlannedBatchDefinition.Create(cultureId, sortId, conditions, method, profile, targetPlants, choices)
-            .Bind(_ => Result.Success(new PlannedBatch(id, cultureId, sortId, conditions, method, profile, targetPlants, choices)));
+            .Bind(_ => Result.Success(new PlannedBatch(id, cultureId, sortId, conditions, method, profile, targetPlants,
+                choices)));
     }
 
     public Result<PlannedBatch> WithChoices(PlanningChoices choices)

@@ -4,9 +4,22 @@ using Bonfire.Domain.Garden;
 namespace Bonfire.Application.Garden;
 
 public sealed record ResizeGridFromViewModel(int ElementId, int Rows, int Columns);
-public sealed record GridSpotFromViewModel(int Id, int Row, int Column, string StateTypeName,
-    Option<int> SeedlingInfoId, Option<DateTime> PlantedDate, Option<DateTime> HarvestDate, Option<string> Note);
-public sealed record GridResultFromViewModel(int ElementId, int Rows, int Columns, IReadOnlyList<GridSpotFromViewModel> Spots);
+
+public sealed record GridSpotFromViewModel(
+    int Id,
+    int Row,
+    int Column,
+    string StateTypeName,
+    Option<int> SeedlingInfoId,
+    Option<DateTime> PlantedDate,
+    Option<DateTime> HarvestDate,
+    Option<string> Note);
+
+public sealed record GridResultFromViewModel(
+    int ElementId,
+    int Rows,
+    int Columns,
+    IReadOnlyList<GridSpotFromViewModel> Spots);
 
 public interface IGridWriter
 {
@@ -15,12 +28,14 @@ public interface IGridWriter
 
 public interface IResizeGrid
 {
-    Task<Result<GridResultFromViewModel>> ExecuteAsync(ResizeGridFromViewModel request, CancellationToken cancellationToken = default);
+    Task<Result<GridResultFromViewModel>> ExecuteAsync(ResizeGridFromViewModel request,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class ResizeGrid(IGridWriter writer) : IResizeGrid
 {
-    public Task<Result<GridResultFromViewModel>> ExecuteAsync(ResizeGridFromViewModel request, CancellationToken cancellationToken = default)
+    public Task<Result<GridResultFromViewModel>> ExecuteAsync(ResizeGridFromViewModel request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();

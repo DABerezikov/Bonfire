@@ -1,6 +1,6 @@
-using BonfireDB.Entities.Base;
-using Bonfire.Domain.Garden.States;
 using System.ComponentModel.DataAnnotations.Schema;
+using Bonfire.Domain.Garden.States;
+using BonfireDB.Entities.Base;
 
 namespace BonfireDB.Entities.GardenPlanning;
 
@@ -14,7 +14,7 @@ public abstract class GardenElement : NamedEntity
     // --- Позиция и отображение на холсте ---
     public double X { get; set; }
     public double Y { get; set; }
-    public double DisplayWidth { get; set; } = 300;  // Д 2.0 м (150 пкс/м × 2)
+    public double DisplayWidth { get; set; } = 300; // Д 2.0 м (150 пкс/м × 2)
     public double DisplayHeight { get; set; } = 135; // Ш 0.9 м (150 пкс/м × 0.9)
     public double Rotation { get; set; }
 
@@ -24,15 +24,7 @@ public abstract class GardenElement : NamedEntity
     // --- Состояние (полиморфное без enum) ---
     public string StateTypeName { get; set; } = nameof(PlannedState);
 
-    [NotMapped]
-    public GardenElementState State => GardenElementState.From(StateTypeName);
-
-    public void TransitionTo(GardenElementState newState)
-    {
-        StateTypeName = State.TransitionTo(newState).Match(
-            state => state.GetType().Name,
-            error => throw new InvalidOperationException(error));
-    }
+    [NotMapped] public GardenElementState State => GardenElementState.From(StateTypeName);
 
     // --- Сетка внутренней планировки ---
     public int GridRows { get; set; } = 1;
@@ -45,4 +37,11 @@ public abstract class GardenElement : NamedEntity
     public DateTime CreatedDate { get; set; } = DateTime.Now;
 
     public virtual List<PlantingSpot> PlantingSpots { get; set; } = [];
+
+    public void TransitionTo(GardenElementState newState)
+    {
+        StateTypeName = State.TransitionTo(newState).Match(
+            state => state.GetType().Name,
+            error => throw new InvalidOperationException(error));
+    }
 }

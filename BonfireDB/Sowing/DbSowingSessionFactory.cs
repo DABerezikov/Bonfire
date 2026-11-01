@@ -15,7 +15,8 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
     {
         private Option<Seed> _loaded = Option.None<Seed>();
 
-        public async Task<Result<SeedStock>> LoadStockAsync(int seedId, SeedUnit measure, CancellationToken cancellationToken)
+        public async Task<Result<SeedStock>> LoadStockAsync(int seedId, SeedUnit measure,
+            CancellationToken cancellationToken)
         {
             var seed = await unit.Repository<Seed>().GetAsync(seedId, cancellationToken).ConfigureAwait(false);
             if (seed is null) return Result.Failure<SeedStock>("Пакет семян не найден");
@@ -26,11 +27,15 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
             });
         }
 
-        public Task<SavedSowing> SaveAsync(SowingChange change, SowingDetails details, CancellationToken cancellationToken)
+        public Task<SavedSowing> SaveAsync(SowingChange change, SowingDetails details,
+            CancellationToken cancellationToken)
             => _loaded.Match(seed => SaveAsync(seed, change, details, cancellationToken),
                 () => throw new InvalidOperationException("Перед сохранением загрузите пакет семян"));
 
-        private async Task<SavedSowing> SaveAsync(Seed seed, SowingChange change, SowingDetails details, CancellationToken cancellationToken)
+        public ValueTask DisposeAsync() => unit.DisposeAsync();
+
+        private async Task<SavedSowing> SaveAsync(Seed seed, SowingChange change, SowingDetails details,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var place = details.Place.ToNullable();
@@ -41,11 +46,14 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
                 Weight = change.Sown.Unit == SeedUnit.Grams ? change.Sown.Value : 0,
                 LandingDate = details.Date, LunarPhase = details.LunarPhase,
                 SeedlingSource = details.Source, PlantPlace = place,
-                SeedlingInfos = [new SeedlingInfo
-                {
-                    LandingDate = details.Date, LunarPhase = details.LunarPhase,
-                    SeedlingSource = details.Source, PlantPlace = place, SeedlingNumber = 0
-                }]
+                SeedlingInfos =
+                [
+                    new SeedlingInfo
+                    {
+                        LandingDate = details.Date, LunarPhase = details.LunarPhase,
+                        SeedlingSource = details.Source, PlantPlace = place, SeedlingNumber = 0
+                    }
+                ]
             };
             if (change.Sown.Unit == SeedUnit.Pieces)
                 seed.SeedsInfo.AmountSeeds = change.Remaining.Available.Value;
@@ -57,7 +65,5 @@ public sealed class DbSowingSessionFactory(IUnitOfWorkFactory units) : ISowingSe
             var grams = seed.SeedsInfo.AmountSeedsWeight.ToOption();
             return new SavedSowing(batch.Id, seed.SeedsInfo.AmountSeeds, grams);
         }
-
-        public ValueTask DisposeAsync() => unit.DisposeAsync();
     }
 }

@@ -3,7 +3,7 @@
 namespace Bonfire.Views;
 
 /// <summary>
-/// Логика взаимодействия для LibraryEditorWindow.xaml
+///     Логика взаимодействия для LibraryEditorWindow.xaml
 /// </summary>
 public partial class LibraryEditorWindow : UserControl
 {

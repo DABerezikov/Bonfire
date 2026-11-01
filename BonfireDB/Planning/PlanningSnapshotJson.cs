@@ -14,41 +14,57 @@ namespace BonfireDB.Planning;
 internal static class PlanningSnapshotJson
 {
     private const int SchemaVersion = 1;
-    private sealed record Envelope(int SchemaVersion, PlanningBatchDocument Document);
-    private sealed record WindowValues(DateOnly Start, DateOnly End);
-    private sealed record RangeValues(int Min, int Max);
-    private sealed record ConditionsValues(GrowingLocation Location, PlantPlacement Placement);
-    private sealed record AnnualValues(int StartMonth, int StartDay, int EndMonth, int EndDay, bool EndInNextYear);
-    private sealed record RegionalValues(RegionId RegionId, CultureId CultureId, GrowingConditions Conditions,
-        RegionalWindowPurpose Purpose, AnnualDateWindow Window, Option<string> Source, Option<string> Note);
-    private sealed record BatchValues(CultureId CultureId, SortId SortId, GrowingConditions Conditions, GrowingMethod Method,
-        EffectiveGrowingProfile Profile, PlantCount TargetPlants, PlanningChoices Choices);
-    private sealed record DocumentValues(PlannedBatchDefinition Batch, PlanningBatchSettings Settings, PlanningReferenceSnapshot References,
-        SowingPreviewFromViewModel Preview, Option<SeedQuantityCalculation> Quantity, DateTimeOffset CalculatedAt,
-        int CalculationVersion, int LunarPolicyVersion);
-    private sealed record PerennialValues(string Name, int EstablishmentYear, CultureId CultureId, SortId SortId, string CultureName, string SortName,
-        RegionId RegionId, string RegionName, string TimeZoneId, SourcedValue<LifeCycleProfile> Profile, Option<DateWindow> FirstEmergence);
 
     private static readonly JsonSerializerOptions Options = CreateOptions();
 
-    internal static string Write(PlanningBatchDocument document) => JsonSerializer.Serialize(new Envelope(SchemaVersion, document), Options);
+    internal static string Write(PlanningBatchDocument document) =>
+        JsonSerializer.Serialize(new Envelope(SchemaVersion, document), Options);
+
     internal static string WriteLifeCycle(LifeCycleProfile profile) => JsonSerializer.Serialize(profile, Options);
+
     internal static Result<LifeCycleProfile> ReadLifeCycle(string json)
     {
-        try { return JsonSerializer.Deserialize<LifeCycleProfile>(json, Options)?.Validate() ?? Result.Failure<LifeCycleProfile>("Профиль отсутствует"); }
-        catch (JsonException error) { return Result.Failure<LifeCycleProfile>($"Неверный профиль жизненного цикла: {error.Message}"); }
+        try
+        {
+            return JsonSerializer.Deserialize<LifeCycleProfile>(json, Options)?.Validate() ??
+                   Result.Failure<LifeCycleProfile>("Профиль отсутствует");
+        }
+        catch (JsonException error)
+        {
+            return Result.Failure<LifeCycleProfile>($"Неверный профиль жизненного цикла: {error.Message}");
+        }
     }
-    internal static string WritePerennial(PerennialPlantingDefinition definition) => JsonSerializer.Serialize(definition, Options);
+
+    internal static string WritePerennial(PerennialPlantingDefinition definition) =>
+        JsonSerializer.Serialize(definition, Options);
+
     internal static Result<PerennialPlantingDefinition> ReadPerennial(string json)
     {
-        try { return Result.From<PerennialPlantingDefinition>(JsonSerializer.Deserialize<PerennialPlantingDefinition>(json, Options)); }
-        catch (JsonException error) { return Result.Failure<PerennialPlantingDefinition>($"Неверный снимок посадки: {error.Message}"); }
+        try
+        {
+            return Result.From<PerennialPlantingDefinition>(
+                JsonSerializer.Deserialize<PerennialPlantingDefinition>(json, Options));
+        }
+        catch (JsonException error)
+        {
+            return Result.Failure<PerennialPlantingDefinition>($"Неверный снимок посадки: {error.Message}");
+        }
     }
-    internal static string WritePerennialSeason(PerennialSeasonSnapshot snapshot) => JsonSerializer.Serialize(snapshot, Options);
+
+    internal static string WritePerennialSeason(PerennialSeasonSnapshot snapshot) =>
+        JsonSerializer.Serialize(snapshot, Options);
+
     internal static Result<PerennialSeasonSnapshot> ReadPerennialSeason(string json)
     {
-        try { return JsonSerializer.Deserialize<PerennialSeasonSnapshot>(json, Options)?.Validate() ?? Result.Failure<PerennialSeasonSnapshot>("Снимок периода отсутствует"); }
-        catch (JsonException error) { return Result.Failure<PerennialSeasonSnapshot>($"Неверный снимок периодов: {error.Message}"); }
+        try
+        {
+            return JsonSerializer.Deserialize<PerennialSeasonSnapshot>(json, Options)?.Validate() ??
+                   Result.Failure<PerennialSeasonSnapshot>("Снимок периода отсутствует");
+        }
+        catch (JsonException error)
+        {
+            return Result.Failure<PerennialSeasonSnapshot>($"Неверный снимок периодов: {error.Message}");
+        }
     }
 
     internal static Result<PlanningBatchDocument> Read(string json)
@@ -60,7 +76,8 @@ internal static class PlanningSnapshotJson
                 || !version.TryGetInt32(out var number) || number != SchemaVersion)
                 return Result.Failure<PlanningBatchDocument>("Неподдерживаемая версия формата снимка партии");
             var envelope = JsonSerializer.Deserialize<Envelope>(json, Options);
-            return envelope?.Document is { } document ? Result.Success(document)
+            return envelope?.Document is { } document
+                ? Result.Success(document)
                 : Result.Failure<PlanningBatchDocument>("Снимок партии отсутствует");
         }
         catch (JsonException error)
@@ -75,18 +92,23 @@ internal static class PlanningSnapshotJson
         resolver.Modifiers.Add(info =>
         {
             if (info.Type == typeof(GrowingMethod))
-                SetVariants(info, (typeof(GrowingMethod.Transplant), "transplant"), (typeof(GrowingMethod.DirectSow), "direct"));
+                SetVariants(info, (typeof(GrowingMethod.Transplant), "transplant"),
+                    (typeof(GrowingMethod.DirectSow), "direct"));
             else if (info.Type == typeof(SeasonalPeriod))
-                SetVariants(info, (typeof(SeasonalPeriod.NotExpected), "notExpected"), (typeof(SeasonalPeriod.Unknown), "unknown"), (typeof(SeasonalPeriod.Known), "known"));
+                SetVariants(info, (typeof(SeasonalPeriod.NotExpected), "notExpected"),
+                    (typeof(SeasonalPeriod.Unknown), "unknown"), (typeof(SeasonalPeriod.Known), "known"));
             else if (info.Type == typeof(OperationOverride<DayRange>))
                 SetVariants(info, (typeof(OperationOverride<DayRange>.Inherit), "inherit"),
-                    (typeof(OperationOverride<DayRange>.Disabled), "disabled"), (typeof(OperationOverride<DayRange>.Enabled), "enabled"));
+                    (typeof(OperationOverride<DayRange>.Disabled), "disabled"),
+                    (typeof(OperationOverride<DayRange>.Enabled), "enabled"));
             else if (info.Type == typeof(OperationPlan<DayRange>))
                 SetVariants(info, (typeof(OperationPlan<DayRange>.Unknown), "unknown"),
-                    (typeof(OperationPlan<DayRange>.Disabled), "disabled"), (typeof(OperationPlan<DayRange>.Enabled), "enabled"));
+                    (typeof(OperationPlan<DayRange>.Disabled), "disabled"),
+                    (typeof(OperationPlan<DayRange>.Enabled), "enabled"));
             else if (info.Type == typeof(SowingRecommendations))
                 SetVariants(info, (typeof(SowingRecommendations.Available), "available"),
-                    (typeof(SowingRecommendations.Conflict), "conflict"), (typeof(SowingRecommendations.Unavailable), "unavailable"));
+                    (typeof(SowingRecommendations.Conflict), "conflict"),
+                    (typeof(SowingRecommendations.Unavailable), "unavailable"));
         });
         var options = new JsonSerializerOptions
         {
@@ -96,30 +118,40 @@ internal static class PlanningSnapshotJson
             RespectRequiredConstructorParameters = true
         };
         options.Converters.Add(new OptionConverterFactory());
-        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, false));
         options.Converters.Add(new FactoryConverter<CultureId, int>(x => x.Value, CultureId.Create));
         options.Converters.Add(new FactoryConverter<SortId, int>(x => x.Value, SortId.Create));
         options.Converters.Add(new FactoryConverter<RegionId, int>(x => x.Value, RegionId.Create));
         options.Converters.Add(new FactoryConverter<PlantCount, int>(x => x.Value, PlantCount.Create));
-        options.Converters.Add(new FactoryConverter<GerminationPercentage, decimal>(x => x.Value, GerminationPercentage.Create));
+        options.Converters.Add(
+            new FactoryConverter<GerminationPercentage, decimal>(x => x.Value, GerminationPercentage.Create));
         options.Converters.Add(new FactoryConverter<LossPercentage, decimal>(x => x.Value, LossPercentage.Create));
         options.Converters.Add(new FactoryConverter<PerennialPlantingDefinition, PerennialValues>(
-            x => new(x.Name, x.EstablishmentYear, x.CultureId, x.SortId, x.CultureName, x.SortName, x.RegionId, x.RegionName, x.TimeZoneId, x.Profile, x.FirstEmergence),
-            x => PerennialPlantingDefinition.Create(x.Name, x.EstablishmentYear, x.CultureId, x.SortId, x.CultureName, x.SortName, x.RegionId, x.RegionName, x.TimeZoneId, x.Profile, x.FirstEmergence)));
-        options.Converters.Add(new FactoryConverter<DateWindow, WindowValues>(x => new(x.Start, x.End), x => DateWindow.Create(x.Start, x.End)));
-        options.Converters.Add(new FactoryConverter<DayRange, RangeValues>(x => new(x.Min, x.Max), x => DayRange.Create(x.Min, x.Max)));
-        options.Converters.Add(new FactoryConverter<GrowingConditions, ConditionsValues>(x => new(x.Location, x.Placement),
+            x => new PerennialValues(x.Name, x.EstablishmentYear, x.CultureId, x.SortId, x.CultureName, x.SortName,
+                x.RegionId, x.RegionName, x.TimeZoneId, x.Profile, x.FirstEmergence),
+            x => PerennialPlantingDefinition.Create(x.Name, x.EstablishmentYear, x.CultureId, x.SortId, x.CultureName,
+                x.SortName, x.RegionId, x.RegionName, x.TimeZoneId, x.Profile, x.FirstEmergence)));
+        options.Converters.Add(new FactoryConverter<DateWindow, WindowValues>(x => new WindowValues(x.Start, x.End),
+            x => DateWindow.Create(x.Start, x.End)));
+        options.Converters.Add(new FactoryConverter<DayRange, RangeValues>(x => new RangeValues(x.Min, x.Max),
+            x => DayRange.Create(x.Min, x.Max)));
+        options.Converters.Add(new FactoryConverter<GrowingConditions, ConditionsValues>(
+            x => new ConditionsValues(x.Location, x.Placement),
             x => GrowingConditions.Create(x.Location, x.Placement)));
-        options.Converters.Add(new FactoryConverter<AnnualDateWindow, AnnualValues>(x => new(x.StartMonth, x.StartDay, x.EndMonth, x.EndDay, x.EndInNextYear),
+        options.Converters.Add(new FactoryConverter<AnnualDateWindow, AnnualValues>(
+            x => new AnnualValues(x.StartMonth, x.StartDay, x.EndMonth, x.EndDay, x.EndInNextYear),
             x => AnnualDateWindow.Create(x.StartMonth, x.StartDay, x.EndMonth, x.EndDay, x.EndInNextYear)));
         options.Converters.Add(new FactoryConverter<RegionalPlantingWindow, RegionalValues>(
-            x => new(x.RegionId, x.CultureId, x.Conditions, x.Purpose, x.Window, x.Source, x.Note),
-            x => RegionalPlantingWindow.Create(x.RegionId, x.CultureId, x.Conditions, x.Purpose, x.Window, x.Source, x.Note)));
+            x => new RegionalValues(x.RegionId, x.CultureId, x.Conditions, x.Purpose, x.Window, x.Source, x.Note),
+            x => RegionalPlantingWindow.Create(x.RegionId, x.CultureId, x.Conditions, x.Purpose, x.Window, x.Source,
+                x.Note)));
         options.Converters.Add(new FactoryConverter<PlannedBatchDefinition, BatchValues>(
-            x => new(x.CultureId, x.SortId, x.Conditions, x.Method, x.Profile, x.TargetPlants, x.Choices),
-            x => PlannedBatchDefinition.Create(x.CultureId, x.SortId, x.Conditions, x.Method, x.Profile, x.TargetPlants, x.Choices)));
+            x => new BatchValues(x.CultureId, x.SortId, x.Conditions, x.Method, x.Profile, x.TargetPlants, x.Choices),
+            x => PlannedBatchDefinition.Create(x.CultureId, x.SortId, x.Conditions, x.Method, x.Profile, x.TargetPlants,
+                x.Choices)));
         options.Converters.Add(new FactoryConverter<PlanningBatchDocument, DocumentValues>(
-            x => new(x.Batch, x.Settings, x.References, x.Preview, x.Quantity, x.CalculatedAt, x.CalculationVersion, x.LunarPolicyVersion),
+            x => new DocumentValues(x.Batch, x.Settings, x.References, x.Preview, x.Quantity, x.CalculatedAt,
+                x.CalculationVersion, x.LunarPolicyVersion),
             x => PlanningBatchDocument.Create(x.Batch, x.Settings, x.References, x.Preview, x.Quantity,
                 x.CalculatedAt, x.CalculationVersion, x.LunarPolicyVersion)));
         return options;
@@ -128,12 +160,66 @@ internal static class PlanningSnapshotJson
     private static void SetVariants(JsonTypeInfo info, params (Type Type, string Tag)[] variants)
     {
         info.PolymorphismOptions = new JsonPolymorphismOptions { TypeDiscriminatorPropertyName = "$kind" };
-        foreach (var variant in variants) info.PolymorphismOptions.DerivedTypes.Add(new(variant.Type, variant.Tag));
+        foreach (var variant in variants)
+            info.PolymorphismOptions.DerivedTypes.Add(new JsonDerivedType(variant.Type, variant.Tag));
     }
 
-    private sealed class FactoryConverter<T, TValues>(Func<T, TValues> values, Func<TValues, Result<T>> create) : JsonConverter<T>
+    private sealed record Envelope(int SchemaVersion, PlanningBatchDocument Document);
+
+    private sealed record WindowValues(DateOnly Start, DateOnly End);
+
+    private sealed record RangeValues(int Min, int Max);
+
+    private sealed record ConditionsValues(GrowingLocation Location, PlantPlacement Placement);
+
+    private sealed record AnnualValues(int StartMonth, int StartDay, int EndMonth, int EndDay, bool EndInNextYear);
+
+    private sealed record RegionalValues(
+        RegionId RegionId,
+        CultureId CultureId,
+        GrowingConditions Conditions,
+        RegionalWindowPurpose Purpose,
+        AnnualDateWindow Window,
+        Option<string> Source,
+        Option<string> Note);
+
+    private sealed record BatchValues(
+        CultureId CultureId,
+        SortId SortId,
+        GrowingConditions Conditions,
+        GrowingMethod Method,
+        EffectiveGrowingProfile Profile,
+        PlantCount TargetPlants,
+        PlanningChoices Choices);
+
+    private sealed record DocumentValues(
+        PlannedBatchDefinition Batch,
+        PlanningBatchSettings Settings,
+        PlanningReferenceSnapshot References,
+        SowingPreviewFromViewModel Preview,
+        Option<SeedQuantityCalculation> Quantity,
+        DateTimeOffset CalculatedAt,
+        int CalculationVersion,
+        int LunarPolicyVersion);
+
+    private sealed record PerennialValues(
+        string Name,
+        int EstablishmentYear,
+        CultureId CultureId,
+        SortId SortId,
+        string CultureName,
+        string SortName,
+        RegionId RegionId,
+        string RegionName,
+        string TimeZoneId,
+        SourcedValue<LifeCycleProfile> Profile,
+        Option<DateWindow> FirstEmergence);
+
+    private sealed class FactoryConverter<T, TValues>(Func<T, TValues> values, Func<TValues, Result<T>> create)
+        : JsonConverter<T>
     {
         public override bool HandleNull => true;
+
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null) throw new JsonException($"Отсутствует {typeof(T).Name}");
@@ -148,14 +234,19 @@ internal static class PlanningSnapshotJson
 
     private sealed class OptionConverterFactory : JsonConverterFactory
     {
-        public override bool CanConvert(Type typeToConvert) => typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Option<>);
+        public override bool CanConvert(Type typeToConvert) => typeToConvert.IsGenericType &&
+                                                               typeToConvert.GetGenericTypeDefinition() ==
+                                                               typeof(Option<>);
+
         public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-            => (JsonConverter)Activator.CreateInstance(typeof(OptionConverter<>).MakeGenericType(typeToConvert.GetGenericArguments()[0]))!;
+            => (JsonConverter)Activator.CreateInstance(
+                typeof(OptionConverter<>).MakeGenericType(typeToConvert.GetGenericArguments()[0]))!;
     }
 
     private sealed class OptionConverter<T> : JsonConverter<Option<T>>
     {
         public override bool HandleNull => true;
+
         public override Option<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null) return Option.None<T>();

@@ -1,12 +1,18 @@
 using System.Collections.Immutable;
 using System.Threading.Tasks;
-using Bonfire.Services.Interfaces;
-using Bonfire.Domain.Functional;
 using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Functional;
+using Bonfire.Services.Interfaces;
 
 namespace Bonfire.Services;
 
-internal class SeedlingsService(ILunarCalendar lunar, ISowSeeds sowing, IDeleteSeedling deletion, IChangeSeedling changes, IEditSeedling editing, ISeedlingReader reader) : ISeedlingsService
+internal class SeedlingsService(
+    ILunarCalendar lunar,
+    ISowSeeds sowing,
+    IDeleteSeedling deletion,
+    IChangeSeedling changes,
+    IEditSeedling editing,
+    ISeedlingReader reader) : ISeedlingsService
 {
     public Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> ReadSeedlingsAsync() => reader.ReadAsync(default);
     public Task<Result<Option<SeedlingReadFromViewModel>>> ReadSeedlingAsync(int id) => reader.ReadAsync(id, default);
@@ -24,5 +30,4 @@ internal class SeedlingsService(ILunarCalendar lunar, ISowSeeds sowing, IDeleteS
 
     public Task<Result<SeedlingEditResultFromViewModel>> EditAsync(EditSeedlingFromViewModel request)
         => editing.ExecuteAsync(request);
-
 }

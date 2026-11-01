@@ -1,5 +1,8 @@
 using BonfireDB.Entities;
 using BonfireDB.Entities.GardenPlanning;
+using BonfireDB.Harvest;
+using BonfireDB.Planning;
+using BonfireDB.Planning.Libraries;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.Context;
@@ -34,10 +37,10 @@ public class DbBonfire(DbContextOptions<DbBonfire> options) : DbContext(options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        BonfireDB.Planning.Libraries.PlanningLibraryConfiguration.Configure(modelBuilder);
-        BonfireDB.Planning.PlantingPlanConfiguration.Configure(modelBuilder);
-        BonfireDB.Harvest.HarvestJournalConfiguration.Configure(modelBuilder);
-        BonfireDB.Planning.PerennialPlanningConfiguration.Configure(modelBuilder);
+        PlanningLibraryConfiguration.Configure(modelBuilder);
+        PlantingPlanConfiguration.Configure(modelBuilder);
+        HarvestJournalConfiguration.Configure(modelBuilder);
+        PerennialPlanningConfiguration.Configure(modelBuilder);
         modelBuilder.Entity<SortOption>().HasIndex(o => new { o.Category, o.Name }).IsUnique();
 
         // --- TPH: иерархия GardenPlot ---

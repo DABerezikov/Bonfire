@@ -1,8 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using BonfireDB.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -39,9 +39,9 @@ internal class DbInitializer(DbBonfire db, ILogger<DbInitializer> logger)
             var meta = seedling.SeedlingInfos.FirstOrDefault(i => i.SeedlingNumber == 0);
             if (meta == null) continue;
             if (meta.LandingDate > DateTime.MinValue) seedling.LandingDate = meta.LandingDate;
-            seedling.LunarPhase     = meta.LunarPhase;
+            seedling.LunarPhase = meta.LunarPhase;
             seedling.SeedlingSource = meta.SeedlingSource;
-            seedling.PlantPlace     = meta.PlantPlace;
+            seedling.PlantPlace = meta.PlantPlace;
         }
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

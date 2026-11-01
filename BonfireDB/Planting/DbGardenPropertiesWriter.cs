@@ -1,15 +1,16 @@
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden;
-using BonfireDB.Entities.GardenPlanning;
 using BonfireDB.Entities.Base;
+using BonfireDB.Entities.GardenPlanning;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.Planting;
 
 public sealed class DbGardenPropertiesWriter(IUnitOfWorkFactory units) : IGardenPropertiesWriter
 {
-    public async Task<Result<GardenPropertiesResultFromViewModel>> ApplyAsync(GardenPropertiesEdit edit, CancellationToken cancellationToken)
+    public async Task<Result<GardenPropertiesResultFromViewModel>> ApplyAsync(GardenPropertiesEdit edit,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edit);
         cancellationToken.ThrowIfCancellationRequested();
@@ -32,7 +33,8 @@ public sealed class DbGardenPropertiesWriter(IUnitOfWorkFactory units) : IGarden
             }
             catch (DbUpdateException error)
             {
-                return Result.Failure<GardenPropertiesResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+                return Result.Failure<GardenPropertiesResultFromViewModel>(
+                    $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
             }
         }, error => Task.FromResult(Result.Failure<GardenPropertiesResultFromViewModel>(error))).ConfigureAwait(false);
     }

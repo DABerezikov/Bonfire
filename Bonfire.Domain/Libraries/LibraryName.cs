@@ -4,8 +4,8 @@ namespace Bonfire.Domain.Libraries;
 
 public sealed record LibraryName
 {
-    public string Value { get; }
     private LibraryName(string value) => Value = value;
+    public string Value { get; }
 
     public static Result<LibraryName> Create(string value) => string.IsNullOrWhiteSpace(value)
         ? Result.Failure<LibraryName>("Название не может быть пустым")

@@ -21,15 +21,16 @@ internal static class CollisionHelper
 
     public static bool CollidesWithAny(double x, double y, double w, double h,
         IEnumerable<GreenhouseFromViewModel> greenhouses)
-        => greenhouses.Any(greenhouse => Overlaps(x, y, w, h, greenhouse.X, greenhouse.Y, greenhouse.DisplayWidth, greenhouse.DisplayHeight));
+        => greenhouses.Any(greenhouse => Overlaps(x, y, w, h, greenhouse.X, greenhouse.Y, greenhouse.DisplayWidth,
+            greenhouse.DisplayHeight));
 
     public static bool CollidesWithSiblings(double x, double y, double w, double h, GardenElementFromViewModel vm)
         => CollidesWithAny(x, y, w, h, vm.ContainerElements ?? [], vm)
-            || CollidesWithAny(x, y, w, h, vm.ContainerGreenhouses ?? []);
+           || CollidesWithAny(x, y, w, h, vm.ContainerGreenhouses ?? []);
 
     public static bool CollidesWithSiblings(double x, double y, double w, double h, GreenhouseFromViewModel vm)
         => CollidesWithAny(x, y, w, h, vm.ContainerElements ?? [])
-            || CollidesWithAny(x, y, w, h, (vm.ContainerGreenhouses ?? []).Where(greenhouse => greenhouse != vm));
+           || CollidesWithAny(x, y, w, h, (vm.ContainerGreenhouses ?? []).Where(greenhouse => greenhouse != vm));
 
     public static Result<Option<(double x, double y)>> FindPlacement(
         IEnumerable<GardenElementFromViewModel> elements,
@@ -40,5 +41,4 @@ internal static class CollisionHelper
                 .Concat((greenhouses ?? []).Select(CanvasGeometryMapper.Read)))
             .Bind(layout => layout.FindFreeSpot(w, h, canvasW, canvasH))
             .Bind(space => Result.Success(space.Map(rectangle => (x: rectangle.X, y: rectangle.Y))));
-
 }

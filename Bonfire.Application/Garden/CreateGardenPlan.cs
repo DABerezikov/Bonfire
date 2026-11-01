@@ -7,7 +7,8 @@ public sealed record GardenPlanResultFromViewModel(int Id, string Name, int Year
 
 public interface IGardenPlanCreationWriter
 {
-    Task<Result<GardenPlanResultFromViewModel>> CreateAsync(GardenPlanDefinition definition, CancellationToken cancellationToken);
+    Task<Result<GardenPlanResultFromViewModel>> CreateAsync(GardenPlanDefinition definition,
+        CancellationToken cancellationToken);
 }
 
 public interface ICreateGardenPlan
@@ -20,6 +21,6 @@ public sealed class CreateGardenPlan(IGardenPlanCreationWriter writer, TimeProvi
     public Task<Result<GardenPlanResultFromViewModel>> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return writer.CreateAsync(new(clock.GetLocalNow().Year), cancellationToken);
+        return writer.CreateAsync(new GardenPlanDefinition(clock.GetLocalNow().Year), cancellationToken);
     }
 }

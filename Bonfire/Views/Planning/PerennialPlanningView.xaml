@@ -1,60 +1,128 @@
 <UserControl x:Class="Bonfire.Views.Planning.PerennialPlanningView"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:local="clr-namespace:Bonfire.Views.Planning">
- <UserControl.Resources><ResourceDictionary Source="PlanningStyles.xaml"/></UserControl.Resources>
- <DockPanel Margin="12">
-  <StackPanel DockPanel.Dock="Top">
-   <TextBlock Text="Многолетние и двулетние посадки" FontSize="22" FontWeight="SemiBold"/>
-   <WrapPanel><Button Content="Обновить" Command="{Binding LoadCommand}"/><Button Content="Новая посадка" Command="{Binding NewCommand}"/>
-    <Button Content="Сохранить посадку" Command="{Binding SaveCommand}"/><Button Content="Отменить изменения" Command="{Binding CancelCommand}"/>
-    <Button Content="Удалить посадку" Command="{Binding DeleteCommand}"/></WrapPanel>
-   <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,5"/>
-  </StackPanel>
-  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="320"/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-   <ListBox ItemsSource="{Binding Plantings}" SelectedItem="{Binding Selected}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-    <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="4">
-     <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-     <TextBlock><TextBlock.Text><MultiBinding StringFormat="ID {0}; начало {1}"><Binding Path="Id"/><Binding Path="Definition.EstablishmentYear"/></MultiBinding></TextBlock.Text></TextBlock>
-     <TextBlock Text="{Binding Definition.CultureName}"/><TextBlock Text="{Binding Definition.SortName}"/>
-    </StackPanel></DataTemplate></ListBox.ItemTemplate>
-   </ListBox>
-   <TabControl Grid.Column="2">
-    <TabItem Header="Посадка">
-     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="8">
-       <TextBlock Text="Название посадки"/><TextBox x:Name="PerennialNameInput" Text="{Binding Draft.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-       <TextBlock Text="Год начала (не год нового посева)"/><TextBox Text="{Binding Draft.EstablishmentYear, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-       <TextBlock Text="Культура / сорт"/><ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Draft.Choice}" ItemTemplate="{StaticResource PlanningPairTemplate}"/>
-       <TextBlock Text="Регион"/><ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding Draft.Region}" DisplayMemberPath="Definition.Name.Value"/>
-       <Button Content="Скопировать жизненный цикл из справочника" Command="{Binding CopyProfileCommand}" HorizontalAlignment="Left"/>
-       <TextBlock Text="Всходы первого сезона: необязательный период дд.мм.гггг" TextWrapping="Wrap"/>
-       <UniformGrid Columns="2"><TextBox Text="{Binding Draft.EmergenceStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Text="{Binding Draft.EmergenceEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/></UniformGrid>
-       <local:LifeCycleEditor DataContext="{Binding Draft.LifeCycle}"/>
-       <TextBlock Text="{Binding Draft.Error}" TextWrapping="Wrap" Foreground="#A03020"/>
-       <TextBlock Text="Одна посадка сохраняет ID между сезонами. Профиль хранится снимком; справочник и фактические посевы не изменяются." TextWrapping="Wrap"/>
-      </StackPanel>
-     </ScrollViewer>
-    </TabItem>
-    <TabItem Header="Сезон в плане">
-     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="8">
-       <TextBlock Text="Сезонный план"/>
-       <ComboBox ItemsSource="{Binding Plans}" SelectedItem="{Binding SelectedPlan}"><ComboBox.ItemTemplate><DataTemplate><TextBlock><TextBlock.Text><MultiBinding StringFormat="{}{0} · {1} · {2}"><Binding Path="SeasonYear"/><Binding Path="Name"/><Binding Path="RegionName"/></MultiBinding></TextBlock.Text></TextBlock></DataTemplate></ComboBox.ItemTemplate></ComboBox>
-       <TextBlock Text="{Binding SavedCount}"/>
-       <TextBlock Text="Ручные периоды, дд.мм.гггг. Пусто — расчёт из сохранённого профиля." TextWrapping="Wrap"/>
-       <TextBlock Text="Цветение, с / по"/>
-       <UniformGrid Columns="2"><TextBox Text="{Binding Season.FlowerStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Text="{Binding Season.FlowerEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/></UniformGrid>
-       <TextBlock Text="Плодоношение, с / по"/>
-       <UniformGrid Columns="2"><TextBox Text="{Binding Season.FruitStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/><TextBox Text="{Binding Season.FruitEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/></UniformGrid>
-       <TextBlock Text="{Binding Season.Error}" TextWrapping="Wrap" Foreground="#A03020"/>
-       <WrapPanel><Button Content="Рассчитать периоды" Command="{Binding CalculateCommand}"/><Button Content="Сохранить в план" Command="{Binding SaveSeasonCommand}"/>
-        <Button Content="Убрать из плана" Command="{Binding DeleteSeasonCommand}"/></WrapPanel>
-       <TextBlock Text="{Binding PreviewText}" TextWrapping="Wrap" Margin="0,8"/>
-       <TextBlock Text="Сначала сохраните изменения самой посадки. Смена сезона только показывает прогноз; запись выполняется кнопкой. Удаление представления оставляет посадку и журнал сборов." TextWrapping="Wrap"/>
-      </StackPanel>
-     </ScrollViewer>
-    </TabItem>
-   </TabControl>
-  </Grid>
- </DockPanel>
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Bonfire.Views.Planning">
+    <UserControl.Resources>
+        <ResourceDictionary Source="PlanningStyles.xaml" />
+    </UserControl.Resources>
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Многолетние и двулетние посадки" FontSize="22" FontWeight="SemiBold" />
+            <WrapPanel>
+                <Button Content="Обновить" Command="{Binding LoadCommand}" />
+                <Button Content="Новая посадка" Command="{Binding NewCommand}" />
+                <Button Content="Сохранить посадку" Command="{Binding SaveCommand}" />
+                <Button Content="Отменить изменения" Command="{Binding CancelCommand}" />
+                <Button Content="Удалить посадку" Command="{Binding DeleteCommand}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,5" />
+        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320" /><ColumnDefinition Width="12" /><ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <ListBox ItemsSource="{Binding Plantings}" SelectedItem="{Binding Selected}"
+                     HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="4">
+                            <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="ID {0}; начало {1}">
+                                        <Binding Path="Id" /><Binding Path="Definition.EstablishmentYear" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Definition.CultureName}" />
+                            <TextBlock Text="{Binding Definition.SortName}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TabControl Grid.Column="2">
+                <TabItem Header="Посадка">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8">
+                            <TextBlock Text="Название посадки" />
+                            <TextBox x:Name="PerennialNameInput"
+                                     Text="{Binding Draft.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Text="Год начала (не год нового посева)" />
+                            <TextBox
+                                Text="{Binding Draft.EstablishmentYear, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Text="Культура / сорт" />
+                            <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Draft.Choice}"
+                                      ItemTemplate="{StaticResource PlanningPairTemplate}" />
+                            <TextBlock Text="Регион" />
+                            <ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding Draft.Region}"
+                                      DisplayMemberPath="Definition.Name.Value" />
+                            <Button Content="Скопировать жизненный цикл из справочника"
+                                    Command="{Binding CopyProfileCommand}" HorizontalAlignment="Left" />
+                            <TextBlock Text="Всходы первого сезона: необязательный период дд.мм.гггг"
+                                       TextWrapping="Wrap" />
+                            <UniformGrid Columns="2">
+                                <TextBox
+                                    Text="{Binding Draft.EmergenceStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                <TextBox
+                                    Text="{Binding Draft.EmergenceEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            </UniformGrid>
+                            <local:LifeCycleEditor DataContext="{Binding Draft.LifeCycle}" />
+                            <TextBlock Text="{Binding Draft.Error}" TextWrapping="Wrap" Foreground="#A03020" />
+                            <TextBlock
+                                Text="Одна посадка сохраняет ID между сезонами. Профиль хранится снимком; справочник и фактические посевы не изменяются."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="Сезон в плане">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="8">
+                            <TextBlock Text="Сезонный план" />
+                            <ComboBox ItemsSource="{Binding Plans}" SelectedItem="{Binding SelectedPlan}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} · {1} · {2}">
+                                                    <Binding Path="SeasonYear" /><Binding Path="Name" />
+                                                    <Binding Path="RegionName" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Text="{Binding SavedCount}" />
+                            <TextBlock Text="Ручные периоды, дд.мм.гггг. Пусто — расчёт из сохранённого профиля."
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="Цветение, с / по" />
+                            <UniformGrid Columns="2">
+                                <TextBox
+                                    Text="{Binding Season.FlowerStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                <TextBox
+                                    Text="{Binding Season.FlowerEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            </UniformGrid>
+                            <TextBlock Text="Плодоношение, с / по" />
+                            <UniformGrid Columns="2">
+                                <TextBox
+                                    Text="{Binding Season.FruitStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                <TextBox
+                                    Text="{Binding Season.FruitEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            </UniformGrid>
+                            <TextBlock Text="{Binding Season.Error}" TextWrapping="Wrap" Foreground="#A03020" />
+                            <WrapPanel>
+                                <Button Content="Рассчитать периоды" Command="{Binding CalculateCommand}" />
+                                <Button Content="Сохранить в план" Command="{Binding SaveSeasonCommand}" />
+                                <Button Content="Убрать из плана" Command="{Binding DeleteSeasonCommand}" />
+                            </WrapPanel>
+                            <TextBlock Text="{Binding PreviewText}" TextWrapping="Wrap" Margin="0,8" />
+                            <TextBlock
+                                Text="Сначала сохраните изменения самой посадки. Смена сезона только показывает прогноз; запись выполняется кнопкой. Удаление представления оставляет посадку и журнал сборов."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </DockPanel>
 </UserControl>

@@ -9,10 +9,19 @@ public interface IReportService
 }
 
 public record SeedReportItem(
-    string Culture, string Sort, string Producer,
-    string ExpirationDate, double WeightPack, double QuantityPack);
+    string Culture,
+    string Sort,
+    string Producer,
+    string ExpirationDate,
+    double WeightPack,
+    double QuantityPack);
 
 public record SeedlingReportItem(
-    string Culture, string Sort, string Producer,
-    string LandingDate, double Weight, double Quantity,
-    int CountGerminate, int Balance);
+    string Culture,
+    string Sort,
+    string Producer,
+    string LandingDate,
+    double Weight,
+    double Quantity,
+    int CountGerminate,
+    int Balance);

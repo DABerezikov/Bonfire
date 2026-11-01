@@ -1,25 +1,32 @@
 using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Bonfire.ViewModels.Base;
 
 namespace Bonfire.Models;
 
 public class SortEditModel : ViewModel, IDataErrorInfo
 {
-    private bool _dirty;
+    private static readonly string NegativeError = "Значение должно быть ≥ 0";
 
     public int Id { get; init; }
 
     public string? Name
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public string? Description
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? MinGerminationTime
@@ -51,101 +58,149 @@ public class SortEditModel : ViewModel, IDataErrorInfo
     public int? AgeOfSeedlings
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? GrowingSeason
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? MaxGrowingSeason
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? LandingPattern
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? PlantHeight
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public string? PlantColor
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public string? Maturity
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? MaxAgeOfSeedlings
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? MaxPlantHeight
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? LandingRowSpacing
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public double? YieldKg
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? MinFruitSize
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public int? MaxFruitSize
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public double? MinFruitWeight
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public double? MaxFruitWeight
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     // Культура меняется только в редакторе библиотек.
     public int? CultureId
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
-    public bool IsDirty => _dirty;
+    public bool IsDirty { get; private set; }
 
     public bool HasErrors =>
         string.IsNullOrWhiteSpace(Name)
@@ -168,18 +223,11 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         || InvalidRange(YieldKg, null) || HasYieldPrecisionError || LandingRowSpacing < 0;
 
     private bool HasYieldPrecisionError => YieldKg.HasValue && double.IsFinite(YieldKg.Value)
-        && Math.Round(YieldKg.Value, 1) != YieldKg.Value;
+                                                            && Math.Round(YieldKg.Value, 1) != YieldKg.Value;
 
     private bool HasIncompletePlantingScheme => LandingPattern.HasValue != LandingRowSpacing.HasValue;
 
-    private static bool InvalidRange(double? min, double? max) =>
-        (min.HasValue && (!double.IsFinite(min.Value) || min < 0))
-        || (max.HasValue && (!double.IsFinite(max.Value) || max < 0))
-        || (min.HasValue && max.HasValue && min > max);
-
     public string Error => string.Empty;
-
-    private static readonly string NegativeError = "Значение должно быть ≥ 0";
 
     public string this[string columnName] => columnName switch
     {
@@ -197,7 +245,8 @@ public class SortEditModel : ViewModel, IDataErrorInfo
             => NegativeError,
         nameof(PlantHeight) when PlantHeight < 0
             => NegativeError,
-        nameof(MinGerminationTime) when MinGerminationTime.HasValue && MaxGerminationTime.HasValue && MinGerminationTime > MaxGerminationTime
+        nameof(MinGerminationTime) when MinGerminationTime.HasValue && MaxGerminationTime.HasValue &&
+                                        MinGerminationTime > MaxGerminationTime
             => "Минимум не может быть больше максимума",
         nameof(AgeOfSeedlings) or nameof(MaxAgeOfSeedlings) when InvalidRange(AgeOfSeedlings, MaxAgeOfSeedlings)
             => "Некорректный диапазон возраста рассады",
@@ -217,15 +266,20 @@ public class SortEditModel : ViewModel, IDataErrorInfo
         _ => string.Empty
     };
 
+    private static bool InvalidRange(double? min, double? max) =>
+        (min.HasValue && (!double.IsFinite(min.Value) || min < 0))
+        || (max.HasValue && (!double.IsFinite(max.Value) || max < 0))
+        || (min.HasValue && max.HasValue && min > max);
+
     public void ResetDirty()
     {
-        _dirty = false;
+        IsDirty = false;
         OnPropertyChanged(nameof(IsDirty));
     }
 
-    private void SetDirty([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
+    private void SetDirty([CallerMemberName] string? propertyName = null)
     {
-        _dirty = true;
+        IsDirty = true;
         var pairedProperty = propertyName switch
         {
             nameof(GrowingSeason) => nameof(MaxGrowingSeason),

@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:m="clr-namespace:Bonfire.Models"
-             xmlns:vm="clr-namespace:Bonfire.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance {x:Type m:GardenElementFromViewModel}}"
              d:DesignHeight="300" d:DesignWidth="600">
@@ -16,13 +15,13 @@
     -->
     <UserControl.Resources>
         <Style x:Key="SpotButtonStyle" TargetType="Button">
-            <Setter Property="Width"  Value="120"/>
-            <Setter Property="Height" Value="100"/>
-            <Setter Property="Margin" Value="2"/>
-            <Setter Property="Padding" Value="6,5"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="120" />
+            <Setter Property="Height" Value="100" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Padding" Value="6,5" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -31,11 +30,11 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CellBorder" Property="Opacity" Value="0.85"/>
+                                <Setter TargetName="CellBorder" Property="Opacity" Value="0.85" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -48,8 +47,9 @@
                   HorizontalAlignment="Left">
         <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-                <UniformGrid Columns="{Binding DataContext.GridColumns,
-                                 RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                <UniformGrid
+                    Columns="{Binding DataContext.GridColumns,
+                                 RelativeSource={RelativeSource AncestorType=UserControl}}" />
             </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
@@ -62,15 +62,15 @@
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource SpotButtonStyle}">
                             <Setter Property="BorderBrush"
-                                    Value="{Binding CellBorderColor, Converter={StaticResource StringToBrushConverter}}"/>
+                                    Value="{Binding CellBorderColor, Converter={StaticResource StringToBrushConverter}}" />
                             <Style.Triggers>
                                 <!-- Выделенная ячейка — синяя рамка -->
                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                    <Setter Property="BorderBrush" Value="#1976D2"/>
-                                    <Setter Property="BorderThickness" Value="3"/>
+                                    <Setter Property="BorderBrush" Value="#1976D2" />
+                                    <Setter Property="BorderThickness" Value="3" />
                                     <Setter Property="Effect">
                                         <Setter.Value>
-                                            <DropShadowEffect Color="#1976D2" BlurRadius="6" ShadowDepth="0"/>
+                                            <DropShadowEffect Color="#1976D2" BlurRadius="6" ShadowDepth="0" />
                                         </Setter.Value>
                                     </Setter>
                                 </DataTrigger>
@@ -85,19 +85,19 @@
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="EmptySpotState">
-                                            <Setter Property="Text" Value=""/>
+                                            <Setter Property="Text" Value="" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="ReservedSpotState">
-                                            <Setter Property="Text" Value="📋"/>
+                                            <Setter Property="Text" Value="📋" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="PlantedSpotState">
-                                            <Setter Property="Text" Value="🌱"/>
+                                            <Setter Property="Text" Value="🌱" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="HarvestedSpotState">
-                                            <Setter Property="Text" Value="🧺"/>
+                                            <Setter Property="Text" Value="🧺" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StateTypeName}" Value="DeadSpotState">
-                                            <Setter Property="Text" Value="💀"/>
+                                            <Setter Property="Text" Value="💀" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -108,20 +108,20 @@
                                    TextWrapping="Wrap" TextAlignment="Center"
                                    FontSize="11" FontWeight="SemiBold" Foreground="#212121"
                                    MaxHeight="34" TextTrimming="CharacterEllipsis"
-                                   Margin="0,0,0,2"/>
+                                   Margin="0,0,0,2" />
                         <!-- Дата посадки -->
                         <TextBlock Text="{Binding PlantedDate, StringFormat={}{0:dd.MM.yy}}"
                                    HorizontalAlignment="Center"
-                                   FontSize="10" Foreground="#616161"/>
+                                   FontSize="10" Foreground="#616161" />
                         <!-- Статус -->
                         <TextBlock Text="{Binding StateDisplayName}"
                                    HorizontalAlignment="Center"
-                                   FontSize="10" Foreground="#9E9E9E"/>
+                                   FontSize="10" Foreground="#9E9E9E" />
                         <!-- Строка:Столбец -->
                         <TextBlock HorizontalAlignment="Center" FontSize="9" Foreground="#BDBDBD">
-                            <Run Text="{Binding Row}"/>
-                            <Run Text=":"/>
-                            <Run Text="{Binding Column}"/>
+                            <Run Text="{Binding Row}" />
+                            <Run Text=":" />
+                            <Run Text="{Binding Column}" />
                         </TextBlock>
                     </StackPanel>
                 </Button>

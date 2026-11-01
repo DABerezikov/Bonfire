@@ -11,9 +11,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.Planning.Libraries;
 
-public sealed partial class DbPlanningLibraries(IUnitOfWorkFactory units) : IPlanningLibraryReader, IPlanningLibraryWriter
+public sealed partial class DbPlanningLibraries(IUnitOfWorkFactory units)
+    : IPlanningLibraryReader, IPlanningLibraryWriter
 {
-    public Task<Result<ImmutableArray<RegionFromViewModel>>> ReadRegionsAsync(bool includeArchived, CancellationToken cancellationToken)
+    public Task<Result<ImmutableArray<RegionFromViewModel>>> ReadRegionsAsync(bool includeArchived,
+        CancellationToken cancellationToken)
         => DbRead.TryAsync(async () =>
         {
             await using var unit = units.Create();
@@ -27,10 +29,12 @@ public sealed partial class DbPlanningLibraries(IUnitOfWorkFactory units) : IPla
                 if (mapped.IsFailure) return mapped.Bind(_ => Result.Success(result.ToImmutable()));
                 result.Add(mapped.ValueOrThrow());
             }
+
             return Result.Success(result.ToImmutable());
         }, "регионов");
 
-    public Task<Result<ImmutableArray<RegionalPlantingWindow>>> ReadRegionalWindowsAsync(RegionId region, CultureId culture, CancellationToken cancellationToken)
+    public Task<Result<ImmutableArray<RegionalPlantingWindow>>> ReadRegionalWindowsAsync(RegionId region,
+        CultureId culture, CancellationToken cancellationToken)
         => DbRead.TryAsync(async () =>
         {
             await using var unit = units.Create();
@@ -45,10 +49,12 @@ public sealed partial class DbPlanningLibraries(IUnitOfWorkFactory units) : IPla
                 if (mapped.IsFailure) return mapped.Bind(_ => Result.Success(result.ToImmutable()));
                 result.Add(mapped.ValueOrThrow());
             }
+
             return Result.Success(result.ToImmutable());
         }, "региональных сроков");
 
-    public Task<Result<GrowingProfilesFromViewModel>> ReadProfilesAsync(CultureId culture, SortId sort, CancellationToken cancellationToken)
+    public Task<Result<GrowingProfilesFromViewModel>> ReadProfilesAsync(CultureId culture, SortId sort,
+        CancellationToken cancellationToken)
         => DbRead.TryAsync(async () =>
         {
             await using var unit = units.Create();
@@ -56,10 +62,13 @@ public sealed partial class DbPlanningLibraries(IUnitOfWorkFactory units) : IPla
                 .SingleOrDefaultAsync(x => x.CultureId == culture.Value, cancellationToken).ConfigureAwait(false);
             var sortRow = await unit.Repository<SortPlanningSettingsRow>().Rows.AsNoTracking()
                 .SingleOrDefaultAsync(x => x.SortId == sort.Value, cancellationToken).ConfigureAwait(false);
-            var cultureResult = cultureRow is null ? Result.Success(Option.None<CultureGrowingProfile>())
+            var cultureResult = cultureRow is null
+                ? Result.Success(Option.None<CultureGrowingProfile>())
                 : PlanningLibraryDbMapper.Read(cultureRow).Bind(x => Result.Success(Option.Some(x)));
-            var sortResult = sortRow is null ? Result.Success(Option.None<SortPlanningSettings>())
+            var sortResult = sortRow is null
+                ? Result.Success(Option.None<SortPlanningSettings>())
                 : PlanningLibraryDbMapper.Read(sortRow).Bind(x => Result.Success(Option.Some(x)));
-            return cultureResult.Bind(c => sortResult.Bind(s => Result.Success(new GrowingProfilesFromViewModel(c, s))));
+            return cultureResult.Bind(c =>
+                sortResult.Bind(s => Result.Success(new GrowingProfilesFromViewModel(c, s))));
         }, "агропрофилей");
 }

@@ -14,20 +14,29 @@ internal static class CanvasScale
             while (true)
             {
                 var parent = VisualTreeHelper.GetParent(current);
-                if (parent is null) return 1.0;
-                if (parent is Canvas canvas)
+                switch (parent)
                 {
-                    var window = Window.GetWindow(canvas);
-                    if (window is null) return 1.0;
-                    var transform = canvas.TransformToAncestor(window);
-                    var origin = transform.Transform(new Point(0, 0));
-                    var unitX = transform.Transform(new Point(1, 0));
-                    var scale = unitX.X - origin.X;
-                    return scale > 0 ? scale : 1.0;
+                    case null:
+                        return 1.0;
+                    case Canvas canvas:
+                    {
+                        var window = Window.GetWindow(canvas);
+                        if (window is null) return 1.0;
+                        var transform = canvas.TransformToAncestor(window);
+                        var origin = transform.Transform(new Point(0, 0));
+                        var unitX = transform.Transform(new Point(1, 0));
+                        var scale = unitX.X - origin.X;
+                        return scale > 0 ? scale : 1.0;
+                    }
+                    default:
+                        current = parent;
+                        break;
                 }
-                current = parent;
             }
         }
-        catch { return 1.0; }
+        catch
+        {
+            return 1.0;
+        }
     }
 }

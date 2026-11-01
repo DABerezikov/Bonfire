@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden;
@@ -9,7 +10,8 @@ namespace BonfireDB.Planting;
 
 public sealed class DbGardenLockWriter(IUnitOfWorkFactory units) : IGardenLockWriter
 {
-    public async Task<Result<GardenLockResultFromViewModel>> ApplyAsync(GardenLockChange change, CancellationToken cancellationToken)
+    public async Task<Result<GardenLockResultFromViewModel>> ApplyAsync(GardenLockChange change,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(change);
         cancellationToken.ThrowIfCancellationRequested();
@@ -17,18 +19,21 @@ public sealed class DbGardenLockWriter(IUnitOfWorkFactory units) : IGardenLockWr
         switch (change.Target)
         {
             case GardenLockTarget.Element:
-                var element = await unit.Repository<GardenElement>().GetAsync(change.Id, cancellationToken).ConfigureAwait(false);
+                var element = await unit.Repository<GardenElement>().GetAsync(change.Id, cancellationToken)
+                    .ConfigureAwait(false);
                 if (element is null) return Result.Failure<GardenLockResultFromViewModel>("Элемент уже удалён");
                 element.IsLocked = change.IsLocked;
                 break;
             case GardenLockTarget.Greenhouse:
-                var house = await unit.Repository<Greenhouse>().GetAsync(change.Id, cancellationToken).ConfigureAwait(false);
+                var house = await unit.Repository<Greenhouse>().GetAsync(change.Id, cancellationToken)
+                    .ConfigureAwait(false);
                 if (house is null) return Result.Failure<GardenLockResultFromViewModel>("Теплица уже удалена");
                 house.IsLocked = change.IsLocked;
                 break;
             default:
-                throw new System.Diagnostics.UnreachableException();
+                throw new UnreachableException();
         }
+
         try
         {
             await unit.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -40,7 +45,8 @@ public sealed class DbGardenLockWriter(IUnitOfWorkFactory units) : IGardenLockWr
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<GardenLockResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<GardenLockResultFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

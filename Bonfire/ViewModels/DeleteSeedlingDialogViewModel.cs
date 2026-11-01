@@ -11,10 +11,12 @@ public sealed class DeleteSeedlingDialogViewModel(string sortName) : ViewModel
 {
     public string Prompt { get; } = $"Удалить рассаду сорта «{sortName}»?";
     public Option<SeedlingRemoval> Choice { get; private set; } = Option.None<SeedlingRemoval>();
-    public event Action? Confirmed;
 
-    public ICommand CorrectSowingCommand => field ??= new LambdaCommand(() => Select(new SeedlingRemoval.CorrectSowing()));
+    public ICommand CorrectSowingCommand =>
+        field ??= new LambdaCommand(() => Select(new SeedlingRemoval.CorrectSowing()));
+
     public ICommand DiscardCommand => field ??= new LambdaCommand(() => Select(new SeedlingRemoval.Discard()));
+    public event Action? Confirmed;
 
     private void Select(SeedlingRemoval removal)
     {

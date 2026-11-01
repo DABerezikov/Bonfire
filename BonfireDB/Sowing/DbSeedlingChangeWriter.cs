@@ -1,15 +1,16 @@
 using Bonfire.Application.Seedlings;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
-using BonfireDB.Entities.Base;
 using BonfireDB.Entities;
+using BonfireDB.Entities.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.Sowing;
 
 public sealed class DbSeedlingChangeWriter(IUnitOfWorkFactory units) : ISeedlingChangeWriter
 {
-    public async Task<Result<SeedlingChangeResultFromViewModel>> ApplyAsync(SeedlingId id, SeedlingAction action, CancellationToken cancellationToken)
+    public async Task<Result<SeedlingChangeResultFromViewModel>> ApplyAsync(SeedlingId id, SeedlingAction action,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(action);
@@ -31,7 +32,8 @@ public sealed class DbSeedlingChangeWriter(IUnitOfWorkFactory units) : ISeedling
             }
             catch (DbUpdateException error)
             {
-                return Result.Failure<SeedlingChangeResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+                return Result.Failure<SeedlingChangeResultFromViewModel>(
+                    $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
             }
         }, error => Task.FromResult(Result.Failure<SeedlingChangeResultFromViewModel>(error))).ConfigureAwait(false);
     }

@@ -7,4 +7,7 @@ namespace Bonfire.Application.Planning;
 public sealed record PlannedBatchFromViewModel(PlannedBatch Snapshot);
 
 public sealed record SeasonalPlantingPlanFromViewModel(
-    int Id, int SeasonYear, int RegionId, ImmutableArray<PlannedBatchFromViewModel> Batches);
+    int Id,
+    int SeasonYear,
+    int RegionId,
+    ImmutableArray<PlannedBatchFromViewModel> Batches);

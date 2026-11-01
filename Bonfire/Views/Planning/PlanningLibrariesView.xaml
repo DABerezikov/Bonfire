@@ -3,71 +3,124 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Bonfire.Views.Planning"
              xmlns:p="clr-namespace:Bonfire.Models.Planning" Loaded="OnLoaded">
-    <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="PlanningStyles.xaml"/>
-    </ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="PlanningStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <DockPanel Margin="12">
-        <Border DockPanel.Dock="Bottom" Background="#F1F5EE" Padding="8" Margin="0,8,0,0"><TextBlock Text="{Binding Status}" TextWrapping="Wrap"/></Border>
+        <Border DockPanel.Dock="Bottom" Background="#F1F5EE" Padding="8" Margin="0,8,0,0">
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+        </Border>
         <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <TextBlock Text="Регион"/><TextBlock Grid.Column="1" Text="Культура / сорт для профиля и справочных сроков" TextWrapping="Wrap"/>
-            <ComboBox Grid.Row="1" ItemsSource="{Binding Regions}" SelectedItem="{Binding SelectedRegion}" DisplayMemberPath="Definition.Name.Value"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Choices}" SelectedItem="{Binding SelectedChoice}" ItemTemplate="{StaticResource PlanningPairTemplate}"/>
-            <Button Grid.Row="1" Grid.Column="2" Content="Обновить списки" Command="{Binding LoadCommand}"/>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition /><ColumnDefinition /><ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Регион" />
+            <TextBlock Grid.Column="1" Text="Культура / сорт для профиля и справочных сроков" TextWrapping="Wrap" />
+            <ComboBox Grid.Row="1" ItemsSource="{Binding Regions}" SelectedItem="{Binding SelectedRegion}"
+                      DisplayMemberPath="Definition.Name.Value" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Choices}"
+                      SelectedItem="{Binding SelectedChoice}" ItemTemplate="{StaticResource PlanningPairTemplate}" />
+            <Button Grid.Row="1" Grid.Column="2" Content="Обновить списки" Command="{Binding LoadCommand}" />
         </Grid>
         <TabControl>
             <TabItem Header="Регионы">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="12" MaxWidth="1000" HorizontalAlignment="Left" MinWidth="500">
-                        <TextBlock Text="Климатическая справка. Даты заморозков не являются прогнозом погоды." TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        <TextBlock Text="Климатическая справка. Даты заморозков не являются прогнозом погоды."
+                                   TextWrapping="Wrap" Margin="0,0,0,10" />
                         <Grid DataContext="{Binding RegionEditor}">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock Text="Название региона" Style="{StaticResource PlanningLabel}"/>
-                            <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            <TextBlock Grid.Row="1" Text="Часовой пояс" Style="{StaticResource PlanningLabel}"/>
+                            <TextBlock Text="Название региона" Style="{StaticResource PlanningLabel}" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Grid.Row="1" Text="Часовой пояс" Style="{StaticResource PlanningLabel}" />
                             <ComboBox Grid.Row="1" Grid.Column="1" IsEditable="True"
                                       ItemsSource="{Binding DataContext.TimeZoneIds, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      Text="{Binding TimeZoneId, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            <TextBlock Grid.Row="2" Text="Последние весенние заморозки, дд.мм" Style="{StaticResource PlanningLabel}"/>
-                            <StackPanel Grid.Row="2" Grid.Column="1"><UniformGrid Columns="2">
-                                <TextBox Text="{Binding SpringStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                                <TextBox Text="{Binding SpringEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            </UniformGrid><CheckBox Content="Окончание в следующем году" IsChecked="{Binding SpringNextYear}" Margin="0,0,0,5"/></StackPanel>
-                            <TextBlock Grid.Row="3" Text="Первые осенние заморозки, дд.мм" Style="{StaticResource PlanningLabel}"/>
-                            <StackPanel Grid.Row="3" Grid.Column="1"><UniformGrid Columns="2">
-                                <TextBox Text="{Binding AutumnStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                                <TextBox Text="{Binding AutumnEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                            </UniformGrid><CheckBox Content="Окончание в следующем году" IsChecked="{Binding AutumnNextYear}" Margin="0,0,0,5"/></StackPanel>
-                            <TextBlock Grid.Row="4" Text="Источник" Style="{StaticResource PlanningLabel}"/><TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Row="5" Text="Примечание" Style="{StaticResource PlanningLabel}"/><TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="70" TextWrapping="Wrap"/>
-                            <CheckBox Grid.Row="6" Grid.Column="1" Content="Архивный регион — исключить из новых планов" IsChecked="{Binding IsArchived}" Margin="0,6,0,8"/>
+                                      Text="{Binding TimeZoneId, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Grid.Row="2" Text="Последние весенние заморозки, дд.мм"
+                                       Style="{StaticResource PlanningLabel}" />
+                            <StackPanel Grid.Row="2" Grid.Column="1">
+                                <UniformGrid Columns="2">
+                                    <TextBox
+                                        Text="{Binding SpringStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                    <TextBox
+                                        Text="{Binding SpringEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                </UniformGrid>
+                                <CheckBox Content="Окончание в следующем году" IsChecked="{Binding SpringNextYear}"
+                                          Margin="0,0,0,5" />
+                            </StackPanel>
+                            <TextBlock Grid.Row="3" Text="Первые осенние заморозки, дд.мм"
+                                       Style="{StaticResource PlanningLabel}" />
+                            <StackPanel Grid.Row="3" Grid.Column="1">
+                                <UniformGrid Columns="2">
+                                    <TextBox
+                                        Text="{Binding AutumnStart, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                    <TextBox
+                                        Text="{Binding AutumnEnd, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                                </UniformGrid>
+                                <CheckBox Content="Окончание в следующем году" IsChecked="{Binding AutumnNextYear}"
+                                          Margin="0,0,0,5" />
+                            </StackPanel>
+                            <TextBlock Grid.Row="4" Text="Источник" Style="{StaticResource PlanningLabel}" />
+                            <TextBox Grid.Row="4" Grid.Column="1"
+                                     Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Grid.Row="5" Text="Примечание" Style="{StaticResource PlanningLabel}" />
+                            <TextBox Grid.Row="5" Grid.Column="1"
+                                     Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True"
+                                     MinHeight="70" TextWrapping="Wrap" />
+                            <CheckBox Grid.Row="6" Grid.Column="1"
+                                      Content="Архивный регион — исключить из новых планов"
+                                      IsChecked="{Binding IsArchived}" Margin="0,6,0,8" />
                         </Grid>
-                        <WrapPanel><Button Content="Новый регион" Command="{Binding NewRegionCommand}"/><Button Content="Сохранить регион" Command="{Binding SaveRegionCommand}"/></WrapPanel>
+                        <WrapPanel>
+                            <Button Content="Новый регион" Command="{Binding NewRegionCommand}" />
+                            <Button Content="Сохранить регион" Command="{Binding SaveRegionCommand}" />
+                        </WrapPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
             <TabItem Header="Агропрофили">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="12">
-                        <TextBlock Text="Сорт наследует отсутствующие параметры культуры. Диапазон задаётся целиком; пусто означает отсутствие данных." TextWrapping="Wrap" Margin="0,0,0,6"/>
-                        <Button Content="Перечитать профили" Command="{Binding ReloadContextCommand}" HorizontalAlignment="Left"/>
+                        <TextBlock
+                            Text="Сорт наследует отсутствующие параметры культуры. Диапазон задаётся целиком; пусто означает отсутствие данных."
+                            TextWrapping="Wrap" Margin="0,0,0,6" />
+                        <Button Content="Перечитать профили" Command="{Binding ReloadContextCommand}"
+                                HorizontalAlignment="Left" />
                         <Grid IsEnabled="{Binding ContextReady}" Margin="0,8,0,0">
-                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition /><ColumnDefinition Width="18" /><ColumnDefinition />
+                            </Grid.ColumnDefinitions>
                             <GroupBox Header="Профиль культуры" Padding="10">
-                                <StackPanel><local:GrowingProfileEditor DataContext="{Binding CultureFields}"/>
-                                    <Button Content="Сохранить профиль культуры" Command="{Binding SaveCultureCommand}" HorizontalAlignment="Left"/>
+                                <StackPanel>
+                                    <local:GrowingProfileEditor DataContext="{Binding CultureFields}" />
+                                    <Button Content="Сохранить профиль культуры" Command="{Binding SaveCultureCommand}"
+                                            HorizontalAlignment="Left" />
                                 </StackPanel>
                             </GroupBox>
                             <GroupBox Grid.Column="2" Header="Дополнительные настройки сорта" Padding="10">
                                 <StackPanel>
-                                    <TextBlock Text="Существующие сроки прорастания, возраста и вегетации сорта используются из его характеристик. Второй набор сроков здесь не создаётся." TextWrapping="Wrap" Margin="0,0,0,8"/>
-                                    <local:GrowingProfileEditor DataContext="{Binding SortFields}"/>
-                                    <Button Content="Сохранить настройки сорта" Command="{Binding SaveSortCommand}" HorizontalAlignment="Left"/>
+                                    <TextBlock
+                                        Text="Существующие сроки прорастания, возраста и вегетации сорта используются из его характеристик. Второй набор сроков здесь не создаётся."
+                                        TextWrapping="Wrap" Margin="0,0,0,8" />
+                                    <local:GrowingProfileEditor DataContext="{Binding SortFields}" />
+                                    <Button Content="Сохранить настройки сорта" Command="{Binding SaveSortCommand}"
+                                            HorizontalAlignment="Left" />
                                 </StackPanel>
                             </GroupBox>
                         </Grid>
@@ -76,26 +129,51 @@
             </TabItem>
             <TabItem Header="Региональные сроки">
                 <Grid Margin="12" IsEnabled="{Binding ContextReady}">
-                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                    <ListBox ItemsSource="{Binding Windows}" SelectedItem="{Binding SelectedWindow}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                        <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5">
-                            <TextBlock Text="{Binding Label}" TextWrapping="Wrap" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Source}" TextWrapping="Wrap"/>
-                        </StackPanel></DataTemplate></ListBox.ItemTemplate>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition /><ColumnDefinition Width="18" /><ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <ListBox ItemsSource="{Binding Windows}" SelectedItem="{Binding SelectedWindow}"
+                             HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="5">
+                                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Source}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
                     </ListBox>
-                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
                         <StackPanel>
-                            <TextBlock Text="Справочный ежегодный интервал по выбранным региону и культуре" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Text="Назначение"/><ComboBox ItemsSource="{x:Static p:PlanningLookups.Purposes}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding WindowPurpose}"/>
-                            <TextBlock Text="Место"/><ComboBox ItemsSource="{x:Static p:PlanningLookups.Locations}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding WindowLocation}"/>
-                            <TextBlock Text="Размещение"/><ComboBox ItemsSource="{x:Static p:PlanningLookups.Placements}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding WindowPlacement}"/>
-                            <TextBlock Text="Начало и окончание, дд.мм"/>
-                            <UniformGrid Columns="2"><TextBox Text="{Binding WindowStart, UpdateSourceTrigger=PropertyChanged}"/><TextBox Text="{Binding WindowEnd, UpdateSourceTrigger=PropertyChanged}"/></UniformGrid>
-                            <CheckBox Content="Окончание в следующем году" IsChecked="{Binding WindowNextYear}" Margin="0,3,0,8"/>
-                            <TextBlock Text="Источник"/><TextBox Text="{Binding WindowSource, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text="Примечание"/><TextBox Text="{Binding WindowNote, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap"/>
-                            <Button Content="Сохранить интервал" Command="{Binding SaveWindowCommand}" HorizontalAlignment="Left"/>
-                            <TextBlock Text="Для грунта и теплицы, высадки рассады и прямого посева сохраняются отдельные строки. Повторное сохранение того же сочетания обновляет его." TextWrapping="Wrap" Margin="0,8,0,0"/>
+                            <TextBlock Text="Справочный ежегодный интервал по выбранным региону и культуре"
+                                       TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBlock Text="Назначение" />
+                            <ComboBox ItemsSource="{x:Static p:PlanningLookups.Purposes}" SelectedValuePath="Value"
+                                      DisplayMemberPath="Label" SelectedValue="{Binding WindowPurpose}" />
+                            <TextBlock Text="Место" />
+                            <ComboBox ItemsSource="{x:Static p:PlanningLookups.Locations}" SelectedValuePath="Value"
+                                      DisplayMemberPath="Label" SelectedValue="{Binding WindowLocation}" />
+                            <TextBlock Text="Размещение" />
+                            <ComboBox ItemsSource="{x:Static p:PlanningLookups.Placements}" SelectedValuePath="Value"
+                                      DisplayMemberPath="Label" SelectedValue="{Binding WindowPlacement}" />
+                            <TextBlock Text="Начало и окончание, дд.мм" />
+                            <UniformGrid Columns="2">
+                                <TextBox Text="{Binding WindowStart, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Text="{Binding WindowEnd, UpdateSourceTrigger=PropertyChanged}" />
+                            </UniformGrid>
+                            <CheckBox Content="Окончание в следующем году" IsChecked="{Binding WindowNextYear}"
+                                      Margin="0,3,0,8" />
+                            <TextBlock Text="Источник" />
+                            <TextBox Text="{Binding WindowSource, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Примечание" />
+                            <TextBox Text="{Binding WindowNote, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap" />
+                            <Button Content="Сохранить интервал" Command="{Binding SaveWindowCommand}"
+                                    HorizontalAlignment="Left" />
+                            <TextBlock
+                                Text="Для грунта и теплицы, высадки рассады и прямого посева сохраняются отдельные строки. Повторное сохранение того же сочетания обновляет его."
+                                TextWrapping="Wrap" Margin="0,8,0,0" />
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

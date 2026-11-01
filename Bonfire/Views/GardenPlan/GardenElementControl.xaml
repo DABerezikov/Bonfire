@@ -5,7 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:m="clr-namespace:Bonfire.Models"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:fa5="http://schemas.fontawesome.com/icons/"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance {x:Type m:GardenElementFromViewModel}}"
@@ -13,10 +12,10 @@
              Focusable="True" FocusVisualStyle="{x:Null}">
     <UserControl.Style>
         <Style TargetType="UserControl">
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Cursor" Value="Hand" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsLocked}" Value="True">
-                    <Setter Property="Cursor" Value="Arrow"/>
+                    <Setter Property="Cursor" Value="Arrow" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -24,41 +23,41 @@
 
     <UserControl.ToolTip>
         <StackPanel>
-            <TextBlock FontWeight="SemiBold" Text="{Binding Name}"/>
+            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
             <TextBlock Foreground="#757575">
-                <Run Text="{Binding TypeLabel, Mode=OneWay}"/>
-                <Run Text="·"/>
-                <Run Text="{Binding StateDisplayName, Mode=OneWay}"/>
+                <Run Text="{Binding TypeLabel, Mode=OneWay}" />
+                <Run Text="·" />
+                <Run Text="{Binding StateDisplayName, Mode=OneWay}" />
             </TextBlock>
             <TextBlock Margin="0,2,0,0">
-                <Run Text="Д"/>
-                <Run Text="{Binding WidthMeters,  Mode=OneWay, StringFormat={}{0:F2}}"/>
-                <Run Text="м  Ш"/>
-                <Run Text="{Binding HeightMeters, Mode=OneWay, StringFormat={}{0:F2}}"/>
-                <Run Text="м  ("/>
-                <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
-                <Run Text="м²)"/>
+                <Run Text="Д" />
+                <Run Text="{Binding WidthMeters,  Mode=OneWay, StringFormat={}{0:F2}}" />
+                <Run Text="м  Ш" />
+                <Run Text="{Binding HeightMeters, Mode=OneWay, StringFormat={}{0:F2}}" />
+                <Run Text="м  (" />
+                <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}" />
+                <Run Text="м²)" />
             </TextBlock>
             <TextBlock Foreground="#9E9E9E" Margin="0,4,0,0" FontSize="10">
-                <Run Text="Двойной клик — схема посадок"/>
-                <LineBreak/>
-                <Run Text="Правый клик — контекстное меню"/>
+                <Run Text="Двойной клик — схема посадок" />
+                <LineBreak />
+                <Run Text="Правый клик — контекстное меню" />
             </TextBlock>
         </StackPanel>
     </UserControl.ToolTip>
 
     <UserControl.Resources>
         <Style x:Key="ResizeThumbStyle" TargetType="Thumb">
-            <Setter Property="Width"  Value="10"/>
-            <Setter Property="Height" Value="10"/>
-            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="Background" Value="#1976D2" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
                         <Rectangle Fill="{TemplateBinding Background}"
                                    Width="{TemplateBinding Width}"
                                    Height="{TemplateBinding Height}"
-                                   RadiusX="2" RadiusY="2"/>
+                                   RadiusX="2" RadiusY="2" />
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -80,13 +79,13 @@
             <i:InvokeCommandAction
                 Command="{Binding Tag.SelectElementCommand,
                     RelativeSource={RelativeSource AncestorType=UserControl}}"
-                CommandParameter="{Binding}"/>
+                CommandParameter="{Binding}" />
         </i:EventTrigger>
         <!-- Двойной клик — открыть схему посадок -->
         <i:EventTrigger EventName="MouseDoubleClick">
             <i:InvokeCommandAction
                 Command="{Binding Tag.OpenPlantingGridCommand,
-                    RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                    RelativeSource={RelativeSource AncestorType=UserControl}}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
@@ -97,14 +96,15 @@
                 CornerRadius="3">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="BorderBrush" Value="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}"/>
-                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="BorderBrush"
+                            Value="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}" />
+                    <Setter Property="BorderThickness" Value="2" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                            <Setter Property="BorderThickness" Value="3"/>
+                            <Setter Property="BorderThickness" Value="3" />
                             <Setter Property="Effect">
                                 <Setter.Value>
-                                    <DropShadowEffect Color="#1976D2" BlurRadius="8" ShadowDepth="0"/>
+                                    <DropShadowEffect Color="#1976D2" BlurRadius="8" ShadowDepth="0" />
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
@@ -113,7 +113,7 @@
             </Border.Style>
             <!-- Точка состояния по центру -->
             <Ellipse Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center"
-                     Fill="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"/>
+                     Fill="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}" />
         </Border>
 
         <!-- Основной блок элемента (скрывается в компактном режиме) -->
@@ -122,14 +122,15 @@
                 CornerRadius="4" Padding="6,4">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="BorderBrush" Value="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}"/>
-                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="BorderBrush"
+                            Value="{Binding TypeColor, Converter={StaticResource StringToBrushConverter}}" />
+                    <Setter Property="BorderThickness" Value="2" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                            <Setter Property="BorderThickness" Value="3"/>
+                            <Setter Property="BorderThickness" Value="3" />
                             <Setter Property="Effect">
                                 <Setter.Value>
-                                    <DropShadowEffect Color="#1976D2" BlurRadius="8" ShadowDepth="0"/>
+                                    <DropShadowEffect Color="#1976D2" BlurRadius="8" ShadowDepth="0" />
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
@@ -142,25 +143,25 @@
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Name}"
                            FontWeight="SemiBold"
                            FontSize="{Binding AdaptiveFontSize}"
-                           TextTrimming="CharacterEllipsis"/>
+                           TextTrimming="CharacterEllipsis" />
                 <TextBlock DockPanel.Dock="Top" Text="{Binding TypeLabel}"
                            FontSize="{Binding AdaptiveFontSizeSmall}"
-                           Foreground="#757575"/>
+                           Foreground="#757575" />
 
                 <!-- Статус-бейдж -->
                 <Border DockPanel.Dock="Bottom"
                         Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
                         CornerRadius="3" Padding="3,1" HorizontalAlignment="Left" Margin="0,4,0,0">
                     <TextBlock Text="{Binding StateDisplayName}"
-                               Foreground="White" FontSize="{Binding AdaptiveFontSizeTiny}"/>
+                               Foreground="White" FontSize="{Binding AdaptiveFontSizeTiny}" />
                 </Border>
 
                 <!-- Площадь -->
                 <TextBlock DockPanel.Dock="Bottom"
                            FontSize="{Binding AdaptiveFontSizeSmall}"
                            Foreground="#9E9E9E" Margin="0,2,0,0">
-                    <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
-                    <Run Text=" м²"/>
+                    <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}" />
+                    <Run Text=" м²" />
                 </TextBlock>
 
             </DockPanel>
@@ -179,13 +180,13 @@
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SelectElementCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}"/>
+                        CommandParameter="{Binding}" />
                 </i:EventTrigger>
                 <i:EventTrigger EventName="DragCompleted">
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SaveElementPositionCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}"/>
+                        CommandParameter="{Binding}" />
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </Thumb>
@@ -200,9 +201,9 @@
                 CommandParameter="{Binding}">
             <Grid>
                 <fa5:ImageAwesome Icon="Solid_Lock" Height="9" Foreground="#E53935"
-                                  Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}"/>
+                                  Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}" />
                 <fa5:ImageAwesome Icon="Solid_LockOpen" Height="9" Foreground="#BDBDBD"
-                                  Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"/>
+                                  Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}" />
             </Grid>
         </Button>
 
@@ -220,14 +221,14 @@
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SelectElementCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}"/>
+                        CommandParameter="{Binding}" />
                 </i:EventTrigger>
                 <!-- После отпускания — сохранить новый размер в БД -->
                 <i:EventTrigger EventName="DragCompleted">
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SaveElementPositionCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}"/>
+                        CommandParameter="{Binding}" />
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </Thumb>
@@ -242,44 +243,44 @@
         <ContextMenu>
             <MenuItem Header="Схема посадок"
                       Command="{Binding PlacementTarget.Tag.OpenPlantingGridCommand,
-                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-            <Separator/>
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+            <Separator />
             <!-- PlacementTarget.DataContext = GardenElementFromViewModel → CanGoTo* -->
             <MenuItem Header="Запланирована"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPlanned,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="PlannedState"/>
+                      CommandParameter="PlannedState" />
             <MenuItem Header="Подготовлена"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPrepared,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="PreparedState"/>
+                      CommandParameter="PreparedState" />
             <MenuItem Header="Активна"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToActive,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="ActiveState"/>
+                      CommandParameter="ActiveState" />
             <MenuItem Header="Под паром"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToFallow,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="FallowState"/>
+                      CommandParameter="FallowState" />
             <MenuItem Header="Зимовка"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToResting,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeElementStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="RestingState"/>
-            <Separator/>
+                      CommandParameter="RestingState" />
+            <Separator />
             <MenuItem Header="Удалить"
                       Command="{Binding PlacementTarget.Tag.DeleteElementCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Foreground="Red"/>
+                      Foreground="Red" />
         </ContextMenu>
     </UserControl.ContextMenu>
 </UserControl>

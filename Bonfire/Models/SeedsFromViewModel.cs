@@ -40,4 +40,3 @@ public class SeedsFromViewModel
 
     public bool IsOld => DateTime.Now.Year - ExpirationDate.Year > 0;
 }
-

@@ -17,11 +17,12 @@ public sealed record SeedlingDetailsValues
 
 public sealed class SeedlingDetails
 {
+    private SeedlingDetails(SeedlingDetailsValues values, DateTime date, string source)
+        => (Values, LandingDate, Source) = (values, date, source);
+
     public SeedlingDetailsValues Values { get; }
     public DateTime LandingDate { get; }
     public string Source { get; }
-    private SeedlingDetails(SeedlingDetailsValues values, DateTime date, string source)
-        => (Values, LandingDate, Source) = (values, date, source);
 
     public static Result<SeedlingDetails> Create(SeedlingDetailsValues values)
     {
@@ -29,8 +30,8 @@ public sealed class SeedlingDetails
         return SeedAmount.Create(values.Quantity, SeedUnit.Pieces).Bind(_ =>
             SeedAmount.Create(values.Weight, SeedUnit.Grams).Bind(_ =>
                 values.LandingDate.Match(date => values.Source.Match(
-                    source => Result.Success(new SeedlingDetails(values, date, source)),
-                    () => Result.Failure<SeedlingDetails>("Укажите источник рассады")),
+                        source => Result.Success(new SeedlingDetails(values, date, source)),
+                        () => Result.Failure<SeedlingDetails>("Укажите источник рассады")),
                     () => Result.Failure<SeedlingDetails>("Укажите дату посева"))));
     }
 }
@@ -39,18 +40,20 @@ public sealed record SeedlingEntryEdit(int Id, int Number, Option<DateTime> Germ
 
 public sealed class SeedlingEdit
 {
+    private SeedlingEdit(SeedlingId id, SeedlingDetails details, ImmutableArray<SeedlingEntryEdit> entries)
+        => (Id, Details, Entries) = (id, details, entries);
+
     public SeedlingId Id { get; }
     public SeedlingDetails Details { get; }
     public ImmutableArray<SeedlingEntryEdit> Entries { get; }
-    private SeedlingEdit(SeedlingId id, SeedlingDetails details, ImmutableArray<SeedlingEntryEdit> entries)
-        => (Id, Details, Entries) = (id, details, entries);
 
     public static Result<SeedlingEdit> Create(int id, SeedlingDetails details, IEnumerable<SeedlingEntryEdit> entries)
     {
         ArgumentNullException.ThrowIfNull(details);
         ArgumentNullException.ThrowIfNull(entries);
         var snapshot = entries.ToImmutableArray();
-        return snapshot.Any(entry => entry.Id <= 0) || snapshot.Select(entry => entry.Id).Distinct().Count() != snapshot.Length
+        return snapshot.Any(entry => entry.Id <= 0) ||
+               snapshot.Select(entry => entry.Id).Distinct().Count() != snapshot.Length
             ? Result.Failure<SeedlingEdit>("Некорректные идентификаторы записей рассады")
             : SeedlingId.Create(id).Bind(value => Result.Success(new SeedlingEdit(value, details, snapshot)));
     }
@@ -63,7 +66,10 @@ public sealed class SeedlingEdit
         var changes = Entries.ToDictionary(entry => entry.Id);
         return SeedlingBatch.Create(Details.Values.Quantity, current.Entries.Select(entry => entry.Id.Match(
             id => changes.TryGetValue(id, out var edit)
-                ? entry with { Number = edit.Number, GerminationDate = edit.GerminationDate, DeathNote = edit.DeathNote }
+                ? entry with
+                {
+                    Number = edit.Number, GerminationDate = edit.GerminationDate, DeathNote = edit.DeathNote
+                }
                 : entry,
             () => entry)), current.PlantedOut);
     }

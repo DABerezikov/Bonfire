@@ -4,8 +4,8 @@ namespace Bonfire.Domain.Libraries;
 
 public sealed record SortId
 {
-    public int Value { get; }
     private SortId(int value) => Value = value;
+    public int Value { get; }
 
     public static Result<SortId> Create(int value) => value > 0
         ? Result.Success(new SortId(value))

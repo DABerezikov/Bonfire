@@ -13,8 +13,10 @@ internal sealed class AstronomyLunarPhaseCalculator : ILunarPhaseCalculator
     public double GetMoonAge(DateTimeOffset moment)
     {
         var time = new AstroTime(moment.UtcDateTime);
+
         var newMoon = Astronomy.SearchMoonPhase(0, time, -40)
-            ?? throw new InvalidOperationException("Астрономический расчёт не нашёл предыдущее новолуние");
+                      ?? throw new InvalidOperationException("Астрономический расчёт не нашёл предыдущее новолуние");
+
         return time.ut - newMoon.ut;
     }
 }

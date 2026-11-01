@@ -8,14 +8,14 @@ namespace Bonfire.Models;
 
 public sealed class SeedPackageEditModel : ViewModel
 {
-    public SeedPackageValues Values { get; private set; }
-    public bool HasErrors => SeedPackage.Create(Values).IsFailure;
-
     public SeedPackageEditModel(SeedPackageValues values)
     {
         ArgumentNullException.ThrowIfNull(values);
         Values = values;
     }
+
+    public SeedPackageValues Values { get; private set; }
+    public bool HasErrors => SeedPackage.Create(Values).IsFailure;
 
     public double WeightPack
     {

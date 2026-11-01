@@ -7,15 +7,23 @@ namespace Bonfire.Models;
 
 public class PlantingSpotFromViewModel : INotifyPropertyChanged
 {
+    // --- Выделение ---
+    private bool _isSelected;
+
+    private DateTime? _plantedDate;
+
+    // --- Данные посадки ---
+
+    private string? _plantLabel;
+
+    private string _stateTypeName = "EmptySpotState";
     public int Id { get; set; }
     public int Row { get; set; }
     public int Column { get; set; }
 
-    private string _stateTypeName = "EmptySpotState";
-
     /// <summary>
-    /// Тип состояния ячейки. При изменении автоматически пересчитываются
-    /// все вычислимые свойства: цвета, DisplayName, CanGoTo*.
+    ///     Тип состояния ячейки. При изменении автоматически пересчитываются
+    ///     все вычислимые свойства: цвета, DisplayName, CanGoTo*.
     /// </summary>
     public string StateTypeName
     {
@@ -39,49 +47,56 @@ public class PlantingSpotFromViewModel : INotifyPropertyChanged
 
     // --- Вычислимые из StateTypeName ---
     public string StateDisplayName => PlantingSpotState.From(_stateTypeName).DisplayName;
-    public string CellColor        => PlantingSpotState.From(_stateTypeName).CellColor;
-    public string CellBorderColor  => PlantingSpotState.From(_stateTypeName).CellBorderColor;
-    public bool   CanPlant         => PlantingSpotState.From(_stateTypeName).CanPlant;
+    public string CellColor => PlantingSpotState.From(_stateTypeName).CellColor;
+    public string CellBorderColor => PlantingSpotState.From(_stateTypeName).CellBorderColor;
+    public bool CanPlant => PlantingSpotState.From(_stateTypeName).CanPlant;
 
     // --- Допустимые переходы ---
-    public bool CanGoToReserved  => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new ReservedSpotState());
-    public bool CanGoToPlanted   => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new PlantedSpotState());
+    public bool CanGoToReserved => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new ReservedSpotState());
+    public bool CanGoToPlanted => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new PlantedSpotState());
     public bool CanGoToHarvested => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new HarvestedSpotState());
-    public bool CanGoToDead      => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new DeadSpotState());
-    public bool CanGoToEmpty     => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new EmptySpotState());
+    public bool CanGoToDead => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new DeadSpotState());
+    public bool CanGoToEmpty => PlantingSpotState.From(_stateTypeName).CanTransitionTo(new EmptySpotState());
 
-    // --- Выделение ---
-    private bool _isSelected;
     public bool IsSelected
     {
         get => _isSelected;
-        set { _isSelected = value; OnPropertyChanged(); }
+        set
+        {
+            _isSelected = value;
+            OnPropertyChanged();
+        }
     }
 
-    // --- Данные посадки ---
-
-    private string? _plantLabel;
     /// <summary>
-    /// Что посажено (название, заполняется пользователем при посадке).
-    /// Хранится в PlantingSpot.Note.
+    ///     Что посажено (название, заполняется пользователем при посадке).
+    ///     Хранится в PlantingSpot.Note.
     /// </summary>
     public string? PlantLabel
     {
         get => _plantLabel;
-        set { _plantLabel = value; OnPropertyChanged(); }
+        set
+        {
+            _plantLabel = value;
+            OnPropertyChanged();
+        }
     }
 
-    private DateTime? _plantedDate;
     public DateTime? PlantedDate
     {
         get => _plantedDate;
-        set { _plantedDate = value; OnPropertyChanged(); }
+        set
+        {
+            _plantedDate = value;
+            OnPropertyChanged();
+        }
     }
 
     public string? Note { get; set; }
     public int? SeedlingInfoId { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
     private void OnPropertyChanged([CallerMemberName] string? p = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 }

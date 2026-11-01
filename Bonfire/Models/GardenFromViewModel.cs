@@ -6,41 +6,65 @@ namespace Bonfire.Models;
 
 public class GardenFromViewModel : INotifyPropertyChanged
 {
-    public int Id { get; set; }
+    private double _canvasHeight;
+
+    private double _canvasWidth;
+
+    private double _heightMeters;
 
     private string _name = "";
+
+    private double _widthMeters;
+    public int Id { get; set; }
+
     public string Name
     {
         get => _name;
-        set { _name = value; OnPropertyChanged(); }
+        set
+        {
+            _name = value;
+            OnPropertyChanged();
+        }
     }
 
-    private double _widthMeters;
     public double WidthMeters
     {
         get => _widthMeters;
-        set { _widthMeters = value; OnPropertyChanged(); }
+        set
+        {
+            _widthMeters = value;
+            OnPropertyChanged();
+        }
     }
 
-    private double _heightMeters;
     public double HeightMeters
     {
         get => _heightMeters;
-        set { _heightMeters = value; OnPropertyChanged(); }
+        set
+        {
+            _heightMeters = value;
+            OnPropertyChanged();
+        }
     }
 
-    private double _canvasWidth;
     public double CanvasWidth
     {
         get => _canvasWidth;
-        set { _canvasWidth = value; OnPropertyChanged(); }
+        set
+        {
+            _canvasWidth = value;
+            OnPropertyChanged();
+        }
     }
 
-    private double _canvasHeight;
     public double CanvasHeight
     {
         get => _canvasHeight;
-        set { _canvasHeight = value; OnPropertyChanged(); }
+        set
+        {
+            _canvasHeight = value;
+            OnPropertyChanged();
+        }
     }
 
     public string? Address { get; set; }
@@ -50,6 +74,7 @@ public class GardenFromViewModel : INotifyPropertyChanged
     public ObservableCollection<GreenhouseFromViewModel> Greenhouses { get; set; } = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
     private void OnPropertyChanged([CallerMemberName] string? p = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 }

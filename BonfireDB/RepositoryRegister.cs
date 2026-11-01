@@ -1,20 +1,22 @@
+using Bonfire.Application.Garden;
+using Bonfire.Application.Harvest;
+using Bonfire.Application.Libraries;
+using Bonfire.Application.Planning;
+using Bonfire.Application.Planning.Libraries;
+using Bonfire.Application.Seedlings;
+using Bonfire.Application.Seeds;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
-using Microsoft.Extensions.DependencyInjection;
-using Bonfire.Application.Seedlings;
-using BonfireDB.Sowing;
-using Bonfire.Application.Libraries;
-using BonfireDB.Libraries;
-using Bonfire.Application.Seeds;
-using BonfireDB.SeedEditing;
-using Bonfire.Application.Garden;
-using BonfireDB.Planting;
-using Bonfire.Application.Planning.Libraries;
-using BonfireDB.Planning.Libraries;
 using BonfireDB.Entities.Planning;
-using Bonfire.Application.Planning;
+using BonfireDB.Harvest;
+using BonfireDB.Libraries;
 using BonfireDB.Planning;
+using BonfireDB.Planning.Libraries;
+using BonfireDB.Planting;
+using BonfireDB.SeedEditing;
+using BonfireDB.Sowing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BonfireDB;
 
@@ -31,10 +33,10 @@ public static class RepositoryRegister
         .AddSingleton<IPerennialPlanningWriter>(provider => provider.GetRequiredService<DbPerennialPlanning>())
         .AddScoped<IRepository<PerennialPlantingRow>, DbRepository<PerennialPlantingRow>>()
         .AddScoped<IRepository<PerennialSeasonRow>, DbRepository<PerennialSeasonRow>>()
-        .AddSingleton<BonfireDB.Harvest.DbHarvestJournal>()
-        .AddSingleton<Bonfire.Application.Harvest.IHarvestJournalReader>(provider => provider.GetRequiredService<BonfireDB.Harvest.DbHarvestJournal>())
-        .AddSingleton<Bonfire.Application.Harvest.IHarvestJournalWriter>(provider => provider.GetRequiredService<BonfireDB.Harvest.DbHarvestJournal>())
-        .AddSingleton<Bonfire.Application.Harvest.IHarvestSourceReader>(provider => provider.GetRequiredService<BonfireDB.Harvest.DbHarvestJournal>())
+        .AddSingleton<DbHarvestJournal>()
+        .AddSingleton<IHarvestJournalReader>(provider => provider.GetRequiredService<DbHarvestJournal>())
+        .AddSingleton<IHarvestJournalWriter>(provider => provider.GetRequiredService<DbHarvestJournal>())
+        .AddSingleton<IHarvestSourceReader>(provider => provider.GetRequiredService<DbHarvestJournal>())
         .AddScoped<IRepository<HarvestEntryRow>, DbRepository<HarvestEntryRow>>()
         .AddSingleton<IPlantingPlanReader>(provider => provider.GetRequiredService<DbPlantingPlans>())
         .AddSingleton<IPlantingPlanWriter>(provider => provider.GetRequiredService<DbPlantingPlans>())
@@ -93,7 +95,5 @@ public static class RepositoryRegister
         .AddScoped<IRepository<Garden>, GardenRepository>()
         .AddScoped<IRepository<Greenhouse>, GreenhouseRepository>()
         .AddScoped<IRepository<GardenElement>, GardenElementRepository>()
-        .AddScoped<IRepository<PlantingSpot>, DbRepository<PlantingSpot>>()
-        ;
-
+        .AddScoped<IRepository<PlantingSpot>, DbRepository<PlantingSpot>>();
 }

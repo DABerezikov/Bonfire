@@ -2,88 +2,153 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Bonfire.Infrastructure;
 using Bonfire.Domain.Garden.States;
+using Bonfire.Infrastructure;
 
 namespace Bonfire.Models;
 
 public class GardenElementFromViewModel : INotifyPropertyChanged
 {
-    public int Id { get; set; }
+    private bool _canAddPlanting;
+
+    private bool _canModifyGrid = true;
+
+    // Текущий масштаб холста — обновляется из VM при зуме
+    private double _canvasZoom = 1.0;
+
+    private int _gridColumns = 1;
+
+    // --- Сетка посадок ---
+    private int _gridRows = 1;
+
+    private double _height = 80;
+
+    // --- Блокировка ---
+    private bool _isLocked;
+
+    // --- Выделение ---
+    private bool _isSelected;
 
     private string _name = "";
+
+    private ObservableCollection<PlantingSpotFromViewModel> _plantingSpots = [];
+
+    private string _stateColor = "#9E9E9E";
+
+    private string _stateDisplayName = "Запланирована";
+
+    // --- Состояние ---
+
+    private string _stateTypeName = "PlannedState";
+
+    private double _width = 80;
+
+    // --- Позиция на Canvas ---
+    private double _x;
+
+    private double _y;
+    public int Id { get; set; }
+
     public string Name
     {
         get => _name;
-        set { _name = value; OnPropertyChanged(); }
+        set
+        {
+            _name = value;
+            OnPropertyChanged();
+        }
     }
 
     public string ElementType { get; set; } = "";
 
     public string TypeLabel => ElementType switch
     {
-        "Bed"            => "Грядка",
-        "ColdFrame"      => "Парник",
-        "FlowerBed"      => "Цветник",
+        "Bed" => "Грядка",
+        "ColdFrame" => "Парник",
+        "FlowerBed" => "Цветник",
         "OpenGroundArea" => "Открытый грунт",
-        _                => ElementType
+        _ => ElementType
     };
 
     public string TypeColor => ElementType switch
     {
-        "Bed"            => "#388E3C",
-        "ColdFrame"      => "#1976D2",
-        "FlowerBed"      => "#E91E63",
+        "Bed" => "#388E3C",
+        "ColdFrame" => "#1976D2",
+        "FlowerBed" => "#E91E63",
         "OpenGroundArea" => "#795548",
-        _                => "#607D8B"
+        _ => "#607D8B"
     };
 
     public string TypeFill => ElementType switch
     {
-        "Bed"            => "#E8F5E9",
-        "ColdFrame"      => "#E3F2FD",
-        "FlowerBed"      => "#FCE4EC",
+        "Bed" => "#E8F5E9",
+        "ColdFrame" => "#E3F2FD",
+        "FlowerBed" => "#FCE4EC",
         "OpenGroundArea" => "#EFEBE9",
-        _                => "#F5F5F5"
+        _ => "#F5F5F5"
     };
 
     // --- Размеры контейнера (для проверки границ при drag/resize) ---
-    public double ContainerCanvasWidth  { get; set; }
+    public double ContainerCanvasWidth { get; set; }
     public double ContainerCanvasHeight { get; set; }
 
-    // --- Позиция на Canvas ---
-    private double _x;
-    public double X { get => _x; set { _x = value; OnPropertyChanged(); } }
+    public double X
+    {
+        get => _x;
+        set
+        {
+            _x = value;
+            OnPropertyChanged();
+        }
+    }
 
-    private double _y;
-    public double Y { get => _y; set { _y = value; OnPropertyChanged(); } }
+    public double Y
+    {
+        get => _y;
+        set
+        {
+            _y = value;
+            OnPropertyChanged();
+        }
+    }
 
-    private double _width = 80;
     public double Width
     {
         get => _width;
-        set { _width = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); OnPropertyChanged(nameof(IsCompact)); OnPropertyChanged(nameof(WidthMeters)); }
+        set
+        {
+            _width = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(AreaSquareMeters));
+            OnPropertyChanged(nameof(IsCompact));
+            OnPropertyChanged(nameof(WidthMeters));
+        }
     }
 
-    private double _height = 80;
     public double Height
     {
         get => _height;
-        set { _height = value; OnPropertyChanged(); OnPropertyChanged(nameof(AreaSquareMeters)); OnPropertyChanged(nameof(IsCompact)); OnPropertyChanged(nameof(HeightMeters)); }
+        set
+        {
+            _height = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(AreaSquareMeters));
+            OnPropertyChanged(nameof(IsCompact));
+            OnPropertyChanged(nameof(HeightMeters));
+        }
     }
 
     public double Rotation { get; set; }
 
     // Масштаб CanvasConstants.PixelsPerMeter пкс/м
     public double AreaSquareMeters => Math.Round(_width * _height
-        / (CanvasConstants.PixelsPerMeter * CanvasConstants.PixelsPerMeter), 1);
+                                                 / (CanvasConstants.PixelsPerMeter * CanvasConstants.PixelsPerMeter),
+        1);
 
     // Размеры в метрах
-    public double WidthMeters  => Math.Round(_width  / CanvasConstants.PixelsPerMeter, 2);
+    public double WidthMeters => Math.Round(_width / CanvasConstants.PixelsPerMeter, 2);
     public double HeightMeters => Math.Round(_height / CanvasConstants.PixelsPerMeter, 2);
 
-    // Текущий масштаб холста — обновляется из VM при зуме
-    private double _canvasZoom = 1.0;
     public double CanvasZoom
     {
         get => _canvasZoom;
@@ -101,32 +166,33 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
     public bool IsCompact => Math.Min(_width, _height) * _canvasZoom < CanvasConstants.CompactThreshold;
 
     // Адаптивные шрифты: буфер компенсации растёт с уменьшением базового размера
-    public double AdaptiveFontSize      => CanvasConstants.AdaptiveFont(11.0, _canvasZoom); // название
+    public double AdaptiveFontSize => CanvasConstants.AdaptiveFont(11.0, _canvasZoom); // название
     public double AdaptiveFontSizeSmall => CanvasConstants.AdaptiveFont(10.0, _canvasZoom); // тип, площадь
-    public double AdaptiveFontSizeTiny  => CanvasConstants.AdaptiveFont( 9.0, _canvasZoom); // статус
+    public double AdaptiveFontSizeTiny => CanvasConstants.AdaptiveFont(9.0, _canvasZoom); // статус
 
-    // --- Блокировка ---
-    private bool _isLocked;
     public bool IsLocked
     {
         get => _isLocked;
-        set { _isLocked = value; OnPropertyChanged(); }
+        set
+        {
+            _isLocked = value;
+            OnPropertyChanged();
+        }
     }
 
-    // --- Выделение ---
-    private bool _isSelected;
     public bool IsSelected
     {
         get => _isSelected;
-        set { _isSelected = value; OnPropertyChanged(); }
+        set
+        {
+            _isSelected = value;
+            OnPropertyChanged();
+        }
     }
 
-    // --- Состояние ---
-
-    private string _stateTypeName = "PlannedState";
     /// <summary>
-    /// Имя типа состояния. При изменении автоматически пересчитываются DisplayName,
-    /// Color и все CanGoTo* — чтобы кнопки переходов сразу стали активными/неактивными.
+    ///     Имя типа состояния. При изменении автоматически пересчитываются DisplayName,
+    ///     Color и все CanGoTo* — чтобы кнопки переходов сразу стали активными/неактивными.
     /// </summary>
     public string StateTypeName
     {
@@ -149,77 +215,98 @@ public class GardenElementFromViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _stateDisplayName = "Запланирована";
     public string StateDisplayName
     {
         get => _stateDisplayName;
-        set { _stateDisplayName = value; OnPropertyChanged(); }
+        set
+        {
+            _stateDisplayName = value;
+            OnPropertyChanged();
+        }
     }
 
-    private string _stateColor = "#9E9E9E";
     public string StateColor
     {
         get => _stateColor;
-        set { _stateColor = value; OnPropertyChanged(); }
+        set
+        {
+            _stateColor = value;
+            OnPropertyChanged();
+        }
     }
 
-    private bool _canAddPlanting;
     public bool CanAddPlanting
     {
         get => _canAddPlanting;
-        set { _canAddPlanting = value; OnPropertyChanged(); }
+        set
+        {
+            _canAddPlanting = value;
+            OnPropertyChanged();
+        }
     }
 
-    private bool _canModifyGrid = true;
     public bool CanModifyGrid
     {
         get => _canModifyGrid;
-        set { _canModifyGrid = value; OnPropertyChanged(); }
+        set
+        {
+            _canModifyGrid = value;
+            OnPropertyChanged();
+        }
     }
 
     // --- Допустимые переходы (для IsEnabled кнопок) ---
-    public bool CanGoToPlanned  => GardenElementState.From(_stateTypeName).CanTransitionTo(new PlannedState());
+    public bool CanGoToPlanned => GardenElementState.From(_stateTypeName).CanTransitionTo(new PlannedState());
     public bool CanGoToPrepared => GardenElementState.From(_stateTypeName).CanTransitionTo(new PreparedState());
-    public bool CanGoToActive   => GardenElementState.From(_stateTypeName).CanTransitionTo(new ActiveState());
-    public bool CanGoToFallow   => GardenElementState.From(_stateTypeName).CanTransitionTo(new FallowState());
-    public bool CanGoToResting  => GardenElementState.From(_stateTypeName).CanTransitionTo(new RestingState());
+    public bool CanGoToActive => GardenElementState.From(_stateTypeName).CanTransitionTo(new ActiveState());
+    public bool CanGoToFallow => GardenElementState.From(_stateTypeName).CanTransitionTo(new FallowState());
+    public bool CanGoToResting => GardenElementState.From(_stateTypeName).CanTransitionTo(new RestingState());
     public bool CanGoToArchived => GardenElementState.From(_stateTypeName).CanTransitionTo(new ArchivedState());
 
     // --- Ссылки для проверки коллизий в code-behind при drag/resize ---
-    public ObservableCollection<GardenElementFromViewModel>? ContainerElements   { get; set; }
-    public ObservableCollection<GreenhouseFromViewModel>?    ContainerGreenhouses { get; set; }
+    public ObservableCollection<GardenElementFromViewModel>? ContainerElements { get; set; }
+    public ObservableCollection<GreenhouseFromViewModel>? ContainerGreenhouses { get; set; }
 
-    // --- Сетка посадок ---
-    private int _gridRows = 1;
     public int GridRows
     {
         get => _gridRows;
-        set { _gridRows = value; OnPropertyChanged(); }
+        set
+        {
+            _gridRows = value;
+            OnPropertyChanged();
+        }
     }
 
-    private int _gridColumns = 1;
     public int GridColumns
     {
         get => _gridColumns;
-        set { _gridColumns = value; OnPropertyChanged(); }
+        set
+        {
+            _gridColumns = value;
+            OnPropertyChanged();
+        }
     }
 
-    private ObservableCollection<PlantingSpotFromViewModel> _plantingSpots = [];
     public ObservableCollection<PlantingSpotFromViewModel> PlantingSpots
     {
         get => _plantingSpots;
-        set { _plantingSpots = value; OnPropertyChanged(); }
+        set
+        {
+            _plantingSpots = value;
+            OnPropertyChanged();
+        }
     }
 
     public string? SoilType { get; set; }
     public string? Note { get; set; }
 
     // --- Специфичные поля (по типу) ---
-    public string? Orientation { get; set; }   // Bed
+    public string? Orientation { get; set; } // Bed
     public string? CoverMaterial { get; set; } // ColdFrame
-    public string? Shape { get; set; }         // FlowerBed
+    public string? Shape { get; set; } // FlowerBed
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
     private void OnPropertyChanged([CallerMemberName] string? p = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 }

@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
-using Bonfire.Models;
-﻿using Bonfire.Application.Seeds;
-using Bonfire.Domain.Functional;
 using System.Threading.Tasks;
+using Bonfire.Application.Seeds;
+using Bonfire.Domain.Functional;
+using Bonfire.Models;
 
 namespace Bonfire.Services.Interfaces;
 

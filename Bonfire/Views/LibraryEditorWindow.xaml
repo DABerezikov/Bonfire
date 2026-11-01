@@ -9,191 +9,196 @@
              d:DataContext="{d:DesignInstance {x:Type vm:LibraryEditorViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920">
     <TabControl>
-    <TabItem Header="Культуры, сорта и производители">
-    <Grid Margin="10">
+        <TabItem Header="Культуры, сорта и производители">
+            <Grid Margin="10">
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="10"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource LibraryBorderStyle}"/>
-        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource LibraryBorderStyle}"/>
-        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource LibraryBorderStyle}"/>
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource LibraryBorderStyle}" />
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource LibraryBorderStyle}" />
+                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource LibraryBorderStyle}" />
 
-        <!-- Список сортов -->
-        <DataGrid Grid.Column="0" Grid.Row="0" IsReadOnly="True" SelectionMode="Single"
-                  ItemsSource="{Binding Sort}" Margin="15"
-                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                  SelectedItem="{Binding SelectedSort}">
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Width="*">
-                    <DataGridTemplateColumn.Header>
-                        <TextBlock Text="Библиотека сортов" Style="{StaticResource LibraryTextBlockStyle}"/>
-                    </DataGridTemplateColumn.Header>
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate DataType="{x:Type m:SortFromSeedsViewModel}">
-                            <TextBlock Text="{Binding Name}" Padding="4,2"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                <!-- Список сортов -->
+                <DataGrid Grid.Column="0" Grid.Row="0" IsReadOnly="True" SelectionMode="Single"
+                          ItemsSource="{Binding Sort}" Margin="15"
+                          ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
+                          SelectedItem="{Binding SelectedSort}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="*">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="Библиотека сортов" Style="{StaticResource LibraryTextBlockStyle}" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type m:SortFromSeedsViewModel}">
+                                    <TextBlock Text="{Binding Name}" Padding="4,2" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
 
-        <!-- Список культур -->
-        <DataGrid Grid.Column="1" Grid.Row="0" IsReadOnly="True" SelectionMode="Single"
-                  ItemsSource="{Binding Culture}" Margin="15"
-                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                  SelectedItem="{Binding SelectedCulture}">
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Width="*">
-                    <DataGridTemplateColumn.Header>
-                        <TextBlock Text="Библиотека культур" Style="{StaticResource LibraryTextBlockStyle}"/>
-                    </DataGridTemplateColumn.Header>
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate DataType="{x:Type m:CultureFromViewModel}">
-                            <TextBlock Text="{Binding Name}" Padding="4,2"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                <!-- Список культур -->
+                <DataGrid Grid.Column="1" Grid.Row="0" IsReadOnly="True" SelectionMode="Single"
+                          ItemsSource="{Binding Culture}" Margin="15"
+                          ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
+                          SelectedItem="{Binding SelectedCulture}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="*">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="Библиотека культур" Style="{StaticResource LibraryTextBlockStyle}" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type m:CultureFromViewModel}">
+                                    <TextBlock Text="{Binding Name}" Padding="4,2" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
 
-        <!-- Список производителей -->
-        <DataGrid Grid.Column="2" Grid.Row="0" IsReadOnly="True" SelectionMode="Single"
-                  ItemsSource="{Binding Producer}" Margin="15"
-                  ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
-                  SelectedItem="{Binding SelectedProducer}">
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Width="*">
-                    <DataGridTemplateColumn.Header>
-                        <TextBlock Text="Библиотека производителей" Style="{StaticResource LibraryTextBlockStyle}"/>
-                    </DataGridTemplateColumn.Header>
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate DataType="{x:Type m:ProducerFromViewModel}">
-                            <TextBlock Text="{Binding Name}" Padding="4,2"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                <!-- Список производителей -->
+                <DataGrid Grid.Column="2" Grid.Row="0" IsReadOnly="True" SelectionMode="Single"
+                          ItemsSource="{Binding Producer}" Margin="15"
+                          ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}"
+                          SelectedItem="{Binding SelectedProducer}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="*">
+                            <DataGridTemplateColumn.Header>
+                                <TextBlock Text="Библиотека производителей"
+                                           Style="{StaticResource LibraryTextBlockStyle}" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type m:ProducerFromViewModel}">
+                                    <TextBlock Text="{Binding Name}" Padding="4,2" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
 
-        <!-- Единое оформление нижних редакторов. -->
-        <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="5,0,5,5">
-            <StackPanel.Resources>
-                <Style x:Key="EditorBorderStyle" TargetType="Border">
-                    <Setter Property="BorderBrush" Value="Gray"/>
-                    <Setter Property="BorderThickness" Value="1"/>
-                    <Setter Property="CornerRadius" Value="8"/>
-                    <Setter Property="Padding" Value="10,8"/>
-                </Style>
-                <Style x:Key="EditorLabelStyle" TargetType="TextBlock">
-                    <Setter Property="VerticalAlignment" Value="Center"/>
-                    <Setter Property="Margin" Value="0,3,6,3"/>
-                </Style>
-                <Style x:Key="EditorTextBoxStyle" TargetType="TextBox">
-                    <Setter Property="Height" Value="26"/>
-                    <Setter Property="Margin" Value="0,3,16,3"/>
-                    <Setter Property="Padding" Value="4,2"/>
-                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                    <Setter Property="TextAlignment" Value="Center"/>
-                </Style>
-                <Style x:Key="EditorComboBoxStyle" TargetType="ComboBox">
-                    <Setter Property="Height" Value="26"/>
-                    <Setter Property="Margin" Value="0,3,16,3"/>
-                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                </Style>
-                <Style x:Key="EditorButtonStyle" TargetType="Button">
-                    <Setter Property="MinWidth" Value="90"/>
-                    <Setter Property="Height" Value="26"/>
-                </Style>
-            </StackPanel.Resources>
+                <!-- Единое оформление нижних редакторов. -->
+                <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="5,0,5,5">
+                    <StackPanel.Resources>
+                        <Style x:Key="EditorBorderStyle" TargetType="Border">
+                            <Setter Property="BorderBrush" Value="Gray" />
+                            <Setter Property="BorderThickness" Value="1" />
+                            <Setter Property="CornerRadius" Value="8" />
+                            <Setter Property="Padding" Value="10,8" />
+                        </Style>
+                        <Style x:Key="EditorLabelStyle" TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Margin" Value="0,3,6,3" />
+                        </Style>
+                        <Style x:Key="EditorTextBoxStyle" TargetType="TextBox">
+                            <Setter Property="Height" Value="26" />
+                            <Setter Property="Margin" Value="0,3,16,3" />
+                            <Setter Property="Padding" Value="4,2" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="TextAlignment" Value="Center" />
+                        </Style>
+                        <Style x:Key="EditorComboBoxStyle" TargetType="ComboBox">
+                            <Setter Property="Height" Value="26" />
+                            <Setter Property="Margin" Value="0,3,16,3" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        </Style>
+                        <Style x:Key="EditorButtonStyle" TargetType="Button">
+                            <Setter Property="MinWidth" Value="90" />
+                            <Setter Property="Height" Value="26" />
+                        </Style>
+                    </StackPanel.Resources>
 
-            <Border Style="{StaticResource EditorBorderStyle}"
-                    Visibility="{Binding SortDetail, Converter={StaticResource NullToVisibilityConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Название:" Style="{StaticResource EditorLabelStyle}"/>
-                    <TextBox Grid.Column="1" Style="{StaticResource EditorTextBoxStyle}"
-                             Text="{Binding SortDetail.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                    <TextBlock Grid.Column="2" Text="Культура:" Style="{StaticResource EditorLabelStyle}"/>
-                    <ComboBox Grid.Column="3" Style="{StaticResource EditorComboBoxStyle}"
-                              ItemsSource="{Binding Culture}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding SortDetail.CultureId}"/>
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3">
-                        <Button Content="Сохранить" Command="{Binding SaveSortCommand}"
-                                Style="{StaticResource EditorButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Отмена" Command="{Binding CancelSortCommand}"
-                                Style="{StaticResource EditorButtonStyle}"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    <Border Style="{StaticResource EditorBorderStyle}"
+                            Visibility="{Binding SortDetail, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Название:" Style="{StaticResource EditorLabelStyle}" />
+                            <TextBox Grid.Column="1" Style="{StaticResource EditorTextBoxStyle}"
+                                     Text="{Binding SortDetail.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Grid.Column="2" Text="Культура:" Style="{StaticResource EditorLabelStyle}" />
+                            <ComboBox Grid.Column="3" Style="{StaticResource EditorComboBoxStyle}"
+                                      ItemsSource="{Binding Culture}" DisplayMemberPath="Name" SelectedValuePath="Id"
+                                      SelectedValue="{Binding SortDetail.CultureId}" />
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right"
+                                        Margin="0,3">
+                                <Button Content="Сохранить" Command="{Binding SaveSortCommand}"
+                                        Style="{StaticResource EditorButtonStyle}" Margin="0,0,8,0" />
+                                <Button Content="Отмена" Command="{Binding CancelSortCommand}"
+                                        Style="{StaticResource EditorButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-            <Border Style="{StaticResource EditorBorderStyle}"
-                    Visibility="{Binding CultureDetail, Converter={StaticResource NullToVisibilityConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Название:" Style="{StaticResource EditorLabelStyle}"/>
-                    <TextBox Grid.Column="1" Style="{StaticResource EditorTextBoxStyle}"
-                             Text="{Binding CultureDetail.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                    <TextBlock Grid.Column="2" Text="Класс:" Style="{StaticResource EditorLabelStyle}"/>
-                    <ComboBox Grid.Column="3" Style="{StaticResource EditorComboBoxStyle}"
-                              ItemsSource="{Binding ClassList}" SelectedItem="{Binding CultureDetail.Class}"/>
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3">
-                        <Button Content="Сохранить" Command="{Binding SaveCultureCommand}"
-                                Style="{StaticResource EditorButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Отмена" Command="{Binding CancelCultureCommand}"
-                                Style="{StaticResource EditorButtonStyle}"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    <Border Style="{StaticResource EditorBorderStyle}"
+                            Visibility="{Binding CultureDetail, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Название:" Style="{StaticResource EditorLabelStyle}" />
+                            <TextBox Grid.Column="1" Style="{StaticResource EditorTextBoxStyle}"
+                                     Text="{Binding CultureDetail.Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <TextBlock Grid.Column="2" Text="Класс:" Style="{StaticResource EditorLabelStyle}" />
+                            <ComboBox Grid.Column="3" Style="{StaticResource EditorComboBoxStyle}"
+                                      ItemsSource="{Binding ClassList}" SelectedItem="{Binding CultureDetail.Class}" />
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right"
+                                        Margin="0,3">
+                                <Button Content="Сохранить" Command="{Binding SaveCultureCommand}"
+                                        Style="{StaticResource EditorButtonStyle}" Margin="0,0,8,0" />
+                                <Button Content="Отмена" Command="{Binding CancelCultureCommand}"
+                                        Style="{StaticResource EditorButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-            <Border Style="{StaticResource EditorBorderStyle}"
-                    Visibility="{Binding SelectedProducer, Converter={StaticResource NullToVisibilityConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="70"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Название:" Style="{StaticResource EditorLabelStyle}"/>
-                    <TextBox Grid.Column="1" Style="{StaticResource EditorTextBoxStyle}"
-                             Text="{Binding ProducerDetailName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3">
-                        <Button Content="Сохранить" Command="{Binding SaveProducerCommand}"
-                                Style="{StaticResource EditorButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Отмена" Command="{Binding CancelProducerCommand}"
-                                Style="{StaticResource EditorButtonStyle}"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    <Border Style="{StaticResource EditorBorderStyle}"
+                            Visibility="{Binding SelectedProducer, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Название:" Style="{StaticResource EditorLabelStyle}" />
+                            <TextBox Grid.Column="1" Style="{StaticResource EditorTextBoxStyle}"
+                                     Text="{Binding ProducerDetailName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right"
+                                        Margin="0,3">
+                                <Button Content="Сохранить" Command="{Binding SaveProducerCommand}"
+                                        Style="{StaticResource EditorButtonStyle}" Margin="0,0,8,0" />
+                                <Button Content="Отмена" Command="{Binding CancelProducerCommand}"
+                                        Style="{StaticResource EditorButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
 
-        </StackPanel>
+                </StackPanel>
 
-    </Grid>
-    </TabItem>
-    <TabItem Header="Планирование: регионы и агропрофили">
-        <planning:PlanningLibrariesView DataContext="{Binding PlanningLibraries}"/>
-    </TabItem>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Планирование: регионы и агропрофили">
+            <planning:PlanningLibrariesView DataContext="{Binding PlanningLibraries}" />
+        </TabItem>
     </TabControl>
 </UserControl>

@@ -9,7 +9,8 @@ namespace BonfireDB.SeedEditing;
 
 public sealed class DbSeedDeletionWriter(IUnitOfWorkFactory units) : ISeedDeletionWriter
 {
-    public async Task<Result<SeedDeletionResultFromViewModel>> DeleteAsync(SeedDeletion deletion, CancellationToken cancellationToken)
+    public async Task<Result<SeedDeletionResultFromViewModel>> DeleteAsync(SeedDeletion deletion,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(deletion);
         await using var unit = units.Create();
@@ -30,7 +31,8 @@ public sealed class DbSeedDeletionWriter(IUnitOfWorkFactory units) : ISeedDeleti
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<SeedDeletionResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<SeedDeletionResultFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

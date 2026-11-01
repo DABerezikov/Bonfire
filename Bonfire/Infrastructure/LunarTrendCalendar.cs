@@ -15,15 +15,22 @@ internal sealed class LunarTrendCalendar(ILunarPhaseCalculator calculator) : ILu
     public Result<LunarTrend> GetTrend(DateOnly date, TimeZoneInfo timeZone)
     {
         ArgumentNullException.ThrowIfNull(timeZone);
+
         if (date.Year is < FirstSupportedYear or > LastSupportedYear)
-            return Result.Failure<LunarTrend>($"Лунный расчёт поддерживается для {FirstSupportedYear}–{LastSupportedYear} годов");
+            return Result.Failure<LunarTrend>(
+                $"Лунный расчёт поддерживается для {FirstSupportedYear}–{LastSupportedYear} годов");
+
         var localNoon = date.ToDateTime(new TimeOnly(12, 0), DateTimeKind.Unspecified);
+
         if (timeZone.IsInvalidTime(localNoon) || timeZone.IsAmbiguousTime(localNoon))
             return Result.Failure<LunarTrend>("Местный полдень неоднозначен или отсутствует в часовом поясе региона");
+
         var utc = TimeZoneInfo.ConvertTimeToUtc(localNoon, timeZone);
+
         var angle = calculator.GetPhaseAngle(new DateTimeOffset(utc));
-        if (!double.IsFinite(angle) || angle is < 0 or >= 360)
-            return Result.Failure<LunarTrend>("Астрономический расчёт вернул недопустимый фазовый угол");
-        return Result.Success(angle < 180 ? LunarTrend.Growing : LunarTrend.Waning);
+
+        return double.IsFinite(angle) && angle is >= 0 and < 360
+            ? Result.Success(angle < 180 ? LunarTrend.Growing : LunarTrend.Waning)
+            : Result.Failure<LunarTrend>("Астрономический расчёт вернул недопустимый фазовый угол");
     }
 }

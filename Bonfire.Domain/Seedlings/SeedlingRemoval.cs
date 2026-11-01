@@ -5,8 +5,9 @@ namespace Bonfire.Domain.Seedlings;
 
 public sealed record SeedlingId
 {
-    public int Value { get; }
     private SeedlingId(int value) => Value = value;
+    public int Value { get; }
+
     public static Result<SeedlingId> Create(int value) => value > 0
         ? Result.Success(new SeedlingId(value))
         : Result.Failure<SeedlingId>("Некорректный идентификатор рассады");
@@ -14,7 +15,9 @@ public sealed record SeedlingId
 
 public abstract record SeedlingRemoval
 {
-    private SeedlingRemoval() { }
+    private SeedlingRemoval()
+    {
+    }
 
     public sealed record Discard : SeedlingRemoval;
 

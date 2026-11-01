@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Bonfire.Data;
-using Bonfire.Application.Libraries;
 using Bonfire.Infrastructure.Commands;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
@@ -15,14 +12,18 @@ using Bonfire.ViewModels.Base;
 
 namespace Bonfire.ViewModels;
 
-public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog userDialog, SeedsViewModel seedsViewModel, PlanningLibrariesViewModel planningLibraries)
+public class LibraryEditorViewModel(
+    ILibraryService libraryService,
+    IUserDialog userDialog,
+    SeedsViewModel seedsViewModel,
+    PlanningLibrariesViewModel planningLibraries)
     : ViewModel
 {
-    public PlanningLibrariesViewModel PlanningLibraries { get; } = planningLibraries;
     private readonly ILibraryService _libraryService = libraryService;
-    private readonly IUserDialog _userDialog = userDialog;
     private readonly SeedsViewModel _seedsViewModel = seedsViewModel;
+    private readonly IUserDialog _userDialog = userDialog;
     private string? _originalProducerName;
+    public PlanningLibrariesViewModel PlanningLibraries { get; } = planningLibraries;
 
     public IReadOnlyList<string> ClassList => PlantClassList.GetClassList();
 
@@ -36,7 +37,12 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         set
         {
             if (!Set(ref field, value)) return;
-            if (value != null) { SelectedCulture = null; SelectedProducer = null; }
+            if (value != null)
+            {
+                SelectedCulture = null;
+                SelectedProducer = null;
+            }
+
             SortDetail = null;
             if (value != null)
                 _ = LoadSortDetailAsync(value.Id);
@@ -49,7 +55,12 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         set
         {
             if (!Set(ref field, value)) return;
-            if (value != null) { SelectedSort = null; SelectedProducer = null; }
+            if (value != null)
+            {
+                SelectedSort = null;
+                SelectedProducer = null;
+            }
+
             CultureDetail = null;
             if (value != null)
                 _ = LoadCultureDetailAsync(value.Id);
@@ -62,7 +73,12 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
         set
         {
             if (!Set(ref field, value)) return;
-            if (value != null) { SelectedSort = null; SelectedCulture = null; }
+            if (value != null)
+            {
+                SelectedSort = null;
+                SelectedCulture = null;
+            }
+
             _originalProducerName = null;
             ProducerDetailName = null;
             ProducerDetailIsDirty = false;
@@ -101,6 +117,103 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     }
 
     public bool ProducerDetailHasError => string.IsNullOrWhiteSpace(ProducerDetailName);
+
+    // Синхронизация с SeedsViewModel
+
+    // Команды — Сорт
+
+    [field: AllowNull]
+    [field: MaybeNull]
+    public ICommand SaveSortCommand => field
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (SortDetail is not { } detail) return;
+            var result = await _libraryService.UpdateSortAsync(detail);
+            result.Match(saved =>
+            {
+                _seedsViewModel.SyncAfterSortUpdate(saved);
+                detail.ResetDirty();
+                _userDialog.Information("Сохранено");
+                return true;
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return false;
+            });
+        }, () => SortDetail is { HasErrors: false, IsDirty: true });
+
+    [field: AllowNull]
+    [field: MaybeNull]
+    public ICommand CancelSortCommand => field
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (SelectedSort != null)
+                await LoadSortDetailAsync(SelectedSort.Id);
+        }, () => SortDetail is { IsDirty: true });
+
+    // Команды — Культура
+
+    [field: AllowNull]
+    [field: MaybeNull]
+    public ICommand SaveCultureCommand => field
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (CultureDetail is not { } detail) return;
+            var result = await _libraryService.UpdateCultureAsync(detail);
+            result.Match(saved =>
+            {
+                _seedsViewModel.SyncAfterCultureUpdate(saved);
+                detail.ResetDirty();
+                _userDialog.Information("Сохранено");
+                return true;
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return false;
+            });
+        }, () => CultureDetail is { HasErrors: false, IsDirty: true });
+
+    [field: AllowNull]
+    [field: MaybeNull]
+    public ICommand CancelCultureCommand => field
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (SelectedCulture != null)
+                await LoadCultureDetailAsync(SelectedCulture.Id);
+        }, () => CultureDetail is { IsDirty: true });
+
+    // Команды — Производитель
+
+    [field: AllowNull]
+    [field: MaybeNull]
+    public ICommand SaveProducerCommand => field
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (SelectedProducer is not { } producer || ProducerDetailName is not { } name) return;
+            var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
+            result.Match(saved =>
+            {
+                _seedsViewModel.SyncAfterProducerUpdate(saved);
+                _originalProducerName = saved.Name;
+                ProducerDetailName = saved.Name;
+                ProducerDetailIsDirty = false;
+                _userDialog.Information("Сохранено");
+                return true;
+            }, error =>
+            {
+                _userDialog.Error(error);
+                return false;
+            });
+        }, () => SelectedProducer != null && !ProducerDetailHasError && ProducerDetailIsDirty);
+
+    [field: AllowNull]
+    [field: MaybeNull]
+    public ICommand CancelProducerCommand => field
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (SelectedProducer != null)
+                await LoadProducerDetailAsync(SelectedProducer.Id);
+        }, () => SelectedProducer != null && ProducerDetailIsDirty);
 
     // Загрузка деталей
 
@@ -150,95 +263,4 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
             return false;
         });
     }
-
-    // Синхронизация с SeedsViewModel
-
-    // Команды — Сорт
-
-    [field: AllowNull, MaybeNull]
-    public ICommand SaveSortCommand => field
-        ??= new LambdaCommandAsync(async () =>
-        {
-            if (SortDetail is not { } detail) return;
-            var result = await _libraryService.UpdateSortAsync(detail);
-            result.Match(saved =>
-            {
-                _seedsViewModel.SyncAfterSortUpdate(saved);
-                detail.ResetDirty();
-                _userDialog.Information("Сохранено");
-                return true;
-            }, error =>
-            {
-                _userDialog.Error(error);
-                return false;
-            });
-        }, () => SortDetail is { HasErrors: false, IsDirty: true });
-
-    [field: AllowNull, MaybeNull]
-    public ICommand CancelSortCommand => field
-        ??= new LambdaCommandAsync(async () =>
-        {
-            if (SelectedSort != null)
-                await LoadSortDetailAsync(SelectedSort.Id);
-        }, () => SortDetail is { IsDirty: true });
-
-    // Команды — Культура
-
-    [field: AllowNull, MaybeNull]
-    public ICommand SaveCultureCommand => field
-        ??= new LambdaCommandAsync(async () =>
-        {
-            if (CultureDetail is not { } detail) return;
-            var result = await _libraryService.UpdateCultureAsync(detail);
-            result.Match(saved =>
-            {
-                _seedsViewModel.SyncAfterCultureUpdate(saved);
-                detail.ResetDirty();
-                _userDialog.Information("Сохранено");
-                return true;
-            }, error =>
-            {
-                _userDialog.Error(error);
-                return false;
-            });
-        }, () => CultureDetail is { HasErrors: false, IsDirty: true });
-
-    [field: AllowNull, MaybeNull]
-    public ICommand CancelCultureCommand => field
-        ??= new LambdaCommandAsync(async () =>
-        {
-            if (SelectedCulture != null)
-                await LoadCultureDetailAsync(SelectedCulture.Id);
-        }, () => CultureDetail is { IsDirty: true });
-
-    // Команды — Производитель
-
-    [field: AllowNull, MaybeNull]
-    public ICommand SaveProducerCommand => field
-        ??= new LambdaCommandAsync(async () =>
-        {
-            if (SelectedProducer is not { } producer || ProducerDetailName is not { } name) return;
-            var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
-            result.Match(saved =>
-            {
-                _seedsViewModel.SyncAfterProducerUpdate(saved);
-                _originalProducerName = saved.Name;
-                ProducerDetailName = saved.Name;
-                ProducerDetailIsDirty = false;
-                _userDialog.Information("Сохранено");
-                return true;
-            }, error =>
-            {
-                _userDialog.Error(error);
-                return false;
-            });
-        }, () => SelectedProducer != null && !ProducerDetailHasError && ProducerDetailIsDirty);
-
-    [field: AllowNull, MaybeNull]
-    public ICommand CancelProducerCommand => field
-        ??= new LambdaCommandAsync(async () =>
-        {
-            if (SelectedProducer != null)
-                await LoadProducerDetailAsync(SelectedProducer.Id);
-        }, () => SelectedProducer != null && ProducerDetailIsDirty);
 }

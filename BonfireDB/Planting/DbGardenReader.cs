@@ -10,7 +10,8 @@ namespace BonfireDB.Planting;
 
 public sealed class DbGardenReader(IUnitOfWorkFactory units) : IGardenReader
 {
-    public Task<Result<ImmutableArray<GardenPlanResultFromViewModel>>> ReadPlansAsync(CancellationToken cancellationToken)
+    public Task<Result<ImmutableArray<GardenPlanResultFromViewModel>>> ReadPlansAsync(
+        CancellationToken cancellationToken)
         => DbRead.TryAsync(async () =>
         {
             await using var unit = units.Create();
@@ -19,14 +20,16 @@ public sealed class DbGardenReader(IUnitOfWorkFactory units) : IGardenReader
             return Result.Success(plans.Select(GardenReadDbMapper.ReadPlan).ToImmutableArray());
         }, "планировщика");
 
-    public Task<Result<ImmutableArray<GardenReadFromViewModel>>> ReadGardensAsync(GardenPlanId planId, CancellationToken cancellationToken)
+    public Task<Result<ImmutableArray<GardenReadFromViewModel>>> ReadGardensAsync(GardenPlanId planId,
+        CancellationToken cancellationToken)
         => DbRead.TryAsync(async () =>
         {
             ArgumentNullException.ThrowIfNull(planId);
             await using var unit = units.Create();
             var gardens = await unit.Repository<Garden>().Rows
                 .Include(g => g.Elements).ThenInclude(element => element.PlantingSpots)
-                .Include(g => g.Greenhouses).ThenInclude(house => house.Elements).ThenInclude(element => element.PlantingSpots)
+                .Include(g => g.Greenhouses).ThenInclude(house => house.Elements)
+                .ThenInclude(element => element.PlantingSpots)
                 .AsNoTracking().AsSplitQuery().Where(g => g.GardenPlanId == planId.Value)
                 .ToArrayAsync(cancellationToken).ConfigureAwait(false);
             return gardens.Traverse(GardenReadDbMapper.ReadGarden);

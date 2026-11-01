@@ -1,5 +1,7 @@
 using BonfireDB.Entities.Base;
+
 namespace BonfireDB.Entities.Planning;
+
 public class HarvestEntryRow : Entity
 {
     public int Version { get; set; }

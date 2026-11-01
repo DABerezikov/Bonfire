@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
-using BonfireDB.Entities.Base;
 using BonfireDB.Entities;
+using BonfireDB.Entities.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.SeedEditing;

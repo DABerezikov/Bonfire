@@ -5,14 +5,16 @@ namespace Bonfire.Domain.Seeds;
 
 public sealed class SeedEdit
 {
+    private SeedEdit(SeedId seedId, SortId sortId, ProducerId producerId, SeedPackage package,
+        SortCharacteristics characteristics)
+        => (SeedId, SortId, ProducerId, Package, Characteristics) =
+            (seedId, sortId, producerId, package, characteristics);
+
     public SeedId SeedId { get; }
     public SortId SortId { get; }
     public ProducerId ProducerId { get; }
     public SeedPackage Package { get; }
     public SortCharacteristics Characteristics { get; }
-
-    private SeedEdit(SeedId seedId, SortId sortId, ProducerId producerId, SeedPackage package, SortCharacteristics characteristics)
-        => (SeedId, SortId, ProducerId, Package, Characteristics) = (seedId, sortId, producerId, package, characteristics);
 
     public static Result<SeedEdit> Create(int seedId, int sortId, int producerId, string name,
         SeedPackageValues package, SortCharacteristicsValues characteristics)

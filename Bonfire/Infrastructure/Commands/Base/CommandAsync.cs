@@ -20,8 +20,6 @@ internal abstract class CommandAsync : ICommand
         }
     }
 
-    public event EventHandler? ExecutableChanged;
-
     event EventHandler? ICommand.CanExecuteChanged
     {
         add => CommandManager.RequerySuggested += value;
@@ -51,6 +49,8 @@ internal abstract class CommandAsync : ICommand
             Executable = true;
         }
     }
+
+    public event EventHandler? ExecutableChanged;
 
     protected virtual bool CanExecute(object p) => true;
 

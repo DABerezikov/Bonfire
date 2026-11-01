@@ -8,8 +8,5 @@ public class SeedlingInfoRepository(DbBonfire db) : DbRepository<SeedlingInfo>(d
 {
     public override IQueryable<SeedlingInfo> Items => base.Items
         .Include(item => item.Replants)
-        .Include(item => item.Treatments)
-           
-
-    ;
+        .Include(item => item.Treatments);
 }

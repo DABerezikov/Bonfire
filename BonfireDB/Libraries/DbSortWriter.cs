@@ -9,7 +9,8 @@ namespace BonfireDB.Libraries;
 
 public sealed class DbSortWriter(IUnitOfWorkFactory units) : ISortWriter
 {
-    public async Task<Result<SortDetailsFromViewModel>> SaveAsync(SortLibraryEdit edit, CancellationToken cancellationToken)
+    public async Task<Result<SortDetailsFromViewModel>> SaveAsync(SortLibraryEdit edit,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edit);
         await using var unit = units.Create();
@@ -20,7 +21,8 @@ public sealed class DbSortWriter(IUnitOfWorkFactory units) : ISortWriter
 
         var selectedCulture = await edit.CultureChange.Match(async identity =>
         {
-            var culture = await unit.Repository<PlantCulture>().GetAsync(identity.Value, cancellationToken).ConfigureAwait(false);
+            var culture = await unit.Repository<PlantCulture>().GetAsync(identity.Value, cancellationToken)
+                .ConfigureAwait(false);
             return culture is null
                 ? Result.Failure<Option<PlantCulture>>("Культура не найдена")
                 : Result.Success(Option.Some(culture));
@@ -38,7 +40,8 @@ public sealed class DbSortWriter(IUnitOfWorkFactory units) : ISortWriter
                 await unit.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 return Result.Success(new SortDetailsFromViewModel(entity.Id, entity.Name,
                     Array.AsReadOnly(entity.Plants.Select(plant => new SortPlantCultureFromViewModel(plant.Id,
-                        new(plant.PlantCulture.Id, plant.PlantCulture.Name, plant.PlantCulture.Class))).ToArray())));
+                        new CultureDetailsFromViewModel(plant.PlantCulture.Id, plant.PlantCulture.Name,
+                            plant.PlantCulture.Class))).ToArray())));
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -46,7 +49,8 @@ public sealed class DbSortWriter(IUnitOfWorkFactory units) : ISortWriter
             }
             catch (DbUpdateException error)
             {
-                return Result.Failure<SortDetailsFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+                return Result.Failure<SortDetailsFromViewModel>(
+                    $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
             }
         }, error => Task.FromResult(Result.Failure<SortDetailsFromViewModel>(error))).ConfigureAwait(false);
     }

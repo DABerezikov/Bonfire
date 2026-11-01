@@ -4,8 +4,12 @@ using Bonfire.Domain.Seeds;
 
 namespace Bonfire.Application.Libraries;
 
-public sealed record SortReadFromViewModel(int Id, string Name, ProducerDetailsFromViewModel Producer,
-    Option<int> CultureId, SortCharacteristicsValues Characteristics);
+public sealed record SortReadFromViewModel(
+    int Id,
+    string Name,
+    ProducerDetailsFromViewModel Producer,
+    Option<int> CultureId,
+    SortCharacteristicsValues Characteristics);
 
 public interface ILibraryReader
 {

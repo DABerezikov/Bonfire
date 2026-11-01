@@ -16,7 +16,8 @@ internal static class PlantingPlanConfiguration
         var batch = model.Entity<PlannedBatchRow>();
         batch.ToTable("PlannedBatches");
         batch.Property(x => x.Version).IsConcurrencyToken();
-        batch.HasOne(x => x.Plan).WithMany(x => x.Batches).HasForeignKey(x => x.PlanId).OnDelete(DeleteBehavior.Cascade);
+        batch.HasOne(x => x.Plan).WithMany(x => x.Batches).HasForeignKey(x => x.PlanId)
+            .OnDelete(DeleteBehavior.Cascade);
         batch.HasOne<PlantCulture>().WithMany().HasForeignKey(x => x.CultureId).OnDelete(DeleteBehavior.SetNull);
         batch.HasOne<PlantSort>().WithMany().HasForeignKey(x => x.SortId).OnDelete(DeleteBehavior.SetNull);
         batch.HasIndex(x => new { x.PlanId, x.Ordinal });

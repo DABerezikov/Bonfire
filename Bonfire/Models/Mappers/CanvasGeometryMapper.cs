@@ -5,17 +5,29 @@ namespace Bonfire.Models.Mappers;
 
 internal static class CanvasGeometryMapper
 {
-    public static Result<(decimal Length, decimal Width)> PlanningSize(double width, double height, double pixelsPerMeter)
+    public static Result<(decimal Length, decimal Width)> PlanningSize(double width, double height,
+        double pixelsPerMeter)
     {
-        if (!double.IsFinite(width) || !double.IsFinite(height) || !double.IsFinite(pixelsPerMeter) || width <= 0 || height <= 0 || pixelsPerMeter <= 0)
-            return Result.Failure<(decimal, decimal)>("Размеры грядки и масштаб должны быть конечными и положительными");
-        var lengthMeters = width / pixelsPerMeter; var widthMeters = height / pixelsPerMeter;
-        if (!double.IsFinite(lengthMeters) || !double.IsFinite(widthMeters) || lengthMeters >= (double)decimal.MaxValue || widthMeters >= (double)decimal.MaxValue)
+        if (!double.IsFinite(width) || !double.IsFinite(height) || !double.IsFinite(pixelsPerMeter) || width <= 0 ||
+            height <= 0 || pixelsPerMeter <= 0)
+            return Result.Failure<(decimal, decimal)>(
+                "Размеры грядки и масштаб должны быть конечными и положительными");
+
+        var lengthMeters = width / pixelsPerMeter;
+        var widthMeters = height / pixelsPerMeter;
+
+        if (!double.IsFinite(lengthMeters) || !double.IsFinite(widthMeters) ||
+            lengthMeters >= (double)decimal.MaxValue || widthMeters >= (double)decimal.MaxValue)
             return Result.Failure<(decimal, decimal)>("Размеры грядки выходят за диапазон");
-        var length = (decimal)lengthMeters; var actualWidth = (decimal)widthMeters;
-        return length > 0 && actualWidth > 0 ? Result.Success((length, actualWidth))
+
+        var length = (decimal)lengthMeters;
+        var actualWidth = (decimal)widthMeters;
+
+        return length > 0 && actualWidth > 0
+            ? Result.Success((length, actualWidth))
             : Result.Failure<(decimal, decimal)>("Размеры грядки слишком малы для расчёта");
     }
+
     public static Result<CanvasRectangle> Read(GardenElementFromViewModel element)
         => CanvasRectangle.Create(element.X, element.Y, element.Width, element.Height);
 

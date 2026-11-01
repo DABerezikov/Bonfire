@@ -4,9 +4,9 @@ namespace Bonfire.Domain.Libraries;
 
 public sealed class ProducerDefinition
 {
+    private ProducerDefinition(ProducerId id, LibraryName name) => (Id, Name) = (id, name);
     public ProducerId Id { get; }
     public LibraryName Name { get; }
-    private ProducerDefinition(ProducerId id, LibraryName name) => (Id, Name) = (id, name);
 
     public static Result<ProducerDefinition> Create(int id, string name)
         => ProducerId.Create(id).Bind(identity => LibraryName.Create(name)

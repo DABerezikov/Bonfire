@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 using Bonfire.Domain.Planning;
@@ -6,35 +5,53 @@ using Bonfire.Domain.Planning.GrowingProfiles;
 
 namespace Bonfire.Application.Planning;
 
-public sealed class CalculatePlannedBatch(IPlanningContextReader contexts, IRecommendSowing recommendations, TimeProvider timeProvider) : ICalculatePlannedBatch
+public sealed class CalculatePlannedBatch(
+    IPlanningContextReader contexts,
+    IRecommendSowing recommendations,
+    TimeProvider timeProvider) : ICalculatePlannedBatch
 {
-    public Task<Result<PlanningPreviewFromViewModel>> ExecuteAsync(PlanningBatchInputFromViewModel input, CancellationToken cancellationToken = default)
+    public Task<Result<PlanningPreviewFromViewModel>> ExecuteAsync(PlanningBatchInputFromViewModel input,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
         cancellationToken.ThrowIfCancellationRequested();
-        if (input.SearchLimitDays < 0) return Task.FromResult(Result.Failure<PlanningPreviewFromViewModel>("Предел поиска не может быть отрицательным"));
-        return RegionId.Create(input.RegionId).Bind(region => CultureId.Create(input.CultureId).Bind(culture => SortId.Create(input.SortId)
-            .Bind(sort => Result.Success((Region: region, Culture: culture, Sort: sort)))))
-            .Match(async ids => await (await contexts.ReadAsync(ids.Region, ids.Culture, ids.Sort, cancellationToken).ConfigureAwait(false))
-                .Match(context => Build(input, context, cancellationToken), error => Task.FromResult(Result.Failure<PlanningPreviewFromViewModel>(error))).ConfigureAwait(false),
+        if (input.SearchLimitDays < 0)
+            return Task.FromResult(
+                Result.Failure<PlanningPreviewFromViewModel>("Предел поиска не может быть отрицательным"));
+        return RegionId.Create(input.RegionId).Bind(region => CultureId.Create(input.CultureId).Bind(culture => SortId
+                .Create(input.SortId)
+                .Bind(sort => Result.Success((Region: region, Culture: culture, Sort: sort)))))
+            .Match(async ids =>
+                    await (await contexts.ReadAsync(ids.Region, ids.Culture, ids.Sort, cancellationToken)
+                            .ConfigureAwait(false))
+                        .Match(context => Build(input, context, cancellationToken),
+                            error => Task.FromResult(Result.Failure<PlanningPreviewFromViewModel>(error)))
+                        .ConfigureAwait(false),
                 error => Task.FromResult(Result.Failure<PlanningPreviewFromViewModel>(error)));
     }
 
-    private Task<Result<PlanningPreviewFromViewModel>> Build(PlanningBatchInputFromViewModel input, PlanningContextFromViewModel context, CancellationToken cancellationToken)
+    private Task<Result<PlanningPreviewFromViewModel>> Build(PlanningBatchInputFromViewModel input,
+        PlanningContextFromViewModel context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (context.Region.Definition.IsArchived)
             return Task.FromResult(Result.Failure<PlanningPreviewFromViewModel>("Выберите неархивный регион"));
         var cultureId = CultureId.Create(input.CultureId).ValueOrThrow();
-        var culture = context.CultureProfile.Match(x => x, () => CultureGrowingProfile.Create(cultureId, new(), new()).ValueOrThrow());
+        var culture = context.CultureProfile.Match(x => x,
+            () => CultureGrowingProfile.Create(cultureId, new GrowingProfileParameters(), new PlanningExtras())
+                .ValueOrThrow());
         var sortExtras = context.SortSettings.Match(x => x.Extras, () => new PlanningExtras());
-        var references = new PlanningReferenceSnapshot(context.Culture.Name, context.SortName, context.Region.Definition.Name.Value,
+        var references = new PlanningReferenceSnapshot(context.Culture.Name, context.SortName,
+            context.Region.Definition.Name.Value,
             context.Region.Definition.TimeZoneId, context.RegionalWindows);
         var at = timeProvider.GetUtcNow();
-        var missing = GrowingProfileResolver.FindMissingInputs(culture, context.SortCharacteristics, input.Overrides, input.Method is GrowingMethod.DirectSow);
+        var missing = GrowingProfileResolver.FindMissingInputs(culture, context.SortCharacteristics, input.Overrides,
+            input.Method is GrowingMethod.DirectSow);
         return Task.FromResult(missing.Bind(items => items.Length > 0
-            ? Result.Success(new PlanningPreviewFromViewModel(input, context.Fingerprint, references, Option.None<PlanningBatchDocument>(), items, at))
-            : GrowingProfileResolver.Resolve(culture, context.SortCharacteristics, input.Overrides, input.Method is GrowingMethod.DirectSow).Bind(profile =>
+            ? Result.Success(new PlanningPreviewFromViewModel(input, context.Fingerprint, references,
+                Option.None<PlanningBatchDocument>(), items, at))
+            : GrowingProfileResolver.Resolve(culture, context.SortCharacteristics, input.Overrides,
+                input.Method is GrowingMethod.DirectSow).Bind(profile =>
             {
                 var inherited = GrowingProfileResolver.ResolveExtras(culture.Extras, sortExtras, input.Overrides);
                 var extras = inherited with
@@ -49,23 +66,45 @@ public sealed class CalculatePlannedBatch(IPlanningContextReader contexts, IReco
                 var group = extras.LunarGroup.Match(x => x.Value, () => LunarGroup.Unspecified);
                 var harvesting = input.Harvest with
                 {
-                    PerPlantKg = input.Harvest.PerPlantKg.Match(x => Option.Some(x), () => inherited.YieldPerPlantKg.Map(x => x.Value)),
-                    PerM2Kg = input.Harvest.PerM2Kg.Match(x => Option.Some(x), () => inherited.YieldPerM2Kg.Map(x => x.Value)),
-                    PerPlantSource = input.Harvest.PerPlantKg.Match(_ => ParameterSource.Batch, () => inherited.YieldPerPlantKg.Match(x => x.Source, () => ParameterSource.Batch)),
-                    PerM2Source = input.Harvest.PerM2Kg.Match(_ => ParameterSource.Batch, () => inherited.YieldPerM2Kg.Match(x => x.Source, () => ParameterSource.Batch))
+                    PerPlantKg = input.Harvest.PerPlantKg.Match(x => Option.Some(x),
+                        () => inherited.YieldPerPlantKg.Map(x => x.Value)),
+                    PerM2Kg = input.Harvest.PerM2Kg.Match(x => Option.Some(x),
+                        () => inherited.YieldPerM2Kg.Map(x => x.Value)),
+                    PerPlantSource = input.Harvest.PerPlantKg.Match(_ => ParameterSource.Batch,
+                        () => inherited.YieldPerPlantKg.Match(x => x.Source, () => ParameterSource.Batch)),
+                    PerM2Source = input.Harvest.PerM2Kg.Match(_ => ParameterSource.Batch,
+                        () => inherited.YieldPerM2Kg.Match(x => x.Source, () => ParameterSource.Batch))
                 };
                 return HarvestProjection.Calculate(harvesting, input.TargetPlants.Value).Bind(harvest =>
                 {
-                var targetInput = input with { TargetPlants = PlantCount.Create(harvest.TargetPlants).ValueOrThrow() };
-                var settings = new PlanningBatchSettings { Harvest = harvesting, Overrides = input.Overrides, Extras = Option.Some(extras),
-                    GerminationPercentage = germination, LossPercentage = losses, Group = group, SearchLimitDays = input.SearchLimitDays };
-                return PlannedBatchDefinition.Create(cultureId, SortId.Create(input.SortId).ValueOrThrow(), input.Conditions,
-                    input.Method, profile, targetInput.TargetPlants, input.Choices).Bind(batch =>
-                    recommendations.Execute(new(input.Method, profile, input.Choices, settings.Extras, group, context.Region.Definition.TimeZone, input.SearchLimitDays), cancellationToken)
-                    .Bind(preview => Quantity(targetInput, germination, losses).Bind(quantity =>
-                        PlanningBatchDocument.Create(batch, settings, references, preview, quantity, at)
-                            .Bind(document => Result.Success(new PlanningPreviewFromViewModel(input, context.Fingerprint, references, Option.Some(document),
-                                quantity is Option<SeedQuantityCalculation>.None ? ["Для автоматического количества задайте всхожесть и потери либо введите число семян вручную"] : [], at))))));
+                    var targetInput = input with
+                    {
+                        TargetPlants = PlantCount.Create(harvest.TargetPlants).ValueOrThrow()
+                    };
+                    var settings = new PlanningBatchSettings
+                    {
+                        Harvest = harvesting, Overrides = input.Overrides, Extras = Option.Some(extras),
+                        GerminationPercentage = germination, LossPercentage = losses, Group = group,
+                        SearchLimitDays = input.SearchLimitDays
+                    };
+                    return PlannedBatchDefinition.Create(cultureId, SortId.Create(input.SortId).ValueOrThrow(),
+                        input.Conditions,
+                        input.Method, profile, targetInput.TargetPlants, input.Choices).Bind(batch =>
+                        recommendations
+                            .Execute(
+                                new SowingRecommendationRequestFromViewModel(input.Method, profile, input.Choices,
+                                    settings.Extras, group, context.Region.Definition.TimeZone, input.SearchLimitDays),
+                                cancellationToken)
+                            .Bind(preview => Quantity(targetInput, germination, losses).Bind(quantity =>
+                                PlanningBatchDocument.Create(batch, settings, references, preview, quantity, at)
+                                    .Bind(document => Result.Success(new PlanningPreviewFromViewModel(input,
+                                        context.Fingerprint, references, Option.Some(document),
+                                        quantity is Option<SeedQuantityCalculation>.None
+                                            ?
+                                            [
+                                                "Для автоматического количества задайте всхожесть и потери либо введите число семян вручную"
+                                            ]
+                                            : [], at))))));
                 });
             })));
     }
@@ -75,8 +114,11 @@ public sealed class CalculatePlannedBatch(IPlanningContextReader contexts, IReco
 
     private static Result<Option<SeedQuantityCalculation>> Quantity(PlanningBatchInputFromViewModel input,
         Option<GerminationPercentage> germination, Option<LossPercentage> losses)
-        => input.Choices.ManualSeedCount.Match(seeds => Result.Success(Option.Some(SeedQuantityCalculation.Manual(input.TargetPlants, seeds, germination, losses))),
+        => input.Choices.ManualSeedCount.Match(
+            seeds => Result.Success(
+                Option.Some(SeedQuantityCalculation.Manual(input.TargetPlants, seeds, germination, losses))),
             () => germination.Match(g => losses.Match(l => SeedQuantityCalculation.Automatic(input.TargetPlants, g, l)
-                .Bind(value => Result.Success(Option.Some(value))), () => Result.Success(Option.None<SeedQuantityCalculation>())),
+                        .Bind(value => Result.Success(Option.Some(value))),
+                    () => Result.Success(Option.None<SeedQuantityCalculation>())),
                 () => Result.Success(Option.None<SeedQuantityCalculation>())));
 }

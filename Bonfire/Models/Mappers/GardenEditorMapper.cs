@@ -1,12 +1,15 @@
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Garden;
 
 namespace Bonfire.Models.Mappers;
 
 internal static class GardenEditorMapper
 {
     public static GardenEditorDraft Open(GardenFromViewModel garden)
-        => new(garden.Id, new(garden.Name, garden.Note.ToOption(), garden.Address.ToOption(), garden.WidthMeters, garden.HeightMeters));
+        => new(garden.Id,
+            new GardenEditorValues(garden.Name, garden.Note.ToOption(), garden.Address.ToOption(), garden.WidthMeters,
+                garden.HeightMeters));
 
     public static void Apply(GardenPropertiesResultFromViewModel saved, GardenFromViewModel garden)
     {
@@ -22,6 +25,7 @@ internal static class GardenEditorMapper
             child.ContainerCanvasWidth = saved.Canvas.Width;
             child.ContainerCanvasHeight = saved.Canvas.Height;
         }
+
         foreach (var child in garden.Elements)
         {
             child.ContainerCanvasWidth = saved.Canvas.Width;

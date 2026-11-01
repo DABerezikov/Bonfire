@@ -14,16 +14,17 @@ public sealed record RegionReference
 
 public sealed record RegionDefinition
 {
+    private RegionDefinition(LibraryName name, TimeZoneInfo timeZone, RegionReference reference, bool isArchived)
+        => (Name, TimeZoneId, TimeZone, Reference, IsArchived) = (name, timeZone.Id, timeZone, reference, isArchived);
+
     public LibraryName Name { get; }
     public string TimeZoneId { get; }
     public TimeZoneInfo TimeZone { get; }
     public RegionReference Reference { get; }
     public bool IsArchived { get; }
 
-    private RegionDefinition(LibraryName name, TimeZoneInfo timeZone, RegionReference reference, bool isArchived)
-        => (Name, TimeZoneId, TimeZone, Reference, IsArchived) = (name, timeZone.Id, timeZone, reference, isArchived);
-
-    public static Result<RegionDefinition> Create(string name, string timeZoneId, RegionReference reference, bool isArchived = false)
+    public static Result<RegionDefinition> Create(string name, string timeZoneId, RegionReference reference,
+        bool isArchived = false)
     {
         ArgumentNullException.ThrowIfNull(reference);
         return LibraryName.Create(name).Bind(validName =>

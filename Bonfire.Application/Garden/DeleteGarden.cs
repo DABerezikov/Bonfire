@@ -4,6 +4,7 @@ using Bonfire.Domain.Garden;
 namespace Bonfire.Application.Garden;
 
 public sealed record DeleteGardenFromViewModel(int GardenId);
+
 public sealed record GardenDeletionResultFromViewModel(int GardenId);
 
 public interface IGardenDeletionWriter
@@ -13,12 +14,14 @@ public interface IGardenDeletionWriter
 
 public interface IDeleteGarden
 {
-    Task<Result<GardenDeletionResultFromViewModel>> ExecuteAsync(DeleteGardenFromViewModel request, CancellationToken cancellationToken = default);
+    Task<Result<GardenDeletionResultFromViewModel>> ExecuteAsync(DeleteGardenFromViewModel request,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class DeleteGarden(IGardenDeletionWriter writer) : IDeleteGarden
 {
-    public Task<Result<GardenDeletionResultFromViewModel>> ExecuteAsync(DeleteGardenFromViewModel request, CancellationToken cancellationToken = default)
+    public Task<Result<GardenDeletionResultFromViewModel>> ExecuteAsync(DeleteGardenFromViewModel request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();

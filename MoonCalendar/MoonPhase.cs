@@ -53,8 +53,8 @@ public class MoonPhase
         var synodicMonthRadian = Normalize((julianDay - 2451550.1) / 29.530588853) * 2 * Math.PI;
         var anomalyMonthRadian = 2 * Math.PI * Normalize((julianDay - 2451562.2) / 27.55454988);
         return 60.4 - 3.3 * Math.Cos(anomalyMonthRadian) -
-            0.6 * Math.Cos(2 * synodicMonthRadian - anomalyMonthRadian) -
-            0.5 * Math.Cos(2 * synodicMonthRadian);
+               0.6 * Math.Cos(2 * synodicMonthRadian - anomalyMonthRadian) -
+               0.5 * Math.Cos(2 * synodicMonthRadian);
     }
 
     /// <summary>Широта затмения Луны в указанную дату</summary>
@@ -79,8 +79,8 @@ public class MoonPhase
         var anomalyMonthRadian = 2 * Math.PI * Normalize((julianDay - 2451562.2) / 27.55454988);
         var tropicalMonthRadian = Normalize((julianDay - 2451555.8) / 27.321582241);
         return 360 * tropicalMonthRadian + 6.3 * Math.Sin(anomalyMonthRadian) +
-            1.3 * Math.Sin(2 * synodicMonthRadian - anomalyMonthRadian) +
-            0.7 * Math.Sin(2 * synodicMonthRadian);
+               1.3 * Math.Sin(2 * synodicMonthRadian - anomalyMonthRadian) +
+               0.7 * Math.Sin(2 * synodicMonthRadian);
     }
 
     /// <summary>Знак зодиака Луны в указанную дату</summary>

@@ -4,8 +4,10 @@ using Bonfire.Domain.Functional;
 
 namespace Bonfire.Application.Seeds;
 
-public sealed record SeedEditorOptionsFromViewModel(ImmutableArray<string> Colors,
-    ImmutableArray<string> Maturities, ImmutableArray<ProducerDetailsFromViewModel> Producers);
+public sealed record SeedEditorOptionsFromViewModel(
+    ImmutableArray<string> Colors,
+    ImmutableArray<string> Maturities,
+    ImmutableArray<ProducerDetailsFromViewModel> Producers);
 
 public interface ISeedEditorOptionsReader
 {

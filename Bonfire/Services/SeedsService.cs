@@ -1,14 +1,19 @@
 using System.Collections.Immutable;
+using System.Threading.Tasks;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
-using System.Threading.Tasks;
 using Bonfire.Models;
 using Bonfire.Models.Mappers;
 using Bonfire.Services.Interfaces;
 
 namespace Bonfire.Services;
 
-internal class SeedsService(IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDeleteSeed deleteSeed, ISeedReader seedReader, ISeedEditorOptionsReader editorOptions) : ISeedsService
+internal class SeedsService(
+    IEditSeed editSeed,
+    IAcquireSeeds acquireSeeds,
+    IDeleteSeed deleteSeed,
+    ISeedReader seedReader,
+    ISeedEditorOptionsReader editorOptions) : ISeedsService
 {
     public Task<Result<ImmutableArray<SeedReadFromViewModel>>> ReadSeedsAsync() => seedReader.ReadAsync(default);
 
@@ -24,5 +29,4 @@ internal class SeedsService(IEditSeed editSeed, IAcquireSeeds acquireSeeds, IDel
 
     public Task<Result<SeedDeletionResultFromViewModel>> DeleteSeedWithReasonAsync(int seedId, string reason)
         => deleteSeed.ExecuteAsync(new DeleteSeedFromViewModel(seedId, reason));
-
 }

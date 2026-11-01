@@ -9,22 +9,22 @@ namespace Bonfire.Data;
 
 internal static class DbRegistrator
 {
-    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration) => services
-        .AddDbContext<DbBonfire>(opt =>
-        {
-            var type = configuration["Type"];
-            switch (type)
+    public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration) =>
+        services
+            .AddDbContext<DbBonfire>(opt =>
             {
-                case null: throw new InvalidOperationException("Не определён тип БД");
+                var type = configuration["Type"];
+                switch (type)
+                {
+                    case null: throw new InvalidOperationException("Не определён тип БД");
 
-                default: throw new InvalidOperationException($"Тип подключения {type} не поддерживается");
+                    default: throw new InvalidOperationException($"Тип подключения {type} не поддерживается");
 
-                case "SQLite":
-                    opt.UseSqlite(configuration.GetConnectionString(type));
-                    break;
-            }
-        })
-        .AddScoped<DbInitializer>()
-        .AddRepositoriesInDb()
-    ;
+                    case "SQLite":
+                        opt.UseSqlite(configuration.GetConnectionString(type));
+                        break;
+                }
+            })
+            .AddScoped<DbInitializer>()
+            .AddRepositoriesInDb();
 }

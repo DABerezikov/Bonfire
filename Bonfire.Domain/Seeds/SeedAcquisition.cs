@@ -3,32 +3,44 @@ using Bonfire.Domain.Libraries;
 
 namespace Bonfire.Domain.Seeds;
 
-public sealed record SeedAcquisitionValues(string Culture, string Sort, string Producer, string Class,
-    string Source, SeedUnit Unit, double QuantityInPack, double PackCount, decimal CostPack,
-    DateTime BestBy, Option<string> Note);
+public sealed record SeedAcquisitionValues(
+    string Culture,
+    string Sort,
+    string Producer,
+    string Class,
+    string Source,
+    SeedUnit Unit,
+    double QuantityInPack,
+    double PackCount,
+    decimal CostPack,
+    DateTime BestBy,
+    Option<string> Note);
 
 public sealed class SeedAcquisition
 {
+    private SeedAcquisition(SeedAcquisitionValues values, SeedAmount total) => (Values, Total) = (values, total);
     public SeedAcquisitionValues Values { get; }
     public SeedAmount Total { get; }
-    private SeedAcquisition(SeedAcquisitionValues values, SeedAmount total) => (Values, Total) = (values, total);
 
     public static Result<SeedAcquisition> Create(SeedAcquisitionValues values)
     {
         ArgumentNullException.ThrowIfNull(values);
         ArgumentNullException.ThrowIfNull(values.Note);
-        if (string.IsNullOrWhiteSpace(values.Class) || string.IsNullOrWhiteSpace(values.Source) || values.BestBy == default)
+        if (string.IsNullOrWhiteSpace(values.Class) || string.IsNullOrWhiteSpace(values.Source) ||
+            values.BestBy == default)
             return Result.Failure<SeedAcquisition>("Укажите класс, источник и срок годности семян");
         if (!double.IsFinite(values.PackCount) || values.PackCount < 0 || values.CostPack < 0)
-            return Result.Failure<SeedAcquisition>("Количество упаковок и стоимость должны быть неотрицательными и конечными");
+            return Result.Failure<SeedAcquisition>(
+                "Количество упаковок и стоимость должны быть неотрицательными и конечными");
         return LibraryName.Create(values.Culture).Bind(_ => LibraryName.Create(values.Sort).Bind(_ =>
-            LibraryName.Create(values.Producer).Bind(_ => SeedAmount.Create(values.QuantityInPack, values.Unit).Bind(_ =>
-                SeedAmount.Create(values.QuantityInPack * values.PackCount, values.Unit).Bind(total =>
-                    Result.Success(new SeedAcquisition(values, total)))))));
+            LibraryName.Create(values.Producer).Bind(_ => SeedAmount.Create(values.QuantityInPack, values.Unit)
+                .Bind(_ =>
+                    SeedAmount.Create(values.QuantityInPack * values.PackCount, values.Unit).Bind(total =>
+                        Result.Success(new SeedAcquisition(values, total)))))));
     }
 
     public Result<SeedPackage> CreatePackage(DateTime purchasedAt)
-        => SeedPackage.Create(new()
+        => SeedPackage.Create(new SeedPackageValues
         {
             WeightPack = Values.Unit == SeedUnit.Grams ? Values.QuantityInPack : 0,
             QuantityPack = Values.Unit == SeedUnit.Pieces ? Values.QuantityInPack : 0,
@@ -41,7 +53,10 @@ public sealed class SeedAcquisition
     public Result<SeedPackage> Replenish(SeedPackage package, DateTime purchasedAt)
     {
         ArgumentNullException.ThrowIfNull(package);
-        var details = package.Values with { PurchaseDate = purchasedAt, Note = Values.Note, CostPack = Values.CostPack };
+        var details = package.Values with
+        {
+            PurchaseDate = purchasedAt, Note = Values.Note, CostPack = Values.CostPack
+        };
         return Values.Unit == SeedUnit.Pieces
             ? package.WithDetails(details with { AmountSeeds = details.AmountSeeds + Total.Value })
             : details.AmountSeedsWeight.Match(

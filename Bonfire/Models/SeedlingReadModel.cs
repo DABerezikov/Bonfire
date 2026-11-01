@@ -24,14 +24,18 @@ public sealed class SeedlingReadModel(SeedlingReadFromViewModel snapshot)
     public string? LunarPhase => Snapshot.LunarPhase.ToNullable();
     public string? SeedlingSource => Snapshot.SeedlingSource.ToNullable();
     public string? PlantPlace => Snapshot.PlantPlace.ToNullable();
-    public IReadOnlyList<SeedlingInfoReadModel> SeedlingInfos { get; } = snapshot.SeedlingInfos.Select(info => new SeedlingInfoReadModel(info)).ToImmutableArray();
-    public Result<SeedlingBatch> ToBatch() => SeedlingBatch.Create(Quantity, Snapshot.SeedlingInfos.Select(info => new SeedlingEntry(
-        Option.Some(info.Entry.Id), info.Entry.Number, info.Entry.GerminationDate, info.Entry.IsDead)
-    {
-        DeathNote = info.Entry.DeathNote,
-        Replants = info.Entry.Replants.Select(replant => new ReplantingEntry(Option.Some(replant.Id), replant.Date,
-            replant.PotVolume, replant.Note)).ToImmutableArray()
-    }), PlantedOut);
+
+    public IReadOnlyList<SeedlingInfoReadModel> SeedlingInfos { get; } = snapshot.SeedlingInfos
+        .Select(info => new SeedlingInfoReadModel(info)).ToImmutableArray();
+
+    public Result<SeedlingBatch> ToBatch() => SeedlingBatch.Create(Quantity, Snapshot.SeedlingInfos.Select(info =>
+        new SeedlingEntry(
+            Option.Some(info.Entry.Id), info.Entry.Number, info.Entry.GerminationDate, info.Entry.IsDead)
+        {
+            DeathNote = info.Entry.DeathNote,
+            Replants = info.Entry.Replants.Select(replant => new ReplantingEntry(Option.Some(replant.Id), replant.Date,
+                replant.PotVolume, replant.Note)).ToImmutableArray()
+        }), PlantedOut);
 }
 
 public sealed class SeedlingInfoReadModel(SeedlingInfoReadFromViewModel snapshot)
@@ -53,8 +57,10 @@ public sealed class SeedlingInfoReadModel(SeedlingInfoReadFromViewModel snapshot
     public DateTime? QuenchingDate => Snapshot.QuenchingDate.ToNullable();
     public string? DeathNote => Snapshot.Entry.DeathNote.ToNullable();
     public bool? IsDead => Snapshot.Entry.IsDead.ToNullable();
+
     public IReadOnlyList<ReplantingReadModel> Replants { get; } = snapshot.Entry.Replants.Select(entry =>
-        new ReplantingReadModel(entry.Id, entry.Date, entry.PotVolume.ToNullable(), entry.Note.ToNullable())).ToImmutableArray();
+            new ReplantingReadModel(entry.Id, entry.Date, entry.PotVolume.ToNullable(), entry.Note.ToNullable()))
+        .ToImmutableArray();
 }
 
 public sealed record ReplantingReadModel(int Id, DateTime ReplantingDate, double? PotVolume, string? ReplantingNote);

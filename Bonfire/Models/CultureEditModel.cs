@@ -5,23 +5,27 @@ namespace Bonfire.Models;
 
 public class CultureEditModel : ViewModel, IDataErrorInfo
 {
-    private bool _dirty;
-
     public int Id { get; init; }
 
     public string? Name
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     }
 
     public string Class
     {
         get;
-        set { if (Set(ref field, value)) SetDirty(); }
+        set
+        {
+            if (Set(ref field, value)) SetDirty();
+        }
     } = string.Empty;
 
-    public bool IsDirty => _dirty;
+    public bool IsDirty { get; private set; }
 
     public bool HasErrors => string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Class);
 
@@ -36,13 +40,13 @@ public class CultureEditModel : ViewModel, IDataErrorInfo
 
     public void ResetDirty()
     {
-        _dirty = false;
+        IsDirty = false;
         OnPropertyChanged(nameof(IsDirty));
     }
 
     private void SetDirty()
     {
-        _dirty = true;
+        IsDirty = true;
         OnPropertyChanged(nameof(IsDirty));
         OnPropertyChanged(nameof(HasErrors));
     }

@@ -17,6 +17,27 @@ public static class BehaviorInStyleAttacher
 
     #endregion
 
+    #region on property changed methods
+
+    private static void OnBehaviorsChanged(DependencyObject depObj, DependencyPropertyChangedEventArgs e)
+    {
+        if (!(e.NewValue is IEnumerable))
+            return;
+
+        var newBehaviorCollection = (IEnumerable)e.NewValue;
+
+        var behaviorCollection = Interaction.GetBehaviors(depObj);
+        behaviorCollection.Clear();
+        foreach (Behavior behavior in newBehaviorCollection)
+        {
+            // you need to make a copy of behavior in order to attach it to several controls
+            var copy = behavior.Clone() as Behavior;
+            behaviorCollection.Add(copy);
+        }
+    }
+
+    #endregion
+
     #region Getter and Setter of Attached Properties
 
     public static IEnumerable GetBehaviors(DependencyObject dependencyObject)
@@ -28,27 +49,6 @@ public static class BehaviorInStyleAttacher
         DependencyObject dependencyObject, IEnumerable value)
     {
         dependencyObject.SetValue(BehaviorsProperty, value);
-    }
-
-    #endregion
-
-    #region on property changed methods
-
-    private static void OnBehaviorsChanged(DependencyObject depObj, DependencyPropertyChangedEventArgs e)
-    {
-        if (e.NewValue is IEnumerable == false)
-            return;
-
-        var newBehaviorCollection = (IEnumerable)e.NewValue;
-
-        BehaviorCollection behaviorCollection = Interaction.GetBehaviors(depObj);
-        behaviorCollection.Clear();
-        foreach (Behavior behavior in newBehaviorCollection)
-        {
-            // you need to make a copy of behavior in order to attach it to several controls
-            var copy = behavior.Clone() as Behavior;
-            behaviorCollection.Add(copy);
-        }
     }
 
     #endregion
