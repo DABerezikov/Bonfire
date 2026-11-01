@@ -51,18 +51,8 @@ public sealed record PlannedBatch
         PlantCount targetPlants, PlanningChoices choices)
     {
         ArgumentNullException.ThrowIfNull(id);
-        ArgumentNullException.ThrowIfNull(cultureId);
-        ArgumentNullException.ThrowIfNull(sortId);
-        ArgumentNullException.ThrowIfNull(conditions);
-        ArgumentNullException.ThrowIfNull(method);
-        ArgumentNullException.ThrowIfNull(profile);
-        ArgumentNullException.ThrowIfNull(targetPlants);
-        ArgumentNullException.ThrowIfNull(choices);
-        if (method is GrowingMethod.Transplant && profile.SeedlingAge is Option<SourcedValue<DayRange>>.None)
-            return Result.Failure<PlannedBatch>("Не задан возраст рассады от всходов");
-        if (method is GrowingMethod.DirectSow && choices.TransplantDate is Option<DateOnly>.Some)
-            return Result.Failure<PlannedBatch>("Для прямого посева дата высадки неприменима");
-        return Result.Success(new PlannedBatch(id, cultureId, sortId, conditions, method, profile, targetPlants, choices));
+        return PlannedBatchDefinition.Create(cultureId, sortId, conditions, method, profile, targetPlants, choices)
+            .Bind(_ => Result.Success(new PlannedBatch(id, cultureId, sortId, conditions, method, profile, targetPlants, choices)));
     }
 
     public Result<PlannedBatch> WithChoices(PlanningChoices choices)

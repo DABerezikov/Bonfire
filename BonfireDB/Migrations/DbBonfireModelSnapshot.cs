@@ -203,6 +203,58 @@ namespace BonfireDB.Migrations
                     b.ToTable("PlanningCultureProfiles", (string)null);
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PlannedBatchRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CultureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Location")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Ordinal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Placement")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly?>("SelectedSowingDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SortId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SelectedSowingDate");
+
+                    b.HasIndex("SortId");
+
+                    b.HasIndex("PlanId", "Ordinal");
+
+                    b.HasIndex("CultureId", "SortId", "Location", "Placement");
+
+                    b.ToTable("PlannedBatches", (string)null);
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.Planning.PlanningRegionRow", b =>
                 {
                     b.Property<int>("Id")
@@ -282,6 +334,46 @@ namespace BonfireDB.Migrations
                         .IsUnique();
 
                     b.ToTable("PlanningRegionalWindows", (string)null);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.SeasonalPlantingPlanRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RegionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RegionName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SeasonYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SnapshotRegionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegionId");
+
+                    b.HasIndex("SeasonYear");
+
+                    b.ToTable("SeasonalPlantingPlans", (string)null);
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Planning.SortPlanningSettingsRow", b =>
@@ -940,6 +1032,27 @@ namespace BonfireDB.Migrations
                     b.Navigation("Vegetation");
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PlannedBatchRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.PlantCulture", null)
+                        .WithMany()
+                        .HasForeignKey("CultureId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BonfireDB.Entities.Planning.SeasonalPlantingPlanRow", "Plan")
+                        .WithMany("Batches")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BonfireDB.Entities.PlantSort", null)
+                        .WithMany()
+                        .HasForeignKey("SortId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Plan");
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.Planning.PlanningRegionRow", b =>
                 {
                     b.OwnsOne("BonfireDB.Entities.Planning.AnnualWindowRow", "FirstAutumnFrost", b1 =>
@@ -1047,6 +1160,14 @@ namespace BonfireDB.Migrations
 
                     b.Navigation("Window")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.SeasonalPlantingPlanRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.Planning.PlanningRegionRow", null)
+                        .WithMany()
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Planning.SortPlanningSettingsRow", b =>
@@ -1260,6 +1381,11 @@ namespace BonfireDB.Migrations
                     b.Navigation("Elements");
 
                     b.Navigation("Greenhouses");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.SeasonalPlantingPlanRow", b =>
+                {
+                    b.Navigation("Batches");
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.PlantCulture", b =>

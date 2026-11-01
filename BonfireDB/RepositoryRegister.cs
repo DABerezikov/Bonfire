@@ -13,6 +13,8 @@ using BonfireDB.Planting;
 using Bonfire.Application.Planning.Libraries;
 using BonfireDB.Planning.Libraries;
 using BonfireDB.Entities.Planning;
+using Bonfire.Application.Planning;
+using BonfireDB.Planning;
 
 namespace BonfireDB;
 
@@ -21,6 +23,11 @@ public static class RepositoryRegister
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
+        .AddSingleton<DbPlantingPlans>()
+        .AddSingleton<IPlantingPlanReader>(provider => provider.GetRequiredService<DbPlantingPlans>())
+        .AddSingleton<IPlantingPlanWriter>(provider => provider.GetRequiredService<DbPlantingPlans>())
+        .AddScoped<IRepository<SeasonalPlantingPlanRow>, DbRepository<SeasonalPlantingPlanRow>>()
+        .AddScoped<IRepository<PlannedBatchRow>, DbRepository<PlannedBatchRow>>()
         .AddSingleton<DbPlanningLibraries>()
         .AddSingleton<IPlanningLibraryReader>(provider => provider.GetRequiredService<DbPlanningLibraries>())
         .AddSingleton<IPlanningLibraryWriter>(provider => provider.GetRequiredService<DbPlanningLibraries>())
