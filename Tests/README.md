@@ -1,5 +1,12 @@
 # Проверки Bonfire
 
+## Возраст кандидатов посева — 01.11.2026
+
+Гейт **1778/1778**: Models 820, Services 567, ViewModels 350, Repository 35,
+SeedsFromViewModel 6. Широкий период высадки не выводит отрицательный возраст
+как возраст рассады; проверены совместимые даты, конфликт и узкий интервал.
+[Подробности](../plans/planting-planning/candidate-readiness-display.md).
+
 ## Пошаговое планирование — 01.11.2026
 
 Гейт **1775/1775**: Models 817, Services 567, ViewModels 350, Repository 35,

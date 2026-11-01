@@ -13,5 +13,5 @@ public enum PlanningDiagnosticCode
 
 public sealed record PlanningDiagnostic(PlanningDiagnosticCode Code, string Message);
 
-/// <summary>Возраст может быть отрицательным: это видимый конфликт, а не нулевой возраст.</summary>
+/// <summary>Разность дат по исходному периоду; отрицательная граница сама по себе не означает несовместимость.</summary>
 public sealed record AgeBounds(int Min, int Max);

@@ -9,7 +9,13 @@ public sealed record CandidateReadiness(
     DateWindow Emergence,
     DateWindow Readiness,
     Option<DateWindow> AllowedTransplant,
-    AgeBounds AgeAtTarget);
+    AgeBounds AgeAtTarget)
+{
+    /// <summary>Возраст только для совместимых высадок, с учётом допустимого возраста рассады.</summary>
+    public Option<AgeBounds> AgeForAllowedTransplant() => AllowedTransplant.Map(window => new AgeBounds(
+        Math.Max(window.Start.DayNumber - Emergence.End.DayNumber, Readiness.Start.DayNumber - Emergence.Start.DayNumber),
+        Math.Min(window.End.DayNumber - Emergence.Start.DayNumber, Readiness.End.DayNumber - Emergence.End.DayNumber)));
+}
 
 /// <summary>Прогноз по введённым диапазонам. Ручные даты не переписываются расчётом.</summary>
 public sealed record PlantingSchedule(

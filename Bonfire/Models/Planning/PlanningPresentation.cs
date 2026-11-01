@@ -69,11 +69,16 @@ public sealed record SowingCandidateItem(SowingCandidate Candidate)
 {
     public string Label => PlanningInputParser.Format(Candidate.Date)
                            + (Candidate.ShiftDays == 0
-                               ? Candidate.InsideResilientWindow ? " — устойчивое окно" : ""
+                               ? Candidate.InsideResilientWindow ? " — подходит при ранних и поздних всходах" : ""
                                : $" — сдвиг {Candidate.ShiftDays:+0;-0} дн.");
 
     public string Details => Candidate.Readiness.Match(
-        value => $"Возраст на исходную высадку: {value.AgeAtTarget.Min}–{value.AgeAtTarget.Max} дн.",
+        value => "Всходы: " + PlanningPresentation.Window(value.Emergence)
+                 + ". Готовность к высадке: " + PlanningPresentation.Window(value.Readiness)
+                 + value.AllowedTransplant.Match(window =>
+                         ". Высадка в заданном периоде: " + PlanningPresentation.Window(window),
+                     () => ". Конфликт: готовность не совпадает с заданным периодом высадки")
+                 + value.AgeForAllowedTransplant().Match(age => $". Возраст при высадке: {age.Min}–{age.Max} дн.", () => ""),
         () => "Всходы: " + PlanningPresentation.Window(Candidate.Preview.Emergence)
                          + Candidate.Preview.Maturity.Match(
                              value => "; зрелость: " + PlanningPresentation.Window(value), () => ""));
