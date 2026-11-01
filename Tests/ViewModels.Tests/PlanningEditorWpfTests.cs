@@ -151,6 +151,33 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
 
     private static PlantingPlanningViewModel Model()
     {
+        return BatchModel();
+    }
+
+    [Fact]
+    public void Libraries_BothSectionsAndProfileRenderForVisualReview() => runtime.Invoke(() =>
+    {
+        var service = Service(); var libraries = new PlanningLibrariesViewModel(service); libraries.LoadAsync().GetAwaiter().GetResult();
+        var seeds = new SeedsViewModel(Substitute.For<ISeedsService>(), Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
+        var view = new Bonfire.Views.LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds, libraries) };
+        WpfRuntime.Layout(view, 1280, 720);
+        var root = WpfRuntime.Descendants<TabControl>(view).First();
+        var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningUi", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
+        var original = Path.Combine(folder, "libraries-original-1280-144.png"); Render(view, 1280, 720, 144, original); output.WriteLine(original);
+        root.SelectedIndex = 1; WpfRuntime.Layout(view, 1280, 720);
+        var planning = Path.Combine(folder, "libraries-planning-1280-144.png"); Render(view, 1280, 720, 144, planning); output.WriteLine(planning);
+        var inner = WpfRuntime.Descendants<TabControl>(view).Single(x => !ReferenceEquals(x, root)); inner.SelectedIndex = 1;
+        libraries.CultureFields.LifeCycle.Mode = 2; libraries.CultureFields.LifeCycle.FirstHarvest = "2";
+        WpfRuntime.Layout(view, 1280, 720);
+        foreach (var expander in WpfRuntime.Descendants<Expander>(view).Where(x => x.Header?.ToString() == "Жизненный цикл, цветение и плодоношение")) expander.IsExpanded = true;
+        WpfRuntime.Layout(view, 1280, 720);
+        foreach (var box in WpfRuntime.Descendants<TextBox>(view))
+            if (BindingOperations.GetBindingExpression(box, TextBox.TextProperty) is { } binding) Assert.Equal(BindingStatus.Active, binding.Status);
+        var profiles = Path.Combine(folder, "libraries-profiles-1280-144.png"); Render(view, 1280, 720, 144, profiles); output.WriteLine(profiles);
+    });
+
+    private static PlantingPlanningViewModel BatchModel()
+    {
         var service = Service();
         var vm = new PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
         var summary = new PlantingPlanSummaryFromViewModel(1, 1, "Сезон", 2027, "Томск");
@@ -175,11 +202,18 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
 
     private static void Render(FrameworkElement view, int width, int height, int dpi, string path)
     {
+        if (VisualTreeHelper.GetParent(view) is null)
+        {
+            var host = new Border { Width = width, Height = height, Child = view };
+            WpfRuntime.Layout(host, width, height);
+        }
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen())
         {
             drawing.DrawRectangle(Brushes.White, null, new Rect(0, 0, width, height));
-            drawing.DrawRectangle(new VisualBrush(view), null, new Rect(0, 0, width, height));
+            var brush = new VisualBrush(view) { AutoLayoutContent = false, ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, width, height),
+                Stretch = Stretch.Fill, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top };
+            drawing.DrawRectangle(brush, null, new Rect(0, 0, width, height));
         }
         var bitmap = new RenderTargetBitmap(width * dpi / 96, height * dpi / 96, dpi, dpi, PixelFormats.Pbgra32);
         bitmap.Render(visual);

@@ -1,4 +1,7 @@
 using Bonfire.Application.Planning;
+using System.Collections.Immutable;
+using Bonfire.Application.Planning.Libraries;
+using Bonfire.Domain.Planning.Regions;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Planning;
 using Bonfire.Domain.Planning.GrowingProfiles;
@@ -76,6 +79,57 @@ public class PlanningWorkflowTests
     }
 
     private async Task<PlantingPlanningViewModel> Model()
+    {
+        return await CreateModel();
+    }
+
+    [Fact]
+    public async Task Refresh_CleanPlanReadsNewVersionAfterPerennialChange()
+    {
+        ConfigureRefresh();
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск"));
+        _service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(Option.Some(Plan() with { Version = 2 })));
+        await vm.LoadAsync();
+        Assert.Equal(2, vm.OpenedPlan!.Version);
+    }
+
+    [Fact]
+    public async Task Refresh_DirtyDraftDoesNotAcceptNewPlanVersionOrLoseChoice()
+    {
+        ConfigureRefresh(); var vm = await Model(); var draft = vm.Draft; var choice = draft.Choice;
+        _service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(Option.Some(Plan() with { Version = 2 })));
+        await vm.LoadAsync();
+        Assert.Same(draft, vm.Draft); Assert.Equal(choice, draft.Choice); Assert.Equal(1, vm.OpenedPlan!.Version);
+        Assert.Contains("черновик", vm.Status);
+    }
+
+    private void ConfigureRefresh()
+    {
+        SetupRefresh();
+    }
+
+    [Fact]
+    public async Task Refresh_LatePlanReadPreservesInputEnteredWhileWaiting()
+    {
+        ConfigureRefresh(); var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск")); var draft = vm.Draft;
+        var pending = new TaskCompletionSource<Result<Option<PlantingPlanDetailsFromViewModel>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(pending.Task);
+        var loading = vm.LoadAsync(); draft.TargetPlantsText = "42";
+        pending.SetResult(Result.Success(Option.Some(Plan() with { Version = 2 }))); await loading;
+        Assert.Same(draft, vm.Draft); Assert.Equal("42", vm.Draft.TargetPlantsText); Assert.Equal(1, vm.OpenedPlan!.Version);
+    }
+
+    private void SetupRefresh()
+    {
+        _service.ReadPlansAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray.Create(new PlantingPlanSummaryFromViewModel(1, 2, "Сезон", 2027, "Томск"))));
+        _service.ReadRegionsAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray.Create(new RegionFromViewModel(RegionId.Create(1).ValueOrThrow(), RegionDefinition.Create("Томск", "Asia/Tomsk", RegionReference.Empty).ValueOrThrow()))));
+        _service.ReadChoicesAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray<PlanningChoiceFromViewModel>.Empty));
+        _service.ReadBedsAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray<PlanningBedFromViewModel>.Empty));
+    }
+
+    private async Task<PlantingPlanningViewModel> CreateModel()
     {
         var vm = new PlantingPlanningViewModel(_service, _dialog, new PlanningLibrariesViewModel(_service), TimeProvider.System);
         await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск"));

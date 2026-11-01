@@ -132,17 +132,34 @@ public sealed class PlantingPlanningViewModel : ViewModel
         regions.Match(items => { var id = NewPlanRegion?.Id; Regions.Clear(); foreach (var item in items) Regions.Add(item);
             NewPlanRegion = Regions.FirstOrDefault(x => x.Id == id) ?? Regions.FirstOrDefault(x => x.Definition.Name.Value == "Томск") ?? Regions.FirstOrDefault(); return 0; }, Error);
         var choices = await _service.ReadChoicesAsync();
-        choices.Match(items => { Choices.Clear(); foreach (var item in items) Choices.Add(item); EnsureChoice(Draft.Choice); return 0; }, Error);
+        var choice = Draft.Choice;
+        choices.Match(items => { Choices.Clear(); foreach (var item in items) Choices.Add(item); EnsureChoice(choice); Draft.Choice = choice; return 0; }, Error);
         (await _service.ReadBedsAsync()).Match(items => { Beds.Clear(); foreach (var item in items) Beds.Add(item); return 0; }, Error);
-        if (OpenedPlan is null && Plans.Count > 0) await OpenPlanAsync(Plans[0]);
+        if (plans.IsFailure) return;
+        if (OpenedPlan is { } opened)
+        {
+            var refreshed = Plans.FirstOrDefault(x => x.Id == opened.Id);
+            if (refreshed is null) Status = "План больше не найден; черновик сохранён";
+            else if (Draft.IsDirty) Status = "Справочники обновлены; черновик сохранён. Для перечитывания плана сначала отмените изменения";
+            else await OpenPlanAsync(refreshed);
+        }
+        else if (Plans.Count > 0) await OpenPlanAsync(Plans[0]);
     }
 
     public async Task OpenPlanAsync(PlantingPlanSummaryFromViewModel summary)
     {
         _applying = true; try { SelectedPlan = summary; } finally { _applying = false; }
         var revision = ++_openRevision;
+        var openingDraft = Draft; var draftRevision = openingDraft.Revision;
         var result = await _service.ReadPlanAsync(summary.Id);
         if (revision != _openRevision || SelectedPlan?.Id != summary.Id) return;
+        if (!ReferenceEquals(Draft, openingDraft) || openingDraft.Revision != draftRevision)
+        {
+            _applying = true;
+            try { SelectedPlan = Plans.FirstOrDefault(x => x.Id == OpenedPlan?.Id); } finally { _applying = false; }
+            Status = "План не заменён: во время чтения изменился черновик";
+            return;
+        }
         result.Match(found => found.Match(plan =>
         {
             OpenedPlan = plan; ApplyBatches(plan); NewBatch(); Status = "План открыт"; return 0;

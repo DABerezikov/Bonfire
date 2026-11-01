@@ -1,5 +1,19 @@
 # Проверки Bonfire
 
+## Планирование посадок — 01.11.2026
+
+Локальный гейт: **1757/1757**, failed/notExecuted = 0. Models 805,
+Services 567, ViewModels 344, Repository 35, SeedsFromViewModel 6.
+Сборка решения — 0 предупреждений/ошибок; пять TRX:
+artifacts/planting-planning-final/verified. Coverlet не пересчитывался.
+
+Проверены SQLite CRUD/версии/rollback/SetNull, полный upgrade/down/re-up
+с сохранением пакетов, рассады, пересадок/обработок и сетки, единый лунный источник,
+расчёты грядки/урожая, журнал и стабильный ID межсезонной посадки.
+12 STA-сценариев: привязки, неверный ввод, вкладки, 100/150% и просмотр PNG.
+Процессный startup/exit открыл планирование, журнал, многолетники, обе библиотеки
+и вернулся к семенам; Host освобождён. [Итог и границы](../plans/planting-planning/implementation-audit.md).
+
 ## Проверка CI — 30.10.2026
 
 Облачный build [run 41078147864](https://github.com/DABerezikov/Bonfire/actions/runs/41078147864)
