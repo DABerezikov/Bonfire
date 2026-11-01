@@ -48,6 +48,8 @@ public sealed record PlanningBatchDocument
         ArgumentNullException.ThrowIfNull(quantity);
         if (!Enum.IsDefined(settings.Group) || settings.SearchLimitDays < 0 || calculationVersion <= 0 || lunarPolicyVersion <= 0 || references.RegionalWindows.IsDefault)
             return Result.Failure<PlanningBatchDocument>("Некорректные параметры или версия снимка партии");
+        if (settings.Extras.Match(x => x.LifeCycle.Match(life => !Enum.IsDefined(life.Source) || life.Value.Validate().IsFailure, () => false), () => false))
+            return Result.Failure<PlanningBatchDocument>("Неверный профиль жизненного цикла снимка");
         return HarvestProjection.Calculate(settings.Harvest, batch.TargetPlants.Value)
             .Bind(_ => LibraryName.Create(references.CultureName)).Bind(_ => LibraryName.Create(references.SortName))
             .Bind(_ => RegionDefinition.Create(references.RegionName, references.TimeZoneId, RegionReference.Empty))

@@ -25,6 +25,7 @@ public sealed record GrowingProfileFieldValues
     public string SoilTemperatureText { get; init; } = "";
     public string YieldPerPlantText { get; init; } = "";
     public string YieldPerM2Text { get; init; } = "";
+    public LifeCycleFieldValues LifeCycle { get; init; } = new();
     public int PrickingMode { get; init; }
     public int HardeningMode { get; init; }
     public int LunarMode { get; init; } = -1;
@@ -33,6 +34,7 @@ public sealed record GrowingProfileFieldValues
 public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
 {
     public GrowingProfileFieldValues Values { get; private set; }
+    public LifeCycleFields LifeCycle { get; }
     public bool ShowRanges { get; }
     public bool ShowSoilTemperature { get; }
     public bool ShowSeedlingFields
@@ -41,7 +43,11 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
         set { if (Set(ref field, value)) OnPropertyChanged(string.Empty); }
     } = true;
     public GrowingProfileFields(GrowingProfileFieldValues values, bool showRanges = true, bool showSoilTemperature = false)
-        => (Values, ShowRanges, ShowSoilTemperature) = (values, showRanges, showSoilTemperature);
+    {
+        (Values, ShowRanges, ShowSoilTemperature) = (values, showRanges, showSoilTemperature);
+        LifeCycle = new(values.LifeCycle);
+        LifeCycle.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(LifeCycleFields.Values)) Update(Values with { LifeCycle = LifeCycle.Values }, nameof(LifeCycle)); };
+    }
 
     public string GermMinText { get => Values.GermMinText; set => Update(Values with { GermMinText = value }); }
     public string GermMaxText { get => Values.GermMaxText; set => Update(Values with { GermMaxText = value }); }
@@ -86,7 +92,8 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
                         PlanningInputParser.Decimal(YieldPerM2Text, "кг/м²").Bind(area =>
                         plant.Match(x => x < 0, () => false) || area.Match(x => x < 0, () => false)
                             ? Result.Failure<PlanningExtras>("Нормы урожайности не могут быть отрицательными")
-                            : Result.Success(extras with { YieldPerPlantKg = plant, YieldPerM2Kg = area }))));
+                            : Result.Success(extras with { YieldPerPlantKg = plant, YieldPerM2Kg = area }))))
+                            .Bind(extras => LifeCycle.Build().Bind(life => Result.Success(extras with { LifeCycle = life })));
 
     public string Error => PlanningInputParser.Error(BuildOverrides(!ShowSeedlingFields)) is { Length: > 0 } error
         ? error : PlanningInputParser.Error(BuildExtras(!ShowSeedlingFields));

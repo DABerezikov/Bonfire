@@ -30,6 +30,7 @@ public class PlanningExtrasRow
     public decimal? ReferenceSoilTemperatureC { get; set; }
     public decimal? YieldPerPlantKg { get; set; }
     public decimal? YieldPerM2Kg { get; set; }
+    public string? LifeCycleJson { get; set; }
 }
 
 public class PlanningRegionRow : NamedEntity

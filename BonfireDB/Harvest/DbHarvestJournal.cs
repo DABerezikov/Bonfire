@@ -34,6 +34,16 @@ public sealed class DbHarvestJournal(IUnitOfWorkFactory units) : IHarvestJournal
                 sources.Add(new($"{seasonYear}: {document.References.CultureName} / {document.References.SortName}, партия #{row.Id}",
                     identity.ValueOrThrow(), forecast.PerPlantKg, forecast.PerM2Kg));
             }
+            var plantings = await unit.Repository<PerennialPlantingRow>().Rows.AsNoTracking().Where(x => x.EstablishmentYear <= seasonYear)
+                .OrderBy(x => x.Name).ThenBy(x => x.Id).ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var planting in plantings)
+            {
+                var read = DbPerennialPlanning.Read(planting);
+                if (read.IsFailure) return read.Bind(_ => Result.Failure<ImmutableArray<HarvestSourceFromViewModel>>("Неверная многолетняя посадка"));
+                var identity = PerennialIdentity(planting.Id, read.ValueOrThrow().Definition, seasonYear);
+                if (identity.IsFailure) return identity.Bind(_ => Result.Failure<ImmutableArray<HarvestSourceFromViewModel>>("Неверная принадлежность"));
+                sources.Add(new($"{seasonYear}: {planting.Name}, межсезонная посадка #{planting.Id}", identity.ValueOrThrow(), Option.None<decimal>(), Option.None<decimal>()));
+            }
             return Result.Success(sources.ToImmutable());
         }, "источников сборов");
     public Task<Result<ImmutableArray<HarvestEntryFromViewModel>>> ReadAsync(CancellationToken cancellationToken)
@@ -64,8 +74,17 @@ public sealed class DbHarvestJournal(IUnitOfWorkFactory units) : IHarvestJournal
             if (request.Id is Option<HarvestEntryId>.None)
             {
                 var identity = entry.Identity;
-                if (identity.PerennialId is Option<PerennialPlantingId>.Some) return Result.Failure<HarvestEntryFromViewModel>("Многолетняя посадка недоступна");
-                if (identity.BatchId is Option<PlannedBatchId>.Some batchId)
+                if (identity.PerennialId is Option<PerennialPlantingId>.Some perennialId)
+                {
+                    var planting = await unit.Repository<PerennialPlantingRow>().Rows.AsNoTracking().SingleOrDefaultAsync(x => x.Id == perennialId.Value.Value, cancellationToken).ConfigureAwait(false);
+                    if (planting is null) return Result.Failure<HarvestEntryFromViewModel>("Межсезонная посадка удалена");
+                    var read = DbPerennialPlanning.Read(planting);
+                    if (read.IsFailure) return read.Bind(_ => Result.Failure<HarvestEntryFromViewModel>("Неверная посадка"));
+                    if (identity.SeasonYear < planting.EstablishmentYear || PerennialIdentity(planting.Id, read.ValueOrThrow().Definition, identity.SeasonYear).ValueOrThrow() != identity)
+                        return Result.Failure<HarvestEntryFromViewModel>("Принадлежность посадки изменилась; обновите источники");
+                    row.PerennialId = planting.Id; row.CultureId = planting.CultureId; row.SortId = planting.SortId;
+                }
+                else if (identity.BatchId is Option<PlannedBatchId>.Some batchId)
                 {
                     var batch = await unit.Repository<PlannedBatchRow>().Rows.AsNoTracking().Include(x => x.Plan)
                         .SingleOrDefaultAsync(x => x.Id == batchId.Value.Value, cancellationToken).ConfigureAwait(false);
@@ -117,6 +136,9 @@ public sealed class DbHarvestJournal(IUnitOfWorkFactory units) : IHarvestJournal
     private static Result<HarvestIdentity> BatchIdentity(PlannedBatchRow row, PlanningBatchDocument document)
         => HarvestIdentity.Create(document.Batch.CultureId, document.Batch.SortId, document.References.CultureName, document.References.SortName,
             row.Plan.SeasonYear, row.Plan.RegionName, row.Plan.TimeZoneId, Option.Some(PlannedBatchId.Create(row.Id).ValueOrThrow()), Option.None<PerennialPlantingId>());
+    private static Result<HarvestIdentity> PerennialIdentity(int id, PerennialPlantingDefinition definition, int seasonYear)
+        => HarvestIdentity.Create(definition.CultureId, definition.SortId, definition.CultureName, definition.SortName, seasonYear,
+            definition.RegionName, definition.TimeZoneId, Option.None<PlannedBatchId>(), Option.Some(PerennialPlantingId.Create(id).ValueOrThrow()));
 
     private static Result<Option<T>> OptionalId<T>(int? value, Func<int, Result<T>> create)
         => value.ToOption().Match(x => create(x).Bind(id => Result.Success(Option.Some(id))), () => Result.Success(Option.None<T>()));

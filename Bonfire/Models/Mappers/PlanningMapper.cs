@@ -20,7 +20,8 @@ public static class PlanningMapper
             {
                 GermPercentText = BatchValue(extra.Value.GerminationPercentage, value => Number(value.Value)),
                 LossPercentText = BatchValue(extra.Value.LossPercentage, value => Number(value.Value)),
-                LunarMode = extra.Value.LunarGroup.Match(value => value.Source == ParameterSource.Batch ? (int)value.Value : -1, () => -1)
+                LunarMode = extra.Value.LunarGroup.Match(value => value.Source == ParameterSource.Batch ? (int)value.Value : -1, () => -1),
+                LifeCycle = LifeCycleFields.From(extra.Value.LifeCycle.Match(value => value.Source == ParameterSource.Batch ? Option.Some(value.Value) : Option.None<LifeCycleProfile>(), () => Option.None<LifeCycleProfile>()))
             };
         var values = new PlannedBatchDraftValues
         {
@@ -61,7 +62,7 @@ public static class PlanningMapper
         LunarMode = extras.LunarGroup.Match(value => (int)value, () => -1),
         SoilTemperatureText = extras.ReferenceSoilTemperatureC.Match(Number, () => ""),
         YieldPerPlantText = extras.YieldPerPlantKg.Match(Number, () => ""),
-        YieldPerM2Text = extras.YieldPerM2Kg.Match(Number, () => "")
+        YieldPerM2Text = extras.YieldPerM2Kg.Match(Number, () => ""), LifeCycle = LifeCycleFields.From(extras.LifeCycle)
     };
 
     private static string BatchValue<T>(Option<SourcedValue<T>> source, Func<T, string> format)

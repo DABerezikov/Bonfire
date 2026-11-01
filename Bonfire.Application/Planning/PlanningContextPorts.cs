@@ -27,6 +27,7 @@ public sealed record PlanningBatchInputFromViewModel(int RegionId, int CultureId
     Option<GerminationPercentage> GerminationOverride, Option<LossPercentage> LossOverride, Option<LunarGroup> LunarGroupOverride, int SearchLimitDays)
 {
     public HarvestPlanningInput Harvest { get; init; } = new();
+    public Option<LifeCycleProfile> LifeCycleOverride { get; init; } = Option.None<LifeCycleProfile>();
 }
 
 /// <summary>Соответствие preview проверяется точным сравнением иммутабельного Input, а не хешем UI-ссылки.</summary>

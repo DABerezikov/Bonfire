@@ -31,6 +31,8 @@ namespace Bonfire.Services
             .AddSingleton<IPlanningService, PlanningService>()
             .AddSingleton<Bonfire.Application.Harvest.IManageHarvestJournal, Bonfire.Application.Harvest.ManageHarvestJournal>()
             .AddSingleton<IHarvestService, HarvestService>()
+            .AddSingleton<IManagePerennialPlanning, ManagePerennialPlanning>()
+            .AddSingleton<IPerennialPlanningService, PerennialPlanningService>()
             .AddSingleton<IUserDialog, UserDialog>()
             .AddSingleton<IReportService, ReportService>()
             .AddSingleton<IReportWorkbookBuilder, ReportWorkbookBuilder>()

@@ -51,7 +51,8 @@ internal static class PlanningLibraryDbMapper
         LossPercentage = value.LossPercentage.Map(x => x.Value).ToNullable(),
         LunarGroup = value.LunarGroup.Map(x => (int)x).ToNullable(),
         ReferenceSoilTemperatureC = value.ReferenceSoilTemperatureC.ToNullable(),
-        YieldPerPlantKg = value.YieldPerPlantKg.ToNullable(), YieldPerM2Kg = value.YieldPerM2Kg.ToNullable()
+        YieldPerPlantKg = value.YieldPerPlantKg.ToNullable(), YieldPerM2Kg = value.YieldPerM2Kg.ToNullable(),
+        LifeCycleJson = value.LifeCycle.Match<string?>(PlanningSnapshotJson.WriteLifeCycle, () => null)
     };
 
     private static int Mode(OperationOverride<DayRange> operation) => operation switch
@@ -89,7 +90,8 @@ internal static class PlanningLibraryDbMapper
                     PrickingOut = pricking, Hardening = hardening, GerminationPercentage = germination,
                     LossPercentage = losses, LunarGroup = lunar, ReferenceSoilTemperatureC = row.ReferenceSoilTemperatureC.ToOption(),
                     YieldPerPlantKg = row.YieldPerPlantKg.ToOption(), YieldPerM2Kg = row.YieldPerM2Kg.ToOption()
-                }))))));
+                })))))).Bind(extras => row.LifeCycleJson.ToOption().Match(json => PlanningSnapshotJson.ReadLifeCycle(json)
+                    .Bind(life => Result.Success(extras with { LifeCycle = Option.Some(life) })), () => Result.Success(extras)));
 
     private static Result<Option<LunarGroup>> ReadLunar(int? value)
         => value.ToOption().Match(id => Enum.IsDefined((LunarGroup)id)

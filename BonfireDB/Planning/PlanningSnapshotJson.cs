@@ -26,10 +26,30 @@ internal static class PlanningSnapshotJson
     private sealed record DocumentValues(PlannedBatchDefinition Batch, PlanningBatchSettings Settings, PlanningReferenceSnapshot References,
         SowingPreviewFromViewModel Preview, Option<SeedQuantityCalculation> Quantity, DateTimeOffset CalculatedAt,
         int CalculationVersion, int LunarPolicyVersion);
+    private sealed record PerennialValues(string Name, int EstablishmentYear, CultureId CultureId, SortId SortId, string CultureName, string SortName,
+        RegionId RegionId, string RegionName, string TimeZoneId, SourcedValue<LifeCycleProfile> Profile, Option<DateWindow> FirstEmergence);
 
     private static readonly JsonSerializerOptions Options = CreateOptions();
 
     internal static string Write(PlanningBatchDocument document) => JsonSerializer.Serialize(new Envelope(SchemaVersion, document), Options);
+    internal static string WriteLifeCycle(LifeCycleProfile profile) => JsonSerializer.Serialize(profile, Options);
+    internal static Result<LifeCycleProfile> ReadLifeCycle(string json)
+    {
+        try { return JsonSerializer.Deserialize<LifeCycleProfile>(json, Options)?.Validate() ?? Result.Failure<LifeCycleProfile>("Профиль отсутствует"); }
+        catch (JsonException error) { return Result.Failure<LifeCycleProfile>($"Неверный профиль жизненного цикла: {error.Message}"); }
+    }
+    internal static string WritePerennial(PerennialPlantingDefinition definition) => JsonSerializer.Serialize(definition, Options);
+    internal static Result<PerennialPlantingDefinition> ReadPerennial(string json)
+    {
+        try { return Result.From<PerennialPlantingDefinition>(JsonSerializer.Deserialize<PerennialPlantingDefinition>(json, Options)); }
+        catch (JsonException error) { return Result.Failure<PerennialPlantingDefinition>($"Неверный снимок посадки: {error.Message}"); }
+    }
+    internal static string WritePerennialSeason(PerennialSeasonSnapshot snapshot) => JsonSerializer.Serialize(snapshot, Options);
+    internal static Result<PerennialSeasonSnapshot> ReadPerennialSeason(string json)
+    {
+        try { return JsonSerializer.Deserialize<PerennialSeasonSnapshot>(json, Options)?.Validate() ?? Result.Failure<PerennialSeasonSnapshot>("Снимок периода отсутствует"); }
+        catch (JsonException error) { return Result.Failure<PerennialSeasonSnapshot>($"Неверный снимок периодов: {error.Message}"); }
+    }
 
     internal static Result<PlanningBatchDocument> Read(string json)
     {
@@ -56,6 +76,8 @@ internal static class PlanningSnapshotJson
         {
             if (info.Type == typeof(GrowingMethod))
                 SetVariants(info, (typeof(GrowingMethod.Transplant), "transplant"), (typeof(GrowingMethod.DirectSow), "direct"));
+            else if (info.Type == typeof(SeasonalPeriod))
+                SetVariants(info, (typeof(SeasonalPeriod.NotExpected), "notExpected"), (typeof(SeasonalPeriod.Unknown), "unknown"), (typeof(SeasonalPeriod.Known), "known"));
             else if (info.Type == typeof(OperationOverride<DayRange>))
                 SetVariants(info, (typeof(OperationOverride<DayRange>.Inherit), "inherit"),
                     (typeof(OperationOverride<DayRange>.Disabled), "disabled"), (typeof(OperationOverride<DayRange>.Enabled), "enabled"));
@@ -81,6 +103,9 @@ internal static class PlanningSnapshotJson
         options.Converters.Add(new FactoryConverter<PlantCount, int>(x => x.Value, PlantCount.Create));
         options.Converters.Add(new FactoryConverter<GerminationPercentage, decimal>(x => x.Value, GerminationPercentage.Create));
         options.Converters.Add(new FactoryConverter<LossPercentage, decimal>(x => x.Value, LossPercentage.Create));
+        options.Converters.Add(new FactoryConverter<PerennialPlantingDefinition, PerennialValues>(
+            x => new(x.Name, x.EstablishmentYear, x.CultureId, x.SortId, x.CultureName, x.SortName, x.RegionId, x.RegionName, x.TimeZoneId, x.Profile, x.FirstEmergence),
+            x => PerennialPlantingDefinition.Create(x.Name, x.EstablishmentYear, x.CultureId, x.SortId, x.CultureName, x.SortName, x.RegionId, x.RegionName, x.TimeZoneId, x.Profile, x.FirstEmergence)));
         options.Converters.Add(new FactoryConverter<DateWindow, WindowValues>(x => new(x.Start, x.End), x => DateWindow.Create(x.Start, x.End)));
         options.Converters.Add(new FactoryConverter<DayRange, RangeValues>(x => new(x.Min, x.Max), x => DayRange.Create(x.Min, x.Max)));
         options.Converters.Add(new FactoryConverter<GrowingConditions, ConditionsValues>(x => new(x.Location, x.Placement),

@@ -14,6 +14,8 @@ public sealed record PlanningLabel<T>(T Value, string Label);
 
 public static class PlanningLookups
 {
+    public static ImmutableArray<PlanningLabel<int>> LifeCycles { get; } =
+        [new(-1, "Наследовать / неизвестно"), new(0, "Однолетнее"), new(1, "Двулетнее"), new(2, "Многолетнее")];
     public static ImmutableArray<PlanningLabel<HarvestPlanningMode>> HarvestModes { get; } =
         [new(HarvestPlanningMode.ManualPlants, "Растения вручную"), new(HarvestPlanningMode.BedCapacity, "По вместимости"),
          new(HarvestPlanningMode.TargetPerPlant, "Цель кг: кг/растение"), new(HarvestPlanningMode.TargetPerM2, "Цель кг: кг/м²")];
@@ -60,6 +62,17 @@ public sealed record RegionalWindowItem(RegionalPlantingWindow Reference, int Ye
 
 public static class PlanningPresentation
 {
+    public static string Period(string title, SeasonalPeriod period) => title + ": " + (period switch
+    {
+        SeasonalPeriod.NotExpected value => "не ожидается — " + value.Reason,
+        SeasonalPeriod.Unknown value => "неизвестно — " + value.Reason,
+        SeasonalPeriod.Known value => value.Period.Start.Match(x => "начало " + Window(x) + "; ", () => "")
+            + value.Period.End.Match(x => "окончание " + Window(x) + "; ", () => "")
+            + value.Period.Envelope.Match(x => "оболочка " + Window(x) + "; ", () => "длительность не определена; ")
+            + (value.Period.Origin switch { GrowthPeriodOrigin.Manual => "вручную", GrowthPeriodOrigin.FromEmergence => "от всходов", _ => "ежегодная справка" })
+            + ". Оболочка не означает непрерывное цветение/плодоношение всех растений.",
+        _ => throw new InvalidOperationException("Неизвестное состояние периода")
+    });
     public static string Place(GrowingConditions conditions) => (conditions.Location switch
     {
         GrowingLocation.OpenGround => "Открытый грунт", GrowingLocation.Greenhouse => "Теплица", GrowingLocation.Windowsill => "Подоконник", _ => "Неизвестное место"
@@ -75,6 +88,13 @@ public static class PlanningPresentation
         if (preview.Document is not Option<PlanningBatchDocument>.Some present) return text.ToString();
         var document = present.Value;
         text.AppendLine(Harvest(document));
+        document.Settings.Extras.Match(extras => extras.LifeCycle.Match(life =>
+        {
+            text.AppendLine("Жизненный цикл: " + Source(life.Source));
+            GrowthPeriods.FirstYear(life.Value, document.Preview.Agronomy.Emergence).Match(periods =>
+            { text.AppendLine(Period("Цветение", periods.Flowering)); text.AppendLine(Period("Плодоношение", periods.Fruiting)); return 0; }, error => { text.AppendLine(error); return 0; });
+            return 0;
+        }, () => 0), () => 0);
         var schedule = document.Preview.Agronomy;
         text.AppendLine("Возможный посев: " + Window(schedule.Sowing));
         text.AppendLine(schedule.ResilientSowing.Match(value => "Устойчивое окно: " + Window(value),

@@ -42,6 +42,7 @@ public sealed class HarvestJournalViewModel(IHarvestService service, IPlanningSe
     public string FilterCulture { get; set { if (Set(ref field, value)) ApplyFilters(); } } = "";
     public string FilterSort { get; set { if (Set(ref field, value)) ApplyFilters(); } } = "";
     public string FilterBatch { get; set { if (Set(ref field, value)) ApplyFilters(); } } = "";
+    public string FilterPerennial { get; set { if (Set(ref field, value)) ApplyFilters(); } } = "";
     public HarvestJournalItem? Selected
     {
         get;
@@ -120,13 +121,15 @@ public sealed class HarvestJournalViewModel(IHarvestService service, IPlanningSe
     }
     private void ApplyFilters()
     {
-        int? year = null, batch = null;
+        int? year = null, batch = null, perennial = null;
         if (FilterSeason.Length > 0) { if (!int.TryParse(FilterSeason, out var value) || value is < 1 or > 9999) { Summary = "Неверный сезон фильтра"; return; } year = value; }
         if (FilterBatch.Length > 0) { if (!int.TryParse(FilterBatch, out var value) || value <= 0) { Summary = "Неверный ID партии"; return; } batch = value; }
+        if (FilterPerennial.Length > 0) { if (!int.TryParse(FilterPerennial, out var value) || value <= 0) { Summary = "Неверный ID межсезонной посадки"; return; } perennial = value; }
         var filtered = _entries.Where(x => (!year.HasValue || x.Entry.Identity.SeasonYear == year) &&
             x.Entry.Identity.CultureName.Contains(FilterCulture, StringComparison.CurrentCultureIgnoreCase) &&
             x.Entry.Identity.SortName.Contains(FilterSort, StringComparison.CurrentCultureIgnoreCase) &&
-            (!batch.HasValue || x.Entry.Identity.BatchId.Match(id => id.Value == batch, () => false))).DistinctBy(x => x.Id).ToArray();
+            (!batch.HasValue || x.Entry.Identity.BatchId.Match(id => id.Value == batch, () => false)) &&
+            (!perennial.HasValue || x.Entry.Identity.PerennialId.Match(id => id.Value == perennial, () => false))).DistinctBy(x => x.Id).ToArray();
         var selectedId = Selected?.Snapshot.Id; _applying = true;
         try { Entries.Clear(); foreach (var entry in filtered.OrderByDescending(x => x.Entry.Date).ThenBy(x => x.Id)) Entries.Add(new(entry)); Selected = Entries.FirstOrDefault(x => x.Snapshot.Id == selectedId); }
         finally { _applying = false; }
@@ -136,6 +139,7 @@ public sealed class HarvestJournalViewModel(IHarvestService service, IPlanningSe
     private string Compare(decimal total, int? batch)
     {
         if (!batch.HasValue) return ". Сравнение с прогнозом доступно при фильтре одной партии.";
+        if (FilterPerennial.Length > 0) return ". Фильтр межсезонной посадки исключает партии; сравнение недоступно.";
         var source = Sources.FirstOrDefault(x => x.Identity.BatchId.Match(id => id.Value == batch, () => false));
         if (source is null || int.TryParse(FilterSeason, out var year) && source.Identity.SeasonYear != year) return ". Сохранённый прогноз партии недоступен.";
         if (!source.Identity.CultureName.Contains(FilterCulture, StringComparison.CurrentCultureIgnoreCase) ||

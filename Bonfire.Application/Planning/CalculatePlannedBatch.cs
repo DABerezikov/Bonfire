@@ -41,7 +41,8 @@ public sealed class CalculatePlannedBatch(IPlanningContextReader contexts, IReco
                 {
                     GerminationPercentage = Override(input.GerminationOverride, inherited.GerminationPercentage),
                     LossPercentage = Override(input.LossOverride, inherited.LossPercentage),
-                    LunarGroup = Override(input.LunarGroupOverride, inherited.LunarGroup)
+                    LunarGroup = Override(input.LunarGroupOverride, inherited.LunarGroup),
+                    LifeCycle = Override(input.LifeCycleOverride, inherited.LifeCycle)
                 };
                 var germination = extras.GerminationPercentage.Map(x => x.Value);
                 var losses = extras.LossPercentage.Map(x => x.Value);

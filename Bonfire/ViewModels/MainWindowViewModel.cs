@@ -12,7 +12,8 @@ namespace Bonfire.ViewModels
         LibraryEditorViewModel libraryEditorViewModel,
         GardenPlanViewModel gardenPlanViewModel,
         PlantingPlanningViewModel plantingPlanningViewModel,
-        HarvestJournalViewModel harvestJournalViewModel)
+        HarvestJournalViewModel harvestJournalViewModel,
+        PerennialPlanningViewModel perennialPlanningViewModel)
         : ViewModel
     {
         public SeedsViewModel SeedsViewModel { get; } = seedsViewModel;
@@ -21,6 +22,9 @@ namespace Bonfire.ViewModels
         public GardenPlanViewModel GardenPlanViewModel { get; } = gardenPlanViewModel;
         public PlantingPlanningViewModel PlantingPlanningViewModel { get; } = plantingPlanningViewModel;
         public HarvestJournalViewModel HarvestJournalViewModel { get; } = harvestJournalViewModel;
+        public PerennialPlanningViewModel PerennialPlanningViewModel { get; } = perennialPlanningViewModel;
+        public FontWeight PerennialBold { get; set => Set(ref field, value); }
+        public Brush? PerennialBackground { get; set => Set(ref field, value); }
         public FontWeight HarvestBold { get; set => Set(ref field, value); }
         public Brush? HarvestBackground { get; set => Set(ref field, value); }
         public FontWeight PlanningBold { get; set => Set(ref field, value); }
@@ -109,6 +113,8 @@ namespace Bonfire.ViewModels
             GardenBackground = TransparentBrush;
             PlanningBold = default;
             HarvestBold = default;
+            PerennialBold = default;
+            PerennialBackground = TransparentBrush;
             HarvestBackground = TransparentBrush;
             PlanningBackground = TransparentBrush;
         }
@@ -189,6 +195,14 @@ namespace Bonfire.ViewModels
             SeedsViewModel.IsActive = false; SeedlingsViewModel.IsActive = false;
             PlantingPlanningViewModel.IsActive = false; GardenPlanViewModel.IsActive = false;
             CurrentViewModel = HarvestJournalViewModel; ClearBold(); HarvestBold = _boldFontWeight; HarvestBackground = _backgroundBrash;
+        });
+        public ICommand ShowPerennialPlanningCommand => field ??= new LambdaCommand(() =>
+        {
+            if (CurrentViewModel is PerennialPlanningViewModel) return;
+            if (CurrentViewModel is SeedsViewModel && !SeedsViewModel.TryDiscardSeedChanges()) return;
+            SeedsViewModel.IsActive = false; SeedlingsViewModel.IsActive = false;
+            PlantingPlanningViewModel.IsActive = false; GardenPlanViewModel.IsActive = false;
+            CurrentViewModel = PerennialPlanningViewModel; ClearBold(); PerennialBold = _boldFontWeight; PerennialBackground = _backgroundBrash;
         });
     }
 }

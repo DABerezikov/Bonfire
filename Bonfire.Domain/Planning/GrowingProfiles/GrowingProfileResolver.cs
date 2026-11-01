@@ -60,7 +60,8 @@ public static class GrowingProfileResolver
             ResolveValue(sort.ReferenceSoilTemperatureC, culture.ReferenceSoilTemperatureC))
         {
             YieldPerPlantKg = ResolveValue(sort.YieldPerPlantKg, culture.YieldPerPlantKg),
-            YieldPerM2Kg = ResolveValue(sort.YieldPerM2Kg, culture.YieldPerM2Kg)
+            YieldPerM2Kg = ResolveValue(sort.YieldPerM2Kg, culture.YieldPerM2Kg),
+            LifeCycle = ResolveValue(sort.LifeCycle, culture.LifeCycle)
         };
 
     private static OperationPlan<T> ResolveOperation<T>(OperationOverride<T> value, ParameterSource source, OperationPlan<T> inherited)

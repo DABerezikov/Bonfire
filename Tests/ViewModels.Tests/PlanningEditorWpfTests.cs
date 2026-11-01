@@ -111,11 +111,6 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
         var path = Path.Combine(folder, $"harvest-{width}-{dpi}.png"); Render(view, width, height, dpi, path); output.WriteLine(path);
     });
 
-    private static PlantingPlanningViewModel Model()
-    {
-        return PlanningModel();
-    }
-
     [Theory]
     [InlineData(1920, 900, 96)]
     [InlineData(1280, 720, 144)]
@@ -132,7 +127,29 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
         var path = Path.Combine(folder, $"journal-{width}-{dpi}.png"); Render(view, width, height, dpi, path); output.WriteLine(path);
     });
 
-    private static PlantingPlanningViewModel PlanningModel()
+    [Theory]
+    [InlineData(1920, 900, 96)]
+    [InlineData(1280, 720, 144)]
+    public void PerennialView_LifeCycleAndSeasonBindingsAtBothScales(int width, int height, int dpi) => runtime.Invoke(() =>
+    {
+        var vm = PerennialPlanningWorkflowTests.Model(Substitute.For<IPerennialPlanningService>());
+        var view = new PerennialPlanningView { DataContext = vm }; WpfRuntime.Layout(view, width, height);
+        foreach (var box in WpfRuntime.Descendants<TextBox>(view))
+            if (BindingOperations.GetBindingExpression(box, TextBox.TextProperty) is { } binding) Assert.Equal(BindingStatus.Active, binding.Status);
+        var year = WpfRuntime.Descendants<TextBox>(view).Single(x => BindingOperations.GetBinding(x, TextBox.TextProperty)?.Path.Path == "Draft.EstablishmentYear");
+        year.Text = "ошибка"; WpfRuntime.Layout(view, width, height); Assert.True(Validation.GetHasError(year)); Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.Equal("ошибка", vm.Draft.EstablishmentYear); year.Text = "2026"; WpfRuntime.Layout(view, width, height);
+        var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningUi", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
+        var body = Path.Combine(folder, $"perennial-body-{width}-{dpi}.png"); Render(view, width, height, dpi, body); output.WriteLine(body);
+        WpfRuntime.Descendants<TabControl>(view).Single().SelectedIndex = 1; WpfRuntime.Layout(view, width, height);
+        vm.CalculateAsync().GetAwaiter().GetResult(); WpfRuntime.Layout(view, width, height);
+        Assert.NotNull(vm.Preview); Assert.Contains("2027", vm.PreviewText);
+        foreach (var box in WpfRuntime.Descendants<TextBox>(view))
+            if (BindingOperations.GetBindingExpression(box, TextBox.TextProperty) is { } binding) Assert.Equal(BindingStatus.Active, binding.Status);
+        var season = Path.Combine(folder, $"perennial-season-{width}-{dpi}.png"); Render(view, width, height, dpi, season); output.WriteLine(season);
+    });
+
+    private static PlantingPlanningViewModel Model()
     {
         var service = Service();
         var vm = new PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);

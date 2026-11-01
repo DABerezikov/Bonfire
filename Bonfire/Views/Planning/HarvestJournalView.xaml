@@ -16,6 +16,7 @@
      <TextBlock Text="Фильтры: сезон (пусто — все), культура, сорт, ID партии" TextWrapping="Wrap"/>
      <UniformGrid Columns="2"><TextBox Text="{Binding FilterSeason, UpdateSourceTrigger=PropertyChanged}"/><TextBox Text="{Binding FilterCulture, UpdateSourceTrigger=PropertyChanged}"/>
       <TextBox Text="{Binding FilterSort, UpdateSourceTrigger=PropertyChanged}"/><TextBox Text="{Binding FilterBatch, UpdateSourceTrigger=PropertyChanged}"/></UniformGrid>
+     <TextBlock Text="ID межсезонной посадки (пусто — все)"/><TextBox Text="{Binding FilterPerennial, UpdateSourceTrigger=PropertyChanged}"/>
     </StackPanel>
     <ListBox ItemsSource="{Binding Entries}" SelectedItem="{Binding Selected}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
      <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="4"><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/><TextBlock Text="{Binding Owner}" TextWrapping="Wrap"/></StackPanel></DataTemplate></ListBox.ItemTemplate>

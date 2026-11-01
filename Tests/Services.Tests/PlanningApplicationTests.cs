@@ -112,6 +112,23 @@ public class PlanningApplicationTests
 
     private CalculatePlannedBatch Calculator() => new(_contexts, new RecommendSowing(_calendar), TimeProvider.System);
     [Fact]
+    public async Task LifeCycle_IsInheritedAsWholeProfileAndBatchOverrideDoesNotChangeSowing()
+    {
+        var context = Context(); var culture = context.CultureProfile.Match(x => x, () => throw new Exception());
+        var life = new LifeCycleProfile { Kind = LifeCycleKind.Perennial, FirstHarvestSeason = 2 };
+        _contexts.ReadAsync(Arg.Any<RegionId>(), Arg.Any<CultureId>(), Arg.Any<SortId>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(context with { CultureProfile = Option.Some(CultureGrowingProfile.Create(culture.CultureId, culture.Parameters,
+                culture.Extras with { LifeCycle = Option.Some(life) }).ValueOrThrow()) }));
+        var inherited = (await Calculator().ExecuteAsync(Input())).ValueOrThrow().Document.Match(x => x, () => throw new Exception());
+        var effective = inherited.Settings.Extras.Match(x => x.LifeCycle.Match(x => x, () => throw new Exception()), () => throw new Exception());
+        Assert.Equal(ParameterSource.Culture, effective.Source);
+        Assert.IsType<SeasonalPeriod.NotExpected>(GrowthPeriods.FirstYear(effective.Value, inherited.Preview.Agronomy.Emergence).ValueOrThrow().Fruiting);
+        var overridden = (await Calculator().ExecuteAsync(Input() with { LifeCycleOverride = Option.Some(new LifeCycleProfile { Kind = LifeCycleKind.Annual }) }))
+            .ValueOrThrow().Document.Match(x => x, () => throw new Exception());
+        Assert.Equal(inherited.Preview.Agronomy.Sowing, overridden.Preview.Agronomy.Sowing);
+        Assert.Equal(ParameterSource.Batch, overridden.Settings.Extras.Match(x => x.LifeCycle.Match(x => x.Source, () => throw new Exception()), () => throw new Exception()));
+    }
+    [Fact]
     public async Task HarvestTarget_InheritsIndependentNormsAndCalculatesSeedsForRequiredPlants()
     {
         var context = Context();

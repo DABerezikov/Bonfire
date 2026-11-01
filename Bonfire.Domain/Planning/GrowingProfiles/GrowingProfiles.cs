@@ -21,6 +21,7 @@ public sealed record PlanningExtras
     public Option<decimal> ReferenceSoilTemperatureC { get; init; } = Option.None<decimal>();
     public Option<decimal> YieldPerPlantKg { get; init; } = Option.None<decimal>();
     public Option<decimal> YieldPerM2Kg { get; init; } = Option.None<decimal>();
+    public Option<LifeCycleProfile> LifeCycle { get; init; } = Option.None<LifeCycleProfile>();
     public bool HasValidYield() => YieldPerPlantKg.Match(x => x >= 0, () => true) && YieldPerM2Kg.Match(x => x >= 0, () => true);
 }
 
@@ -37,7 +38,7 @@ public sealed record CultureGrowingProfile
         ArgumentNullException.ThrowIfNull(cultureId);
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(extras);
-        return extras.HasValidYield() && extras.LunarGroup.Match(Enum.IsDefined, () => true)
+        return extras.HasValidYield() && extras.LifeCycle.Match(x => x.Validate().IsSuccess, () => true) && extras.LunarGroup.Match(Enum.IsDefined, () => true)
             ? Result.Success(new CultureGrowingProfile(cultureId, parameters, extras))
             : Result.Failure<CultureGrowingProfile>("Неверная лунная группа или норма урожайности");
     }
@@ -52,7 +53,7 @@ public sealed record SortPlanningSettings
     {
         ArgumentNullException.ThrowIfNull(sortId);
         ArgumentNullException.ThrowIfNull(extras);
-        return extras.HasValidYield() && extras.LunarGroup.Match(Enum.IsDefined, () => true)
+        return extras.HasValidYield() && extras.LifeCycle.Match(x => x.Validate().IsSuccess, () => true) && extras.LunarGroup.Match(Enum.IsDefined, () => true)
             ? Result.Success(new SortPlanningSettings(sortId, extras))
             : Result.Failure<SortPlanningSettings>("Неверная лунная группа или норма урожайности");
     }
@@ -75,4 +76,5 @@ public sealed record EffectivePlanningExtras(
 {
     public Option<SourcedValue<decimal>> YieldPerPlantKg { get; init; } = Option.None<SourcedValue<decimal>>();
     public Option<SourcedValue<decimal>> YieldPerM2Kg { get; init; } = Option.None<SourcedValue<decimal>>();
+    public Option<SourcedValue<LifeCycleProfile>> LifeCycle { get; init; } = Option.None<SourcedValue<LifeCycleProfile>>();
 }

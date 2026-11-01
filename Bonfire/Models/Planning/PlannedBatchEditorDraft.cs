@@ -95,7 +95,7 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
                 .Bind(transplant => Result.Success(new PlanningBatchInputFromViewModel(RegionId, Choice.CultureId, Choice.SortId,
                     conditions, DirectSow ? new GrowingMethod.DirectSow(dates) : new GrowingMethod.Transplant(dates),
                     target, overrides, new PlanningChoices(sowing, transplant, seeds) { SowingOrigin = Values.SowingOrigin }, extras.GerminationPercentage,
-                    extras.LossPercentage, extras.LunarGroup, limit) { Harvest = harvest }))))))))));
+                    extras.LossPercentage, extras.LunarGroup, limit) { Harvest = harvest, LifeCycleOverride = extras.LifeCycle }))))))))));
     }
 
     public void AcceptSaved(PlannedBatchDraftValues submitted, int batchId)

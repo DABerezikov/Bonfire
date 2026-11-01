@@ -271,6 +271,8 @@ namespace BonfireDB.Migrations
 
                     b.HasIndex("CultureId");
 
+                    b.HasIndex("PerennialId");
+
                     b.HasIndex("SnapshotBatchId");
 
                     b.HasIndex("SortId");
@@ -278,6 +280,82 @@ namespace BonfireDB.Migrations
                     b.HasIndex("SeasonYear", "SnapshotCultureId", "SnapshotSortId");
 
                     b.ToTable("HarvestJournalEntries", (string)null);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PerennialPlantingRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CultureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EstablishmentYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RegionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SortId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CultureId");
+
+                    b.HasIndex("EstablishmentYear");
+
+                    b.HasIndex("RegionId");
+
+                    b.HasIndex("SortId");
+
+                    b.ToTable("PerennialPlantings", (string)null);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PerennialSeasonRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlantingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SeasonYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlantingId");
+
+                    b.HasIndex("PlanId", "PlantingId")
+                        .IsUnique();
+
+                    b.ToTable("PlannedPerennialSeasons", (string)null);
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Planning.PlannedBatchRow", b =>
@@ -980,6 +1058,9 @@ namespace BonfireDB.Migrations
                             b1.Property<int>("HardeningMode")
                                 .HasColumnType("INTEGER");
 
+                            b1.Property<string>("LifeCycleJson")
+                                .HasColumnType("TEXT");
+
                             b1.Property<decimal?>("LossPercentage")
                                 .HasColumnType("TEXT");
 
@@ -1127,10 +1208,48 @@ namespace BonfireDB.Migrations
                         .HasForeignKey("CultureId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("BonfireDB.Entities.Planning.PerennialPlantingRow", null)
+                        .WithMany()
+                        .HasForeignKey("PerennialId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("BonfireDB.Entities.PlantSort", null)
                         .WithMany()
                         .HasForeignKey("SortId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PerennialPlantingRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.PlantCulture", null)
+                        .WithMany()
+                        .HasForeignKey("CultureId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BonfireDB.Entities.Planning.PlanningRegionRow", null)
+                        .WithMany()
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BonfireDB.Entities.PlantSort", null)
+                        .WithMany()
+                        .HasForeignKey("SortId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PerennialSeasonRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.Planning.SeasonalPlantingPlanRow", null)
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BonfireDB.Entities.Planning.PerennialPlantingRow", null)
+                        .WithMany()
+                        .HasForeignKey("PlantingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Planning.PlannedBatchRow", b =>
@@ -1289,6 +1408,9 @@ namespace BonfireDB.Migrations
 
                             b1.Property<int>("HardeningMode")
                                 .HasColumnType("INTEGER");
+
+                            b1.Property<string>("LifeCycleJson")
+                                .HasColumnType("TEXT");
 
                             b1.Property<decimal?>("LossPercentage")
                                 .HasColumnType("TEXT");
