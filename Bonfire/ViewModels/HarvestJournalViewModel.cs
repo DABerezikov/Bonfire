@@ -144,9 +144,12 @@ public sealed class HarvestJournalViewModel(IHarvestService service, IPlanningSe
         if (source is null || int.TryParse(FilterSeason, out var year) && source.Identity.SeasonYear != year) return ". Сохранённый прогноз партии недоступен.";
         if (!source.Identity.CultureName.Contains(FilterCulture, StringComparison.CurrentCultureIgnoreCase) ||
             !source.Identity.SortName.Contains(FilterSort, StringComparison.CurrentCultureIgnoreCase)) return ". Фильтры исключают выбранную партию; сравнение недоступно.";
-        try { return source.ForecastPerPlantKg.Match(x => $"; прогноз по растениям {x:0.###} кг, отклонение {checked(total - x):+0.###;-0.###;0} кг", () => "; прогноз по растениям неизвестен")
-            + source.ForecastPerM2Kg.Match(x => $"; прогноз по площади {x:0.###} кг, отклонение {checked(total - x):+0.###;-0.###;0} кг", () => "; прогноз по площади неизвестен"); }
-        catch (OverflowException) { return "; отклонение превышает диапазон"; }
+        return Deviation(source.ForecastPerPlantKg, "растениям").Bind(plants => Deviation(source.ForecastPerM2Kg, "площади")
+            .Bind(area => Result.Success(plants + area))).Match(value => value, error => "; " + error);
+
+        Result<string> Deviation(Option<decimal> forecast, string basis) => forecast.Match(value => DecimalArithmetic.Subtract(total, value)
+            .Bind(delta => Result.Success($"; прогноз по {basis} {value:0.###} кг, отклонение {delta:+0.###;-0.###;0} кг")),
+            () => Result.Success($"; прогноз по {basis} неизвестен"));
     }
     private int Error(string error) { Status = error; return 0; }
 }

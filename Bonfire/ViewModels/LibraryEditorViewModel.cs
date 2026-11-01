@@ -159,26 +159,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     public ICommand SaveSortCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
-            try
+            if (SortDetail is not { } detail) return;
+            var result = await _libraryService.UpdateSortAsync(detail);
+            result.Match(saved =>
             {
-                if (SortDetail is not { } detail) return;
-                var result = await _libraryService.UpdateSortAsync(detail);
-                result.Match(saved =>
-                {
-                    _seedsViewModel.SyncAfterSortUpdate(saved);
-                    detail.ResetDirty();
-                    _userDialog.Information("Сохранено");
-                    return true;
-                }, error =>
-                {
-                    _userDialog.Error(error);
-                    return false;
-                });
-            }
-            catch (Exception ex)
+                _seedsViewModel.SyncAfterSortUpdate(saved);
+                detail.ResetDirty();
+                _userDialog.Information("Сохранено");
+                return true;
+            }, error =>
             {
-                _userDialog.Error($"Не удалось сохранить: {ex.Message}");
-            }
+                _userDialog.Error(error);
+                return false;
+            });
         }, () => SortDetail is { HasErrors: false, IsDirty: true });
 
     [field: AllowNull, MaybeNull]
@@ -195,26 +188,19 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     public ICommand SaveCultureCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
-            try
+            if (CultureDetail is not { } detail) return;
+            var result = await _libraryService.UpdateCultureAsync(detail);
+            result.Match(saved =>
             {
-                if (CultureDetail is not { } detail) return;
-                var result = await _libraryService.UpdateCultureAsync(detail);
-                result.Match(saved =>
-                {
-                    _seedsViewModel.SyncAfterCultureUpdate(saved);
-                    detail.ResetDirty();
-                    _userDialog.Information("Сохранено");
-                    return true;
-                }, error =>
-                {
-                    _userDialog.Error(error);
-                    return false;
-                });
-            }
-            catch (Exception ex)
+                _seedsViewModel.SyncAfterCultureUpdate(saved);
+                detail.ResetDirty();
+                _userDialog.Information("Сохранено");
+                return true;
+            }, error =>
             {
-                _userDialog.Error($"Не удалось сохранить: {ex.Message}");
-            }
+                _userDialog.Error(error);
+                return false;
+            });
         }, () => CultureDetail is { HasErrors: false, IsDirty: true });
 
     [field: AllowNull, MaybeNull]
@@ -231,28 +217,21 @@ public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog 
     public ICommand SaveProducerCommand => field
         ??= new LambdaCommandAsync(async () =>
         {
-            try
+            if (SelectedProducer is not { } producer || ProducerDetailName is not { } name) return;
+            var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
+            result.Match(saved =>
             {
-                if (SelectedProducer is not { } producer || ProducerDetailName is not { } name) return;
-                var result = await _libraryService.UpdateProducerAsync(producer.Id, name);
-                result.Match(saved =>
-                {
-                    _seedsViewModel.SyncAfterProducerUpdate(saved);
-                    _originalProducerName = saved.Name;
-                    ProducerDetailName = saved.Name;
-                    ProducerDetailIsDirty = false;
-                    _userDialog.Information("Сохранено");
-                    return true;
-                }, error =>
-                {
-                    _userDialog.Error(error);
-                    return false;
-                });
-            }
-            catch (Exception ex)
+                _seedsViewModel.SyncAfterProducerUpdate(saved);
+                _originalProducerName = saved.Name;
+                ProducerDetailName = saved.Name;
+                ProducerDetailIsDirty = false;
+                _userDialog.Information("Сохранено");
+                return true;
+            }, error =>
             {
-                _userDialog.Error($"Не удалось сохранить: {ex.Message}");
-            }
+                _userDialog.Error(error);
+                return false;
+            });
         }, () => SelectedProducer != null && !ProducerDetailHasError && ProducerDetailIsDirty);
 
     [field: AllowNull, MaybeNull]

@@ -64,7 +64,7 @@ public abstract record SowingRecommendations
             if (trend.ValueOrThrow() != preferred) continue;
             var candidate = MakeCandidate(date, preferred, 0, schedule, method, profile, choices, extras);
             if (candidate.IsFailure)
-                return candidate.Match(_ => throw new InvalidOperationException(), Result.Failure<SowingRecommendations>);
+                return candidate.Match(_ => Result.Failure<SowingRecommendations>("Некорректное состояние расчёта лунных вариантов"), Result.Failure<SowingRecommendations>);
             candidates.Add(candidate.ValueOrThrow());
         }
         if (candidates.Count > 0)
@@ -96,7 +96,7 @@ public abstract record SowingRecommendations
     }
 
     private static Result<SowingRecommendations> CalendarFailure(Result<LunarTrend> trend, DateOnly date)
-        => trend.Match(_ => throw new InvalidOperationException(), error => Result.Success<SowingRecommendations>(
+        => trend.Match(_ => Result.Failure<SowingRecommendations>("Некорректное состояние календарного отказа"), error => Result.Success<SowingRecommendations>(
             new Unavailable(LunarUnavailableReason.CalendarFailure, $"Нет лунной рекомендации на {date:dd.MM.yyyy}: {error}")));
 
     private static Result<SowingCandidate> MakeCandidate(DateOnly date, LunarTrend trend, int shift,

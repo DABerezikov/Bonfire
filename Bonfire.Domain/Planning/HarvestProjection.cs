@@ -13,19 +13,23 @@ public sealed record BedCapacity(int Rows, int PerRow, int Plants, decimal AreaM
         if (layout.Length <= 0 || layout.Width <= 0 || layout.PlantStep <= 0 || layout.RowStep <= 0 ||
             layout.StartMargin < 0 || layout.EndMargin < 0 || layout.LeftMargin < 0 || layout.RightMargin < 0)
             return Result.Failure<BedCapacity>("Размеры и шаги должны быть положительными, отступы — неотрицательными");
-        try
-        {
-            int Count(decimal size, decimal before, decimal after, decimal step)
-                => size - before - after < 0 ? 0 : checked((int)decimal.Floor((size - before - after) / step) + 1);
-            var along = layout.RowsAcross ? layout.Width : layout.Length;
-            var across = layout.RowsAcross ? layout.Length : layout.Width;
-            var perRow = Count(along, layout.StartMargin, layout.EndMargin, layout.PlantStep);
-            var rows = Count(across, layout.LeftMargin, layout.RightMargin, layout.RowStep);
-            return Result.Success(new BedCapacity(rows, perRow, checked(rows * perRow), checked(layout.Length * layout.Width),
-                1m / checked(layout.PlantStep * layout.RowStep)));
-        }
-        catch (Exception error) when (error is OverflowException or DivideByZeroException)
-        { return Result.Failure<BedCapacity>("Размеры или плотность выходят за допустимый диапазон"); }
+        var along = layout.RowsAcross ? layout.Width : layout.Length;
+        var across = layout.RowsAcross ? layout.Length : layout.Width;
+        return Count(along, layout.StartMargin, layout.EndMargin, layout.PlantStep).Bind(perRow =>
+            Count(across, layout.LeftMargin, layout.RightMargin, layout.RowStep).Bind(rows =>
+            rows != 0 && perRow > int.MaxValue / rows
+                ? Result.Failure<BedCapacity>("Число мест выходит за допустимый диапазон")
+                : DecimalArithmetic.Multiply(layout.Length, layout.Width).Bind(area =>
+                    DecimalArithmetic.Multiply(layout.PlantStep, layout.RowStep).Bind(feedingArea => DecimalArithmetic.Divide(1m, feedingArea)
+                    .Bind(density => Result.Success(new BedCapacity(rows, perRow, rows * perRow, area, density)))))));
+    }
+
+    private static Result<int> Count(decimal size, decimal before, decimal after, decimal step)
+    {
+        if (before > size || after > size - before) return Result.Success(0);
+        return DecimalArithmetic.Divide(size - before - after, step).Bind(count =>
+            count >= int.MaxValue ? Result.Failure<int>("Число позиций выходит за допустимый диапазон")
+                : Result.Success((int)decimal.Floor(count) + 1));
     }
 }
 
@@ -62,41 +66,40 @@ public sealed record HarvestProjection(int TargetPlants, Option<BedCapacity> Cap
 
     private static Result<HarvestProjection> Build(HarvestPlanningInput input, int manualPlants, Option<BedCapacity> capacity)
     {
-        try
+        return ResolveTarget(input, manualPlants, capacity).Bind(target =>
         {
-            var plants = manualPlants;
-            var requiredArea = Option.None<decimal>();
-            if (input.Mode == HarvestPlanningMode.BedCapacity)
-            {
-                if (capacity is not Option<BedCapacity>.Some bed) return Failure("Задайте размеры и схему грядки");
-                plants = bed.Value.Plants;
-            }
-            if (input.Mode is HarvestPlanningMode.TargetPerPlant or HarvestPlanningMode.TargetPerM2)
-            {
-                if (input.TargetKg is not Option<decimal>.Some target) return Failure("Задайте желаемый урожай в кг");
-                var selected = input.Mode == HarvestPlanningMode.TargetPerPlant ? input.PerPlantKg : input.PerM2Kg;
-                if (selected is not Option<decimal>.Some rate || rate.Value <= 0) return Failure("Для цели нужна положительная выбранная норма");
-                var perPlant = rate.Value;
-                if (input.Mode == HarvestPlanningMode.TargetPerM2)
-                {
-                    if (input.Layout is not Option<BedLayout>.Some layout || input.YieldAreaM2 is Option<decimal>.None)
-                        return Failure("Для цели по м² задайте схему и выделенную площадь урожая");
-                    requiredArea = Option.Some(target.Value / rate.Value);
-                    perPlant = checked(rate.Value * layout.Value.PlantStep * layout.Value.RowStep);
-                }
-                plants = checked((int)decimal.Ceiling(target.Value / perPlant));
-            }
-            if (plants <= 0) return Failure("Расчёт должен давать хотя бы одно растение");
-            var forecastPlant = input.PerPlantKg.Map(rate => checked(plants * rate));
-            var forecastArea = input.PerM2Kg.Match(rate => input.YieldAreaM2.Map(area => checked(area * rate)), () => Option.None<decimal>());
-            var deficit = capacity.Map(bed => Math.Max(0, checked(plants - bed.Plants)));
-            var areaDeficit = requiredArea.Match(required => input.YieldAreaM2.Map(area => Math.Max(0, required - area)), () => Option.None<decimal>());
-            return Result.Success(new HarvestProjection(plants, capacity, forecastPlant, forecastArea, requiredArea, deficit,
-                areaDeficit, input.Mode == HarvestPlanningMode.TargetPerM2));
-        }
-        catch (Exception error) when (error is OverflowException or DivideByZeroException)
-        { return Failure("Количество растений или урожай выходит за допустимый диапазон"); }
+            if (target.Plants <= 0) return Failure("Расчёт должен давать хотя бы одно растение");
+            var areaForecast = input.PerM2Kg.Match(rate => input.YieldAreaM2.Match(area => DecimalArithmetic.Multiply(area, rate)
+                .Bind(value => Result.Success(Option.Some(value))), () => Result.Success(Option.None<decimal>())), () => Result.Success(Option.None<decimal>()));
+            return input.PerPlantKg.Match(rate => DecimalArithmetic.Multiply(target.Plants, rate).Bind(value => Result.Success(Option.Some(value))),
+                () => Result.Success(Option.None<decimal>())).Bind(plantForecast => areaForecast.Bind(area =>
+                Result.Success(new HarvestProjection(target.Plants, capacity, plantForecast, area, target.Area,
+                    capacity.Map(bed => Math.Max(0, target.Plants - bed.Plants)),
+                    target.Area.Match(required => input.YieldAreaM2.Map(allocated => Math.Max(0, required - allocated)), () => Option.None<decimal>()),
+                    input.Mode == HarvestPlanningMode.TargetPerM2))));
+        });
     }
+
+    private static Result<(int Plants, Option<decimal> Area)> ResolveTarget(HarvestPlanningInput input, int manualPlants, Option<BedCapacity> capacity)
+    {
+        if (input.Mode == HarvestPlanningMode.ManualPlants) return Result.Success((manualPlants, Option.None<decimal>()));
+        if (input.Mode == HarvestPlanningMode.BedCapacity) return capacity.Match(bed => Result.Success((bed.Plants, Option.None<decimal>())),
+            () => Result.Failure<(int, Option<decimal>)>("Задайте размеры и схему грядки"));
+        if (input.TargetKg is not Option<decimal>.Some target) return Result.Failure<(int, Option<decimal>)>("Задайте желаемый урожай в кг");
+        var selected = input.Mode == HarvestPlanningMode.TargetPerPlant ? input.PerPlantKg : input.PerM2Kg;
+        if (selected is not Option<decimal>.Some rate || rate.Value <= 0) return Result.Failure<(int, Option<decimal>)>("Для цели нужна положительная выбранная норма");
+        if (input.Mode == HarvestPlanningMode.TargetPerPlant)
+            return RequiredPlants(target.Value, rate.Value).Bind(plants => Result.Success((plants, Option.None<decimal>())));
+        if (input.Layout is not Option<BedLayout>.Some layout || input.YieldAreaM2 is Option<decimal>.None)
+            return Result.Failure<(int, Option<decimal>)>("Для цели по м² задайте схему и выделенную площадь урожая");
+        var equivalentRate = DecimalArithmetic.Multiply(rate.Value, layout.Value.PlantStep)
+            .Bind(plantRate => DecimalArithmetic.Multiply(plantRate, layout.Value.RowStep));
+        return DecimalArithmetic.Divide(target.Value, rate.Value).Bind(area => equivalentRate.Bind(equivalent =>
+            RequiredPlants(target.Value, equivalent).Bind(plants => Result.Success((plants, Option.Some(area))))));
+    }
+
+    private static Result<int> RequiredPlants(decimal target, decimal rate) => DecimalArithmetic.Divide(target, rate)
+        .Bind(value => DecimalArithmetic.ToInt32(decimal.Ceiling(value)));
 
     private static Result<HarvestProjection> Failure(string error) => Result.Failure<HarvestProjection>(error);
 }

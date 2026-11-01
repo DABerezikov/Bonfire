@@ -12,18 +12,9 @@ public sealed record SeedQuantityCalculation(PlantCount Seeds, Option<decimal> E
         var survival = germination.Value / 100m * (1m - losses.Value / 100m);
         if (survival <= 0)
             return Result.Failure<SeedQuantityCalculation>("Проценты слишком малы для точного расчёта количества");
-        try
-        {
-            var seeds = decimal.Ceiling(target.Value / survival);
-            if (seeds > int.MaxValue)
-                return Result.Failure<SeedQuantityCalculation>("Число семян выходит за допустимый диапазон");
-            return PlantCount.Create((int)seeds).Bind(count => Result.Success(new SeedQuantityCalculation(
-                count, Option.Some(count.Value * survival), false, false)));
-        }
-        catch (OverflowException)
-        {
-            return Result.Failure<SeedQuantityCalculation>("Число семян выходит за допустимый диапазон");
-        }
+        return DecimalArithmetic.Divide(target.Value, survival).Bind(seeds => DecimalArithmetic.ToInt32(decimal.Ceiling(seeds)))
+            .Bind(PlantCount.Create).Bind(count => Result.Success(new SeedQuantityCalculation(count, Option.Some(count.Value * survival), false, false)))
+            .Match(Result.Success, _ => Result.Failure<SeedQuantityCalculation>("Число семян выходит за допустимый диапазон"));
     }
 
     public static SeedQuantityCalculation Manual(PlantCount target, PlantCount seeds,

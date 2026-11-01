@@ -51,4 +51,10 @@ public class BedHarvestTests
     }
 
     internal static BedLayout Layout(bool across = false) => new(2m, .9m, .4m, .6m, .2m, .2m, .3m, .3m, across);
+    [Fact]
+    public void OversizedMargins_ReturnZeroPlacesWithoutSubtractingBeyondDecimalRange()
+    {
+        var result = BedCapacity.Calculate(Layout() with { StartMargin = decimal.MaxValue, EndMargin = decimal.MaxValue }).ValueOrThrow();
+        Assert.Equal(0, result.Plants);
+    }
 }

@@ -63,8 +63,8 @@ public sealed record HarvestSummary(int Count, decimal TotalKg, Option<DateOnly>
     public static Result<HarvestSummary> Calculate(IEnumerable<RecordedHarvest> entries)
     {
         var unique = entries.DistinctBy(x => x.Id).ToArray();
-        try { return Result.Success(new HarvestSummary(unique.Length, unique.Sum(x => x.Entry.Mass.Kg),
-            unique.Length > 0 ? Option.Some(unique.Min(x => x.Entry.Date)) : Option.None<DateOnly>())); }
-        catch (OverflowException) { return Result.Failure<HarvestSummary>("Суммарная масса превышает допустимый диапазон"); }
+        return DecimalArithmetic.Sum(unique.Select(x => x.Entry.Mass.Kg)).Bind(total => Result.Success(new HarvestSummary(unique.Length, total,
+            unique.Length > 0 ? Option.Some(unique.Min(x => x.Entry.Date)) : Option.None<DateOnly>())))
+            .Match(Result.Success, _ => Result.Failure<HarvestSummary>("Суммарная масса превышает допустимый диапазон"));
     }
 }

@@ -1,5 +1,12 @@
 # Проверки Bonfire
 
+## Исправление расчётов через Result — 01.11.2026
+
+Гейт **1769/1769**: Models 817, Services 567, ViewModels 344, Repository 35,
+SeedsFromViewModel 6. Проверены 3844 комбинации арифметики против .NET decimal,
+отсутствие FirstChance арифметических исключений, распространение отказа партии
+в сезонную сводку и граничные размеры. [Подробности](../plans/planting-planning/result-based-calculations.md).
+
 ## Планирование посадок — 01.11.2026
 
 Локальный гейт: **1757/1757**, failed/notExecuted = 0. Models 805,

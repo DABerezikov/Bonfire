@@ -146,16 +146,9 @@ public static class PlanningPresentation
     }, error => error);
 
     public static string SeasonHarvest(IEnumerable<StoredPlannedBatchFromViewModel> batches)
-    {
-        try
-        {
-            var forecasts = batches.DistinctBy(x => x.Id).Select(x => HarvestProjection.Calculate(x.Document.Settings.Harvest, x.Document.Batch.TargetPlants.Value))
-                .Where(x => x.IsSuccess).Select(x => x.ValueOrThrow()).ToArray();
-            return $"Сезон, прогнозы отдельно: кг/растение — {forecasts.Sum(x => x.PerPlantKg.Match(v => v, () => 0m)):0.##} кг (неизвестно: {forecasts.Count(x => x.PerPlantKg is Option<decimal>.None)}); "
-                + $"кг/м² — {forecasts.Sum(x => x.PerM2Kg.Match(v => v, () => 0m)):0.##} кг (неизвестно: {forecasts.Count(x => x.PerM2Kg is Option<decimal>.None)}).";
-        }
-        catch (OverflowException) { return "Сезонный прогноз превышает допустимый диапазон"; }
-    }
+        => HarvestSeasonSummary.Calculate(batches.DistinctBy(x => x.Id).Select(x => (x.Document.Settings.Harvest, x.Document.Batch.TargetPlants.Value)))
+            .Match(summary => $"Сезон, прогнозы отдельно: кг/растение — {summary.PerPlantKg:0.##} кг (неизвестно: {summary.UnknownPerPlantCount}); "
+                + $"кг/м² — {summary.PerM2Kg:0.##} кг (неизвестно: {summary.UnknownPerM2Count}).", error => error);
 
     public static IEnumerable<SowingCandidate> Candidates(SowingRecommendations result) => result switch
     {

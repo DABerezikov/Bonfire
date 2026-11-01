@@ -30,18 +30,9 @@ public sealed record RegionDefinition
         {
             if (string.IsNullOrWhiteSpace(timeZoneId))
                 return Result.Failure<RegionDefinition>("Не указан часовой пояс региона");
-            try
-            {
-                return Result.Success(new RegionDefinition(validName, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId), reference, isArchived));
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                return Result.Failure<RegionDefinition>("Часовой пояс региона не найден");
-            }
-            catch (InvalidTimeZoneException)
-            {
-                return Result.Failure<RegionDefinition>("Недопустимые правила часового пояса региона");
-            }
+            return TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneId, out var zone)
+                ? Result.Success(new RegionDefinition(validName, zone, reference, isArchived))
+                : Result.Failure<RegionDefinition>("Часовой пояс региона не найден или содержит недопустимые правила");
         });
     }
 }
