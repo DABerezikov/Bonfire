@@ -28,7 +28,7 @@ public sealed record PlannedBatchDraftValues
     public PlannedDateOrigin SowingOrigin { get; init; } = PlannedDateOrigin.Manual;
 }
 
-public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
+public sealed partial class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
 {
     public PlannedBatchEditorDraft(int regionId) : this(regionId, new PlannedBatchDraftValues(), Option.None<int>())
     {
@@ -79,8 +79,8 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
         get => Values.DirectSow;
         set
         {
-            Update(Values with { DirectSow = value });
             Profile.ShowSeedlingFields = !value;
+            Update(Values with { DirectSow = value });
         }
     }
 
@@ -149,30 +149,21 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
         get => Values.ManualSeedCountText;
         set
         {
-            Update(Values with { ManualSeedCountText = value });
             Profile.RequireSeedPercentages = value.Length == 0;
+            Update(Values with { ManualSeedCountText = value });
         }
     }
 
     public string Error => PlanningInputParser.Error(BuildInput());
 
-    public string this[string property] => property switch
+    public string this[string property] => FieldRules.TryGetValue(property, out var rule) ? rule.Error : property switch
     {
-        nameof(Choice) => Choice is null ? "Выберите культуру и сорт" : "",
-        nameof(TargetPlantsText) when Harvest.IsManualPlants => PlanningInputParser.Error(
-            PlanningInputParser.Count(TargetPlantsText, "Растения")),
         nameof(ManualSeedCountText) => PlanningInputParser.Error(
             PlanningInputParser.OptionalCount(ManualSeedCountText, "Семена")),
-        nameof(TransplantStartText) when !DirectSow => WindowError(TransplantStartText, TransplantEndText, true),
-        nameof(TransplantEndText) when !DirectSow => WindowError(TransplantStartText, TransplantEndText, false),
-        nameof(DirectStartText) when DirectSow => WindowError(DirectStartText, DirectEndText, true),
-        nameof(DirectEndText) when DirectSow => WindowError(DirectStartText, DirectEndText, false),
         nameof(ChosenSowingText) => PlanningInputParser.Error(
             PlanningInputParser.OptionalDate(ChosenSowingText, "Посев")),
         nameof(ChosenTransplantText) when !DirectSow => PlanningInputParser.Error(
             PlanningInputParser.OptionalDate(ChosenTransplantText, "Высадка")),
-        nameof(Location) or nameof(Placement) => PlanningInputParser.Error(
-            GrowingConditions.Create(Location, Placement)),
         nameof(SearchLimitText) => int.TryParse(SearchLimitText, out var limit) && limit >= 0
             ? ""
             : "Укажите неотрицательное число дней",
@@ -186,7 +177,9 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
             _ => PlanningInputParser.Error(PlanningInputParser.Window(start, end)), _ => ""), error => error);
     }
 
-    public Result<PlanningBatchInputFromViewModel> BuildInput()
+    public Result<PlanningBatchInputFromViewModel> BuildInput() => ValidateRequiredFields().Bind(_ => BuildCheckedInput());
+
+    private Result<PlanningBatchInputFromViewModel> BuildCheckedInput()
     {
         if (Choice is null) return Result.Failure<PlanningBatchInputFromViewModel>("Выберите культуру и сорт");
         if (!int.TryParse(SearchLimitText, out var limit) || limit < 0)

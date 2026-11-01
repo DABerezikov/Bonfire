@@ -6,7 +6,7 @@
     </UserControl.Resources>
     <StackPanel>
         <TextBlock Text="{Binding ModeHint}" TextWrapping="Wrap" Margin="0,0,0,6" /><TextBlock Text="{Binding BedSource}" />
-        <CheckBox Content="Считать вместимость по прямоугольнику (метры)" IsChecked="{Binding UseLayout}" />
+        <CheckBox Content="{Binding FieldRules[UseLayout].Caption}" IsChecked="{Binding UseLayout}" />
         <StackPanel Visibility="{Binding UseLayout, Converter={StaticResource PlanningBoolVisibility}}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -17,25 +17,25 @@
                     <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Text="Длина, м *" /><TextBlock Grid.Column="1" Text="Ширина, м *" />
+                <TextBlock Text="{Binding FieldRules[Length].Caption}" /><TextBlock Grid.Column="1" Text="{Binding FieldRules[Width].Caption}" />
                 <TextBox Grid.Row="1"
                          Text="{Binding Length, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                 <TextBox Grid.Row="1" Grid.Column="1"
                          Text="{Binding Width, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-                <TextBlock Grid.Row="2" Text="Шаг растения, м *" />
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="Шаг ряда, м *" />
+                <TextBlock Grid.Row="2" Text="{Binding FieldRules[PlantStep].Caption}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FieldRules[RowStep].Caption}" />
                 <TextBox Grid.Row="3"
                          Text="{Binding PlantStep, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                 <TextBox Grid.Row="3" Grid.Column="1"
                          Text="{Binding RowStep, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-                <TextBlock Grid.Row="4" Text="Отступ начала, м *" />
-                <TextBlock Grid.Row="4" Grid.Column="1" Text="Отступ конца, м *" />
+                <TextBlock Grid.Row="4" Text="{Binding FieldRules[StartMargin].Caption}" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding FieldRules[EndMargin].Caption}" />
                 <TextBox Grid.Row="5"
                          Text="{Binding StartMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                 <TextBox Grid.Row="5" Grid.Column="1"
                          Text="{Binding EndMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-                <TextBlock Grid.Row="6" Text="Отступ слева, м *" />
-                <TextBlock Grid.Row="6" Grid.Column="1" Text="Отступ справа, м *" />
+                <TextBlock Grid.Row="6" Text="{Binding FieldRules[LeftMargin].Caption}" />
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FieldRules[RightMargin].Caption}" />
                 <TextBox Grid.Row="7"
                          Text="{Binding LeftMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                 <TextBox Grid.Row="7" Grid.Column="1"

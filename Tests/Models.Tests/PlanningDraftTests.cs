@@ -55,9 +55,17 @@ public class PlanningDraftTests
         Assert.Equal(Option.Some(12), draft.BatchId);
     }
 
-    internal static PlannedBatchEditorDraft Draft() => new(1)
+    internal static PlannedBatchEditorDraft Draft()
     {
-        Choice = new PlanningChoiceFromViewModel(1, "Томат", 2, "Черри"),
-        TransplantStartText = "20.05.2027", TransplantEndText = "25.05.2027", TargetPlantsText = "20"
-    };
+        var draft = new PlannedBatchEditorDraft(1)
+        {
+            Choice = new PlanningChoiceFromViewModel(1, "Томат", 2, "Черри"),
+            TransplantStartText = "20.05.2027", TransplantEndText = "25.05.2027", TargetPlantsText = "20"
+        };
+        draft.Profile.ConfigureInheritance(new()
+        {
+            Germination = Option.Some(DayRange.Create(5, 10).ValueOrThrow()), SeedlingAge = Option.Some(DayRange.Create(50, 60).ValueOrThrow())
+        }, new(), Option.Some(GerminationPercentage.Create(80).ValueOrThrow()), Option.Some(LossPercentage.Create(0).ValueOrThrow()));
+        return draft;
+    }
 }

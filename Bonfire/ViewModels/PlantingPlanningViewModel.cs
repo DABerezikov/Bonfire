@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -83,19 +83,19 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
     public string NewPlanName
     {
         get;
-        set => Set(ref field, value);
+        set { if (Set(ref field, value)) RefreshPlanRules(); }
     } = "Новый сезон";
 
     public string NewPlanYear
     {
         get;
-        set => Set(ref field, value);
+        set { if (Set(ref field, value)) RefreshPlanRules(); }
     }
 
     public RegionFromViewModel? NewPlanRegion
     {
         get;
-        set => Set(ref field, value);
+        set { if (Set(ref field, value)) RefreshPlanRules(); }
     }
 
     public bool AcceptHistoricalSnapshot
@@ -173,7 +173,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
     public ICommand LoadCommand => field ??= new LambdaCommandAsync(LoadAsync, () => !IsBusy);
 
     public ICommand CreatePlanCommand =>
-        field ??= new LambdaCommandAsync(CreatePlanAsync, () => !IsBusy && NewPlanRegion is not null);
+        field ??= new LambdaCommandAsync(CreatePlanAsync, () => !IsBusy && PlanningFieldRule.ValidateAll(NewPlanFieldRules.Values).IsSuccess);
 
     public ICommand NewBatchCommand =>
         field ??= new LambdaCommand(() => NewBatch(), () => !IsBusy && OpenedPlan is not null);
@@ -193,8 +193,10 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
     public ICommand ChooseSowingCommand => field ??= new LambdaCommandAsync(async parameter =>
     {
         if (parameter is not SowingCandidateItem candidate || IsBusy) return;
+        var returnToResult = IsResultStep;
         Draft.ChooseLunarDate(candidate.Candidate.Date);
         await CalculateAsync();
+        if (returnToResult && ResultStepEnabled) EditorStep = 4;
     }, parameter => !IsBusy && parameter is SowingCandidateItem { IsSelected: false });
 
     public ICommand UseReferenceCommand => field ??= new LambdaCommand(parameter =>
@@ -379,17 +381,20 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         IsBusy = true;
         try
         {
+            Preview = null;
+            _calculationValidation = "";
             var result = await _service.CalculateAsync(input.ValueOrThrow());
             if (!ReferenceEquals(Draft, draft) || draft.Revision != revision) return;
             result.Match(preview =>
             {
                 ApplyPreview(preview);
+                _calculationValidation = string.Join("; ", preview.MissingInputs);
                 RefreshSteps();
                 Status = preview.MissingInputs.Length == 0
                     ? "Расчёт готов. Выбор даты и сохранение — отдельные действия."
                     : "Заполните недостающие параметры";
                 return 0;
-            }, Error);
+            }, error => { _calculationValidation = error; return Error(error); });
         }
         finally
         {
@@ -451,9 +456,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         }
     }
 
-    private bool CanSave() => !IsBusy && Draft.IsDirty && OpenedPlan is not null && Preview is { } preview &&
-                              preview.MissingInputs.Length == 0
-                              && Draft.BuildInput().Match(input => input == preview.Input, _ => false);
+    private bool CanSave() => !IsBusy && Draft.IsDirty && ResultStepEnabled;
 
     public void NewBatch()
     {
@@ -561,6 +564,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         Candidates.Clear();
         References.Clear();
         AcceptHistoricalSnapshot = false;
+        _calculationValidation = "";
         EditorStep = 0;
         RefreshSteps();
         OnPropertyChanged(nameof(Draft));
@@ -572,7 +576,15 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
     {
         if (args.PropertyName == nameof(PlannedBatchEditorDraft.Values))
         {
+            if (_referenceContext is { } context &&
+                (context.Culture.Id != Draft.Choice?.CultureId || context.SortId != Draft.Choice?.SortId))
+            {
+                _referenceContext = null;
+                Draft.Profile.ConfigureInheritance(new(), new(), Option.None<GerminationPercentage>(), Option.None<LossPercentage>());
+                Draft.Harvest.ConfigureInheritance(Option.None<decimal>(), Option.None<decimal>());
+            }
             Preview = null;
+            _calculationValidation = "";
             PreviewText = "Ввод изменён — выполните расчёт";
             Candidates.Clear();
             RefreshSteps();
@@ -595,7 +607,6 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         result.Match(context =>
         {
             _referenceContext = context;
-            RefreshSteps();
             ApplyReferences(context.RegionalWindows, draft.DirectSow);
             var reference = context.Region.Definition.Reference;
             var year = OpenedPlan?.Definition.SeasonYear ?? DateTime.Now.Year;
@@ -603,6 +614,10 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
             var extras = GrowingProfileResolver.ResolveExtras(
                 context.CultureProfile.Match(value => value.Extras, () => new PlanningExtras()),
                 context.SortSettings.Match(value => value.Extras, () => new PlanningExtras()), new PlanningOverrides());
+            draft.Profile.ConfigureInheritance(context.CultureProfile.Match(value => value.Parameters, () => new GrowingProfileParameters()),
+                context.SortCharacteristics, extras.GerminationPercentage.Map(value => value.Value), extras.LossPercentage.Map(value => value.Value));
+            draft.Harvest.ConfigureInheritance(extras.YieldPerPlantKg.Map(value => value.Value), extras.YieldPerM2Kg.Map(value => value.Value));
+            RefreshSteps();
             ReferenceText = "Сроки справочные и не изменяют рабочий интервал.\n"
                             + "Открытый грунт: " +
                             (context.RegionalWindows.Any(x =>

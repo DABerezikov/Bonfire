@@ -29,7 +29,7 @@ public sealed record HarvestPlanningFieldValues
     public string? BedName { get; init; }
 }
 
-public sealed class HarvestPlanningFields(HarvestPlanningFieldValues values) : ViewModel, IDataErrorInfo
+public sealed partial class HarvestPlanningFields(HarvestPlanningFieldValues values) : ViewModel, IDataErrorInfo
 {
     public HarvestPlanningFieldValues Values { get; private set; } = values;
 
@@ -47,12 +47,9 @@ public sealed class HarvestPlanningFields(HarvestPlanningFieldValues values) : V
         HarvestPlanningMode.TargetPerM2 => "Обязательны цель в кг, норма кг/м² (здесь либо в сорте/культуре), размеры и схема грядки.",
         _ => "Обязательно количество растений. Грядка и нормы урожайности необязательны."
     };
-    public string TargetLabel => Mode is HarvestPlanningMode.TargetPerPlant or HarvestPlanningMode.TargetPerM2
-        ? "Цель урожая, кг *" : "Цель урожая, кг (необязательно)";
-    public string PerPlantLabel => Mode == HarvestPlanningMode.TargetPerPlant
-        ? "Норма, кг/растение * (или из справочника)" : "Норма, кг/растение";
-    public string PerM2Label => Mode == HarvestPlanningMode.TargetPerM2
-        ? "Норма, кг/м² * (или из справочника)" : "Норма, кг/м²";
+    public string TargetLabel => FieldRules[nameof(TargetKg)].Caption;
+    public string PerPlantLabel => FieldRules[nameof(PerPlantKg)].Caption;
+    public string PerM2Label => FieldRules[nameof(PerM2Kg)].Caption;
 
     public bool UseLayout
     {
@@ -141,7 +138,7 @@ public sealed class HarvestPlanningFields(HarvestPlanningFieldValues values) : V
     public string BedSource => Values.BedName is { } name ? $"Снимок размеров: {name}" : "Размеры вручную";
 
     public string Error => PlanningInputParser.Error(Build());
-    public string this[string property] => Error;
+    public string this[string property] => FieldRules.TryGetValue(property, out var rule) ? rule.Error : Error;
 
     public void ApplyBed(int id, string name, decimal length, decimal width)
         => Update(Values with
@@ -168,7 +165,9 @@ public sealed class HarvestPlanningFields(HarvestPlanningFieldValues values) : V
             }, _ => 0);
     }
 
-    public Result<HarvestPlanningInput> Build()
+    public Result<HarvestPlanningInput> Build() => ValidateRequiredFields().Bind(_ => BuildChecked());
+
+    private Result<HarvestPlanningInput> BuildChecked()
     {
         var errors = new List<string>();
 

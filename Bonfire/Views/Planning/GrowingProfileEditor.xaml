@@ -50,7 +50,7 @@
             <TextBlock Text="Пикировка" Style="{StaticResource PlanningLabel}" />
             <ComboBox Grid.Column="1" Grid.ColumnSpan="2" ItemsSource="{x:Static p:PlanningLookups.Operations}"
                       SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding PrickingMode}" />
-            <TextBlock Grid.Row="1" Text="Дней после всходов" Style="{StaticResource PlanningLabel}" />
+            <TextBlock Grid.Row="1" Text="{Binding PrickingRangeRule.Caption}" Style="{StaticResource PlanningLabel}" />
             <TextBox Grid.Row="1" Grid.Column="1" IsEnabled="{Binding PrickingEnabled}"
                      Text="{Binding PrickingMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
             <TextBox Grid.Row="1" Grid.Column="2" IsEnabled="{Binding PrickingEnabled}"
@@ -59,7 +59,7 @@
             <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                       ItemsSource="{x:Static p:PlanningLookups.Operations}" SelectedValuePath="Value"
                       DisplayMemberPath="Label" SelectedValue="{Binding HardeningMode}" />
-            <TextBlock Grid.Row="3" Text="Длительность, дней" Style="{StaticResource PlanningLabel}" />
+            <TextBlock Grid.Row="3" Text="{Binding HardeningRangeRule.Caption}" Style="{StaticResource PlanningLabel}" />
             <TextBox Grid.Row="3" Grid.Column="1" IsEnabled="{Binding HardeningEnabled}"
                      Text="{Binding HardeningMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
             <TextBox Grid.Row="3" Grid.Column="2" IsEnabled="{Binding HardeningEnabled}"

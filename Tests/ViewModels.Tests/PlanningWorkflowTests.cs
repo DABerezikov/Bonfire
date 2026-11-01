@@ -13,6 +13,90 @@ namespace ViewModels.Tests;
 
 public class PlanningWorkflowTests
 {
+    [Theory]
+    [InlineData(nameof(PlantingPlanningViewModel.NewPlanName))]
+    [InlineData(nameof(PlantingPlanningViewModel.NewPlanYear))]
+    [InlineData(nameof(PlantingPlanningViewModel.NewPlanRegion))]
+    public void PlanFields_UseSameRequiredRuleForCaptionErrorsAndCreateCommand(string property)
+    {
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        vm.NewPlanRegion = ReferenceContext().Region;
+        Assert.True(vm.CreatePlanCommand.CanExecute(null));
+        if (property == nameof(vm.NewPlanRegion)) vm.NewPlanRegion = null;
+        else typeof(PlantingPlanningViewModel).GetProperty(property)!.SetValue(vm, "");
+        var rule = vm.NewPlanFieldRules[property];
+        Assert.True(rule.IsRequired); Assert.EndsWith(" *", rule.Caption);
+        Assert.True(rule.Validation.IsFailure);
+        Assert.Equal(rule.Error, ((System.ComponentModel.IDataErrorInfo)vm)[property]);
+        Assert.False(vm.CreatePlanCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task ResultStep_OpensOnlyAfterCompleteCalculationAndLocksAfterInputChanges()
+    {
+        var vm = await Model(); vm.EditorStep = 3;
+        vm.EditorStep = 4; Assert.Equal(3, vm.EditorStep);
+        _service.CalculateAsync(Arg.Any<PlanningBatchInputFromViewModel>(), Arg.Any<CancellationToken>())
+            .Returns(call => Result.Success(Preview(call.Arg<PlanningBatchInputFromViewModel>())));
+        Assert.True(vm.NextStepCommand.CanExecute(null));
+        vm.NextStepCommand.Execute(null);
+        Assert.Equal(4, vm.EditorStep);
+        Assert.True(vm.ResultStepEnabled);
+        vm.Draft.TargetPlantsText = "45";
+        Assert.False(vm.ResultStepEnabled); Assert.Equal(3, vm.EditorStep);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+    }
+
+    [Theory]
+    [InlineData("Для цели урожая нужна норма кг/растение")]
+    [InlineData("Для цели урожая нужна норма кг/м²")]
+    [InlineData("Не хватает обязательных параметров")]
+    public async Task ResultStep_ApplicationValidationFailureRemainsOnParametersWithReason(string error)
+    {
+        var vm = await Model(); vm.EditorStep = 3;
+        _service.CalculateAsync(Arg.Any<PlanningBatchInputFromViewModel>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Failure<PlanningPreviewFromViewModel>(error));
+        vm.NextStepCommand.Execute(null);
+        Assert.Equal(3, vm.EditorStep);
+        Assert.False(vm.ResultStepEnabled);
+        Assert.Contains(error, vm.StepGuidance);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task MissingSeedQuantity_ExplainsBlockedSaveAndOpensRelevantSteps()
+    {
+        var vm = await Model();
+        vm.Draft.ManualSeedCountText = ""; vm.Draft.ChosenSowingText = "20.03.2027";
+        _service.CalculateAsync(Arg.Any<PlanningBatchInputFromViewModel>(), Arg.Any<CancellationToken>()).Returns(call =>
+        {
+            var preview = Preview(call.Arg<PlanningBatchInputFromViewModel>());
+            if (preview.Input.Choices.ManualSeedCount is Option<PlantCount>.Some) return Result.Success(preview);
+            return Result.Success(preview with
+            {
+                Document = preview.Document.Map(document => PlanningBatchDocument.Create(document.Batch, document.Settings,
+                    document.References, document.Preview, Option.None<SeedQuantityCalculation>(), document.CalculatedAt).ValueOrThrow()),
+                MissingInputs = ["Для автоматического количества задайте всхожесть и потери либо введите число семян вручную"]
+            });
+        });
+        vm.EditorStep = 3;
+        await vm.CalculateAsync(); vm.EditorStep = 4;
+        Assert.Equal(3, vm.EditorStep);
+        Assert.False(vm.ResultStepEnabled);
+        Assert.Contains("всхожесть", vm.StepGuidance);
+        Assert.True(vm.NeedsSeedQuantity);
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.Contains("Сохранение недоступно", vm.SelectedSowingText);
+        Assert.DoesNotContain("нажмите «Сохранить партию»", vm.SelectedSowingText);
+        vm.EditSeedPercentagesCommand.Execute(null); Assert.Equal(3, vm.EditorStep);
+        vm.EditManualSeedCountCommand.Execute(null); Assert.Equal(2, vm.EditorStep);
+        Assert.Equal("20.03.2027", vm.Draft.ChosenSowingText);
+        vm.Draft.ManualSeedCountText = "30";
+        await vm.CalculateAsync();
+        Assert.False(vm.NeedsSeedQuantity);
+        Assert.True(vm.SaveCommand.CanExecute(null));
+    }
+
     [Fact]
     public async Task Steps_MissingInheritedPeriodsExplainWhatToFillBeforeResult()
     {
@@ -27,6 +111,10 @@ public class PlanningWorkflowTests
         Assert.Contains("Возраст", vm.StepGuidance);
         vm.Draft.Profile.GermMinText = "5"; vm.Draft.Profile.GermMaxText = "10";
         vm.Draft.Profile.AgeMinText = "50"; vm.Draft.Profile.AgeMaxText = "60";
+        Assert.False(vm.ResultStepEnabled);
+        _service.CalculateAsync(Arg.Any<PlanningBatchInputFromViewModel>(), Arg.Any<CancellationToken>())
+            .Returns(call => Result.Success(Preview(call.Arg<PlanningBatchInputFromViewModel>())));
+        await vm.CalculateAsync();
         Assert.True(vm.ResultStepEnabled);
         Assert.False(vm.Draft.Profile.RequireSeedPercentages);
         vm.Draft.ManualSeedCountText = "";
@@ -79,9 +167,17 @@ public class PlanningWorkflowTests
     public PlanningWorkflowTests()
     {
         _service.ReadContextAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Failure<PlanningContextFromViewModel>("Справка не заполнена"));
+            .Returns(Result.Success(ReferenceContext()));
         _service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(Option.Some(Plan())));
     }
+
+    internal static PlanningContextFromViewModel ReferenceContext() => new(
+        new(RegionId.Create(1).ValueOrThrow(), RegionDefinition.Create("Томск", "Asia/Tomsk", RegionReference.Empty).ValueOrThrow()),
+        new(1, "Томат", "Овощи"), 2, "Черри", new(),
+        Option.Some(CultureGrowingProfile.Create(Bonfire.Domain.Libraries.CultureId.Create(1).ValueOrThrow(),
+            new() { Germination = Option.Some(DayRange.Create(5, 10).ValueOrThrow()), SeedlingAge = Option.Some(DayRange.Create(50, 60).ValueOrThrow()) },
+            new() { GerminationPercentage = Option.Some(GerminationPercentage.Create(80).ValueOrThrow()), LossPercentage = Option.Some(LossPercentage.Create(0).ValueOrThrow()) }).ValueOrThrow()),
+        Option.None<SortPlanningSettings>(), [], "v1");
 
     [Fact]
     public async Task Calculate_LatePreview_DoesNotReplaceEditedInput()

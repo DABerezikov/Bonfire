@@ -57,7 +57,14 @@ public static class PlanningMapper
             },
             _ => throw new InvalidOperationException("Неизвестный способ выращивания")
         };
-        return new PlannedBatchEditorDraft(regionId, values, Option.Some(stored.Id));
+        var draft = new PlannedBatchEditorDraft(regionId, values, Option.Some(stored.Id));
+        draft.Profile.ConfigureInheritance(new GrowingProfileParameters
+        {
+            Germination = Option.Some(batch.Profile.Germination.Value), SeedlingAge = batch.Profile.SeedlingAge.Map(value => value.Value)
+        }, new(), document.Settings.Extras.Match(value => value.GerminationPercentage.Map(x => x.Value), () => Option.None<GerminationPercentage>()),
+            document.Settings.Extras.Match(value => value.LossPercentage.Map(x => x.Value), () => Option.None<LossPercentage>()));
+        draft.Harvest.ConfigureInheritance(document.Settings.Harvest.PerPlantKg, document.Settings.Harvest.PerM2Kg);
+        return draft;
     }
 
     public static GrowingProfileFieldValues Fields(GrowingProfileParameters parameters, PlanningExtras extras)

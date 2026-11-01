@@ -31,7 +31,7 @@ public sealed record GrowingProfileFieldValues
     public int LunarMode { get; init; } = -1;
 }
 
-public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
+public sealed partial class GrowingProfileFields : ViewModel, IDataErrorInfo
 {
     public GrowingProfileFields(GrowingProfileFieldValues values, bool showRanges = true,
         bool showSoilTemperature = false)
@@ -55,10 +55,10 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
         get;
         set { if (Set(ref field, value)) OnPropertyChanged(string.Empty); }
     }
-    public string GerminationLabel => IsPlanningBatch ? "Прорастание * (или из справочника)" : "Прорастание";
-    public string SeedlingAgeLabel => IsPlanningBatch ? "Возраст от всходов * (или из справочника)" : "Возраст от всходов";
-    public string GerminationPercentLabel => IsPlanningBatch && RequireSeedPercentages ? "Всхожесть, % * (или из справочника)" : "Всхожесть, %";
-    public string LossPercentLabel => IsPlanningBatch && RequireSeedPercentages ? "Потери после всходов, % * (или из справочника)" : "Потери после всходов, %";
+    public string GerminationLabel => GerminationRule.Caption;
+    public string SeedlingAgeLabel => SeedlingAgeRule.Caption;
+    public string GerminationPercentLabel => GerminationPercentRule.Caption;
+    public string LossPercentLabel => LossPercentRule.Caption;
 
     public bool ShowSeedlingFields
     {
@@ -180,26 +180,21 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
     public bool PrickingEnabled => PrickingMode == 2;
     public bool HardeningEnabled => HardeningMode == 2;
 
-    public string Error => PlanningInputParser.Error(BuildOverrides(!ShowSeedlingFields)) is { Length: > 0 } error
+    public string Error => PlanningInputParser.Error(ValidateRequiredFields()) is { Length: > 0 } requiredError ? requiredError
+        : PlanningInputParser.Error(BuildOverrides(!ShowSeedlingFields)) is { Length: > 0 } error
         ? error
         : PlanningInputParser.Error(BuildExtras(!ShowSeedlingFields));
 
     public string this[string property] => property switch
     {
-        nameof(GermMinText) or nameof(GermMaxText) => PlanningInputParser.Error(
-            PlanningInputParser.Range(GermMinText, GermMaxText, "Прорастание")),
-        nameof(AgeMinText) or nameof(AgeMaxText) when ShowSeedlingFields => PlanningInputParser.Error(
-            PlanningInputParser.Range(AgeMinText, AgeMaxText, "Возраст")),
+        nameof(GermMinText) or nameof(GermMaxText) => GerminationRule.Error,
+        nameof(AgeMinText) or nameof(AgeMaxText) when ShowSeedlingFields => SeedlingAgeRule.Error,
         nameof(VegetationMinText) or nameof(VegetationMaxText) => PlanningInputParser.Error(
             PlanningInputParser.Range(VegetationMinText, VegetationMaxText, "Вегетация")),
-        nameof(GermPercentText) => PlanningInputParser.Error(PlanningInputParser.Decimal(GermPercentText, "Всхожесть")
-            .Bind(x => Optional(x, GerminationPercentage.Create))),
-        nameof(LossPercentText) => PlanningInputParser.Error(PlanningInputParser.Decimal(LossPercentText, "Потери")
-            .Bind(x => Optional(x, LossPercentage.Create))),
-        nameof(PrickingMinText) or nameof(PrickingMaxText) when ShowSeedlingFields => PlanningInputParser.Error(
-            Operation(PrickingMode, PrickingMinText, PrickingMaxText, "Пикировка")),
-        nameof(HardeningMinText) or nameof(HardeningMaxText) when ShowSeedlingFields => PlanningInputParser.Error(
-            Operation(HardeningMode, HardeningMinText, HardeningMaxText, "Закаливание")),
+        nameof(GermPercentText) => GerminationPercentRule.Error,
+        nameof(LossPercentText) => LossPercentRule.Error,
+        nameof(PrickingMinText) or nameof(PrickingMaxText) when ShowSeedlingFields => PrickingRangeRule.Error,
+        nameof(HardeningMinText) or nameof(HardeningMaxText) when ShowSeedlingFields => HardeningRangeRule.Error,
         nameof(SoilTemperatureText) => PlanningInputParser.Error(
             PlanningInputParser.Decimal(SoilTemperatureText, "Температура")),
         nameof(YieldPerPlantText) or nameof(YieldPerM2Text) => PlanningInputParser.Error(

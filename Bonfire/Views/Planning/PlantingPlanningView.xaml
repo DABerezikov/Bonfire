@@ -65,12 +65,12 @@
                 </StackPanel>
                 <Expander DockPanel.Dock="Bottom" Header="Создать сезонный план" Margin="0,8,6,0">
                     <StackPanel Margin="0,8,0,0">
-                        <TextBlock Text="Название *" TextWrapping="Wrap" />
-                        <TextBox Text="{Binding NewPlanName, UpdateSourceTrigger=PropertyChanged}" />
-                        <TextBlock Text="Год сезона *" TextWrapping="Wrap" />
-                        <TextBox Text="{Binding NewPlanYear, UpdateSourceTrigger=PropertyChanged}" />
-                        <TextBlock Text="Регион *" TextWrapping="Wrap" />
-                        <ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding NewPlanRegion}" DisplayMemberPath="Definition.Name.Value" />
+                        <TextBlock Text="{Binding NewPlanFieldRules[NewPlanName].Caption}" TextWrapping="Wrap" />
+                        <TextBox Text="{Binding NewPlanName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                        <TextBlock Text="{Binding NewPlanFieldRules[NewPlanYear].Caption}" TextWrapping="Wrap" />
+                        <TextBox Text="{Binding NewPlanYear, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                        <TextBlock Text="{Binding NewPlanFieldRules[NewPlanRegion].Caption}" TextWrapping="Wrap" />
+                        <ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding NewPlanRegion, ValidatesOnDataErrors=True}" DisplayMemberPath="Definition.Name.Value" />
                         <Button Command="{Binding CreatePlanCommand}" HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <fa5:ImageAwesome Icon="Solid_Plus" Height="12" Margin="0,0,6,0" Foreground="#388E3C" />
@@ -140,7 +140,7 @@
                         <Button Command="{Binding NextStepCommand}" Visibility="{Binding HasNextStep, Converter={StaticResource PlanningBoolVisibility}}" ToolTip="{Binding StepGuidance}" ToolTipService.ShowOnDisabled="True">
                             <StackPanel Orientation="Horizontal">
                                 <fa5:ImageAwesome Icon="Solid_ArrowRight" Height="12" Margin="0,0,6,0" Foreground="#388E3C" />
-                                <TextBlock Text="Далее" />
+                                <TextBlock Text="{Binding NextStepLabel}" />
                             </StackPanel>
                         </Button>
                     </WrapPanel>
@@ -155,7 +155,7 @@
                         </TabItem.Header>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="10,10,8,10">
-                                <TextBlock Text="Культура / сорт *" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Draft.FieldRules[Choice].Caption}" TextWrapping="Wrap" />
                                 <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Draft.Choice, ValidatesOnDataErrors=True}" ItemTemplate="{StaticResource PlanningPairTemplate}" />
                                 <CheckBox Content="Прямой посев на место" IsChecked="{Binding Draft.DirectSow}" Margin="0,5,0,8" />
                                 <Grid>
@@ -167,8 +167,8 @@
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock Text="Место выращивания *" TextWrapping="Wrap" />
-                                    <TextBlock Grid.Column="1" Text="Размещение *" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Draft.FieldRules[Location].Caption}" TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Draft.FieldRules[Placement].Caption}" TextWrapping="Wrap" />
                                     <ComboBox Grid.Row="1" ItemsSource="{x:Static p:PlanningLookups.Locations}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Location, ValidatesOnDataErrors=True}" />
                                     <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{x:Static p:PlanningLookups.Placements}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Placement, ValidatesOnDataErrors=True}" />
                                 </Grid>
@@ -192,11 +192,11 @@
                                         <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Начало периода *" />
+                                        <TextBlock Text="{Binding Draft.FieldRules[TransplantStartText].Caption}" />
                                         <local:PlanningDateInput x:Name="PlanningStartInput" Text="{Binding Draft.TransplantStartText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" ToolTip="Начало периода: выберите дату в календаре или введите дд.мм.гггг" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Окончание периода *" />
+                                        <TextBlock Text="{Binding Draft.FieldRules[TransplantEndText].Caption}" />
                                         <local:PlanningDateInput x:Name="PlanningEndInput" Text="{Binding Draft.TransplantEndText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" ToolTip="Окончание периода: выберите дату в календаре или введите дд.мм.гггг" />
                                     </StackPanel>
                                 </Grid>
@@ -206,11 +206,11 @@
                                         <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Начало периода *" />
+                                        <TextBlock Text="{Binding Draft.FieldRules[DirectStartText].Caption}" />
                                         <local:PlanningDateInput Text="{Binding Draft.DirectStartText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" ToolTip="Начало периода: выберите дату в календаре или введите дд.мм.гггг" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Окончание периода *" />
+                                        <TextBlock Text="{Binding Draft.FieldRules[DirectEndText].Caption}" />
                                         <local:PlanningDateInput Text="{Binding Draft.DirectEndText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" ToolTip="Окончание периода: выберите дату в календаре или введите дд.мм.гггг" />
                                     </StackPanel>
                                 </Grid>
@@ -275,14 +275,14 @@
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock Text="Количество растений * (при ручном режиме)" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Draft.FieldRules[TargetPlantsText].Caption}" TextWrapping="Wrap" />
                                     <TextBlock Grid.Column="1" Text="Семена вручную (пусто — расчёт)" TextWrapping="Wrap" />
                                     <TextBox x:Name="PlanningTargetInput" Grid.Row="1" IsEnabled="{Binding Draft.Harvest.IsManualPlants}" Text="{Binding Draft.TargetPlantsText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                                     <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Draft.ManualSeedCountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
                                 </Grid>
                                 <Expander Header="Грядка, вместимость и урожай, кг" Margin="0,8,0,6" IsExpanded="True">
                                     <StackPanel>
-                                        <TextBlock Text="Режим количества растений" />
+                                        <TextBlock Text="{Binding Draft.Harvest.FieldRules[Mode].Caption}" />
                                         <ComboBox ItemsSource="{x:Static p:PlanningLookups.HarvestModes}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Harvest.Mode}" />
                                         <ComboBox ItemsSource="{Binding Beds}" SelectedItem="{Binding SelectedBed}" DisplayMemberPath="Name" />
                                         <Button Command="{Binding UseBedCommand}" HorizontalAlignment="Left">
@@ -321,6 +321,15 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="10,10,8,10">
                                 <TextBlock Text="Для расчёта нужны прорастание и, для рассады, возраст от всходов: из сорта, культуры или указанные здесь. Для автоматического количества семян задайте всхожесть и потери; либо введите семена вручную на предыдущем шаге." TextWrapping="Wrap" Margin="0,0,0,8" />
+                                <TextBlock Text="{Binding CalculationGuidance}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                <WrapPanel Visibility="{Binding NeedsSeedQuantity, Converter={StaticResource PlanningBoolVisibility}}" Margin="0,0,0,8">
+                                    <Button Command="{Binding EditManualSeedCountCommand}">
+                                        <StackPanel Orientation="Horizontal"><fa5:ImageAwesome Icon="Solid_Seedling" Height="12" Margin="0,0,6,0"/><TextBlock Text="Ввести число семян"/></StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding EditSeedPercentagesCommand}">
+                                        <StackPanel Orientation="Horizontal"><fa5:ImageAwesome Icon="Solid_Percent" Height="12" Margin="0,0,6,0"/><TextBlock Text="Задать всхожесть и потери"/></StackPanel>
+                                    </Button>
+                                </WrapPanel>
                                 <Expander Header="Параметры партии: пустые поля наследуются из справочника" Margin="0,8,0,6" IsExpanded="True">
                                     <StackPanel Margin="0,8,0,0">
                                         <local:GrowingProfileEditor DataContext="{Binding Draft.Profile}" />
@@ -341,6 +350,7 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="10,10,8,10">
                                 <TextBlock Text="{Binding CalculationGuidance}" TextWrapping="Wrap" Margin="0,0,0,8" />
+
                                 <WrapPanel>
                                     <Button Command="{Binding CalculateCommand}" ToolTip="{Binding CalculationGuidance}" ToolTipService.ShowOnDisabled="True">
                                         <StackPanel Orientation="Horizontal">

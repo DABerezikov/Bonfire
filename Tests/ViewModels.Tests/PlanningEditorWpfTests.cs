@@ -18,6 +18,26 @@ namespace ViewModels.Tests;
 public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output)
 {
     [Fact]
+    public void RequiredMarkerAndFieldValidation_ChangeTogetherInRealView() => runtime.Invoke(() =>
+    {
+        var vm = Model();
+        vm.Draft.ManualSeedCountText = "";
+        vm.Draft.Profile.ConfigureInheritance(new(), new(), Option.None<GerminationPercentage>(), Option.None<LossPercentage>());
+        vm.EditorStep = 3;
+        var view = new PlantingPlanningView { DataContext = vm }; WpfRuntime.Layout(view, 1280, 720);
+        var percent = WpfRuntime.Descendants<TextBox>(view).Single(box =>
+            BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == "GermPercentText");
+        var label = WpfRuntime.Descendants<TextBlock>(view).Single(block =>
+            BindingOperations.GetBinding(block, TextBlock.TextProperty)?.Path.Path == "GerminationPercentLabel");
+        Assert.Equal(vm.Draft.Profile.GerminationPercentRule.Caption, label.Text);
+        Assert.Contains("*", label.Text); Assert.True(Validation.GetHasError(percent));
+        Assert.False(vm.NextStepCommand.CanExecute(null)); Assert.False(vm.ResultStepEnabled);
+        vm.Draft.ManualSeedCountText = "30";
+        WpfRuntime.Layout(view, 1280, 720);
+        Assert.DoesNotContain("*", label.Text); Assert.False(Validation.GetHasError(percent));
+    });
+
+    [Fact]
     public void ChooseSowing_RealButtonSetsDateRecalculatesAndShowsPersistentConfirmation() => runtime.Invoke(() =>
     {
         var service = Service();
@@ -95,8 +115,8 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
         output.WriteLine(folder);
         for (var step = 0; step < 5; step++)
         {
-            vm.EditorStep = step;
             if (step == 4) vm.CalculateAsync().GetAwaiter().GetResult();
+            vm.EditorStep = step;
             WpfRuntime.Layout(view, width, height);
             Assert.Equal(step, vm.EditorStep);
             var tabs = Assert.IsType<TabControl>(view.FindName("PlanningSteps"));
@@ -295,7 +315,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
         service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(Option.Some(PlanningWorkflowTests.Plan())));
         service.ReadRegionsAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray<RegionFromViewModel>.Empty));
         service.ReadChoicesAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray<PlanningChoiceFromViewModel>.Empty));
-        service.ReadContextAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Result.Failure<PlanningContextFromViewModel>("Справочные интервалы не заполнены"));
+        service.ReadContextAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Result.Success(PlanningWorkflowTests.ReferenceContext()));
         service.CalculateAsync(Arg.Any<PlanningBatchInputFromViewModel>(), Arg.Any<CancellationToken>()).Returns(call => Result.Success(PlanningWorkflowTests.Preview(call.Arg<PlanningBatchInputFromViewModel>())));
         return service;
     }

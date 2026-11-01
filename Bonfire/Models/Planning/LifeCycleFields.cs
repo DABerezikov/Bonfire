@@ -28,7 +28,7 @@ public sealed record LifeCycleFieldValues
     public bool FruitNextYear { get; init; }
 }
 
-public sealed class LifeCycleFields(LifeCycleFieldValues values) : ViewModel, IDataErrorInfo
+public sealed partial class LifeCycleFields(LifeCycleFieldValues values) : ViewModel, IDataErrorInfo
 {
     public LifeCycleFieldValues Values { get; private set; } = values;
     public bool ShowDetails => Mode >= 0;
@@ -136,9 +136,11 @@ public sealed class LifeCycleFields(LifeCycleFieldValues values) : ViewModel, ID
     }
 
     public string Error => PlanningInputParser.Error(Build());
-    public string this[string name] => Error;
+    public string this[string name] => FieldRules.TryGetValue(name, out var rule) ? rule.Error : Error;
 
-    public Result<Option<LifeCycleProfile>> Build()
+    public Result<Option<LifeCycleProfile>> Build() => PlanningFieldRule.ValidateAll(FieldRules.Values).Bind(_ => BuildChecked());
+
+    private Result<Option<LifeCycleProfile>> BuildChecked()
     {
         if (Mode == -1) return Result.Success(Option.None<LifeCycleProfile>());
         if (!int.TryParse(FirstFlower, out var flower) || flower <= 0 || !int.TryParse(FirstHarvest, out var fruit) ||
@@ -194,5 +196,6 @@ public sealed class LifeCycleFields(LifeCycleFieldValues values) : ViewModel, ID
         OnPropertyChanged(name);
         OnPropertyChanged(nameof(ShowDetails));
         OnPropertyChanged(nameof(Error));
+        OnPropertyChanged(nameof(FieldRules));
     }
 }
