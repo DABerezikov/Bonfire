@@ -61,12 +61,30 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
-            <MenuItem Header="Планирование посадок" Command="{Binding ShowPlantingPlanningCommand}"
-                      Background="{Binding PlanningBackground}" FontWeight="{Binding PlanningBold}" />
-            <MenuItem Header="Сборы урожая" Command="{Binding ShowHarvestJournalCommand}"
-                      Background="{Binding HarvestBackground}" FontWeight="{Binding HarvestBold}" />
-            <MenuItem Header="Многолетние посадки" Command="{Binding ShowPerennialPlanningCommand}"
-                      Background="{Binding PerennialBackground}" FontWeight="{Binding PerennialBold}" />
+            <MenuItem Command="{Binding ShowPlantingPlanningCommand}" Background="{Binding PlanningBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_CalendarAlt" Height="13" Margin="0,0,5,0" Foreground="#1976D2" />
+                        <TextBlock Text="Планирование посадок" FontWeight="{Binding PlanningBold}" />
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem Command="{Binding ShowHarvestJournalCommand}" Background="{Binding HarvestBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_ShoppingBasket" Height="13" Margin="0,0,5,0" Foreground="#C77800" />
+                        <TextBlock Text="Сборы урожая" FontWeight="{Binding HarvestBold}" />
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem Command="{Binding ShowPerennialPlanningCommand}" Background="{Binding PerennialBackground}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <fa5:ImageAwesome Icon="Solid_Tree" Height="13" Margin="0,0,5,0" Foreground="#388E3C" />
+                        <TextBlock Text="Многолетние посадки" FontWeight="{Binding PerennialBold}" />
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
             <MenuItem Command="{Binding ShowGardenPlanViewModelCommand}" Background="{Binding GardenBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">
