@@ -50,7 +50,8 @@ internal static class PlanningLibraryDbMapper
         GerminationPercentage = value.GerminationPercentage.Map(x => x.Value).ToNullable(),
         LossPercentage = value.LossPercentage.Map(x => x.Value).ToNullable(),
         LunarGroup = value.LunarGroup.Map(x => (int)x).ToNullable(),
-        ReferenceSoilTemperatureC = value.ReferenceSoilTemperatureC.ToNullable()
+        ReferenceSoilTemperatureC = value.ReferenceSoilTemperatureC.ToNullable(),
+        YieldPerPlantKg = value.YieldPerPlantKg.ToNullable(), YieldPerM2Kg = value.YieldPerM2Kg.ToNullable()
     };
 
     private static int Mode(OperationOverride<DayRange> operation) => operation switch
@@ -86,7 +87,8 @@ internal static class PlanningLibraryDbMapper
                 .Bind(losses => ReadLunar(row.LunarGroup).Bind(lunar => Result.Success(new PlanningExtras
                 {
                     PrickingOut = pricking, Hardening = hardening, GerminationPercentage = germination,
-                    LossPercentage = losses, LunarGroup = lunar, ReferenceSoilTemperatureC = row.ReferenceSoilTemperatureC.ToOption()
+                    LossPercentage = losses, LunarGroup = lunar, ReferenceSoilTemperatureC = row.ReferenceSoilTemperatureC.ToOption(),
+                    YieldPerPlantKg = row.YieldPerPlantKg.ToOption(), YieldPerM2Kg = row.YieldPerM2Kg.ToOption()
                 }))))));
 
     private static Result<Option<LunarGroup>> ReadLunar(int? value)

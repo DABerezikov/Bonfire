@@ -25,6 +25,7 @@ public sealed record PlannedBatchDraftValues
     public string ChosenTransplantText { get; init; } = "";
     public string ManualSeedCountText { get; init; } = "";
     public GrowingProfileFieldValues Profile { get; init; } = new();
+    public HarvestPlanningFieldValues Harvest { get; init; } = new();
     public PlannedDateOrigin SowingOrigin { get; init; } = PlannedDateOrigin.Manual;
 }
 
@@ -35,6 +36,7 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
     public PlannedBatchDraftValues Values { get; private set; }
     public PlannedBatchDraftValues Original { get; private set; }
     public GrowingProfileFields Profile { get; }
+    public HarvestPlanningFields Harvest { get; }
     public long Revision { get; private set; }
     public bool IsDirty => Values != Original;
     public bool IsSeedling => !DirectSow;
@@ -46,6 +48,11 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
         RegionId = regionId;
         BatchId = batchId;
         Values = Original = values;
+        Harvest = new(values.Harvest);
+        Harvest.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(HarvestPlanningFields.Values)) Update(Values with { Harvest = Harvest.Values }, nameof(Harvest));
+        };
         Profile = new(values.Profile) { ShowSeedlingFields = !values.DirectSow };
         Profile.PropertyChanged += (_, args) =>
         {
@@ -78,8 +85,8 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
             return Result.Failure<PlanningBatchInputFromViewModel>("Предел сдвига должен быть целым неотрицательным числом дней");
         var window = DirectSow ? PlanningInputParser.Window(DirectStartText, DirectEndText)
             : PlanningInputParser.Window(TransplantStartText, TransplantEndText);
-        return GrowingConditions.Create(Location, Placement).Bind(conditions =>
-            PlanningInputParser.Count(TargetPlantsText, "Количество растений").Bind(target =>
+        return Harvest.Build().Bind(harvest => GrowingConditions.Create(Location, Placement).Bind(conditions =>
+            (Harvest.IsManualPlants ? PlanningInputParser.Count(TargetPlantsText, "Количество растений") : PlantCount.Create(1)).Bind(target =>
             window.Bind(dates => Profile.BuildOverrides(DirectSow).Bind(overrides =>
             Profile.BuildExtras(DirectSow).Bind(extras =>
             PlanningInputParser.OptionalCount(ManualSeedCountText, "Количество семян").Bind(seeds =>
@@ -88,7 +95,7 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
                 .Bind(transplant => Result.Success(new PlanningBatchInputFromViewModel(RegionId, Choice.CultureId, Choice.SortId,
                     conditions, DirectSow ? new GrowingMethod.DirectSow(dates) : new GrowingMethod.Transplant(dates),
                     target, overrides, new PlanningChoices(sowing, transplant, seeds) { SowingOrigin = Values.SowingOrigin }, extras.GerminationPercentage,
-                    extras.LossPercentage, extras.LunarGroup, limit))))))))));
+                    extras.LossPercentage, extras.LunarGroup, limit) { Harvest = harvest }))))))))));
     }
 
     public void AcceptSaved(PlannedBatchDraftValues submitted, int batchId)
@@ -109,7 +116,7 @@ public sealed class PlannedBatchEditorDraft : ViewModel, IDataErrorInfo
     public string this[string property] => property switch
     {
         nameof(Choice) => Choice is null ? "Выберите культуру и сорт" : "",
-        nameof(TargetPlantsText) => PlanningInputParser.Error(PlanningInputParser.Count(TargetPlantsText, "Растения")),
+        nameof(TargetPlantsText) when Harvest.IsManualPlants => PlanningInputParser.Error(PlanningInputParser.Count(TargetPlantsText, "Растения")),
         nameof(ManualSeedCountText) => PlanningInputParser.Error(PlanningInputParser.OptionalCount(ManualSeedCountText, "Семена")),
         nameof(TransplantStartText) or nameof(TransplantEndText) when !DirectSow => PlanningInputParser.Error(PlanningInputParser.Window(TransplantStartText, TransplantEndText)),
         nameof(DirectStartText) or nameof(DirectEndText) when DirectSow => PlanningInputParser.Error(PlanningInputParser.Window(DirectStartText, DirectEndText)),

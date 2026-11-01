@@ -19,6 +19,9 @@ public sealed record PlanningExtras
     public Option<LossPercentage> LossPercentage { get; init; } = Option.None<LossPercentage>();
     public Option<LunarGroup> LunarGroup { get; init; } = Option.None<LunarGroup>();
     public Option<decimal> ReferenceSoilTemperatureC { get; init; } = Option.None<decimal>();
+    public Option<decimal> YieldPerPlantKg { get; init; } = Option.None<decimal>();
+    public Option<decimal> YieldPerM2Kg { get; init; } = Option.None<decimal>();
+    public bool HasValidYield() => YieldPerPlantKg.Match(x => x >= 0, () => true) && YieldPerM2Kg.Match(x => x >= 0, () => true);
 }
 
 public sealed record CultureGrowingProfile
@@ -34,9 +37,9 @@ public sealed record CultureGrowingProfile
         ArgumentNullException.ThrowIfNull(cultureId);
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(extras);
-        return extras.LunarGroup.Match(Enum.IsDefined, () => true)
+        return extras.HasValidYield() && extras.LunarGroup.Match(Enum.IsDefined, () => true)
             ? Result.Success(new CultureGrowingProfile(cultureId, parameters, extras))
-            : Result.Failure<CultureGrowingProfile>("Неизвестная лунная группа");
+            : Result.Failure<CultureGrowingProfile>("Неверная лунная группа или норма урожайности");
     }
 }
 
@@ -49,9 +52,9 @@ public sealed record SortPlanningSettings
     {
         ArgumentNullException.ThrowIfNull(sortId);
         ArgumentNullException.ThrowIfNull(extras);
-        return extras.LunarGroup.Match(Enum.IsDefined, () => true)
+        return extras.HasValidYield() && extras.LunarGroup.Match(Enum.IsDefined, () => true)
             ? Result.Success(new SortPlanningSettings(sortId, extras))
-            : Result.Failure<SortPlanningSettings>("Неизвестная лунная группа");
+            : Result.Failure<SortPlanningSettings>("Неверная лунная группа или норма урожайности");
     }
 }
 
@@ -68,4 +71,8 @@ public sealed record EffectivePlanningExtras(
     Option<SourcedValue<GerminationPercentage>> GerminationPercentage,
     Option<SourcedValue<LossPercentage>> LossPercentage,
     Option<SourcedValue<LunarGroup>> LunarGroup,
-    Option<SourcedValue<decimal>> ReferenceSoilTemperatureC);
+    Option<SourcedValue<decimal>> ReferenceSoilTemperatureC)
+{
+    public Option<SourcedValue<decimal>> YieldPerPlantKg { get; init; } = Option.None<SourcedValue<decimal>>();
+    public Option<SourcedValue<decimal>> YieldPerM2Kg { get; init; } = Option.None<SourcedValue<decimal>>();
+}

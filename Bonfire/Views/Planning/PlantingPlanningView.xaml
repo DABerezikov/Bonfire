@@ -80,9 +80,22 @@
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                             <TextBlock Text="Желаемое количество растений"/><TextBlock Grid.Column="1" Text="Семена вручную (пусто — расчёт)" TextWrapping="Wrap"/>
-                            <TextBox x:Name="PlanningTargetInput" Grid.Row="1" Text="{Binding Draft.TargetPlantsText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                            <TextBox x:Name="PlanningTargetInput" Grid.Row="1" IsEnabled="{Binding Draft.Harvest.IsManualPlants}" Text="{Binding Draft.TargetPlantsText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
                             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Draft.ManualSeedCountText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
                         </Grid>
+                        <Expander Header="Грядка, вместимость и урожай, кг" Margin="0,8,0,6">
+                            <StackPanel>
+                                <TextBlock Text="Режим количества растений"/>
+                                <ComboBox ItemsSource="{x:Static p:PlanningLookups.HarvestModes}" SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding Draft.Harvest.Mode}"/>
+                                <ComboBox ItemsSource="{Binding Beds}" SelectedItem="{Binding SelectedBed}" DisplayMemberPath="Name"/>
+                                <Button Content="Взять размеры выбранной грядки" Command="{Binding UseBedCommand}" HorizontalAlignment="Left"/>
+                                <local:HarvestPlanningEditor DataContext="{Binding Draft.Harvest}"/>
+                                <Button Content="Взять шаги из схемы сорта (см → м)" Command="{Binding UseSortSpacingCommand}" HorizontalAlignment="Left"/>
+                                <Button Content="Отступы по половине шага" Command="{Binding HalfMarginsCommand}" HorizontalAlignment="Left"/>
+                                <TextBlock Text="Снимок прямоугольника партии. Совместимость размещения нескольких партий на общей грядке не проверяется; сетка грядки не меняется." TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SeasonHarvestText}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Expander>
                         <Expander Header="Параметры партии: пустые поля наследуются из справочника" Margin="0,8,0,6">
                             <StackPanel Margin="0,8,0,0">
                                 <local:GrowingProfileEditor DataContext="{Binding Draft.Profile}"/>

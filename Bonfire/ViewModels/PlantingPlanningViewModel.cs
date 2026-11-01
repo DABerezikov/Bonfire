@@ -11,6 +11,7 @@ using Bonfire.Domain.Planning;
 using Bonfire.Domain.Planning.Regions;
 using Bonfire.Domain.Planning.GrowingProfiles;
 using Bonfire.Infrastructure.Commands;
+using Bonfire.Infrastructure;
 using Bonfire.Models.Mappers;
 using Bonfire.Models.Planning;
 using Bonfire.Services.Interfaces;
@@ -25,12 +26,32 @@ public sealed class PlantingPlanningViewModel : ViewModel
     private bool _applying;
     private long _openRevision;
     private long _referenceRevision;
+    private PlanningContextFromViewModel? _referenceContext;
     private PlannedBatchEditorDraft _draft = new(0);
     public PlanningLibrariesViewModel Libraries { get; }
     public ObservableCollection<PlantingPlanSummaryFromViewModel> Plans { get; } = [];
     public ObservableCollection<PlannedBatchListItem> Batches { get; } = [];
     public ObservableCollection<RegionFromViewModel> Regions { get; } = [];
     public ObservableCollection<PlanningChoiceFromViewModel> Choices { get; } = [];
+    public ObservableCollection<PlanningBedFromViewModel> Beds { get; } = [];
+    public PlanningBedFromViewModel? SelectedBed { get; set; }
+    public ICommand UseBedCommand => field ??= new LambdaCommand(() =>
+    {
+        if (SelectedBed is not { } bed) return;
+        CanvasGeometryMapper.PlanningSize(bed.WidthPixels, bed.HeightPixels, CanvasConstants.PixelsPerMeter).Match(size =>
+        { Draft.Harvest.ApplyBed(bed.Id, bed.Name, size.Length, size.Width); return 0; }, Error);
+    }, () => SelectedBed is not null);
+    public ICommand HalfMarginsCommand => field ??= new LambdaCommand(() => Draft.Harvest.HalfStepMargins());
+    public ICommand UseSortSpacingCommand => field ??= new LambdaCommand(() =>
+    {
+        if (_referenceContext is not { } context || Draft.Choice?.SortId != context.SortId || Draft.Choice?.CultureId != context.Culture.Id) return;
+        if (context.SortCharacteristics.LandingPattern is not Option<int>.Some plant || plant.Value <= 0 ||
+            context.SortCharacteristics.LandingRowSpacing is not Option<int>.Some row || row.Value <= 0)
+        { Status = "В сорте не заполнены оба положительных шага посадки в см"; return; }
+        Draft.Harvest.PlantStep = (plant.Value / 100m).ToString(); Draft.Harvest.RowStep = (row.Value / 100m).ToString();
+        Status = "Шаги взяты из схемы сорта (см → м). Проверьте отступы перед расчётом";
+    });
+    public string SeasonHarvestText => PlanningPresentation.SeasonHarvest(Batches.Select(x => x.Snapshot));
     public ObservableCollection<SowingCandidateItem> Candidates { get; } = [];
     public ObservableCollection<RegionalWindowItem> References { get; } = [];
     public string NewPlanName { get; set => Set(ref field, value); } = "Новый сезон";
@@ -112,6 +133,7 @@ public sealed class PlantingPlanningViewModel : ViewModel
             NewPlanRegion = Regions.FirstOrDefault(x => x.Id == id) ?? Regions.FirstOrDefault(x => x.Definition.Name.Value == "Томск") ?? Regions.FirstOrDefault(); return 0; }, Error);
         var choices = await _service.ReadChoicesAsync();
         choices.Match(items => { Choices.Clear(); foreach (var item in items) Choices.Add(item); EnsureChoice(Draft.Choice); return 0; }, Error);
+        (await _service.ReadBedsAsync()).Match(items => { Beds.Clear(); foreach (var item in items) Beds.Add(item); return 0; }, Error);
         if (OpenedPlan is null && Plans.Count > 0) await OpenPlanAsync(Plans[0]);
     }
 
@@ -268,11 +290,13 @@ public sealed class PlantingPlanningViewModel : ViewModel
     private async Task RefreshReferenceAsync()
     {
         var draft = Draft; var choice = draft.Choice; var revision = ++_referenceRevision;
+        _referenceContext = null;
         if (choice is null || OpenedPlan is null) return;
         var result = await _service.ReadContextAsync(draft.RegionId, choice.CultureId, choice.SortId);
         if (revision != _referenceRevision || !ReferenceEquals(Draft, draft)) return;
         result.Match(context =>
         {
+            _referenceContext = context;
             ApplyReferences(context.RegionalWindows, draft.DirectSow);
             var reference = context.Region.Definition.Reference;
             var year = OpenedPlan?.Definition.SeasonYear ?? DateTime.Now.Year;
@@ -309,6 +333,7 @@ public sealed class PlantingPlanningViewModel : ViewModel
         var selectedId = SelectedBatch?.Id; _applying = true;
         try { Batches.Clear(); foreach (var batch in plan.Batches) Batches.Add(new(batch)); SelectedBatch = Batches.FirstOrDefault(x => x.Id == selectedId); }
         finally { _applying = false; }
+        OnPropertyChanged(nameof(SeasonHarvestText));
     }
     private void UpdateSummary(PlantingPlanDetailsFromViewModel plan)
     {

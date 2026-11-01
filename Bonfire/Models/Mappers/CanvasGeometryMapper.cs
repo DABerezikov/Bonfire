@@ -5,6 +5,13 @@ namespace Bonfire.Models.Mappers;
 
 internal static class CanvasGeometryMapper
 {
+    public static Result<(decimal Length, decimal Width)> PlanningSize(double width, double height, double pixelsPerMeter)
+    {
+        if (!double.IsFinite(width) || !double.IsFinite(height) || !double.IsFinite(pixelsPerMeter) || width <= 0 || height <= 0 || pixelsPerMeter <= 0)
+            return Result.Failure<(decimal, decimal)>("Размеры грядки и масштаб должны быть конечными и положительными");
+        try { return Result.Success((checked((decimal)(width / pixelsPerMeter)), checked((decimal)(height / pixelsPerMeter)))); }
+        catch (System.OverflowException) { return Result.Failure<(decimal, decimal)>("Размеры грядки выходят за диапазон"); }
+    }
     public static Result<CanvasRectangle> Read(GardenElementFromViewModel element)
         => CanvasRectangle.Create(element.X, element.Y, element.Width, element.Height);
 

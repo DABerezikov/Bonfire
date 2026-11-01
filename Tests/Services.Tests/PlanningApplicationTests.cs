@@ -111,6 +111,24 @@ public class PlanningApplicationTests
     }
 
     private CalculatePlannedBatch Calculator() => new(_contexts, new RecommendSowing(_calendar), TimeProvider.System);
+    [Fact]
+    public async Task HarvestTarget_InheritsIndependentNormsAndCalculatesSeedsForRequiredPlants()
+    {
+        var context = Context();
+        var profile = context.CultureProfile.Match(x => x, () => throw new Exception());
+        _contexts.ReadAsync(Arg.Any<RegionId>(), Arg.Any<CultureId>(), Arg.Any<SortId>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(context with { CultureProfile = Option.Some(CultureGrowingProfile.Create(profile.CultureId, profile.Parameters,
+                profile.Extras with { YieldPerPlantKg = Option.Some(2m), YieldPerM2Kg = Option.Some(4m) }).ValueOrThrow()) }));
+        var input = Input() with { Harvest = new() { Mode = HarvestPlanningMode.TargetPerPlant, TargetKg = Option.Some(15m),
+            YieldAreaM2 = Option.Some(1.8m), Layout = Option.Some(new BedLayout(2m, .9m, .4m, .6m, .2m, .2m, .3m, .3m, false)) } };
+        var preview = (await Calculator().ExecuteAsync(input)).ValueOrThrow();
+        var document = preview.Document.Match(x => x, () => throw new Exception());
+        Assert.Equal(input, preview.Input);
+        Assert.Equal(8, document.Batch.TargetPlants.Value);
+        Assert.Equal(12, document.Quantity.Match(x => x.Seeds.Value, () => -1));
+        Assert.Equal(ParameterSource.Culture, document.Settings.Harvest.PerPlantSource);
+        Assert.Equal(Option.Some(3), HarvestProjection.Calculate(document.Settings.Harvest, document.Batch.TargetPlants.Value).ValueOrThrow().PlantDeficit);
+    }
     private static DateWindow Window() => DateWindow.Create(new(2027, 5, 20), new(2027, 5, 25)).ValueOrThrow();
     internal static PlanningBatchInputFromViewModel Input() => new(1, 1, 2,
         GrowingConditions.Create(GrowingLocation.OpenGround, PlantPlacement.InGround).ValueOrThrow(), new GrowingMethod.Transplant(Window()),

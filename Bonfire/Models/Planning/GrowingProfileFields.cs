@@ -23,6 +23,8 @@ public sealed record GrowingProfileFieldValues
     public string GermPercentText { get; init; } = "";
     public string LossPercentText { get; init; } = "";
     public string SoilTemperatureText { get; init; } = "";
+    public string YieldPerPlantText { get; init; } = "";
+    public string YieldPerM2Text { get; init; } = "";
     public int PrickingMode { get; init; }
     public int HardeningMode { get; init; }
     public int LunarMode { get; init; } = -1;
@@ -54,6 +56,8 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
     public string GermPercentText { get => Values.GermPercentText; set => Update(Values with { GermPercentText = value }); }
     public string LossPercentText { get => Values.LossPercentText; set => Update(Values with { LossPercentText = value }); }
     public string SoilTemperatureText { get => Values.SoilTemperatureText; set => Update(Values with { SoilTemperatureText = value }); }
+    public string YieldPerPlantText { get => Values.YieldPerPlantText; set => Update(Values with { YieldPerPlantText = value }); }
+    public string YieldPerM2Text { get => Values.YieldPerM2Text; set => Update(Values with { YieldPerM2Text = value }); }
     public int PrickingMode { get => Values.PrickingMode; set => Update(Values with { PrickingMode = value }); }
     public int HardeningMode { get => Values.HardeningMode; set => Update(Values with { HardeningMode = value }); }
     public int LunarMode { get => Values.LunarMode; set => Update(Values with { LunarMode = value }); }
@@ -78,7 +82,11 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
                     {
                         GerminationPercentage = gp, LossPercentage = lp, PrickingOut = p, Hardening = h,
                         LunarGroup = moon, ReferenceSoilTemperatureC = t
-                    })))))))));
+                    }))))))))).Bind(extras => PlanningInputParser.Decimal(YieldPerPlantText, "кг/растение").Bind(plant =>
+                        PlanningInputParser.Decimal(YieldPerM2Text, "кг/м²").Bind(area =>
+                        plant.Match(x => x < 0, () => false) || area.Match(x => x < 0, () => false)
+                            ? Result.Failure<PlanningExtras>("Нормы урожайности не могут быть отрицательными")
+                            : Result.Success(extras with { YieldPerPlantKg = plant, YieldPerM2Kg = area }))));
 
     public string Error => PlanningInputParser.Error(BuildOverrides(!ShowSeedlingFields)) is { Length: > 0 } error
         ? error : PlanningInputParser.Error(BuildExtras(!ShowSeedlingFields));
@@ -92,6 +100,7 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
         nameof(PrickingMinText) or nameof(PrickingMaxText) when ShowSeedlingFields => PlanningInputParser.Error(Operation(PrickingMode, PrickingMinText, PrickingMaxText, "Пикировка")),
         nameof(HardeningMinText) or nameof(HardeningMaxText) when ShowSeedlingFields => PlanningInputParser.Error(Operation(HardeningMode, HardeningMinText, HardeningMaxText, "Закаливание")),
         nameof(SoilTemperatureText) => PlanningInputParser.Error(PlanningInputParser.Decimal(SoilTemperatureText, "Температура")),
+        nameof(YieldPerPlantText) or nameof(YieldPerM2Text) => PlanningInputParser.Error(BuildExtras(!ShowSeedlingFields)),
         _ => ""
     };
 

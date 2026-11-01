@@ -10,6 +10,7 @@ namespace Bonfire.Application.Planning;
 public sealed record PlanningBatchSettings
 {
     public int SearchLimitDays { get; init; } = 35;
+    public HarvestPlanningInput Harvest { get; init; } = new();
     public PlanningOverrides Overrides { get; init; } = new();
     public Option<EffectivePlanningExtras> Extras { get; init; } = Option.None<EffectivePlanningExtras>();
     public Option<GerminationPercentage> GerminationPercentage { get; init; } = Option.None<GerminationPercentage>();
@@ -47,7 +48,8 @@ public sealed record PlanningBatchDocument
         ArgumentNullException.ThrowIfNull(quantity);
         if (!Enum.IsDefined(settings.Group) || settings.SearchLimitDays < 0 || calculationVersion <= 0 || lunarPolicyVersion <= 0 || references.RegionalWindows.IsDefault)
             return Result.Failure<PlanningBatchDocument>("Некорректные параметры или версия снимка партии");
-        return LibraryName.Create(references.CultureName).Bind(_ => LibraryName.Create(references.SortName))
+        return HarvestProjection.Calculate(settings.Harvest, batch.TargetPlants.Value)
+            .Bind(_ => LibraryName.Create(references.CultureName)).Bind(_ => LibraryName.Create(references.SortName))
             .Bind(_ => RegionDefinition.Create(references.RegionName, references.TimeZoneId, RegionReference.Empty))
             .Bind(_ => Result.Success(new PlanningBatchDocument(batch, settings, references, preview, quantity,
                 calculatedAt.ToUniversalTime(), calculationVersion, lunarPolicyVersion)));

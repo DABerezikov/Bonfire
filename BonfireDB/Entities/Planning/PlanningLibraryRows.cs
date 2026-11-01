@@ -28,6 +28,8 @@ public class PlanningExtrasRow
     public decimal? LossPercentage { get; set; }
     public int? LunarGroup { get; set; }
     public decimal? ReferenceSoilTemperatureC { get; set; }
+    public decimal? YieldPerPlantKg { get; set; }
+    public decimal? YieldPerM2Kg { get; set; }
 }
 
 public class PlanningRegionRow : NamedEntity

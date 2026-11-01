@@ -83,6 +83,34 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
                 Assert.Equal(BindingStatus.Active, binding.Status);
     });
 
+    [Theory]
+    [InlineData(1920, 900, 96)]
+    [InlineData(1280, 720, 144)]
+    public void HarvestEditor_ExpandedBindingsAndInvalidInput(int width, int height, int dpi) => runtime.Invoke(() =>
+    {
+        var vm = Model();
+        vm.Draft.Harvest.ApplyBed(1, "Грядка", 2m, .9m);
+        var view = new PlantingPlanningView { DataContext = vm };
+        WpfRuntime.Layout(view, width, height);
+        var expander = WpfRuntime.Descendants<Expander>(view).Single(x => x.Header?.ToString()?.StartsWith("Грядка,") == true);
+        expander.IsExpanded = true;
+        WpfRuntime.Layout(view, width, height);
+        var editor = WpfRuntime.Descendants<HarvestPlanningEditor>(view).Single();
+        foreach (var box in WpfRuntime.Descendants<TextBox>(editor))
+            Assert.Equal(BindingStatus.Active, BindingOperations.GetBindingExpression(box, TextBox.TextProperty)!.Status);
+        var length = WpfRuntime.Descendants<TextBox>(editor).Single(x => BindingOperations.GetBinding(x, TextBox.TextProperty)?.Path.Path == "Length");
+        length.Text = "ошибка"; WpfRuntime.Layout(view, width, height);
+        Assert.True(Validation.GetHasError(length)); Assert.False(vm.CalculateCommand.CanExecute(null));
+        Assert.Equal("ошибка", vm.Draft.Harvest.Length);
+        length.Text = "2";
+        WpfRuntime.Layout(view, width, height);
+        Assert.True(vm.Draft.Harvest.Build().IsSuccess);
+        WpfRuntime.Descendants<ScrollViewer>(view).First(x => x.Content is StackPanel && x.ScrollableHeight > 0).ScrollToVerticalOffset(450);
+        WpfRuntime.Layout(view, width, height);
+        var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningUi", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, $"harvest-{width}-{dpi}.png"); Render(view, width, height, dpi, path); output.WriteLine(path);
+    });
+
     private static PlantingPlanningViewModel Model()
     {
         var service = Service();

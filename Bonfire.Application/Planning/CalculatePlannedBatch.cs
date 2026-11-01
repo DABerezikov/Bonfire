@@ -46,15 +46,26 @@ public sealed class CalculatePlannedBatch(IPlanningContextReader contexts, IReco
                 var germination = extras.GerminationPercentage.Map(x => x.Value);
                 var losses = extras.LossPercentage.Map(x => x.Value);
                 var group = extras.LunarGroup.Match(x => x.Value, () => LunarGroup.Unspecified);
-                var settings = new PlanningBatchSettings { Overrides = input.Overrides, Extras = Option.Some(extras),
+                var harvesting = input.Harvest with
+                {
+                    PerPlantKg = input.Harvest.PerPlantKg.Match(x => Option.Some(x), () => inherited.YieldPerPlantKg.Map(x => x.Value)),
+                    PerM2Kg = input.Harvest.PerM2Kg.Match(x => Option.Some(x), () => inherited.YieldPerM2Kg.Map(x => x.Value)),
+                    PerPlantSource = input.Harvest.PerPlantKg.Match(_ => ParameterSource.Batch, () => inherited.YieldPerPlantKg.Match(x => x.Source, () => ParameterSource.Batch)),
+                    PerM2Source = input.Harvest.PerM2Kg.Match(_ => ParameterSource.Batch, () => inherited.YieldPerM2Kg.Match(x => x.Source, () => ParameterSource.Batch))
+                };
+                return HarvestProjection.Calculate(harvesting, input.TargetPlants.Value).Bind(harvest =>
+                {
+                var targetInput = input with { TargetPlants = PlantCount.Create(harvest.TargetPlants).ValueOrThrow() };
+                var settings = new PlanningBatchSettings { Harvest = harvesting, Overrides = input.Overrides, Extras = Option.Some(extras),
                     GerminationPercentage = germination, LossPercentage = losses, Group = group, SearchLimitDays = input.SearchLimitDays };
                 return PlannedBatchDefinition.Create(cultureId, SortId.Create(input.SortId).ValueOrThrow(), input.Conditions,
-                    input.Method, profile, input.TargetPlants, input.Choices).Bind(batch =>
+                    input.Method, profile, targetInput.TargetPlants, input.Choices).Bind(batch =>
                     recommendations.Execute(new(input.Method, profile, input.Choices, settings.Extras, group, context.Region.Definition.TimeZone, input.SearchLimitDays), cancellationToken)
-                    .Bind(preview => Quantity(input, germination, losses).Bind(quantity =>
+                    .Bind(preview => Quantity(targetInput, germination, losses).Bind(quantity =>
                         PlanningBatchDocument.Create(batch, settings, references, preview, quantity, at)
                             .Bind(document => Result.Success(new PlanningPreviewFromViewModel(input, context.Fingerprint, references, Option.Some(document),
                                 quantity is Option<SeedQuantityCalculation>.None ? ["Для автоматического количества задайте всхожесть и потери либо введите число семян вручную"] : [], at))))));
+                });
             })));
     }
 

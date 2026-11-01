@@ -57,7 +57,11 @@ public static class GrowingProfileResolver
             ResolveValue(sort.GerminationPercentage, culture.GerminationPercentage),
             ResolveValue(sort.LossPercentage, culture.LossPercentage),
             ResolveValue(sort.LunarGroup, culture.LunarGroup),
-            ResolveValue(sort.ReferenceSoilTemperatureC, culture.ReferenceSoilTemperatureC));
+            ResolveValue(sort.ReferenceSoilTemperatureC, culture.ReferenceSoilTemperatureC))
+        {
+            YieldPerPlantKg = ResolveValue(sort.YieldPerPlantKg, culture.YieldPerPlantKg),
+            YieldPerM2Kg = ResolveValue(sort.YieldPerM2Kg, culture.YieldPerM2Kg)
+        };
 
     private static OperationPlan<T> ResolveOperation<T>(OperationOverride<T> value, ParameterSource source, OperationPlan<T> inherited)
         where T : notnull => value switch

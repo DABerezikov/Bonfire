@@ -915,6 +915,12 @@ namespace BonfireDB.Migrations
                             b1.Property<decimal?>("ReferenceSoilTemperatureC")
                                 .HasColumnType("TEXT");
 
+                            b1.Property<decimal?>("YieldPerM2Kg")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<decimal?>("YieldPerPlantKg")
+                                .HasColumnType("TEXT");
+
                             b1.HasKey("CultureGrowingProfileRowId");
 
                             b1.ToTable("PlanningCultureProfiles");
@@ -1199,6 +1205,12 @@ namespace BonfireDB.Migrations
                                 .HasColumnType("INTEGER");
 
                             b1.Property<decimal?>("ReferenceSoilTemperatureC")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<decimal?>("YieldPerM2Kg")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<decimal?>("YieldPerPlantKg")
                                 .HasColumnType("TEXT");
 
                             b1.HasKey("SortPlanningSettingsRowId");

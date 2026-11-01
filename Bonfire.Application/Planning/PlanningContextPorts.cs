@@ -24,7 +24,10 @@ public interface IPlanningContextReader
 
 public sealed record PlanningBatchInputFromViewModel(int RegionId, int CultureId, int SortId, GrowingConditions Conditions,
     GrowingMethod Method, PlantCount TargetPlants, PlanningOverrides Overrides, PlanningChoices Choices,
-    Option<GerminationPercentage> GerminationOverride, Option<LossPercentage> LossOverride, Option<LunarGroup> LunarGroupOverride, int SearchLimitDays);
+    Option<GerminationPercentage> GerminationOverride, Option<LossPercentage> LossOverride, Option<LunarGroup> LunarGroupOverride, int SearchLimitDays)
+{
+    public HarvestPlanningInput Harvest { get; init; } = new();
+}
 
 /// <summary>Соответствие preview проверяется точным сравнением иммутабельного Input, а не хешем UI-ссылки.</summary>
 public sealed record PlanningPreviewFromViewModel(PlanningBatchInputFromViewModel Input, string ContextFingerprint,

@@ -46,5 +46,13 @@
             <TextBlock Grid.Row="3" Text="Температура почвы, °C (справочно)" Style="{StaticResource PlanningLabel}" Visibility="{Binding ShowSoilTemperature, Converter={StaticResource PlanningBoolVisibility}}"/>
             <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SoilTemperatureText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Visibility="{Binding ShowSoilTemperature, Converter={StaticResource PlanningBoolVisibility}}"/>
         </Grid>
+        <StackPanel Visibility="{Binding ShowSoilTemperature, Converter={StaticResource PlanningBoolVisibility}}">
+            <TextBlock Text="Независимые нормы урожайности, кг/растение и кг/м²"/>
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <TextBox Text="{Binding YieldPerPlantText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+                <TextBox Grid.Column="1" Text="{Binding YieldPerM2Text, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+            </Grid>
+            <TextBlock Text="Пусто — наследование/неизвестно. Прежнее поле урожайности не переносится без указания базы." TextWrapping="Wrap"/>
+        </StackPanel>
     </StackPanel>
 </UserControl>

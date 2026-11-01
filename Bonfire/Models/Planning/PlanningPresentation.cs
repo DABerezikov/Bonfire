@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
+using System.Linq;
 using Bonfire.Application.Planning;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Planning;
@@ -13,6 +14,9 @@ public sealed record PlanningLabel<T>(T Value, string Label);
 
 public static class PlanningLookups
 {
+    public static ImmutableArray<PlanningLabel<HarvestPlanningMode>> HarvestModes { get; } =
+        [new(HarvestPlanningMode.ManualPlants, "Растения вручную"), new(HarvestPlanningMode.BedCapacity, "По вместимости"),
+         new(HarvestPlanningMode.TargetPerPlant, "Цель кг: кг/растение"), new(HarvestPlanningMode.TargetPerM2, "Цель кг: кг/м²")];
     public static ImmutableArray<PlanningLabel<GrowingLocation>> Locations { get; } =
         [new(GrowingLocation.OpenGround, "Открытый грунт"), new(GrowingLocation.Greenhouse, "Теплица"), new(GrowingLocation.Windowsill, "Подоконник")];
     public static ImmutableArray<PlanningLabel<PlantPlacement>> Placements { get; } =
@@ -70,6 +74,7 @@ public static class PlanningPresentation
         foreach (var missing in preview.MissingInputs) text.AppendLine(missing);
         if (preview.Document is not Option<PlanningBatchDocument>.Some present) return text.ToString();
         var document = present.Value;
+        text.AppendLine(Harvest(document));
         var schedule = document.Preview.Agronomy;
         text.AppendLine("Возможный посев: " + Window(schedule.Sowing));
         text.AppendLine(schedule.ResilientSowing.Match(value => "Устойчивое окно: " + Window(value),
@@ -103,6 +108,33 @@ public static class PlanningPresentation
             + (value.MatchesPreference ? ", соответствует предпочтению" : ", не соответствует предпочтению")); return 0; }, () => 0);
         return text.ToString();
         void Add(string label, Option<DateWindow> window) => window.Match(value => { text.AppendLine(label + ": " + Window(value)); return 0; }, () => 0);
+    }
+
+    public static string Harvest(PlanningBatchDocument document) => HarvestProjection.Calculate(document.Settings.Harvest, document.Batch.TargetPlants.Value).Match(value =>
+    {
+        var text = new StringBuilder();
+        value.Capacity.Match(bed => { text.AppendLine($"Вместимость: {bed.Rows} ряд. × {bed.PerRow} = {bed.Plants}; площадь {bed.AreaM2:0.##} м². Совместимость с другими партиями на грядке не проверена."); return 0; }, () => 0);
+        if (document.Settings.Harvest.PerPlantKg is Option<decimal>.Some plant)
+            text.AppendLine($"Норма {plant.Value} кг/растение ({Source(document.Settings.Harvest.PerPlantSource)}); прогноз {value.PerPlantKg.Match(x => x.ToString("0.##"), () => "неизвестно")} кг");
+        if (document.Settings.Harvest.PerM2Kg is Option<decimal>.Some area)
+            text.AppendLine($"Норма {area.Value} кг/м² ({Source(document.Settings.Harvest.PerM2Source)}); прогноз по выделенной площади {value.PerM2Kg.Match(x => x.ToString("0.##") + " кг", () => "неизвестен — задайте площадь")}.");
+        document.Settings.Harvest.TargetKg.Match(target => { text.AppendLine($"Цель {target} кг; требуется {value.TargetPlants} растений."); return 0; }, () => 0);
+        value.PlantDeficit.Match(deficit => { text.AppendLine($"Нехватка мест: {deficit}"); return 0; }, () => 0);
+        value.RequiredAreaM2.Match(required => { text.AppendLine($"Требуется {required:0.###} м²; нехватка площади: {value.AreaDeficitM2.Match(x => x.ToString("0.###"), () => "неизвестно")} м²."); return 0; }, () => 0);
+        if (value.UsesDensityEstimate) text.AppendLine("Число растений для нормы на м² — оценка по площади питания, не отдельная агрономическая норма.");
+        return text.ToString();
+    }, error => error);
+
+    public static string SeasonHarvest(IEnumerable<StoredPlannedBatchFromViewModel> batches)
+    {
+        try
+        {
+            var forecasts = batches.DistinctBy(x => x.Id).Select(x => HarvestProjection.Calculate(x.Document.Settings.Harvest, x.Document.Batch.TargetPlants.Value))
+                .Where(x => x.IsSuccess).Select(x => x.ValueOrThrow()).ToArray();
+            return $"Сезон, прогнозы отдельно: кг/растение — {forecasts.Sum(x => x.PerPlantKg.Match(v => v, () => 0m)):0.##} кг (неизвестно: {forecasts.Count(x => x.PerPlantKg is Option<decimal>.None)}); "
+                + $"кг/м² — {forecasts.Sum(x => x.PerM2Kg.Match(v => v, () => 0m)):0.##} кг (неизвестно: {forecasts.Count(x => x.PerM2Kg is Option<decimal>.None)}).";
+        }
+        catch (OverflowException) { return "Сезонный прогноз превышает допустимый диапазон"; }
     }
 
     public static IEnumerable<SowingCandidate> Candidates(SowingRecommendations result) => result switch

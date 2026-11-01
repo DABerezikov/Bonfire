@@ -30,6 +30,7 @@ public static class PlanningMapper
             TargetPlantsText = batch.TargetPlants.Value.ToString(CultureInfo.InvariantCulture),
             SearchLimitText = document.Settings.SearchLimitDays.ToString(CultureInfo.InvariantCulture),
             SowingOrigin = batch.Choices.SowingOrigin,
+            Harvest = HarvestPlanningFields.From(document.Settings.Harvest),
             ManualSeedCountText = batch.Choices.ManualSeedCount.Match(value => value.Value.ToString(CultureInfo.InvariantCulture), () => ""),
             ChosenSowingText = PlanningInputParser.Format(batch.Choices.SowingDate),
             ChosenTransplantText = PlanningInputParser.Format(batch.Choices.TransplantDate), Profile = fields
@@ -58,7 +59,9 @@ public static class PlanningMapper
         GermPercentText = extras.GerminationPercentage.Match(value => Number(value.Value), () => ""),
         LossPercentText = extras.LossPercentage.Match(value => Number(value.Value), () => ""),
         LunarMode = extras.LunarGroup.Match(value => (int)value, () => -1),
-        SoilTemperatureText = extras.ReferenceSoilTemperatureC.Match(Number, () => "")
+        SoilTemperatureText = extras.ReferenceSoilTemperatureC.Match(Number, () => ""),
+        YieldPerPlantText = extras.YieldPerPlantKg.Match(Number, () => ""),
+        YieldPerM2Text = extras.YieldPerM2Kg.Match(Number, () => "")
     };
 
     private static string BatchValue<T>(Option<SourcedValue<T>> source, Func<T, string> format)

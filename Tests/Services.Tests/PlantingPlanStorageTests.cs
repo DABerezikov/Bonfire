@@ -17,6 +17,23 @@ public class PlantingPlanStorageTests : IDisposable
     public void Dispose() => _fixture.Dispose();
 
     [Fact]
+    public async Task HarvestLayout_RoundTripIsIndependentOfLiveBed()
+    {
+        var pair = await PreparePair();
+        var original = Document(pair.Culture, pair.Sort, true);
+        var harvesting = new HarvestPlanningInput { BedId = Option.Some(987), BedName = Option.Some("Грядка 1"),
+            Layout = Option.Some(new BedLayout(2m, .9m, .4m, .6m, .2m, .2m, .3m, .3m, false)),
+            PerPlantKg = Option.Some(2m), PerM2Kg = Option.Some(4m), YieldAreaM2 = Option.Some(1.8m) };
+        var document = PlanningBatchDocument.Create(original.Batch, original.Settings with { Harvest = harvesting }, original.References,
+            original.Preview, original.Quantity, original.CalculatedAt).ValueOrThrow();
+        var store = new DbPlantingPlans(_fixture.Factory);
+        var saved = (await store.SaveAsync(NewPlan([NewBatch(document)]), default)).ValueOrThrow();
+        var read = (await store.ReadAsync(SeasonalPlantingPlanId.Create(saved.Id).ValueOrThrow(), default)).ValueOrThrow().Match(x => x, () => throw new Exception());
+        Assert.Equal(harvesting, read.Batches[0].Document.Settings.Harvest);
+        Assert.Equal(5, HarvestProjection.Calculate(harvesting, 20).ValueOrThrow().Capacity.Match(x => x.Plants, () => -1));
+    }
+
+    [Fact]
     public async Task Save_TwoIndependentBatches_RoundTripPreservesInputsAndHistoricalNames()
     {
         var pair = await PreparePair();
@@ -162,6 +179,7 @@ public class PlantingPlanStorageTests : IDisposable
             var row = await db.Set<PlannedBatchRow>().SingleAsync();
             var node = JsonNode.Parse(row.SnapshotJson)!;
             node["Document"]!["Settings"]!.AsObject().Remove("SearchLimitDays");
+            node["Document"]!["Settings"]!.AsObject().Remove("Harvest");
             node["Document"]!["Batch"]!["Choices"]!.AsObject().Remove("SowingOrigin");
             row.SnapshotJson = node.ToJsonString();
             db.Plants.RemoveRange(db.Plants); db.PlantsSort.RemoveRange(db.PlantsSort); db.PlantsCulture.RemoveRange(db.PlantsCulture);

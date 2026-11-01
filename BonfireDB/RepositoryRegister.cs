@@ -25,6 +25,7 @@ public static class RepositoryRegister
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddSingleton<DbPlantingPlans>()
         .AddSingleton<IPlanningContextReader, DbPlanningContextReader>()
+        .AddSingleton<IPlanningBedReader, DbPlanningBedReader>()
         .AddSingleton<IPlantingPlanReader>(provider => provider.GetRequiredService<DbPlantingPlans>())
         .AddSingleton<IPlantingPlanWriter>(provider => provider.GetRequiredService<DbPlantingPlans>())
         .AddScoped<IRepository<SeasonalPlantingPlanRow>, DbRepository<SeasonalPlantingPlanRow>>()

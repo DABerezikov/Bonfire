@@ -14,8 +14,10 @@ using Bonfire.Services.Interfaces;
 namespace Bonfire.Services;
 
 internal sealed class PlanningService(IPlantingPlanReader reader, IPlanningContextReader contexts,
-    IPlanningLibraryReader libraries, ICalculatePlannedBatch calculate, IManagePlantingPlans manage, ISavePlanningLibraries editLibraries) : IPlanningService
+    IPlanningLibraryReader libraries, ICalculatePlannedBatch calculate, IManagePlantingPlans manage, ISavePlanningLibraries editLibraries,
+    IPlanningBedReader beds) : IPlanningService
 {
+    public Task<Result<ImmutableArray<PlanningBedFromViewModel>>> ReadBedsAsync(CancellationToken cancellationToken = default) => beds.ReadAsync(cancellationToken);
     public Task<Result<ImmutableArray<PlantingPlanSummaryFromViewModel>>> ReadPlansAsync(CancellationToken cancellationToken = default) => reader.ReadAllAsync(cancellationToken);
     public Task<Result<Option<PlantingPlanDetailsFromViewModel>>> ReadPlanAsync(int id, CancellationToken cancellationToken = default)
         => SeasonalPlantingPlanId.Create(id).Match(key => reader.ReadAsync(key, cancellationToken),
