@@ -113,6 +113,27 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
 
     private static PlantingPlanningViewModel Model()
     {
+        return PlanningModel();
+    }
+
+    [Theory]
+    [InlineData(1920, 900, 96)]
+    [InlineData(1280, 720, 144)]
+    public void HarvestJournal_RealBindingsValidationAndLayout(int width, int height, int dpi) => runtime.Invoke(() =>
+    {
+        var vm = HarvestJournalWorkflowTests.Model(Substitute.For<IHarvestService>());
+        var view = new HarvestJournalView { DataContext = vm }; WpfRuntime.Layout(view, width, height);
+        foreach (var box in WpfRuntime.Descendants<TextBox>(view))
+            if (BindingOperations.GetBindingExpression(box, TextBox.TextProperty) is { } binding) Assert.Equal(BindingStatus.Active, binding.Status);
+        var mass = Assert.IsType<TextBox>(view.FindName("HarvestMassInput")); mass.Text = "не число"; WpfRuntime.Layout(view, width, height);
+        Assert.True(Validation.GetHasError(mass)); Assert.False(vm.SaveCommand.CanExecute(null)); Assert.Equal("не число", vm.Draft.MassKg);
+        mass.Text = "1,25"; WpfRuntime.Layout(view, width, height); Assert.True(vm.SaveCommand.CanExecute(null));
+        var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningUi", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, $"journal-{width}-{dpi}.png"); Render(view, width, height, dpi, path); output.WriteLine(path);
+    });
+
+    private static PlantingPlanningViewModel PlanningModel()
+    {
         var service = Service();
         var vm = new PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
         var summary = new PlantingPlanSummaryFromViewModel(1, 1, "Сезон", 2027, "Томск");

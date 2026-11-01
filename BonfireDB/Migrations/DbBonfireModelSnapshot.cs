@@ -203,6 +203,83 @@ namespace BonfireDB.Migrations
                     b.ToTable("PlanningCultureProfiles", (string)null);
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Planning.HarvestEntryRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BatchId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CultureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CultureName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("MassKg")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PerennialId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RegionName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SeasonYear")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SnapshotBatchId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SnapshotCultureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SnapshotPerennialId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SnapshotSortId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SortId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SortName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("CultureId");
+
+                    b.HasIndex("SnapshotBatchId");
+
+                    b.HasIndex("SortId");
+
+                    b.HasIndex("SeasonYear", "SnapshotCultureId", "SnapshotSortId");
+
+                    b.ToTable("HarvestJournalEntries", (string)null);
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.Planning.PlannedBatchRow", b =>
                 {
                     b.Property<int>("Id")
@@ -1036,6 +1113,24 @@ namespace BonfireDB.Migrations
                     b.Navigation("SeedlingAge");
 
                     b.Navigation("Vegetation");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.HarvestEntryRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.Planning.PlannedBatchRow", null)
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BonfireDB.Entities.PlantCulture", null)
+                        .WithMany()
+                        .HasForeignKey("CultureId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BonfireDB.Entities.PlantSort", null)
+                        .WithMany()
+                        .HasForeignKey("SortId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Planning.PlannedBatchRow", b =>

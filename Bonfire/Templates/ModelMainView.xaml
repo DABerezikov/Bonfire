@@ -24,6 +24,9 @@
     <DataTemplate DataType="{x:Type vm:PlantingPlanningViewModel}">
         <planning:PlantingPlanningView DataContext="{Binding}"/>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:HarvestJournalViewModel}">
+        <planning:HarvestJournalView DataContext="{Binding}"/>
+    </DataTemplate>
 
     <!-- Общий стиль метки-подсказки (используется в GardenPlanView) -->
     <Style x:Key="LabelStyle" TargetType="TextBlock">

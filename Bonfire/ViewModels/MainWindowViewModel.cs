@@ -11,7 +11,8 @@ namespace Bonfire.ViewModels
         SeedlingsViewModel seedlingsViewModel,
         LibraryEditorViewModel libraryEditorViewModel,
         GardenPlanViewModel gardenPlanViewModel,
-        PlantingPlanningViewModel plantingPlanningViewModel)
+        PlantingPlanningViewModel plantingPlanningViewModel,
+        HarvestJournalViewModel harvestJournalViewModel)
         : ViewModel
     {
         public SeedsViewModel SeedsViewModel { get; } = seedsViewModel;
@@ -19,6 +20,9 @@ namespace Bonfire.ViewModels
         public LibraryEditorViewModel LibraryEditorViewModel { get; } = libraryEditorViewModel;
         public GardenPlanViewModel GardenPlanViewModel { get; } = gardenPlanViewModel;
         public PlantingPlanningViewModel PlantingPlanningViewModel { get; } = plantingPlanningViewModel;
+        public HarvestJournalViewModel HarvestJournalViewModel { get; } = harvestJournalViewModel;
+        public FontWeight HarvestBold { get; set => Set(ref field, value); }
+        public Brush? HarvestBackground { get; set => Set(ref field, value); }
         public FontWeight PlanningBold { get; set => Set(ref field, value); }
         public Brush? PlanningBackground { get; set => Set(ref field, value); }
 
@@ -104,6 +108,8 @@ namespace Bonfire.ViewModels
             GardenBold = default;
             GardenBackground = TransparentBrush;
             PlanningBold = default;
+            HarvestBold = default;
+            HarvestBackground = TransparentBrush;
             PlanningBackground = TransparentBrush;
         }
 
@@ -175,6 +181,14 @@ namespace Bonfire.ViewModels
             ClearBold();
             PlanningBold = _boldFontWeight;
             PlanningBackground = _backgroundBrash;
+        });
+        public ICommand ShowHarvestJournalCommand => field ??= new LambdaCommand(() =>
+        {
+            if (CurrentViewModel is HarvestJournalViewModel) return;
+            if (CurrentViewModel is SeedsViewModel && !SeedsViewModel.TryDiscardSeedChanges()) return;
+            SeedsViewModel.IsActive = false; SeedlingsViewModel.IsActive = false;
+            PlantingPlanningViewModel.IsActive = false; GardenPlanViewModel.IsActive = false;
+            CurrentViewModel = HarvestJournalViewModel; ClearBold(); HarvestBold = _boldFontWeight; HarvestBackground = _backgroundBrash;
         });
     }
 }

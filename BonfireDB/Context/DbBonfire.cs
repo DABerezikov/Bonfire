@@ -36,6 +36,7 @@ public class DbBonfire(DbContextOptions<DbBonfire> options) : DbContext(options)
         base.OnModelCreating(modelBuilder);
         BonfireDB.Planning.Libraries.PlanningLibraryConfiguration.Configure(modelBuilder);
         BonfireDB.Planning.PlantingPlanConfiguration.Configure(modelBuilder);
+        BonfireDB.Harvest.HarvestJournalConfiguration.Configure(modelBuilder);
         modelBuilder.Entity<SortOption>().HasIndex(o => new { o.Category, o.Name }).IsUnique();
 
         // --- TPH: иерархия GardenPlot ---
