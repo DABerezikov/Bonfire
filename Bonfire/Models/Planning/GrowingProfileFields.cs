@@ -49,6 +49,16 @@ public sealed class GrowingProfileFields : ViewModel, IDataErrorInfo
     public LifeCycleFields LifeCycle { get; }
     public bool ShowRanges { get; }
     public bool ShowSoilTemperature { get; }
+    public bool IsPlanningBatch { get; init; }
+    public bool RequireSeedPercentages
+    {
+        get;
+        set { if (Set(ref field, value)) OnPropertyChanged(string.Empty); }
+    }
+    public string GerminationLabel => IsPlanningBatch ? "Прорастание * (или из справочника)" : "Прорастание";
+    public string SeedlingAgeLabel => IsPlanningBatch ? "Возраст от всходов * (или из справочника)" : "Возраст от всходов";
+    public string GerminationPercentLabel => IsPlanningBatch && RequireSeedPercentages ? "Всхожесть, % * (или из справочника)" : "Всхожесть, %";
+    public string LossPercentLabel => IsPlanningBatch && RequireSeedPercentages ? "Потери после всходов, % * (или из справочника)" : "Потери после всходов, %";
 
     public bool ShowSeedlingFields
     {

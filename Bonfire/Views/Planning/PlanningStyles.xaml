@@ -2,6 +2,11 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:conv="clr-namespace:Bonfire.Infrastructure.Converters">
     <BooleanToVisibilityConverter x:Key="PlanningBoolVisibility" />
+    <Style TargetType="DatePicker">
+        <Setter Property="MinHeight" Value="29" />
+        <Setter Property="Margin" Value="0,2,6,5" />
+        <Setter Property="Language" Value="ru-RU" />
+    </Style>
     <conv:ValidationErrorConverter x:Key="PlanningValidationError" />
     <Style TargetType="TextBox">
         <Setter Property="MinHeight" Value="27" />

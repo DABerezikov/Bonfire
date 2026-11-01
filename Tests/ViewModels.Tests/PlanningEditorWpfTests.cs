@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -17,9 +17,65 @@ namespace ViewModels.Tests;
 public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output)
 {
     [Fact]
+    public void DatePickers_ValidateBothBoundsAndKeepInvalidText() => runtime.Invoke(() =>
+    {
+        var vm = Model(); vm.EditorStep = 1;
+        var view = new PlantingPlanningView { DataContext = vm };
+        WpfRuntime.Layout(view, 1280, 720);
+        var start = Assert.IsType<PlanningDateInput>(view.FindName("PlanningStartInput"));
+        var end = Assert.IsType<PlanningDateInput>(view.FindName("PlanningEndInput"));
+        Assert.Contains("Начало", start.ToolTip.ToString());
+        Assert.Contains("Окончание", end.ToolTip.ToString());
+        Assert.IsType<DatePicker>(end.FindName("CalendarPicker")).SelectedDate = new DateTime(2027, 5, 19);
+        WpfRuntime.Layout(view, 1280, 720);
+        Assert.True(Validation.GetHasError(end));
+        Assert.False(vm.NextStepCommand.CanExecute(null));
+        Assert.Contains("позже", vm.StepGuidance);
+        Assert.IsType<DatePicker>(start.FindName("CalendarPicker")).SelectedDate = new DateTime(2027, 5, 18);
+        WpfRuntime.Layout(view, 1280, 720);
+        Assert.False(Validation.GetHasError(end));
+        Assert.True(vm.NextStepCommand.CanExecute(null));
+        Assert.IsType<TextBox>(end.FindName("DateText")).Text = "не дата";
+        WpfRuntime.Layout(view, 1280, 720);
+        Assert.Equal("не дата", vm.Draft.TransplantEndText);
+        Assert.True(Validation.GetHasError(end));
+        Assert.Contains("Окончание", vm.Draft[nameof(vm.Draft.TransplantEndText)]);
+    });
+
+    [Theory]
+    [InlineData(1280, 720, 144)]
+    [InlineData(1920, 900, 96)]
+    public void Wizard_AllStepsRenderAndUnavailableStepsStayLocked(int width, int height, int dpi) => runtime.Invoke(() =>
+    {
+        var vm = Model();
+        var view = new PlantingPlanningView { DataContext = vm };
+        var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningWizardUi", Guid.NewGuid().ToString("N"), $"{width}-{dpi}");
+        Directory.CreateDirectory(folder);
+        output.WriteLine(folder);
+        for (var step = 0; step < 5; step++)
+        {
+            vm.EditorStep = step;
+            if (step == 4) vm.CalculateAsync().GetAwaiter().GetResult();
+            WpfRuntime.Layout(view, width, height);
+            Assert.Equal(step, vm.EditorStep);
+            var tabs = Assert.IsType<TabControl>(view.FindName("PlanningSteps"));
+            Assert.Equal(step, tabs.SelectedIndex);
+            foreach (var picker in WpfRuntime.Descendants<PlanningDateInput>(view))
+                Assert.Equal(BindingStatus.Active, BindingOperations.GetBindingExpression(picker, PlanningDateInput.TextProperty)!.Status);
+            Render(view, width, height, dpi, Path.Combine(folder, $"step-{step + 1}.png"));
+        }
+        vm.EditorStep = 0;
+        vm.Draft.Choice = null;
+        WpfRuntime.Layout(view, width, height);
+        var steps = Assert.IsType<TabControl>(view.FindName("PlanningSteps"));
+        Assert.All(steps.Items.Cast<TabItem>().Skip(1), tab => Assert.False(tab.IsEnabled));
+    });
+
+    [Fact]
     public void InvalidText_RemainsInEditorAndBlocksCalculation() => runtime.Invoke(() =>
     {
         var vm = Model();
+        vm.EditorStep = 2;
         var view = new PlantingPlanningView { DataContext = vm };
         WpfRuntime.Layout(view, 1280, 720);
         var target = Assert.IsType<TextBox>(view.FindName("PlanningTargetInput"));
@@ -39,6 +95,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
     public void DirectSow_HidesSeedlingAgeWithoutDestroyingItsDraftText() => runtime.Invoke(() =>
     {
         var vm = Model(); vm.Draft.Profile.AgeMinText = "50"; vm.Draft.Profile.AgeMaxText = "60";
+        vm.EditorStep = 3;
         var view = new PlantingPlanningView { DataContext = vm };
         WpfRuntime.Layout(view, 1280, 720);
         var expander = WpfRuntime.Descendants<Expander>(view).Single(x => x.Header?.ToString()?.StartsWith("Параметры партии") == true);
@@ -46,7 +103,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
         var age = WpfRuntime.Descendants<TextBox>(view).Single(x => BindingOperations.GetBinding(x, TextBox.TextProperty)?.Path.Path == "AgeMinText");
         Assert.Equal(Visibility.Visible, age.Visibility);
         vm.Draft.DirectSow = true; WpfRuntime.Layout(view, 1280, 720);
-        Assert.Equal(Visibility.Collapsed, age.Visibility);
+        Assert.False(vm.Draft.Profile.ShowSeedlingFields);
         Assert.Equal("50", vm.Draft.Profile.AgeMinText);
     });
 
@@ -57,6 +114,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
     {
         var vm = Model();
         vm.CalculateAsync().GetAwaiter().GetResult();
+        vm.EditorStep = 4;
         var view = new PlantingPlanningView { DataContext = vm };
         WpfRuntime.Layout(view, width, height);
         foreach (var box in WpfRuntime.Descendants<TextBox>(view))
@@ -90,6 +148,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
     {
         var vm = Model();
         vm.Draft.Harvest.ApplyBed(1, "Грядка", 2m, .9m);
+        vm.EditorStep = 2;
         var view = new PlantingPlanningView { DataContext = vm };
         WpfRuntime.Layout(view, width, height);
         var expander = WpfRuntime.Descendants<Expander>(view).Single(x => x.Header?.ToString()?.StartsWith("Грядка,") == true);

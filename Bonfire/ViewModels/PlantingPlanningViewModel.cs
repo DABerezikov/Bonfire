@@ -20,7 +20,7 @@ using Bonfire.ViewModels.Base;
 
 namespace Bonfire.ViewModels;
 
-public sealed class PlantingPlanningViewModel : ViewModel
+public sealed partial class PlantingPlanningViewModel : ViewModel
 {
     private readonly IUserDialog _dialog;
     private readonly IPlanningService _service;
@@ -125,13 +125,13 @@ public sealed class PlantingPlanningViewModel : ViewModel
     public bool IsBusy
     {
         get;
-        private set => Set(ref field, value);
+        private set { if (Set(ref field, value)) RefreshSteps(); }
     }
 
     public PlantingPlanDetailsFromViewModel? OpenedPlan
     {
         get;
-        private set => Set(ref field, value);
+        private set { if (Set(ref field, value)) RefreshSteps(); }
     }
 
     public PlanningPreviewFromViewModel? Preview
@@ -384,6 +384,7 @@ public sealed class PlantingPlanningViewModel : ViewModel
             result.Match(preview =>
             {
                 ApplyPreview(preview);
+                RefreshSteps();
                 Status = preview.MissingInputs.Length == 0
                     ? "Расчёт готов. Выбор даты и сохранение — отдельные действия."
                     : "Заполните недостающие параметры";
@@ -560,6 +561,8 @@ public sealed class PlantingPlanningViewModel : ViewModel
         Candidates.Clear();
         References.Clear();
         AcceptHistoricalSnapshot = false;
+        EditorStep = 0;
+        RefreshSteps();
         OnPropertyChanged(nameof(Draft));
         CommandManager.InvalidateRequerySuggested();
         if (draft.Choice is not null) _ = RefreshReferenceAsync();
@@ -572,6 +575,7 @@ public sealed class PlantingPlanningViewModel : ViewModel
             Preview = null;
             PreviewText = "Ввод изменён — выполните расчёт";
             Candidates.Clear();
+            RefreshSteps();
             CommandManager.InvalidateRequerySuggested();
         }
 
@@ -591,6 +595,7 @@ public sealed class PlantingPlanningViewModel : ViewModel
         result.Match(context =>
         {
             _referenceContext = context;
+            RefreshSteps();
             ApplyReferences(context.RegionalWindows, draft.DirectSow);
             var reference = context.Region.Definition.Reference;
             var year = OpenedPlan?.Definition.SeasonYear ?? DateTime.Now.Year;

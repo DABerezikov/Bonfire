@@ -40,6 +40,19 @@ public sealed class HarvestPlanningFields(HarvestPlanningFieldValues values) : V
     }
 
     public bool IsManualPlants => Mode == HarvestPlanningMode.ManualPlants;
+    public string ModeHint => Mode switch
+    {
+        HarvestPlanningMode.BedCapacity => "Обязательны размеры и схема грядки: включите расчёт по прямоугольнику или возьмите размеры выбранной грядки.",
+        HarvestPlanningMode.TargetPerPlant => "Обязательны цель в кг и положительная норма кг/растение (здесь либо в сорте/культуре).",
+        HarvestPlanningMode.TargetPerM2 => "Обязательны цель в кг, норма кг/м² (здесь либо в сорте/культуре), размеры и схема грядки.",
+        _ => "Обязательно количество растений. Грядка и нормы урожайности необязательны."
+    };
+    public string TargetLabel => Mode is HarvestPlanningMode.TargetPerPlant or HarvestPlanningMode.TargetPerM2
+        ? "Цель урожая, кг *" : "Цель урожая, кг (необязательно)";
+    public string PerPlantLabel => Mode == HarvestPlanningMode.TargetPerPlant
+        ? "Норма, кг/растение * (или из справочника)" : "Норма, кг/растение";
+    public string PerM2Label => Mode == HarvestPlanningMode.TargetPerM2
+        ? "Норма, кг/м² * (или из справочника)" : "Норма, кг/м²";
 
     public bool UseLayout
     {

@@ -13,6 +13,66 @@ namespace ViewModels.Tests;
 
 public class PlanningWorkflowTests
 {
+    [Fact]
+    public async Task Steps_MissingInheritedPeriodsExplainWhatToFillBeforeResult()
+    {
+        _service.ReadContextAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(new PlanningContextFromViewModel(
+                new(RegionId.Create(1).ValueOrThrow(), RegionDefinition.Create("Томск", "Asia/Tomsk", RegionReference.Empty).ValueOrThrow()),
+                new(1, "Томат", "Овощи"), 2, "Черри", new(), Option.None<CultureGrowingProfile>(),
+                Option.None<SortPlanningSettings>(), [], "v1")));
+        var vm = await Model(); vm.EditorStep = 3;
+        Assert.False(vm.ResultStepEnabled);
+        Assert.Contains("Прорастание", vm.StepGuidance);
+        Assert.Contains("Возраст", vm.StepGuidance);
+        vm.Draft.Profile.GermMinText = "5"; vm.Draft.Profile.GermMaxText = "10";
+        vm.Draft.Profile.AgeMinText = "50"; vm.Draft.Profile.AgeMaxText = "60";
+        Assert.True(vm.ResultStepEnabled);
+        Assert.False(vm.Draft.Profile.RequireSeedPercentages);
+        vm.Draft.ManualSeedCountText = "";
+        Assert.True(vm.Draft.Profile.RequireSeedPercentages);
+        Assert.Contains("*", vm.Draft.Profile.GerminationPercentLabel);
+    }
+
+    [Fact]
+    public async Task Steps_BlockInvalidIntervalAndPreserveInputWhenReturning()
+    {
+        var vm = await Model();
+        vm.Draft.TransplantEndText = "19.05.2027";
+        Assert.True(vm.DatesStepEnabled);
+        Assert.False(vm.QuantityStepEnabled);
+        vm.EditorStep = 1;
+        Assert.Contains("позже", vm.StepGuidance);
+        Assert.False(vm.NextStepCommand.CanExecute(null));
+        vm.Draft.TransplantEndText = "25.05.2027";
+        Assert.True(vm.QuantityStepEnabled);
+        vm.EditorStep = 2;
+        vm.Draft.TargetPlantsText = "42";
+        vm.PreviousStepCommand.Execute(null);
+        Assert.Equal(1, vm.EditorStep);
+        Assert.Equal("42", vm.Draft.TargetPlantsText);
+        vm.Draft.DirectSow = true;
+        Assert.False(vm.QuantityStepEnabled);
+        Assert.Contains("Начало", vm.StepGuidance);
+    }
+
+    [Fact]
+    public async Task Steps_ExplainMissingBedAndRevokeFollowingSteps()
+    {
+        var vm = await Model();
+        vm.EditorStep = 2;
+        vm.Draft.Harvest.Mode = HarvestPlanningMode.BedCapacity;
+        Assert.False(vm.ParametersStepEnabled);
+        Assert.Contains("размер", vm.StepGuidance);
+        vm.Draft.Harvest.ApplyBed(1, "Грядка", 2m, .9m);
+        Assert.True(vm.ParametersStepEnabled);
+        vm.EditorStep = 3;
+        vm.Draft.TransplantStartText = "30.05.2027";
+        Assert.Equal(1, vm.EditorStep);
+        Assert.False(vm.ResultStepEnabled);
+        Assert.Equal("2", vm.Draft.Harvest.Length);
+    }
+
     private readonly IPlanningService _service = Substitute.For<IPlanningService>();
     private readonly IUserDialog _dialog = Substitute.For<IUserDialog>();
 

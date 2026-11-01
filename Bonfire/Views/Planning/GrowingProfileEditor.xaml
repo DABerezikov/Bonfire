@@ -1,4 +1,4 @@
-<UserControl x:Class="Bonfire.Views.Planning.GrowingProfileEditor"
+﻿<UserControl x:Class="Bonfire.Views.Planning.GrowingProfileEditor"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:p="clr-namespace:Bonfire.Models.Planning"
@@ -20,12 +20,12 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Column="1" Text="От, дней" /><TextBlock Grid.Column="2" Text="До, дней" />
-            <TextBlock Grid.Row="1" Text="Прорастание" Style="{StaticResource PlanningLabel}" />
+            <TextBlock Grid.Row="1" Text="{Binding GerminationLabel}" Style="{StaticResource PlanningLabel}" />
             <TextBox Grid.Row="1" Grid.Column="1"
                      Text="{Binding GermMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
             <TextBox Grid.Row="1" Grid.Column="2"
                      Text="{Binding GermMaxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-            <TextBlock Grid.Row="2" Text="Возраст от всходов" Style="{StaticResource PlanningLabel}"
+            <TextBlock Grid.Row="2" Text="{Binding SeedlingAgeLabel}" Style="{StaticResource PlanningLabel}"
                        Visibility="{Binding ShowSeedlingFields, Converter={StaticResource PlanningBoolVisibility}}" />
             <TextBox Grid.Row="2" Grid.Column="1"
                      Text="{Binding AgeMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
@@ -73,10 +73,10 @@
                 <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <TextBlock Text="Всхожесть, %" Style="{StaticResource PlanningLabel}" />
+            <TextBlock Text="{Binding GerminationPercentLabel}" Style="{StaticResource PlanningLabel}" />
             <TextBox Grid.Column="1"
                      Text="{Binding GermPercentText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
-            <TextBlock Grid.Row="1" Text="Потери после всходов, %" Style="{StaticResource PlanningLabel}" />
+            <TextBlock Grid.Row="1" Text="{Binding LossPercentLabel}" Style="{StaticResource PlanningLabel}" />
             <TextBox Grid.Row="1" Grid.Column="1"
                      Text="{Binding LossPercentText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
             <TextBlock Grid.Row="2" Text="Лунная группа" Style="{StaticResource PlanningLabel}" />
