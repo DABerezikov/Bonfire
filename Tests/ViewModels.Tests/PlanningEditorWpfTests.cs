@@ -8,6 +8,7 @@ using Bonfire.Application.Planning;
 using Bonfire.Application.Planning.Libraries;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Planning;
+using Bonfire.Models.Planning;
 using Bonfire.Views.Planning;
 using Xunit.Abstractions;
 
@@ -16,6 +17,46 @@ namespace ViewModels.Tests;
 [Collection("WPF runtime")]
 public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output)
 {
+    [Fact]
+    public void ChooseSowing_RealButtonSetsDateRecalculatesAndShowsPersistentConfirmation() => runtime.Invoke(() =>
+    {
+        var service = Service();
+        var vm = new Bonfire.ViewModels.PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
+        vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск")).GetAwaiter().GetResult();
+        vm.Draft.Choice = new(1, "Томат", 2, "Черри");
+        vm.Draft.TransplantStartText = "20.05.2027"; vm.Draft.TransplantEndText = "25.05.2027";
+        vm.Draft.ManualSeedCountText = "30";
+        var date = new DateOnly(2027, 3, 20);
+        service.CalculateAsync(Arg.Any<PlanningBatchInputFromViewModel>(), Arg.Any<CancellationToken>()).Returns(call =>
+        {
+            var preview = PlanningWorkflowTests.Preview(call.Arg<PlanningBatchInputFromViewModel>());
+            return Result.Success(preview with { Document = preview.Document.Map(document => PlanningBatchDocument.Create(
+                document.Batch, document.Settings, document.References,
+                document.Preview with { Lunar = new SowingRecommendations.Available(
+                    [new(date, LunarTrend.Growing, 0, true, document.Preview.Agronomy, Option.None<CandidateReadiness>())], true, false,
+                    Option.None<ManualSowingAssessment>()) }
+                , document.Quantity, document.CalculatedAt).ValueOrThrow()) });
+        });
+        vm.CalculateAsync().GetAwaiter().GetResult(); vm.EditorStep = 4;
+        var view = new PlantingPlanningView { DataContext = vm }; WpfRuntime.Layout(view, 1280, 720);
+        var button = WpfRuntime.Descendants<Button>(view).Single(x => x.CommandParameter is SowingCandidateItem);
+        Assert.Same(vm.ChooseSowingCommand, button.Command);
+        typeof(Button).GetMethod("OnClick", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.Invoke(button, null);
+        WpfRuntime.Layout(view, 1280, 720);
+        Assert.Equal("20.03.2027", vm.Draft.ChosenSowingText);
+        Assert.Equal(PlannedDateOrigin.LunarRecommendation, vm.Draft.Values.SowingOrigin);
+        Assert.NotNull(vm.Preview);
+        Assert.Equal(Option.Some(date), vm.Preview.Input.Choices.SowingDate);
+        Assert.Equal(4, vm.EditorStep);
+        Assert.Contains("20.03.2027", Assert.IsType<TextBlock>(view.FindName("PlanningSelectedSowingText")).Text);
+        Assert.True(vm.Candidates.Single().IsSelected);
+        Assert.True(vm.SaveCommand.CanExecute(null));
+        Assert.False(WpfRuntime.Descendants<Button>(view).Single(x => x.CommandParameter is SowingCandidateItem).IsEnabled);
+        var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningUi", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, "selected-sowing-1280-144.png");
+        Render(view, 1280, 720, 144, path); output.WriteLine(path);
+    });
+
     [Fact]
     public void DatePickers_ValidateBothBoundsAndKeepInvalidText() => runtime.Invoke(() =>
     {

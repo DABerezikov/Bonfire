@@ -35,6 +35,11 @@ public sealed partial class PlantingPlanningViewModel
         : Preview is null ? "Сначала выполните расчёт."
         : Preview.MissingInputs.Length > 0 ? CalculationGuidance : "Проверьте параметры и пересчитайте изменённый ввод.";
     public string StepTitle => $"Шаг {EditorStep + 1} из 5";
+    public string SelectedSowingText => Draft.ChosenSowingText.Length == 0
+        ? "День посева пока не выбран: выберите вариант ниже или задайте дату на шаге «Сроки»."
+        : "Выбран посев: " + Draft.ChosenSowingText
+          + (Draft.Values.SowingOrigin == PlannedDateOrigin.LunarRecommendation ? " (из лунных рекомендаций). " : " (вручную). ")
+          + (Preview is null ? "Требуется пересчёт." : "Для записи в план нажмите «Сохранить партию».");
     public string StepGuidance => IsBusy ? "Выполняется операция…" : OpenedPlan is null
         ? "Сначала создайте или выберите сезонный план слева."
         : ValidateStep(EditorStep).Match(_ => EditorStep switch
@@ -124,6 +129,7 @@ public sealed partial class PlantingPlanningViewModel
         OnPropertyChanged(nameof(StepGuidance));
         OnPropertyChanged(nameof(CalculationGuidance));
         OnPropertyChanged(nameof(SaveGuidance));
+        OnPropertyChanged(nameof(SelectedSowingText));
         OnPropertyChanged(nameof(EditorAvailable));
         CommandManager.InvalidateRequerySuggested();
     }

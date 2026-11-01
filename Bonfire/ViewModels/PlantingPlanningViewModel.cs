@@ -195,7 +195,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         if (parameter is not SowingCandidateItem candidate || IsBusy) return;
         Draft.ChooseLunarDate(candidate.Candidate.Date);
         await CalculateAsync();
-    });
+    }, parameter => !IsBusy && parameter is SowingCandidateItem { IsSelected: false });
 
     public ICommand UseReferenceCommand => field ??= new LambdaCommand(parameter =>
         {
@@ -638,7 +638,10 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         preview.Document.Match(document =>
         {
             foreach (var candidate in PlanningPresentation.Candidates(document.Preview.Lunar))
-                Candidates.Add(new SowingCandidateItem(candidate));
+                Candidates.Add(new SowingCandidateItem(candidate)
+                {
+                    IsSelected = preview.Input.Choices.SowingDate.Match(date => date == candidate.Date, () => false)
+                });
             return 0;
         }, () => 0);
         ApplyReferences(preview.References.RegionalWindows, preview.Input.Method is GrowingMethod.DirectSow);

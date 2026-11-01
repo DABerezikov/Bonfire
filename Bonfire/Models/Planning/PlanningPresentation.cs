@@ -67,6 +67,7 @@ public sealed record PlannedBatchListItem(StoredPlannedBatchFromViewModel Snapsh
 
 public sealed record SowingCandidateItem(SowingCandidate Candidate)
 {
+    public bool IsSelected { get; init; }
     public string Label => PlanningInputParser.Format(Candidate.Date)
                            + (Candidate.ShiftDays == 0
                                ? Candidate.InsideResilientWindow ? " — подходит при ранних и поздних всходах" : ""

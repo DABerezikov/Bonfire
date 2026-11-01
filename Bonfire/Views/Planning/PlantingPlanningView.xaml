@@ -127,6 +127,7 @@
                         <StackPanel>
                             <TextBlock Text="{Binding StepTitle}" FontWeight="SemiBold" />
                             <TextBlock x:Name="PlanningStepGuidance" Text="{Binding StepGuidance}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                            <TextBlock x:Name="PlanningSelectedSowingText" Text="{Binding SelectedSowingText}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,6,0,0" />
                         </StackPanel>
                     </Border>
                     <WrapPanel Margin="0,5,0,0">
@@ -361,11 +362,31 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border BorderBrush="#DDE5D7" BorderThickness="0,0,0,1" Padding="0,5">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter Property="Background" Value="#E8F5E9" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
                                                 <DockPanel>
                                                     <Button DockPanel.Dock="Right" Command="{Binding DataContext.ChooseSowingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <fa5:ImageAwesome Icon="Solid_Seedling" Height="12" Margin="0,0,6,0" Foreground="#388E3C" />
-                                                            <TextBlock Text="Выбрать посев" />
+                                                            <TextBlock>
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="Выбрать посев" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                <Setter Property="Text" Value="Посев выбран" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
                                                         </StackPanel>
                                                     </Button>
                                                     <StackPanel>
