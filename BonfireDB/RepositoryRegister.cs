@@ -10,6 +10,9 @@ using Bonfire.Application.Seeds;
 using BonfireDB.SeedEditing;
 using Bonfire.Application.Garden;
 using BonfireDB.Planting;
+using Bonfire.Application.Planning.Libraries;
+using BonfireDB.Planning.Libraries;
+using BonfireDB.Entities.Planning;
 
 namespace BonfireDB;
 
@@ -18,6 +21,13 @@ public static class RepositoryRegister
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
+        .AddSingleton<DbPlanningLibraries>()
+        .AddSingleton<IPlanningLibraryReader>(provider => provider.GetRequiredService<DbPlanningLibraries>())
+        .AddSingleton<IPlanningLibraryWriter>(provider => provider.GetRequiredService<DbPlanningLibraries>())
+        .AddScoped<IRepository<PlanningRegionRow>, DbRepository<PlanningRegionRow>>()
+        .AddScoped<IRepository<CultureGrowingProfileRow>, DbRepository<CultureGrowingProfileRow>>()
+        .AddScoped<IRepository<SortPlanningSettingsRow>, DbRepository<SortPlanningSettingsRow>>()
+        .AddScoped<IRepository<RegionalPlantingWindowRow>, DbRepository<RegionalPlantingWindowRow>>()
         .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
         .AddSingleton<ISeedlingDeletionWriter, DbSeedlingDeletionWriter>()
         .AddSingleton<ISeedlingChangeWriter, DbSeedlingChangeWriter>()

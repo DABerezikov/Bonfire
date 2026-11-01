@@ -8,6 +8,7 @@ using Bonfire.Infrastructure;
 using Bonfire.Application.Libraries;
 using Bonfire.Application.Seeds;
 using Bonfire.Application.Garden;
+using Bonfire.Application.Planning.Libraries;
 
 namespace Bonfire.Services
 {
@@ -46,6 +47,7 @@ namespace Bonfire.Services
             .AddSingleton<ICreateGardenObjects, CreateGardenObjects>()
             .AddSingleton<ILibraryService, LibraryService>()
             .AddSingleton<IUpdateCulture, UpdateCulture>()
+            .AddSingleton<ISavePlanningLibraries, SavePlanningLibraries>()
             .AddSingleton<IUpdateProducer, UpdateProducer>()
             .AddSingleton<IUpdateSort, UpdateSort>()
             .AddSingleton<IEditSeed, EditSeed>()

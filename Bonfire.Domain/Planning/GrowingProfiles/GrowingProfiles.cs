@@ -1,0 +1,71 @@
+using Bonfire.Domain.Functional;
+using Bonfire.Domain.Libraries;
+
+namespace Bonfire.Domain.Planning.GrowingProfiles;
+
+public sealed record GrowingProfileParameters
+{
+    public Option<DayRange> Germination { get; init; } = Option.None<DayRange>();
+    public Option<DayRange> SeedlingAge { get; init; } = Option.None<DayRange>();
+    public Option<DayRange> Vegetation { get; init; } = Option.None<DayRange>();
+}
+
+/// <summary>Новые настройки. Сроки сорта остаются в SortCharacteristicsValues.</summary>
+public sealed record PlanningExtras
+{
+    public OperationOverride<DayRange> PrickingOut { get; init; } = new OperationOverride<DayRange>.Inherit();
+    public OperationOverride<DayRange> Hardening { get; init; } = new OperationOverride<DayRange>.Inherit();
+    public Option<GerminationPercentage> GerminationPercentage { get; init; } = Option.None<GerminationPercentage>();
+    public Option<LossPercentage> LossPercentage { get; init; } = Option.None<LossPercentage>();
+    public Option<LunarGroup> LunarGroup { get; init; } = Option.None<LunarGroup>();
+    public Option<decimal> ReferenceSoilTemperatureC { get; init; } = Option.None<decimal>();
+}
+
+public sealed record CultureGrowingProfile
+{
+    public CultureId CultureId { get; }
+    public GrowingProfileParameters Parameters { get; }
+    public PlanningExtras Extras { get; }
+    private CultureGrowingProfile(CultureId cultureId, GrowingProfileParameters parameters, PlanningExtras extras)
+        => (CultureId, Parameters, Extras) = (cultureId, parameters, extras);
+
+    public static Result<CultureGrowingProfile> Create(CultureId cultureId, GrowingProfileParameters parameters, PlanningExtras extras)
+    {
+        ArgumentNullException.ThrowIfNull(cultureId);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(extras);
+        return extras.LunarGroup.Match(Enum.IsDefined, () => true)
+            ? Result.Success(new CultureGrowingProfile(cultureId, parameters, extras))
+            : Result.Failure<CultureGrowingProfile>("Неизвестная лунная группа");
+    }
+}
+
+public sealed record SortPlanningSettings
+{
+    public SortId SortId { get; }
+    public PlanningExtras Extras { get; }
+    private SortPlanningSettings(SortId sortId, PlanningExtras extras) => (SortId, Extras) = (sortId, extras);
+    public static Result<SortPlanningSettings> Create(SortId sortId, PlanningExtras extras)
+    {
+        ArgumentNullException.ThrowIfNull(sortId);
+        ArgumentNullException.ThrowIfNull(extras);
+        return extras.LunarGroup.Match(Enum.IsDefined, () => true)
+            ? Result.Success(new SortPlanningSettings(sortId, extras))
+            : Result.Failure<SortPlanningSettings>("Неизвестная лунная группа");
+    }
+}
+
+public abstract record OperationPlan<T>
+{
+    private OperationPlan() { }
+    public sealed record Unknown : OperationPlan<T>;
+    public sealed record Disabled(ParameterSource Source) : OperationPlan<T>;
+    public sealed record Enabled(SourcedValue<T> Setting) : OperationPlan<T>;
+}
+
+public sealed record EffectivePlanningExtras(
+    OperationPlan<DayRange> PrickingOut, OperationPlan<DayRange> Hardening,
+    Option<SourcedValue<GerminationPercentage>> GerminationPercentage,
+    Option<SourcedValue<LossPercentage>> LossPercentage,
+    Option<SourcedValue<LunarGroup>> LunarGroup,
+    Option<SourcedValue<decimal>> ReferenceSoilTemperatureC);

@@ -186,6 +186,121 @@ namespace BonfireDB.Migrations
                     b.ToTable("PlantingSpots");
                 });
 
+            modelBuilder.Entity("BonfireDB.Entities.Planning.CultureGrowingProfileRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CultureId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CultureId")
+                        .IsUnique();
+
+                    b.ToTable("PlanningCultureProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PlanningRegionRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StableKey")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StableKey")
+                        .IsUnique();
+
+                    b.ToTable("PlanningRegions", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IsArchived = false,
+                            Name = "Томск",
+                            StableKey = "tomsk",
+                            TimeZoneId = "Asia/Tomsk"
+                        });
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.RegionalPlantingWindowRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CultureId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Location")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Placement")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RegionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CultureId");
+
+                    b.HasIndex("RegionId", "CultureId", "Location", "Placement", "Purpose")
+                        .IsUnique();
+
+                    b.ToTable("PlanningRegionalWindows", (string)null);
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.SortPlanningSettingsRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SortId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SortId")
+                        .IsUnique();
+
+                    b.ToTable("PlanningSortSettings", (string)null);
+                });
+
             modelBuilder.Entity("BonfireDB.Entities.Plant", b =>
                 {
                     b.Property<int>("Id")
@@ -675,6 +790,348 @@ namespace BonfireDB.Migrations
                     b.Navigation("GardenElement");
 
                     b.Navigation("SeedlingInfo");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.CultureGrowingProfileRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.PlantCulture", null)
+                        .WithMany()
+                        .HasForeignKey("CultureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.PlanningExtrasRow", "Extras", b1 =>
+                        {
+                            b1.Property<int>("CultureGrowingProfileRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<decimal?>("GerminationPercentage")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<int>("HardeningMode")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<decimal?>("LossPercentage")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<int?>("LunarGroup")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("PrickingMode")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<decimal?>("ReferenceSoilTemperatureC")
+                                .HasColumnType("TEXT");
+
+                            b1.HasKey("CultureGrowingProfileRowId");
+
+                            b1.ToTable("PlanningCultureProfiles");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CultureGrowingProfileRowId");
+
+                            b1.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "Hardening", b2 =>
+                                {
+                                    b2.Property<int>("PlanningExtrasRowCultureGrowingProfileRowId")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Max")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Min")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.HasKey("PlanningExtrasRowCultureGrowingProfileRowId");
+
+                                    b2.ToTable("PlanningCultureProfiles");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PlanningExtrasRowCultureGrowingProfileRowId");
+                                });
+
+                            b1.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "PrickingOut", b2 =>
+                                {
+                                    b2.Property<int>("PlanningExtrasRowCultureGrowingProfileRowId")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Max")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Min")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.HasKey("PlanningExtrasRowCultureGrowingProfileRowId");
+
+                                    b2.ToTable("PlanningCultureProfiles");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PlanningExtrasRowCultureGrowingProfileRowId");
+                                });
+
+                            b1.Navigation("Hardening");
+
+                            b1.Navigation("PrickingOut");
+                        });
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "Germination", b1 =>
+                        {
+                            b1.Property<int>("CultureGrowingProfileRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Max")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Min")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("CultureGrowingProfileRowId");
+
+                            b1.ToTable("PlanningCultureProfiles");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CultureGrowingProfileRowId");
+                        });
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "SeedlingAge", b1 =>
+                        {
+                            b1.Property<int>("CultureGrowingProfileRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Max")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Min")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("CultureGrowingProfileRowId");
+
+                            b1.ToTable("PlanningCultureProfiles");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CultureGrowingProfileRowId");
+                        });
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "Vegetation", b1 =>
+                        {
+                            b1.Property<int>("CultureGrowingProfileRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Max")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("Min")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("CultureGrowingProfileRowId");
+
+                            b1.ToTable("PlanningCultureProfiles");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CultureGrowingProfileRowId");
+                        });
+
+                    b.Navigation("Extras")
+                        .IsRequired();
+
+                    b.Navigation("Germination");
+
+                    b.Navigation("SeedlingAge");
+
+                    b.Navigation("Vegetation");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.PlanningRegionRow", b =>
+                {
+                    b.OwnsOne("BonfireDB.Entities.Planning.AnnualWindowRow", "FirstAutumnFrost", b1 =>
+                        {
+                            b1.Property<int>("PlanningRegionRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("EndDay")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<bool>("EndInNextYear")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("EndMonth")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("StartDay")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("StartMonth")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("PlanningRegionRowId");
+
+                            b1.ToTable("PlanningRegions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlanningRegionRowId");
+                        });
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.AnnualWindowRow", "LastSpringFrost", b1 =>
+                        {
+                            b1.Property<int>("PlanningRegionRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("EndDay")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<bool>("EndInNextYear")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("EndMonth")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("StartDay")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("StartMonth")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("PlanningRegionRowId");
+
+                            b1.ToTable("PlanningRegions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlanningRegionRowId");
+                        });
+
+                    b.Navigation("FirstAutumnFrost");
+
+                    b.Navigation("LastSpringFrost");
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.RegionalPlantingWindowRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.PlantCulture", null)
+                        .WithMany()
+                        .HasForeignKey("CultureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BonfireDB.Entities.Planning.PlanningRegionRow", null)
+                        .WithMany()
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.AnnualWindowRow", "Window", b1 =>
+                        {
+                            b1.Property<int>("RegionalPlantingWindowRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("EndDay")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<bool>("EndInNextYear")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("EndMonth")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("StartDay")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("StartMonth")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("RegionalPlantingWindowRowId");
+
+                            b1.ToTable("PlanningRegionalWindows");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RegionalPlantingWindowRowId");
+                        });
+
+                    b.Navigation("Window")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BonfireDB.Entities.Planning.SortPlanningSettingsRow", b =>
+                {
+                    b.HasOne("BonfireDB.Entities.PlantSort", null)
+                        .WithMany()
+                        .HasForeignKey("SortId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("BonfireDB.Entities.Planning.PlanningExtrasRow", "Extras", b1 =>
+                        {
+                            b1.Property<int>("SortPlanningSettingsRowId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<decimal?>("GerminationPercentage")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<int>("HardeningMode")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<decimal?>("LossPercentage")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<int?>("LunarGroup")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int>("PrickingMode")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<decimal?>("ReferenceSoilTemperatureC")
+                                .HasColumnType("TEXT");
+
+                            b1.HasKey("SortPlanningSettingsRowId");
+
+                            b1.ToTable("PlanningSortSettings");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SortPlanningSettingsRowId");
+
+                            b1.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "Hardening", b2 =>
+                                {
+                                    b2.Property<int>("PlanningExtrasRowSortPlanningSettingsRowId")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Max")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Min")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.HasKey("PlanningExtrasRowSortPlanningSettingsRowId");
+
+                                    b2.ToTable("PlanningSortSettings");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PlanningExtrasRowSortPlanningSettingsRowId");
+                                });
+
+                            b1.OwnsOne("BonfireDB.Entities.Planning.DayRangeRow", "PrickingOut", b2 =>
+                                {
+                                    b2.Property<int>("PlanningExtrasRowSortPlanningSettingsRowId")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Max")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.Property<int>("Min")
+                                        .HasColumnType("INTEGER");
+
+                                    b2.HasKey("PlanningExtrasRowSortPlanningSettingsRowId");
+
+                                    b2.ToTable("PlanningSortSettings");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PlanningExtrasRowSortPlanningSettingsRowId");
+                                });
+
+                            b1.Navigation("Hardening");
+
+                            b1.Navigation("PrickingOut");
+                        });
+
+                    b.Navigation("Extras")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BonfireDB.Entities.Plant", b =>
