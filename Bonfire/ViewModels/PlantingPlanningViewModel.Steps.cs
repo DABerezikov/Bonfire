@@ -44,10 +44,17 @@ public sealed partial class PlantingPlanningViewModel
         : Preview.MissingInputs.Length > 0 ? CalculationGuidance : "Проверьте параметры и пересчитайте изменённый ввод.";
     public string StepTitle => $"Шаг {EditorStep + 1} из 5";
     public string SelectedSowingText => Draft.ChosenSowingText.Length == 0
-        ? "День посева пока не выбран: выберите вариант ниже или задайте дату на шаге «Сроки»."
+        ? EditorStep switch
+        {
+            1 => "Дату посева можно задать в разделе «Ручной выбор дат» или выбрать из рекомендаций на шаге «Результат» после расчёта.",
+            4 when Candidates.Count > 0 => "Чтобы выбрать день посева, нажмите «Выбрать посев» у нужной даты в списке рекомендаций на этом шаге.",
+            4 => "Для ручного выбора дня посева вернитесь на шаг «Сроки», в раздел «Ручной выбор дат».",
+            _ => ""
+        }
         : "Выбран посев: " + Draft.ChosenSowingText
           + (Draft.Values.SowingOrigin == PlannedDateOrigin.LunarRecommendation ? " (из лунных рекомендаций). " : " (вручную). ")
-          + (CanSave() ? "Для записи в план нажмите «Сохранить партию»." : "Сохранение недоступно: " + SaveGuidance);
+          + (CanSave() ? IsResultStep ? "Для записи в план нажмите «Сохранить партию»." : ""
+              : "Сохранение недоступно: " + SaveGuidance);
     public string StepGuidance => IsBusy ? "Выполняется операция…" : OpenedPlan is null
         ? "Сначала создайте или выберите сезонный план слева."
         : EditorStep == 3 && _calculationValidation.Length > 0 ? "Для продолжения: " + _calculationValidation
