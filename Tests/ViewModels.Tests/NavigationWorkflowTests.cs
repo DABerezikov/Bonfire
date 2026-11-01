@@ -8,8 +8,9 @@ public class NavigationWorkflowTests
         new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()),
         new SeedlingsViewModel(Substitute.For<ISeedlingsService>(), Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()),
         new LibraryEditorViewModel(Substitute.For<ILibraryService>(), _dialog,
-            new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>())),
-        new GardenPlanViewModel(Substitute.For<IGardenService>(), _dialog, Substitute.For<ISeedlingsService>(), Substitute.For<ISeedsService>(), Substitute.For<IPlantingService>()));
+            new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()), new PlanningLibrariesViewModel(Substitute.For<IPlanningService>())),
+        new GardenPlanViewModel(Substitute.For<IGardenService>(), _dialog, Substitute.For<ISeedlingsService>(), Substitute.For<ISeedsService>(), Substitute.For<IPlantingService>()),
+        new PlantingPlanningViewModel(Substitute.For<IPlanningService>(), _dialog, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), TimeProvider.System));
 
     [Fact]
     public void Navigation_SelectsScreenAndUpdatesActiveFlags()

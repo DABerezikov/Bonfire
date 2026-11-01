@@ -10,13 +10,17 @@ namespace Bonfire.ViewModels
         SeedsViewModel seedsViewModel,
         SeedlingsViewModel seedlingsViewModel,
         LibraryEditorViewModel libraryEditorViewModel,
-        GardenPlanViewModel gardenPlanViewModel)
+        GardenPlanViewModel gardenPlanViewModel,
+        PlantingPlanningViewModel plantingPlanningViewModel)
         : ViewModel
     {
         public SeedsViewModel SeedsViewModel { get; } = seedsViewModel;
         public SeedlingsViewModel SeedlingsViewModel { get; } = seedlingsViewModel;
         public LibraryEditorViewModel LibraryEditorViewModel { get; } = libraryEditorViewModel;
         public GardenPlanViewModel GardenPlanViewModel { get; } = gardenPlanViewModel;
+        public PlantingPlanningViewModel PlantingPlanningViewModel { get; } = plantingPlanningViewModel;
+        public FontWeight PlanningBold { get; set => Set(ref field, value); }
+        public Brush? PlanningBackground { get; set => Set(ref field, value); }
 
         public string Title
         {
@@ -99,6 +103,8 @@ namespace Bonfire.ViewModels
             LibraryBackground = TransparentBrush;
             GardenBold = default;
             GardenBackground = TransparentBrush;
+            PlanningBold = default;
+            PlanningBackground = TransparentBrush;
         }
 
         // Команды навигации
@@ -110,6 +116,7 @@ namespace Bonfire.ViewModels
                 SeedsViewModel.IsActive = true;
                 SeedlingsViewModel.IsActive = false;
                 CurrentViewModel = SeedsViewModel;
+                PlantingPlanningViewModel.IsActive = false;
                 ClearBold();
                 SeedsBold = _boldFontWeight;
                 SeedBackground = _backgroundBrash;
@@ -123,6 +130,7 @@ namespace Bonfire.ViewModels
                 SeedsViewModel.IsActive = false;
                 SeedlingsViewModel.IsActive = true;
                 CurrentViewModel = SeedlingsViewModel;
+                PlantingPlanningViewModel.IsActive = false;
                 ClearBold();
                 SeedlingsBold = _boldFontWeight;
                 SeedlingBackground = _backgroundBrash;
@@ -136,6 +144,7 @@ namespace Bonfire.ViewModels
                 SeedsViewModel.IsActive = false;
                 SeedlingsViewModel.IsActive = false;
                 CurrentViewModel = LibraryEditorViewModel;
+                PlantingPlanningViewModel.IsActive = false;
                 ClearBold();
                 LibraryBold = _boldFontWeight;
                 LibraryBackground = _backgroundBrash;
@@ -150,9 +159,22 @@ namespace Bonfire.ViewModels
                 SeedlingsViewModel.IsActive = false;
                 GardenPlanViewModel.IsActive = true;
                 CurrentViewModel = GardenPlanViewModel;
+                PlantingPlanningViewModel.IsActive = false;
                 ClearBold();
                 GardenBold = _boldFontWeight;
                 GardenBackground = _backgroundBrash;
             });
+        public ICommand ShowPlantingPlanningCommand => field ??= new LambdaCommand(() =>
+        {
+            if (CurrentViewModel is PlantingPlanningViewModel) return;
+            if (CurrentViewModel is SeedsViewModel && !SeedsViewModel.TryDiscardSeedChanges()) return;
+            SeedsViewModel.IsActive = false;
+            SeedlingsViewModel.IsActive = false;
+            PlantingPlanningViewModel.IsActive = true;
+            CurrentViewModel = PlantingPlanningViewModel;
+            ClearBold();
+            PlanningBold = _boldFontWeight;
+            PlanningBackground = _backgroundBrash;
+        });
     }
 }

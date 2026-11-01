@@ -7,6 +7,7 @@ using Bonfire.Domain.Planning.GrowingProfiles;
 using BonfireDB.Entities.Planning;
 using BonfireDB.Planning;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Nodes;
 
 namespace Services.Tests;
 
@@ -148,6 +149,28 @@ public class PlantingPlanStorageTests : IDisposable
             await db.SaveChangesAsync();
         });
         Assert.True((await store.ReadAsync(SeasonalPlantingPlanId.Create(saved.Id).ValueOrThrow(), default)).IsFailure);
+    }
+
+    [Fact]
+    public async Task Save_OlderOptionalFields_DoesNotTreatUnchangedHistoricalBatchAsNewReference()
+    {
+        var pair = await PreparePair();
+        var store = new DbPlantingPlans(_fixture.Factory);
+        var saved = (await store.SaveAsync(NewPlan([NewBatch(Document(pair.Culture, pair.Sort, true))]), default)).ValueOrThrow();
+        await _fixture.ExecuteAsync(async db =>
+        {
+            var row = await db.Set<PlannedBatchRow>().SingleAsync();
+            var node = JsonNode.Parse(row.SnapshotJson)!;
+            node["Document"]!["Settings"]!.AsObject().Remove("SearchLimitDays");
+            node["Document"]!["Batch"]!["Choices"]!.AsObject().Remove("SowingOrigin");
+            row.SnapshotJson = node.ToJsonString();
+            db.Plants.RemoveRange(db.Plants); db.PlantsSort.RemoveRange(db.PlantsSort); db.PlantsCulture.RemoveRange(db.PlantsCulture);
+            await db.SaveChangesAsync();
+        });
+        var loaded = (await store.ReadAsync(SeasonalPlantingPlanId.Create(saved.Id).ValueOrThrow(), default)).ValueOrThrow().Match(x => x, () => throw new Exception());
+        var request = PlantingPlanWrite.Create(Option.Some(SeasonalPlantingPlanId.Create(saved.Id).ValueOrThrow()), loaded.Version, loaded.Definition,
+            loaded.Batches.Select(x => new PlannedBatchWrite(Option.Some(PlannedBatchId.Create(x.Id).ValueOrThrow()), x.Document)).ToImmutableArray()).ValueOrThrow();
+        Assert.True((await store.SaveAsync(request, default)).IsSuccess);
     }
 
     private async Task<(int Culture, int Sort)> PreparePair() => await _fixture.QueryAsync(async db =>

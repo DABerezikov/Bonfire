@@ -59,6 +59,7 @@
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
+            <MenuItem Header="Планирование посадок" Command="{Binding ShowPlantingPlanningCommand}" Background="{Binding PlanningBackground}" FontWeight="{Binding PlanningBold}"/>
             <MenuItem Command="{Binding ShowGardenPlanViewModelCommand}" Background="{Binding GardenBackground}">
                 <MenuItem.Header>
                     <StackPanel Orientation="Horizontal">

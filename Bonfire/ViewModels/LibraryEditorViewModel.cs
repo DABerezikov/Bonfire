@@ -15,9 +15,10 @@ using Bonfire.ViewModels.Base;
 
 namespace Bonfire.ViewModels;
 
-public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog userDialog, SeedsViewModel seedsViewModel)
+public class LibraryEditorViewModel(ILibraryService libraryService, IUserDialog userDialog, SeedsViewModel seedsViewModel, PlanningLibrariesViewModel planningLibraries)
     : ViewModel
 {
+    public PlanningLibrariesViewModel PlanningLibraries { get; } = planningLibraries;
     private readonly ILibraryService _libraryService = libraryService;
     private readonly IUserDialog _userDialog = userDialog;
     private readonly SeedsViewModel _seedsViewModel = seedsViewModel;

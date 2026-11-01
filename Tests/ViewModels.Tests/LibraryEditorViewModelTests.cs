@@ -34,7 +34,7 @@ public class LibraryEditorViewModelTests
         ObservableCollection<Seed>? seeds = null)
     {
         var seedsVm = CreateSeedsVm(sorts, cultures, producers, seeds);
-        return new LibraryEditorViewModel(_libraryService, _userDialog, seedsVm);
+        return new LibraryEditorViewModel(_libraryService, _userDialog, seedsVm, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()));
     }
 
     // ── SelectedSort очищает SortDetail и запускает загрузку ─────────────────

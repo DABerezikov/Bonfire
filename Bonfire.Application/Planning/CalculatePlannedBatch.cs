@@ -47,7 +47,7 @@ public sealed class CalculatePlannedBatch(IPlanningContextReader contexts, IReco
                 var losses = extras.LossPercentage.Map(x => x.Value);
                 var group = extras.LunarGroup.Match(x => x.Value, () => LunarGroup.Unspecified);
                 var settings = new PlanningBatchSettings { Overrides = input.Overrides, Extras = Option.Some(extras),
-                    GerminationPercentage = germination, LossPercentage = losses, Group = group };
+                    GerminationPercentage = germination, LossPercentage = losses, Group = group, SearchLimitDays = input.SearchLimitDays };
                 return PlannedBatchDefinition.Create(cultureId, SortId.Create(input.SortId).ValueOrThrow(), input.Conditions,
                     input.Method, profile, input.TargetPlants, input.Choices).Bind(batch =>
                     recommendations.Execute(new(input.Method, profile, input.Choices, settings.Extras, group, context.Region.Definition.TimeZone, input.SearchLimitDays), cancellationToken)

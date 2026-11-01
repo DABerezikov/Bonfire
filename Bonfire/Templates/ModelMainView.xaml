@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:vm="clr-namespace:Bonfire.ViewModels"
                     xmlns:view="clr-namespace:Bonfire.Views"
-                    xmlns:gp="clr-namespace:Bonfire.Views.GardenPlan">
+                    xmlns:gp="clr-namespace:Bonfire.Views.GardenPlan"
+                    xmlns:planning="clr-namespace:Bonfire.Views.Planning">
 
     <DataTemplate DataType="{x:Type vm:SeedsViewModel}">
         <view:SeedsWindow DataContext="{Binding}"/>
@@ -18,6 +19,10 @@
 
     <DataTemplate DataType="{x:Type vm:GardenPlanViewModel}">
         <gp:GardenPlanView DataContext="{Binding}"/>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:PlantingPlanningViewModel}">
+        <planning:PlantingPlanningView DataContext="{Binding}"/>
     </DataTemplate>
 
     <!-- Общий стиль метки-подсказки (используется в GardenPlanView) -->

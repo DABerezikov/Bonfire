@@ -45,7 +45,7 @@ public class WpfBehaviorTests(WpfRuntime runtime)
         {
             "Seeds" => new SeedsWindow { DataContext = seeds },
             "Seedlings" => new SeedlingsWindow { DataContext = new SeedlingsViewModel(seedlingService, seedService, Substitute.For<IUserDialog>(), Substitute.For<IReportService>()) },
-            "Library" => new LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds) },
+            "Library" => new LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>())) },
             "Garden" => new GardenPlanView { DataContext = garden },
             _ => new PlantingGridView { DataContext = garden }
         };

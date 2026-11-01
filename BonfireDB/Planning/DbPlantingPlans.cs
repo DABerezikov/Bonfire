@@ -65,7 +65,10 @@ public sealed class DbPlantingPlans(IUnitOfWorkFactory units) : IPlantingPlanRea
                 if (item.Id is Option<PlannedBatchId>.Some && existing is null)
                     return Result.Failure<PlantingPlanDetailsFromViewModel>("Партия удалена или принадлежит другому плану");
                 var json = PlanningSnapshotJson.Write(item.Document);
-                var changed = existing is null || existing.SnapshotJson != json;
+                var originalJson = existing is null ? Result.Success("") : PlanningSnapshotJson.Read(existing.SnapshotJson)
+                    .Bind(document => Result.Success(PlanningSnapshotJson.Write(document)));
+                if (originalJson.IsFailure) return originalJson.Bind(_ => Result.Failure<PlantingPlanDetailsFromViewModel>("Повреждён исходный снимок"));
+                var changed = existing is null || originalJson.ValueOrThrow() != json;
                 var batch = existing ?? new PlannedBatchRow { Plan = row };
                 if (changed)
                 {

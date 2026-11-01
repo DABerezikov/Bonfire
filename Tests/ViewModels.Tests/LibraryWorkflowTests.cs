@@ -28,7 +28,7 @@ public class LibraryWorkflowTests
         _library.GetSortAsync(1).Returns(LibraryReadDbMapper.Read(sort));
         _library.GetCultureAsync(1).Returns(Result.Success(LibraryReadDbMapper.Read(_seed.Plant.PlantCulture)));
         _library.GetProducerAsync(1).Returns(Result.Success(LibraryReadDbMapper.Read(sort.Producer)));
-        var vm = new LibraryEditorViewModel(_library, _dialog, seeds);
+        var vm = new LibraryEditorViewModel(_library, _dialog, seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()));
         switch (kind)
         {
             case "Sort":

@@ -22,11 +22,14 @@ public sealed record PlanningOverrides
 }
 
 /// <summary>Ручные решения хранятся отдельно от пересчитываемого прогноза.</summary>
+public enum PlannedDateOrigin { Manual, LunarRecommendation }
+
 public sealed record PlanningChoices(
     Option<DateOnly> SowingDate,
     Option<DateOnly> TransplantDate,
     Option<PlantCount> ManualSeedCount)
 {
+    public PlannedDateOrigin SowingOrigin { get; init; } = PlannedDateOrigin.Manual;
     public static PlanningChoices Empty { get; } = new(Option.None<DateOnly>(), Option.None<DateOnly>(), Option.None<PlantCount>());
 }
 

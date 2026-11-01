@@ -29,6 +29,7 @@ public sealed record PlannedBatchDefinition
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(targetPlants);
         ArgumentNullException.ThrowIfNull(choices);
+        if (!Enum.IsDefined(choices.SowingOrigin)) return Result.Failure<PlannedBatchDefinition>("Неизвестное происхождение выбранной даты");
         if (method is GrowingMethod.Transplant && profile.SeedlingAge is Option<SourcedValue<DayRange>>.None)
             return Result.Failure<PlannedBatchDefinition>("Не задан возраст рассады от всходов");
         if (method is GrowingMethod.DirectSow && choices.TransplantDate is Option<DateOnly>.Some)

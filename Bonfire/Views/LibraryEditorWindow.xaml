@@ -5,8 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:Bonfire.ViewModels"
              xmlns:m="clr-namespace:Bonfire.Models"
+             xmlns:planning="clr-namespace:Bonfire.Views.Planning"
              d:DataContext="{d:DesignInstance {x:Type vm:LibraryEditorViewModel}}"
              d:DesignHeight="1080" d:DesignWidth="1920">
+    <TabControl>
+    <TabItem Header="Культуры, сорта и производители">
     <Grid Margin="10">
 
         <Grid.ColumnDefinitions>
@@ -188,4 +191,9 @@
         </StackPanel>
 
     </Grid>
+    </TabItem>
+    <TabItem Header="Планирование: регионы и агропрофили">
+        <planning:PlanningLibrariesView DataContext="{Binding PlanningLibraries}"/>
+    </TabItem>
+    </TabControl>
 </UserControl>
