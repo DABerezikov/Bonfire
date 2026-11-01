@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Collections.Immutable;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 
@@ -6,6 +7,29 @@ namespace Bonfire.Domain.Planning.GrowingProfiles;
 
 public static class GrowingProfileResolver
 {
+    public static Result<ImmutableArray<string>> FindMissingInputs(CultureGrowingProfile culture, SortCharacteristicsValues sort,
+        PlanningOverrides overrides, bool directSow)
+    {
+        var checks = new List<Result<PlanningRangeResolution>>
+        {
+            PlanningParameters.ResolveRangeStatus("Прорастание", overrides.Germination,
+                new(sort.MinGerminationTime, sort.MaxGerminationTime), ToInput(culture.Parameters.Germination))
+        };
+        if (!directSow) checks.Add(PlanningParameters.ResolveRangeStatus("Возраст рассады от всходов", overrides.SeedlingAge,
+            new(sort.AgeOfSeedlings, sort.MaxAgeOfSeedlings), ToInput(culture.Parameters.SeedlingAge)));
+        if (overrides.Vegetation is Option<DayRange>.Some || sort.GrowingSeason is Option<int>.Some
+            || sort.MaxGrowingSeason is Option<int>.Some || culture.Parameters.Vegetation is Option<DayRange>.Some)
+            checks.Add(PlanningParameters.ResolveRangeStatus("Вегетация от всходов", overrides.Vegetation,
+                new(sort.GrowingSeason, sort.MaxGrowingSeason), ToInput(culture.Parameters.Vegetation)));
+        var missing = ImmutableArray.CreateBuilder<string>();
+        foreach (var check in checks)
+        {
+            if (check.IsFailure) return check.Bind(_ => Result.Success(missing.ToImmutable()));
+            if (check.ValueOrThrow() is PlanningRangeResolution.Missing item) missing.Add(item.Message);
+        }
+        return Result.Success(missing.ToImmutable());
+    }
+
     public static Result<EffectiveGrowingProfile> Resolve(CultureGrowingProfile culture,
         SortCharacteristicsValues sort, PlanningOverrides overrides, bool directSow)
     {

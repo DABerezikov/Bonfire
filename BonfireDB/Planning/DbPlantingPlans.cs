@@ -89,8 +89,8 @@ public sealed class DbPlantingPlans(IUnitOfWorkFactory units) : IPlantingPlanRea
             }
             foreach (var removed in original.Values.Where(x => !retained.Contains(x.Id)))
             {
-                row.Batches.Remove(removed);
                 unit.Repository<PlannedBatchRow>().Remove(removed.Id);
+                row.Batches.Remove(removed);
             }
             row.Name = header.Name.Value;
             row.SeasonYear = header.SeasonYear;

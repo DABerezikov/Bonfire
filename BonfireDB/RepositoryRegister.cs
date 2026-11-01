@@ -24,6 +24,7 @@ public static class RepositoryRegister
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
         .AddSingleton<DbPlantingPlans>()
+        .AddSingleton<IPlanningContextReader, DbPlanningContextReader>()
         .AddSingleton<IPlantingPlanReader>(provider => provider.GetRequiredService<DbPlantingPlans>())
         .AddSingleton<IPlantingPlanWriter>(provider => provider.GetRequiredService<DbPlantingPlans>())
         .AddScoped<IRepository<SeasonalPlantingPlanRow>, DbRepository<SeasonalPlantingPlanRow>>()

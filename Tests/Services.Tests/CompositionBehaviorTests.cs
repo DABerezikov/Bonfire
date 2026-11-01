@@ -72,6 +72,12 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<IDeleteSeed>());
         Assert.NotNull(provider.GetRequiredService<ISeedDeletionWriter>());
         Assert.NotNull(provider.GetRequiredService<TimeProvider>());
+        Assert.NotNull(provider.GetRequiredService<IPlanningService>());
+        Assert.NotNull(provider.GetRequiredService<IPlanningContextReader>());
+        Assert.NotNull(provider.GetRequiredService<IPlantingPlanReader>());
+        Assert.NotNull(provider.GetRequiredService<IPlantingPlanWriter>());
+        Assert.NotNull(provider.GetRequiredService<ICalculatePlannedBatch>());
+        Assert.NotNull(provider.GetRequiredService<IManagePlantingPlans>());
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
     }
 
