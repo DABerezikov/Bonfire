@@ -430,7 +430,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         set
         {
             if (!Set(ref field, value)) return;
-            MoonPhase = _seedlingsService.Lunar.GetMoonPhase(PlantingDate);
+            MoonPhase = _seedlingsService.Lunar.GetPhase(PlantingDate);
         }
     }
 
@@ -602,7 +602,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         var metaInfo   = seedling.SeedlingInfos.FirstOrDefault(i => !i.GerminationDate.HasValue);
         var landingDate = seedling.LandingDate ?? metaInfo?.LandingDate;
         var moonPhaseStr = seedling.LunarPhase ?? (metaInfo != null
-            ? _seedlingsService.Lunar.GetMoonPhase(metaInfo.LandingDate)
+            ? _seedlingsService.Lunar.GetPhase(metaInfo.LandingDate)
             : string.Empty);
 
         // Только записи всходов (с датой); метаданные и "посажено в грунт" отфильтрованы

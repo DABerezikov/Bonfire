@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CosineKitty.AstronomyEngine" Version="2.1.19" />
     <PackageReference Include="EPPlus" Version="8.7.2" />
     <PackageReference Include="FontAwesome5" Version="2.1.11" />
     <PackageReference Include="MathCore.WPF" Version="0.0.50" />

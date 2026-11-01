@@ -9,6 +9,7 @@ using Bonfire.Application.Libraries;
 using Bonfire.Application.Seeds;
 using Bonfire.Application.Garden;
 using Bonfire.Application.Planning.Libraries;
+using Bonfire.Application.Planning;
 
 namespace Bonfire.Services
 {
@@ -22,12 +23,14 @@ namespace Bonfire.Services
             .AddSingleton<IChangeSeedling, ChangeSeedling>()
             .AddSingleton<IEditSeedling, EditSeedling>()
             .AddSingleton<ILunarCalendar, MoonPhaseCalendar>()
+            .AddSingleton<ILunarPhaseCalculator, AstronomyLunarPhaseCalculator>()
+            .AddSingleton<ILunarTrendCalendar, LunarTrendCalendar>()
+            .AddSingleton<IRecommendSowing, RecommendSowing>()
             .AddSingleton<IUserDialog, UserDialog>()
             .AddSingleton<IReportService, ReportService>()
             .AddSingleton<IReportWorkbookBuilder, ReportWorkbookBuilder>()
             .AddSingleton<IReportPathPolicy, ReportPathPolicy>()
             .AddSingleton<IReportFileWriter, ReportFileWriter>()
-            .AddSingleton(typeof(MoonPhase))
             .AddSingleton<IGardenService, GardenService>()
             .AddSingleton<IPlantingService, PlantingService>()
             .AddSingleton<IPlantInSpot, PlantInSpot>()

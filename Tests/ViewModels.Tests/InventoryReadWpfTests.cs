@@ -47,7 +47,7 @@ public class InventoryReadWpfTests(WpfRuntime runtime)
                 FrameworkElement view;
                 if (seedlings)
                 {
-                    var service = Substitute.For<ISeedlingsService>(); service.Lunar.Returns(new MoonPhase());
+                    var service = Substitute.For<ISeedlingsService>(); service.Lunar.Returns(new Bonfire.Infrastructure.MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator()));
                     service.ReadSeedlingsAsync().Returns(Result.Success(System.Collections.Immutable.ImmutableArray.Create(batch)));
                     var vm = new SeedlingsViewModel(service, seeds, dialog, reports); vm.LoadDataCommand.Execute(null);
                     vm.SelectedSeedlingViewItem = Assert.Single(vm.SeedlingsView!.Cast<SeedlingFromViewModel>());

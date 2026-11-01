@@ -24,7 +24,7 @@ public class SeedlingsWorkflowTests
     {
         _service.ReadSeedlingsAsync().Returns(seedlings.ReadSeedlings());
         _seeds.ReadSeedsAsync().Returns(new[] { SeedsWorkflowTests.Seed(1) }.ReadSeeds());
-        _service.Lunar.Returns(new MoonPhase());
+        _service.Lunar.Returns(new Bonfire.Infrastructure.MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator()));
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         if (seedlings.Length > 0) vm.SelectedSeedlingViewItem = vm.SeedlingsView!.Cast<SeedlingFromViewModel>().First();
@@ -58,7 +58,7 @@ public class SeedlingsWorkflowTests
         if (grams) { seed.SeedsInfo.AmountSeeds = 0; seed.SeedsInfo.AmountSeedsWeight = 1.5; }
         _seeds.ReadSeedsAsync().Returns(new[] { seed }.ReadSeeds());
         _service.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
-        _service.Lunar.Returns(new MoonPhase());
+        _service.Lunar.Returns(new Bonfire.Infrastructure.MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator()));
         var saved = Batch(2);
         saved.Quantity = grams ? 0 : 2;
         saved.Weight = grams ? 0.5 : 0;
@@ -216,7 +216,7 @@ public class SeedlingsWorkflowTests
         seed.SeedsInfo.AmountSeedsWeight = 0;
         _seeds.ReadSeedsAsync().Returns(new[] { seed }.ReadSeeds());
         _service.ReadSeedlingsAsync().Returns(new[] { batch }.ReadSeedlings());
-        _service.Lunar.Returns(new MoonPhase());
+        _service.Lunar.Returns(new Bonfire.Infrastructure.MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator()));
         var vm = new SeedlingsViewModel(_service, _seeds, _dialog, _reports);
         vm.LoadDataCommand.Execute(null);
         vm.SelectedSeedlingViewItem = Assert.Single(vm.SeedlingsView!.Cast<SeedlingFromViewModel>());

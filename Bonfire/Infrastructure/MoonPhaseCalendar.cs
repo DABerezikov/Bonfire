@@ -4,7 +4,8 @@ using MoonCalendar;
 
 namespace Bonfire.Infrastructure;
 
-internal sealed class MoonPhaseCalendar(MoonPhase phase) : ILunarCalendar
+internal sealed class MoonPhaseCalendar(ILunarPhaseCalculator calculator) : ILunarCalendar
 {
-    public string GetPhase(DateTime date) => phase.GetMoonPhase(date);
+    public string GetPhase(DateTime date) => LunarPhaseNames.FromAngle(
+        calculator.GetPhaseAngle(new DateTimeOffset(date.ToUniversalTime())));
 }

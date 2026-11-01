@@ -19,7 +19,7 @@ public class SeedlingEditorWpfTests(WpfRuntime runtime)
             SeedlingInfos = [new() { Id = 1, LandingDate = DateTime.Today, SeedlingSource = "Из семян" }] };
         var service = Substitute.For<ISeedlingsService>();
         service.ReadSeedlingsAsync().Returns(new[] { batch }.ReadSeedlings());
-        service.Lunar.Returns(new MoonPhase());
+        service.Lunar.Returns(new Bonfire.Infrastructure.MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator()));
         var seeds = Substitute.For<ISeedsService>(); seeds.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         var vm = new SeedlingsViewModel(service, seeds, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
         vm.LoadDataCommand.Execute(null);

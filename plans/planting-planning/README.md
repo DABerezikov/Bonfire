@@ -1,9 +1,9 @@
 # Планирование посева и высадки
 
-Дата: 01.11.2026. Статус: проект реализации, код приложения не изменён.
+Дата: 01.11.2026. Статус: реализация по этапам, результаты — в журнале.
 Основание: согласование требований в чате и чтение текущей модели Bonfire.
 Обозначения типов и новых файлов ниже предварительные; существующие пути проверены.
-Выполнен анализ, а не тестирование или реализация нового поведения.
+Исходный анализ сохранён; реализованные части отмечены в подробных этапах.
 
 Дополнительный источник: [анализ пользовательской Excel-книги](workbook-analysis.md).
 Ответы владельца после анализа книги учтены ниже. Excel служит примером задач,
@@ -90,9 +90,9 @@
 | Характеристики сорта | `Bonfire.Domain/Seeds/SortCharacteristics.cs`, `BonfireDB/Entities/PlantSort.cs` | Есть диапазоны прорастания/возраста, Option и проверки; нет расчёта календаря |
 | Культура и связи | `BonfireDB/Entities/PlantCulture.cs`, `Plant.cs` | У культуры нет агропрофиля; культура принадлежит Plant, не PlantSort |
 | Чтение | `Bonfire.Application/Libraries/ReadLibraries.cs`, `Seeds/ReadSeeds.cs` | Независимые DTO, готовая граница чтения сорта/растения |
-| Луна | `MoonCalendar/MoonPhase.cs`, `Bonfire/Infrastructure/MoonPhaseCalendar.cs` | Приближённые расчёты по дате, без времени и часового пояса |
+| Луна | `MoonCalendar/ILunarPhaseCalculator.cs`, `MoonPhase.cs`, `Bonfire/Infrastructure/` | Один заменяемый источник фаз, восемь названий и дневная классификация региона |
 | Порт Луны | `Bonfire.Application/Seedlings/SowingPorts.cs` | ILunarCalendar.GetPhase возвращает строку для фактического посева |
-| Проверки Луны | `Tests/Models.Tests/MoonCalendarBehaviorTests.cs` | Фиксируют прежние результаты, не астрономическую точность |
+| Проверки Луны | `Tests/Models.Tests/MoonCalendarBehaviorTests.cs`, `Tests/Services.Tests/LunarTrendCalendarTests.cs` | Независимые события USNO и переходы местной даты; прочие старые функции проверяются отдельно |
 | Фактические события | `BonfireDB/Entities/SeedlingInfo.cs`, `Seedling.cs` | Есть посев, всходы, закаливание, история; это не будущие задания |
 | План участка | `BonfireDB/Entities/GardenPlanning/GardenPlan.cs` | Год и участки; временного плана партий нет |
 | Реальный посев | `Bonfire.Application/Seedlings/SowSeeds.cs` | Меняет остаток, поэтому не используется для простого сохранения плана |
