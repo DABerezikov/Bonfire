@@ -35,7 +35,7 @@ public sealed class CreateSeedShoppingList(IPlantingPlanReader plans, ISeedShopp
             () => Result.Failure<SeedPurchaseDemand>($"В партии «{batch.Document.References.CultureName} / {batch.Document.References.SortName}» не задано число семян. Пересчитайте и сохраните партию.")));
         return await demands.Match(async needs =>
         {
-            var inventory = await stock.ReadAsync(needs.Select(item => item.Key).Distinct().ToImmutableArray(), cancellationToken).ConfigureAwait(false);
+            var inventory = await stock.ReadAsync([..needs.Select(item => item.Key).Distinct()], cancellationToken).ConfigureAwait(false);
             return inventory.Bind(available => SeedShoppingList.Calculate(needs, available).Bind(rows =>
             {
                 var items = rows.Select(row =>

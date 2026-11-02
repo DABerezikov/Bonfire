@@ -50,7 +50,7 @@ public static class SeedShoppingList
             var available = inventory[group.Key].ToArray();
             return DecimalArithmetic.Sum(group.Select(item => item.Seeds)).Bind(required =>
                 DecimalArithmetic.Sum(available.Select(item => item.Pieces)).Bind(pieces =>
-                    DecimalArithmetic.Sum(available.SelectMany(item => item.Grams.Match(value => new[] { value }, () => Array.Empty<decimal>())))
+                    DecimalArithmetic.Sum(available.SelectMany(item => item.Grams.Match(value => [value], Array.Empty<decimal>)))
                     .Bind(grams => Result.Success(new SeedPurchaseDeficit(group.Key, required, pieces,
                         available.Any(item => item.Grams is Option<decimal>.Some) ? Option.Some(grams) : Option.None<decimal>(),
                         available.Any(item => item.HasUncountedSeeds) && pieces < required ? Option.None<decimal>()
