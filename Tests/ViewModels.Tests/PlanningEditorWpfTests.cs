@@ -18,6 +18,31 @@ namespace ViewModels.Tests;
 public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output)
 {
     [Fact]
+    public void StockFilter_RealSelectionRemainsInDraftWhileUnavailableChoicesAreHidden() => runtime.Invoke(() =>
+    {
+        var service = Service();
+        var available = new PlanningChoiceFromViewModel(1, "Томат", 2, "Черри") { HasAvailableSeeds = true };
+        var absent = new PlanningChoiceFromViewModel(3, "Арбуз", 4, "Алый сладкий");
+        service.ReadPlansAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray<PlantingPlanSummaryFromViewModel>.Empty));
+        service.ReadBedsAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray<PlanningBedFromViewModel>.Empty));
+        service.ReadChoicesAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray.Create(available, absent)));
+        var vm = new Bonfire.ViewModels.PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
+        vm.LoadAsync().GetAwaiter().GetResult();
+        var view = new PlantingPlanningView { DataContext = vm }; WpfRuntime.Layout(view, 1280, 720);
+        var choices = WpfRuntime.Descendants<ComboBox>(view).Single(box => ReferenceEquals(box.ItemsSource, vm.Choices));
+        Assert.Single(choices.Items);
+        vm.ShowChoicesWithoutSeeds = true; WpfRuntime.Layout(view, 1280, 720);
+        choices.SelectedItem = absent; WpfRuntime.Layout(view, 1280, 720);
+        var values = vm.Draft.Values; var revision = vm.Draft.Revision;
+        vm.ShowChoicesWithoutSeeds = false; WpfRuntime.Layout(view, 1280, 720);
+        Assert.Same(absent, choices.SelectedItem); Assert.Same(absent, vm.Draft.Choice);
+        Assert.Equal(values, vm.Draft.Values); Assert.Equal(revision, vm.Draft.Revision);
+        Assert.Contains("нет в наличии", vm.ChoiceAvailabilityText);
+        vm.NewBatch(); WpfRuntime.Layout(view, 1280, 720);
+        Assert.Single(choices.Items); Assert.Null(vm.Draft.Choice);
+    });
+
+    [Fact]
     public void RequiredMarkerAndFieldValidation_ChangeTogetherInRealView() => runtime.Invoke(() =>
     {
         var vm = Model();

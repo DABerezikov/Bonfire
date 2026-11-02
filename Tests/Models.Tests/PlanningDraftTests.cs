@@ -8,6 +8,16 @@ namespace Models.Tests;
 public class PlanningDraftTests
 {
     [Fact]
+    public void StockMetadata_DoesNotChangeSelectedSortIdentityOrDirtyState()
+    {
+        var draft = Draft(); draft.AcceptSaved(draft.Values, 1); var choice = draft.Choice!;
+        draft.Choice = choice with { HasAvailableSeeds = true };
+        Assert.Equal(choice, draft.Choice);
+        Assert.Equal(choice.GetHashCode(), draft.Choice.GetHashCode());
+        Assert.False(draft.IsDirty);
+    }
+
+    [Fact]
     public void Draft_InvalidNumber_KeepsTextAndDoesNotSubstituteZero()
     {
         var draft = Draft();

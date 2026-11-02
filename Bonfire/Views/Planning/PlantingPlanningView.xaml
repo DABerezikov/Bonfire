@@ -156,7 +156,9 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="10,10,8,10">
                                 <TextBlock Text="{Binding Draft.FieldRules[Choice].Caption}" TextWrapping="Wrap" />
+                                <CheckBox Content="Показать сорта без семян в наличии" IsChecked="{Binding ShowChoicesWithoutSeeds}" Margin="0,3,0,5" />
                                 <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Draft.Choice, ValidatesOnDataErrors=True}" ItemTemplate="{StaticResource PlanningPairTemplate}" />
+                                <TextBlock Text="{Binding ChoiceAvailabilityText}" TextWrapping="Wrap" Foreground="#8A5200" Margin="0,0,0,6" />
                                 <CheckBox Content="Прямой посев на место" IsChecked="{Binding Draft.DirectSow}" Margin="0,5,0,8" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -350,7 +352,7 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="10,10,8,10">
                                 <TextBlock Text="{Binding CalculationGuidance}" TextWrapping="Wrap" Margin="0,0,0,8" />
-
+                                <TextBlock Text="{Binding ChoiceAvailabilityText}" TextWrapping="Wrap" Foreground="#8A5200" Margin="0,0,0,8" />
                                 <WrapPanel>
                                     <Button Command="{Binding CalculateCommand}" ToolTip="{Binding CalculationGuidance}" ToolTipService.ShowOnDisabled="True">
                                         <StackPanel Orientation="Horizontal">

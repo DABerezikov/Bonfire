@@ -13,6 +13,25 @@ namespace ViewModels.Tests;
 
 public class PlanningWorkflowTests
 {
+    [Fact]
+    public async Task Choices_DefaultToAvailableStockAndPreserveSelectedMissingSortWhenFilterChanges()
+    {
+        ConfigureRefresh();
+        var available = new PlanningChoiceFromViewModel(1, "Томат", 2, "Черри") { HasAvailableSeeds = true };
+        var absent = new PlanningChoiceFromViewModel(3, "Арбуз", 4, "Алый сладкий");
+        _service.ReadChoicesAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray.Create(available, absent)));
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        await vm.LoadAsync();
+        Assert.Single(vm.Choices); Assert.Equal("Томат", vm.Choices[0].CultureName);
+        vm.ShowChoicesWithoutSeeds = true; Assert.Equal(2, vm.Choices.Count);
+        vm.Draft.Choice = absent;
+        var values = vm.Draft.Values; var revision = vm.Draft.Revision;
+        vm.ShowChoicesWithoutSeeds = false;
+        Assert.Same(absent, vm.Draft.Choice); Assert.Equal(values, vm.Draft.Values); Assert.Equal(revision, vm.Draft.Revision);
+        Assert.Contains("нет в наличии", vm.ChoiceAvailabilityText);
+        vm.NewBatch(); Assert.Single(vm.Choices); Assert.Null(vm.Draft.Choice);
+    }
+
     [Theory]
     [InlineData(nameof(PlantingPlanningViewModel.NewPlanName))]
     [InlineData(nameof(PlantingPlanningViewModel.NewPlanYear))]

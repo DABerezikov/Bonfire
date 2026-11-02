@@ -166,7 +166,11 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         get;
         set
         {
-            if (Set(ref field, value) && value && Plans.Count == 0) _ = LoadAsync();
+            if (Set(ref field, value) && value)
+            {
+                if (Plans.Count == 0) _ = LoadAsync();
+                else _ = RefreshChoicesAsync();
+            }
         }
     }
 
@@ -251,16 +255,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
                             Regions.FirstOrDefault(x => x.Definition.Name.Value == "Томск") ?? Regions.FirstOrDefault();
             return 0;
         }, Error);
-        var choices = await _service.ReadChoicesAsync();
-        var choice = Draft.Choice;
-        choices.Match(items =>
-        {
-            Choices.Clear();
-            foreach (var item in items) Choices.Add(item);
-            EnsureChoice(choice);
-            Draft.Choice = choice;
-            return 0;
-        }, Error);
+        await RefreshChoicesAsync();
         (await _service.ReadBedsAsync()).Match(items =>
         {
             Beds.Clear();
@@ -568,6 +563,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         EditorStep = 0;
         RefreshSteps();
         OnPropertyChanged(nameof(Draft));
+        if (_choicesLoaded) RebuildChoiceList();
         CommandManager.InvalidateRequerySuggested();
         if (draft.Choice is not null) _ = RefreshReferenceAsync();
     }
@@ -576,6 +572,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
     {
         if (args.PropertyName == nameof(PlannedBatchEditorDraft.Values))
         {
+            OnPropertyChanged(nameof(ChoiceAvailabilityText));
             if (_referenceContext is { } context &&
                 (context.Culture.Id != Draft.Choice?.CultureId || context.SortId != Draft.Choice?.SortId))
             {
@@ -672,7 +669,10 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
 
     private void EnsureChoice(PlanningChoiceFromViewModel? choice)
     {
-        if (choice is not null && !Choices.Contains(choice)) Choices.Add(choice);
+        if (choice is null) return;
+        var existing = Choices.FirstOrDefault(item => SameChoice(item, choice));
+        if (existing is null) Choices.Add(choice);
+        else if (!ReferenceEquals(existing, choice)) Choices[Choices.IndexOf(existing)] = choice;
     }
 
     private void ApplyBatches(PlantingPlanDetailsFromViewModel plan)

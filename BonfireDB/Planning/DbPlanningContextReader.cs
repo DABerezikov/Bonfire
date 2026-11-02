@@ -25,16 +25,22 @@ public sealed class DbPlanningContextReader(IUnitOfWorkFactory units) : IPlannin
         => DbRead.TryAsync(async () =>
         {
             await using var unit = units.Create();
+            var seeds = unit.Repository<Seed>().Rows;
             var rows = await unit.Repository<Plant>().Rows.AsNoTracking()
                 .Select(x => new
                 {
                     CultureId = x.PlantCulture.Id, CultureName = x.PlantCulture.Name, SortId = x.PlantSort.Id,
-                    SortName = x.PlantSort.Name
+                    SortName = x.PlantSort.Name,
+                    HasAvailableSeeds = seeds.Any(seed => seed.Plant.PlantCulture.Id == x.PlantCulture.Id
+                        && seed.Plant.PlantSort.Id == x.PlantSort.Id
+                        && (seed.SeedsInfo.AmountSeeds > 0 && seed.SeedsInfo.AmountSeeds <= double.MaxValue
+                            || seed.SeedsInfo.AmountSeedsWeight > 0 && seed.SeedsInfo.AmountSeedsWeight <= double.MaxValue))
                 })
                 .Distinct().OrderBy(x => x.CultureName).ThenBy(x => x.SortName).ToArrayAsync(cancellationToken)
                 .ConfigureAwait(false);
             return Result.Success(rows
-                .Select(x => new PlanningChoiceFromViewModel(x.CultureId, x.CultureName, x.SortId, x.SortName))
+                .Select(x => new PlanningChoiceFromViewModel(x.CultureId, x.CultureName, x.SortId, x.SortName)
+                { HasAvailableSeeds = x.HasAvailableSeeds })
                 .ToImmutableArray());
         }, "вариантов культур и сортов");
 

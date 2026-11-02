@@ -10,7 +10,16 @@ using Bonfire.Domain.Seeds;
 
 namespace Bonfire.Application.Planning;
 
-public sealed record PlanningChoiceFromViewModel(int CultureId, string CultureName, int SortId, string SortName);
+public sealed record PlanningChoiceFromViewModel(int CultureId, string CultureName, int SortId, string SortName)
+{
+    public bool HasAvailableSeeds { get; init; }
+
+    // Наличие — свежая справка; его изменение не меняет выбранный сорт и dirty черновика.
+    public bool Equals(PlanningChoiceFromViewModel? other) => other is not null
+        && CultureId == other.CultureId && CultureName == other.CultureName
+        && SortId == other.SortId && SortName == other.SortName;
+    public override int GetHashCode() => HashCode.Combine(CultureId, CultureName, SortId, SortName);
+}
 
 public sealed record PlanningContextFromViewModel(
     RegionFromViewModel Region,

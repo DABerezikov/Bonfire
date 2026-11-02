@@ -1,5 +1,12 @@
 # Проверки Bonfire
 
+## Наличие семян в планировании — 01.11.2026
+
+Гейт **1810/1810**: Models 839, Services 568, ViewModels 362, Repository 35,
+SeedsFromViewModel 6. Проверены SQL наличия, положительные остатки в штуках/граммах,
+исторические сорта, фильтр и сохранение выбора/ввода в WPF, стабильность dirty.
+[Подробности](../plans/planting-planning/stock-choices.md).
+
 ## Единые правила обязательных полей — 01.11.2026
 
 Гейт **1806/1806**: Models 838, Services 567, ViewModels 360, Repository 35,
