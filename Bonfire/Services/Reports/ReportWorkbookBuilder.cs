@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using Bonfire.Domain.Functional;
+using Bonfire.Application.Planning;
 using Bonfire.Models;
 using Bonfire.Services.Interfaces;
 using OfficeOpenXml;
@@ -14,11 +15,12 @@ namespace Bonfire.Services.Reports;
 
 public interface IReportWorkbookBuilder
 {
+    Result<ImmutableArray<byte>> BuildSeedShopping(SeedShoppingListFromViewModel shopping);
     Result<ImmutableArray<byte>> BuildSeeds(IReadOnlyList<SeedReportItem> items, int currentYear);
     Result<ImmutableArray<byte>> BuildSeedlings(IReadOnlyList<SeedlingReportItem> items);
 }
 
-internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
+internal sealed partial class ReportWorkbookBuilder : IReportWorkbookBuilder
 {
     public Result<ImmutableArray<byte>> BuildSeeds(IReadOnlyList<SeedReportItem> items, int currentYear)
     {
@@ -137,9 +139,9 @@ internal sealed class ReportWorkbookBuilder : IReportWorkbookBuilder
         }
     }
 
-    private static void ApplyBorders(ExcelWorksheet sheet, int lastRow)
+    private static void ApplyBorders(ExcelWorksheet sheet, int lastRow, int columns = 7, int firstRow = 1)
     {
-        var range = sheet.Cells[1, 1, lastRow, 7];
+        var range = sheet.Cells[firstRow, 1, lastRow, columns];
         range.Style.Border.Top.Style = ExcelBorderStyle.Thin;
         range.Style.Border.Left.Style = ExcelBorderStyle.Thin;
         range.Style.Border.Right.Style = ExcelBorderStyle.Thin;

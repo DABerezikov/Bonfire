@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using Bonfire.Domain.Functional;
+using Bonfire.Application.Planning;
 using Bonfire.Services.Interfaces;
 using Bonfire.Services.Reports;
 
@@ -25,8 +26,14 @@ internal sealed class ReportService(
     public void CreateSeedlingsReport(IEnumerable<SeedlingReportItem> items, string fileName = "Рассада")
         => Export(workbooks.BuildSeedlings(items.ToArray()), fileName, clock.GetLocalNow().DateTime);
 
+    public Result<string> CreateSeedShoppingReport(SeedShoppingListFromViewModel shopping)
+        => Write(workbooks.BuildSeedShopping(shopping), $"Покупка_семян_{shopping.SeasonYear}_план{shopping.PlanId}", clock.GetLocalNow().DateTime);
+
+    private Result<string> Write(Result<ImmutableArray<byte>> content, string fileName, DateTime date)
+        => content.Bind(bytes => paths.Resolve(fileName, date).Bind(path => files.Save(path, bytes)));
+
     private void Export(Result<ImmutableArray<byte>> content, string fileName, DateTime date)
-        => content.Bind(bytes => paths.Resolve(fileName, date).Bind(path => files.Save(path, bytes))).Match(path =>
+        => Write(content, fileName, date).Match(path =>
         {
             userDialog.Information($"Отчет {Path.GetFileName(path)} сформирован", "Информация");
             return true;

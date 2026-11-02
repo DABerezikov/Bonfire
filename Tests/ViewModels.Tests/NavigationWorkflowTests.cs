@@ -1,4 +1,4 @@
-namespace ViewModels.Tests;
+﻿namespace ViewModels.Tests;
 
 public class NavigationWorkflowTests
 {
@@ -10,7 +10,7 @@ public class NavigationWorkflowTests
         new LibraryEditorViewModel(Substitute.For<ILibraryService>(), _dialog,
             new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()), new PlanningLibrariesViewModel(Substitute.For<IPlanningService>())),
         new GardenPlanViewModel(Substitute.For<IGardenService>(), _dialog, Substitute.For<ISeedlingsService>(), Substitute.For<ISeedsService>(), Substitute.For<IPlantingService>()),
-        new PlantingPlanningViewModel(Substitute.For<IPlanningService>(), _dialog, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), TimeProvider.System),
+        new PlantingPlanningViewModel(Substitute.For<IPlanningService>(), _dialog, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), TimeProvider.System, Substitute.For<IReportService>()),
         new HarvestJournalViewModel(Substitute.For<IHarvestService>(), Substitute.For<IPlanningService>(), _dialog, TimeProvider.System),
         new PerennialPlanningViewModel(Substitute.For<IPerennialPlanningService>(), Substitute.For<IPlanningService>(), _dialog, TimeProvider.System));
 

@@ -1,4 +1,4 @@
-using Bonfire.Application.Planning;
+﻿using Bonfire.Application.Planning;
 using System.Collections.Immutable;
 using Bonfire.Application.Planning.Libraries;
 using Bonfire.Domain.Planning.Regions;
@@ -14,13 +14,49 @@ namespace ViewModels.Tests;
 public class PlanningWorkflowTests
 {
     [Fact]
+    public async Task ShoppingExport_UsesSavedPlanAndPreservesDraftOnSuccessAndFailure()
+    {
+        var reports = Substitute.For<IReportService>();
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System, reports);
+        await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск"));
+        vm.Draft.TargetPlantsText = "45";
+        var values = vm.Draft.Values;
+        var key = new SeedPurchaseKey(Bonfire.Domain.Libraries.CultureId.Create(1).ValueOrThrow(), Bonfire.Domain.Libraries.SortId.Create(2).ValueOrThrow());
+        var shopping = new SeedShoppingListFromViewModel(1, 2, "Сезон", 2027, DateTimeOffset.UtcNow,
+            [new("Томат", "Черри", new(key, 10, 2, Option.None<decimal>(), Option.Some(8m), false), new DateOnly(2027, 3, 20))]);
+        _service.ReadShoppingListAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(shopping));
+        reports.CreateSeedShoppingReport(shopping).Returns(Result.Success("Reports/покупка.xlsx"));
+        await vm.ExportShoppingListAsync();
+        reports.Received(1).CreateSeedShoppingReport(shopping);
+        Assert.Contains("выгружен", vm.Status); Assert.Equal(values, vm.Draft.Values);
+        reports.ClearReceivedCalls();
+        _service.ReadShoppingListAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Failure<SeedShoppingListFromViewModel>("Не удалось прочитать остаток"));
+        await vm.ExportShoppingListAsync();
+        reports.DidNotReceive().CreateSeedShoppingReport(Arg.Any<SeedShoppingListFromViewModel>());
+        Assert.Equal("Не удалось прочитать остаток", vm.Status); Assert.Equal(values, vm.Draft.Values); Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public async Task ShoppingExport_CoveredPlanDoesNotWriteEmptyFile()
+    {
+        var reports = Substitute.For<IReportService>();
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System, reports);
+        await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск"));
+        _service.ReadShoppingListAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(
+            new SeedShoppingListFromViewModel(1, 1, "Сезон", 2027, DateTimeOffset.UtcNow, [])));
+        await vm.ExportShoppingListAsync();
+        reports.DidNotReceive().CreateSeedShoppingReport(Arg.Any<SeedShoppingListFromViewModel>());
+        Assert.Contains("нет дефицита", vm.Status);
+    }
+
+    [Fact]
     public async Task Choices_DefaultToAvailableStockAndPreserveSelectedMissingSortWhenFilterChanges()
     {
         ConfigureRefresh();
         var available = new PlanningChoiceFromViewModel(1, "Томат", 2, "Черри") { HasAvailableSeeds = true };
         var absent = new PlanningChoiceFromViewModel(3, "Арбуз", 4, "Алый сладкий");
         _service.ReadChoicesAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray.Create(available, absent)));
-        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System, Substitute.For<IReportService>());
         await vm.LoadAsync();
         Assert.Single(vm.Choices); Assert.Equal("Томат", vm.Choices[0].CultureName);
         vm.ShowChoicesWithoutSeeds = true; Assert.Equal(2, vm.Choices.Count);
@@ -38,7 +74,7 @@ public class PlanningWorkflowTests
     [InlineData(nameof(PlantingPlanningViewModel.NewPlanRegion))]
     public void PlanFields_UseSameRequiredRuleForCaptionErrorsAndCreateCommand(string property)
     {
-        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System, Substitute.For<IReportService>());
         vm.NewPlanRegion = ReferenceContext().Region;
         Assert.True(vm.CreatePlanCommand.CanExecute(null));
         if (property == nameof(vm.NewPlanRegion)) vm.NewPlanRegion = null;
@@ -262,7 +298,7 @@ public class PlanningWorkflowTests
     public async Task Refresh_CleanPlanReadsNewVersionAfterPerennialChange()
     {
         ConfigureRefresh();
-        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System, Substitute.For<IReportService>());
         await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск"));
         _service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(Result.Success(Option.Some(Plan() with { Version = 2 })));
         await vm.LoadAsync();
@@ -287,7 +323,7 @@ public class PlanningWorkflowTests
     [Fact]
     public async Task Refresh_LatePlanReadPreservesInputEnteredWhileWaiting()
     {
-        ConfigureRefresh(); var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System);
+        ConfigureRefresh(); var vm = new PlantingPlanningViewModel(_service, _dialog, new(_service), TimeProvider.System, Substitute.For<IReportService>());
         await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск")); var draft = vm.Draft;
         var pending = new TaskCompletionSource<Result<Option<PlantingPlanDetailsFromViewModel>>>(TaskCreationOptions.RunContinuationsAsynchronously);
         _service.ReadPlanAsync(1, Arg.Any<CancellationToken>()).Returns(pending.Task);
@@ -306,7 +342,7 @@ public class PlanningWorkflowTests
 
     private async Task<PlantingPlanningViewModel> CreateModel()
     {
-        var vm = new PlantingPlanningViewModel(_service, _dialog, new PlanningLibrariesViewModel(_service), TimeProvider.System);
+        var vm = new PlantingPlanningViewModel(_service, _dialog, new PlanningLibrariesViewModel(_service), TimeProvider.System, Substitute.For<IReportService>());
         await vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск"));
         vm.Draft.Choice = new(1, "Томат", 2, "Черри");
         vm.Draft.TransplantStartText = "20.05.2027";

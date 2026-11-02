@@ -30,10 +30,11 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
     private long _referenceRevision;
 
     public PlantingPlanningViewModel(IPlanningService service, IUserDialog dialog, PlanningLibrariesViewModel libraries,
-        TimeProvider clock)
+        TimeProvider clock, IReportService reports)
     {
         _service = service;
         _dialog = dialog;
+        _reports = reports;
         Libraries = libraries;
         NewPlanYear = clock.GetLocalNow().Year.ToString();
         Draft.PropertyChanged += DraftChanged;

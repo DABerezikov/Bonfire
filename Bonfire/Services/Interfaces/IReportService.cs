@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using Bonfire.Application.Planning;
+using Bonfire.Domain.Functional;
 
 namespace Bonfire.Services.Interfaces;
 
 public interface IReportService
 {
+    Result<string> CreateSeedShoppingReport(SeedShoppingListFromViewModel shopping);
     void CreateSeedsReport(IEnumerable<SeedReportItem> items, string fileName = "Семена");
     void CreateSeedlingsReport(IEnumerable<SeedlingReportItem> items, string fileName = "Рассада");
 }

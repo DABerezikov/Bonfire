@@ -1,5 +1,12 @@
 # Проверки Bonfire
 
+## Список покупки семян — 02.11.2026
+
+Гейт **1820/1820**: Models 843, Services 571, ViewModels 365, Repository 35,
+SeedsFromViewModel 6. Проверены общий дефицит партий, свежие остатки и отсутствие
+списания, вес без пересчёта в штуки, реальные ячейки XLSX и команда экспорта.
+[Подробности](../plans/planting-planning/shopping-export.md).
+
 ## Наличие семян в планировании — 01.11.2026
 
 Гейт **1810/1810**: Models 839, Services 568, ViewModels 362, Repository 35,

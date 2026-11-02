@@ -11,6 +11,7 @@ namespace Bonfire.Services.Interfaces;
 
 public interface IPlanningService
 {
+    Task<Result<SeedShoppingListFromViewModel>> ReadShoppingListAsync(int planId, CancellationToken cancellationToken = default);
     Task<Result<ImmutableArray<PlanningBedFromViewModel>>> ReadBedsAsync(CancellationToken cancellationToken = default);
 
     Task<Result<ImmutableArray<PlantingPlanSummaryFromViewModel>>> ReadPlansAsync(

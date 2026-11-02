@@ -18,6 +18,16 @@ namespace ViewModels.Tests;
 public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output)
 {
     [Fact]
+    public void ShoppingExportButton_BindsToCommandAndRequiresSavedBatches() => runtime.Invoke(() =>
+    {
+        var vm = Model(); var view = new PlantingPlanningView { DataContext = vm }; WpfRuntime.Layout(view, 1280, 720);
+        var button = Assert.IsType<Button>(view.FindName("PlanningShoppingExportButton"));
+        Assert.Same(vm.ExportShoppingListCommand, button.Command);
+        Assert.False(button.IsEnabled);
+        Assert.Contains("сохранённым", button.ToolTip.ToString());
+    });
+
+    [Fact]
     public void StockFilter_RealSelectionRemainsInDraftWhileUnavailableChoicesAreHidden() => runtime.Invoke(() =>
     {
         var service = Service();
@@ -26,7 +36,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
         service.ReadPlansAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray<PlantingPlanSummaryFromViewModel>.Empty));
         service.ReadBedsAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray<PlanningBedFromViewModel>.Empty));
         service.ReadChoicesAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(System.Collections.Immutable.ImmutableArray.Create(available, absent)));
-        var vm = new Bonfire.ViewModels.PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
+        var vm = new Bonfire.ViewModels.PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System, Substitute.For<IReportService>());
         vm.LoadAsync().GetAwaiter().GetResult();
         var view = new PlantingPlanningView { DataContext = vm }; WpfRuntime.Layout(view, 1280, 720);
         var choices = WpfRuntime.Descendants<ComboBox>(view).Single(box => ReferenceEquals(box.ItemsSource, vm.Choices));
@@ -66,7 +76,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
     public void ChooseSowing_RealButtonSetsDateRecalculatesAndShowsPersistentConfirmation() => runtime.Invoke(() =>
     {
         var service = Service();
-        var vm = new Bonfire.ViewModels.PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
+        var vm = new Bonfire.ViewModels.PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System, Substitute.For<IReportService>());
         vm.OpenPlanAsync(new(1, 1, "Сезон", 2027, "Томск")).GetAwaiter().GetResult();
         vm.Draft.Choice = new(1, "Томат", 2, "Черри");
         vm.Draft.TransplantStartText = "20.05.2027"; vm.Draft.TransplantEndText = "25.05.2027";
@@ -324,7 +334,7 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
     private static PlantingPlanningViewModel BatchModel()
     {
         var service = Service();
-        var vm = new PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System);
+        var vm = new PlantingPlanningViewModel(service, Substitute.For<IUserDialog>(), new(service), TimeProvider.System, Substitute.For<IReportService>());
         var summary = new PlantingPlanSummaryFromViewModel(1, 1, "Сезон", 2027, "Томск");
         var choice = new PlanningChoiceFromViewModel(1, "Томат", 2, "Черри");
         vm.Plans.Add(summary); vm.Choices.Add(choice);

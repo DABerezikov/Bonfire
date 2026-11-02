@@ -30,6 +30,7 @@ internal static class ServiceRegister
         .AddSingleton<ICalculatePlannedBatch, CalculatePlannedBatch>()
         .AddSingleton<IManagePlantingPlans, ManagePlantingPlans>()
         .AddSingleton<IPlanningService, PlanningService>()
+        .AddSingleton<ICreateSeedShoppingList, CreateSeedShoppingList>()
         .AddSingleton<IManageHarvestJournal, ManageHarvestJournal>()
         .AddSingleton<IHarvestService, HarvestService>()
         .AddSingleton<IManagePerennialPlanning, ManagePerennialPlanning>()

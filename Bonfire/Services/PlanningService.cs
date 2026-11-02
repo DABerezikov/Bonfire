@@ -19,8 +19,11 @@ internal sealed class PlanningService(
     ICalculatePlannedBatch calculate,
     IManagePlantingPlans manage,
     ISavePlanningLibraries editLibraries,
-    IPlanningBedReader beds) : IPlanningService
+    IPlanningBedReader beds,
+    ICreateSeedShoppingList shopping) : IPlanningService
 {
+    public Task<Result<SeedShoppingListFromViewModel>> ReadShoppingListAsync(int planId, CancellationToken cancellationToken = default)
+        => shopping.ExecuteAsync(planId, cancellationToken);
     public Task<Result<ImmutableArray<PlanningBedFromViewModel>>> ReadBedsAsync(
         CancellationToken cancellationToken = default) => beds.ReadAsync(cancellationToken);
 

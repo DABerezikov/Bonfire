@@ -62,6 +62,9 @@
                             </StackPanel>
                         </Button>
                     </WrapPanel>
+                    <Button x:Name="PlanningShoppingExportButton" Command="{Binding ExportShoppingListCommand}" ToolTip="Excel по всем сохранённым партиям выбранного плана: потребность минус текущий остаток. Несохранённый ввод не включается." ToolTipService.ShowOnDisabled="True" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal"><fa5:ImageAwesome Icon="Solid_ShoppingBasket" Height="12" Margin="0,0,6,0" Foreground="#C77800"/><TextBlock Text="Список покупки (Excel)"/></StackPanel>
+                    </Button>
                 </StackPanel>
                 <Expander DockPanel.Dock="Bottom" Header="Создать сезонный план" Margin="0,8,6,0">
                     <StackPanel Margin="0,8,0,0">
