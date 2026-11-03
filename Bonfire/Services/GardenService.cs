@@ -1,3 +1,4 @@
+﻿using Bonfire.Application.Caching;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,8 @@ internal class GardenService(
     ICreateGardenPlan createGardenPlan,
     ICreateGarden createGarden,
     ICreateGardenObjects createGardenObjects,
-    IGardenReader gardenReader) : IGardenService
+    IGardenReader gardenReader,
+    IReadModelCache cache) : IGardenService
 {
     public Task<Result<GeometryResultFromViewModel>> SaveGeometryAsync(SaveGardenGeometryFromViewModel request)
         => saveGardenGeometry.ExecuteAsync(request);
@@ -72,10 +74,10 @@ internal class GardenService(
         createGardenObjects.CreateGreenhouseAsync(request);
 
     public Task<Result<ImmutableArray<GardenPlanResultFromViewModel>>> ReadPlansAsync() =>
-        gardenReader.ReadPlansAsync(default);
+        cache.ReadAsync(ReadArea.Garden, nameof(ReadPlansAsync), gardenReader.ReadPlansAsync);
 
     public Task<Result<ImmutableArray<GardenReadFromViewModel>>> ReadGardensAsync(int planId)
-        => GardenPlanId.Create(planId).Match(id => gardenReader.ReadGardensAsync(id, default),
+        => GardenPlanId.Create(planId).Match(id => cache.ReadAsync(ReadArea.Garden | ReadArea.Seedlings | ReadArea.Catalog, (nameof(ReadGardensAsync), planId), token => gardenReader.ReadGardensAsync(id, token)),
             error => Task.FromResult(Result.Failure<ImmutableArray<GardenReadFromViewModel>>(error)));
 
     public Task<Result<GardenStateResultFromViewModel>> ChangeStateAsync(ChangeGardenStateFromViewModel request,

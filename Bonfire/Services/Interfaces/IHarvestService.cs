@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Bonfire.Application.Harvest;
@@ -8,6 +8,9 @@ namespace Bonfire.Services.Interfaces;
 
 public interface IHarvestService
 {
+    long ReadVersion { get; }
+    void RefreshReadCache();
+
     Task<Result<ImmutableArray<HarvestEntryFromViewModel>>> ReadAsync(CancellationToken cancellationToken = default);
 
     Task<Result<ImmutableArray<HarvestSourceFromViewModel>>> ReadSourcesAsync(int seasonYear,

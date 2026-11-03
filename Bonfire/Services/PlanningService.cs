@@ -1,3 +1,4 @@
+﻿using Bonfire.Application.Caching;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,33 +21,38 @@ internal sealed class PlanningService(
     IManagePlantingPlans manage,
     ISavePlanningLibraries editLibraries,
     IPlanningBedReader beds,
-    ICreateSeedShoppingList shopping) : IPlanningService
+    ICreateSeedShoppingList shopping,
+    IReadModelCache cache) : IPlanningService
 {
+    private const ReadArea Scope = ReadArea.Seeds | ReadArea.Catalog | ReadArea.Garden | ReadArea.PlantingPlans | ReadArea.PlanningLibraries | ReadArea.Perennials;
+    public long ReadVersion => cache.Version(Scope);
+    public void RefreshReadCache() => cache.Invalidate(Scope);
+
     public Task<Result<SeedShoppingListFromViewModel>> ReadShoppingListAsync(int planId, CancellationToken cancellationToken = default)
         => shopping.ExecuteAsync(planId, cancellationToken);
     public Task<Result<ImmutableArray<PlanningBedFromViewModel>>> ReadBedsAsync(
-        CancellationToken cancellationToken = default) => beds.ReadAsync(cancellationToken);
+        CancellationToken cancellationToken = default) => cache.ReadAsync(ReadArea.Garden, nameof(ReadBedsAsync), beds.ReadAsync, cancellationToken);
 
     public Task<Result<ImmutableArray<PlantingPlanSummaryFromViewModel>>> ReadPlansAsync(
-        CancellationToken cancellationToken = default) => reader.ReadAllAsync(cancellationToken);
+        CancellationToken cancellationToken = default) => cache.ReadAsync(ReadArea.PlantingPlans | ReadArea.Perennials, nameof(ReadPlansAsync), reader.ReadAllAsync, cancellationToken);
 
     public Task<Result<Option<PlantingPlanDetailsFromViewModel>>> ReadPlanAsync(int id,
         CancellationToken cancellationToken = default)
-        => SeasonalPlantingPlanId.Create(id).Match(key => reader.ReadAsync(key, cancellationToken),
+        => SeasonalPlantingPlanId.Create(id).Match(key => cache.ReadAsync(ReadArea.PlantingPlans | ReadArea.Perennials, (nameof(ReadPlanAsync), id), token => reader.ReadAsync(key, token), cancellationToken),
             error => Task.FromResult(Result.Failure<Option<PlantingPlanDetailsFromViewModel>>(error)));
 
     public Task<Result<ImmutableArray<RegionFromViewModel>>> ReadRegionsAsync(bool includeArchived = false,
         CancellationToken cancellationToken = default)
-        => libraries.ReadRegionsAsync(includeArchived, cancellationToken);
+        => cache.ReadAsync(ReadArea.PlanningLibraries, (nameof(ReadRegionsAsync), includeArchived), token => libraries.ReadRegionsAsync(includeArchived, token), cancellationToken);
 
     public Task<Result<ImmutableArray<PlanningChoiceFromViewModel>>> ReadChoicesAsync(
-        CancellationToken cancellationToken = default) => contexts.ReadChoicesAsync(cancellationToken);
+        CancellationToken cancellationToken = default) => cache.ReadAsync(ReadArea.Seeds | ReadArea.Catalog, nameof(ReadChoicesAsync), contexts.ReadChoicesAsync, cancellationToken);
 
     public Task<Result<PlanningContextFromViewModel>> ReadContextAsync(int regionId, int cultureId, int sortId,
         CancellationToken cancellationToken = default)
         => RegionId.Create(regionId).Bind(r => CultureId.Create(cultureId).Bind(c =>
                 SortId.Create(sortId).Bind(s => Result.Success((Region: r, Culture: c, Sort: s)))))
-            .Match(ids => contexts.ReadAsync(ids.Region, ids.Culture, ids.Sort, cancellationToken),
+            .Match(ids => cache.ReadAsync(ReadArea.Catalog | ReadArea.PlanningLibraries, (nameof(ReadContextAsync), regionId, cultureId, sortId), token => contexts.ReadAsync(ids.Region, ids.Culture, ids.Sort, token), cancellationToken),
                 error => Task.FromResult(Result.Failure<PlanningContextFromViewModel>(error)));
 
     public Task<Result<PlanningPreviewFromViewModel>> CalculateAsync(PlanningBatchInputFromViewModel input,

@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Bonfire.Application.Planning;
@@ -11,6 +11,9 @@ namespace Bonfire.Services.Interfaces;
 
 public interface IPlanningService
 {
+    long ReadVersion { get; }
+    void RefreshReadCache();
+
     Task<Result<SeedShoppingListFromViewModel>> ReadShoppingListAsync(int planId, CancellationToken cancellationToken = default);
     Task<Result<ImmutableArray<PlanningBedFromViewModel>>> ReadBedsAsync(CancellationToken cancellationToken = default);
 

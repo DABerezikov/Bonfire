@@ -1,4 +1,4 @@
-using BonfireDB;
+﻿using BonfireDB;
 using BonfireDB.Context;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
@@ -32,7 +32,7 @@ public class GardenServiceIntegrationTests : IDisposable
     private GardenService CreateService()
     {
         var factory = _sp.GetRequiredService<IUnitOfWorkFactory>();
-        return new(new ResizeGrid(new DbGridWriter(factory)), new ChangeGardenState(new DbGardenStateWriter(factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(factory)), new EditElementProperties(new DbElementPropertiesWriter(factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(factory)), new EditGardenProperties(new DbGardenPropertiesWriter(factory)), new SetGardenLock(new DbGardenLockWriter(factory)), new DeleteGardenElement(new DbElementDeletionWriter(factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(factory)), new DeleteGarden(new DbGardenDeletionWriter(factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(factory)), new DbGardenReader(factory));
+        return new(new ResizeGrid(new DbGridWriter(factory)), new ChangeGardenState(new DbGardenStateWriter(factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(factory)), new EditElementProperties(new DbElementPropertiesWriter(factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(factory)), new EditGardenProperties(new DbGardenPropertiesWriter(factory)), new SetGardenLock(new DbGardenLockWriter(factory)), new DeleteGardenElement(new DbElementDeletionWriter(factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(factory)), new DeleteGarden(new DbGardenDeletionWriter(factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(factory)), new DbGardenReader(factory), _sp.GetRequiredService<Bonfire.Application.Caching.IReadModelCache>());
     }
 
     private async Task<(int planId, int gardenId, int bedId)> SeedAsync(int year = 2026)

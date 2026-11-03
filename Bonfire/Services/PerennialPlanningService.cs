@@ -1,3 +1,4 @@
+﻿using Bonfire.Application.Caching;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,14 +9,19 @@ using Bonfire.Services.Interfaces;
 
 namespace Bonfire.Services;
 
-internal sealed class PerennialPlanningService(IPerennialPlanningReader reader, IManagePerennialPlanning manage)
+internal sealed class PerennialPlanningService(IPerennialPlanningReader reader, IManagePerennialPlanning manage,
+    IReadModelCache cache)
     : IPerennialPlanningService
 {
+    private const ReadArea Scope = ReadArea.Perennials | ReadArea.PlantingPlans;
+    public long ReadVersion => cache.Version(Scope);
+    public void RefreshReadCache() => cache.Invalidate(Scope);
+
     public Task<Result<ImmutableArray<PerennialPlantingFromViewModel>>> ReadAsync(
-        CancellationToken cancellationToken = default) => reader.ReadAsync(cancellationToken);
+        CancellationToken cancellationToken = default) => cache.ReadAsync(ReadArea.Perennials, nameof(ReadAsync), reader.ReadAsync, cancellationToken);
 
     public Task<Result<ImmutableArray<PerennialSeasonFromViewModel>>> ReadSeasonsAsync(int planId,
-        CancellationToken cancellationToken = default) => reader.ReadSeasonsAsync(planId, cancellationToken);
+        CancellationToken cancellationToken = default) => cache.ReadAsync(ReadArea.Perennials | ReadArea.PlantingPlans, (nameof(ReadSeasonsAsync), planId), token => reader.ReadSeasonsAsync(planId, token), cancellationToken);
 
     public Task<Result<PerennialPlantingFromViewModel>> SaveAsync(Option<int> id, int version,
         PerennialPlantingDefinition definition, CancellationToken cancellationToken = default) =>

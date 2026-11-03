@@ -1,3 +1,4 @@
+﻿using Bonfire.Application.Caching;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Bonfire.Application.Seedlings;
@@ -12,10 +13,13 @@ internal class SeedlingsService(
     IDeleteSeedling deletion,
     IChangeSeedling changes,
     IEditSeedling editing,
-    ISeedlingReader reader) : ISeedlingsService
+    ISeedlingReader reader,
+    IReadModelCache cache) : ISeedlingsService
 {
-    public Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> ReadSeedlingsAsync() => reader.ReadAsync(default);
-    public Task<Result<Option<SeedlingReadFromViewModel>>> ReadSeedlingAsync(int id) => reader.ReadAsync(id, default);
+    public long ReadVersion => cache.Version(ReadArea.Seedlings | ReadArea.Catalog);
+
+    public Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> ReadSeedlingsAsync() => cache.ReadAsync(ReadArea.Seedlings | ReadArea.Catalog, nameof(ReadSeedlingsAsync), reader.ReadAsync);
+    public Task<Result<Option<SeedlingReadFromViewModel>>> ReadSeedlingAsync(int id) => cache.ReadAsync(ReadArea.Seedlings | ReadArea.Catalog, (nameof(ReadSeedlingAsync), id), token => reader.ReadAsync(id, token));
 
     public ILunarCalendar Lunar { get; } = lunar;
 

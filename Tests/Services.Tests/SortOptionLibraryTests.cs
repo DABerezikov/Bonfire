@@ -1,4 +1,4 @@
-using Bonfire.Application.Libraries;
+﻿using Bonfire.Application.Libraries;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
@@ -23,7 +23,7 @@ public class SortOptionLibraryTests
             db.Add(new SortOption { Category = category == SortOptionCategory.Color ? "Цвет" : "Созревание", Name = "СТАРОЕ" });
             await db.SaveChangesAsync();
         });
-        var service = new ManageSortOptions(new DbSortOptionStore(fixture.Factory));
+        var service = new ManageSortOptions(new DbSortOptionStore(fixture.Factory), fixture.Cache);
         var item = Assert.Single((await service.ReadAsync()).ValueOrThrow().Where(item => item.Category == category));
         Assert.True(item.IsUsed);
         Assert.True((await service.DeleteAsync(category, item.Name)).IsFailure);
@@ -43,7 +43,7 @@ public class SortOptionLibraryTests
     public async Task AddRenameDeleteUnusedValue_RejectsBlankDuplicateAndStaleChanges()
     {
         using var fixture = new SqliteUowFixture();
-        var service = new ManageSortOptions(new DbSortOptionStore(fixture.Factory));
+        var service = new ManageSortOptions(new DbSortOptionStore(fixture.Factory), fixture.Cache);
         Assert.True((await service.SaveAsync(SortOptionCategory.Color, Option.None<string>(), " ")).IsFailure);
         Assert.True((await service.SaveAsync((SortOptionCategory)99, Option.None<string>(), "Белый")).IsFailure);
         Assert.True((await service.SaveAsync(SortOptionCategory.Color, Option.None<string>(), " Белый ")).IsSuccess);

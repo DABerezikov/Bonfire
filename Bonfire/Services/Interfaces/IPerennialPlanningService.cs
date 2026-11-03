@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Bonfire.Application.Planning;
@@ -9,6 +9,9 @@ namespace Bonfire.Services.Interfaces;
 
 public interface IPerennialPlanningService
 {
+    long ReadVersion { get; }
+    void RefreshReadCache();
+
     Task<Result<ImmutableArray<PerennialPlantingFromViewModel>>> ReadAsync(
         CancellationToken cancellationToken = default);
 

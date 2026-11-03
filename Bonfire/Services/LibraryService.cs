@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bonfire.Application.Caching;
+using System;
 using System.Threading.Tasks;
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
@@ -13,20 +14,21 @@ internal class LibraryService(
     IUpdateCulture updateCulture,
     IUpdateProducer updateProducer,
     IUpdateSort updateSort,
-    IDeleteLibraryEntry deleteEntry) : ILibraryService
+    IDeleteLibraryEntry deleteEntry,
+    IReadModelCache cache) : ILibraryService
 {
     public Task<Result<bool>> DeleteEntryAsync(LibraryEntryKind kind, int id) => deleteEntry.ExecuteAsync(kind, id);
 
     public Task<Result<SortReadFromViewModel>> GetSortAsync(int id)
-        => SortId.Create(id).Match(key => reader.ReadSortAsync(key, default),
+        => SortId.Create(id).Match(key => cache.ReadAsync(ReadArea.Catalog, (nameof(GetSortAsync), id), token => reader.ReadSortAsync(key, token)),
             error => Task.FromResult(Result.Failure<SortReadFromViewModel>(error)));
 
     public Task<Result<CultureDetailsFromViewModel>> GetCultureAsync(int id)
-        => CultureId.Create(id).Match(key => reader.ReadCultureAsync(key, default),
+        => CultureId.Create(id).Match(key => cache.ReadAsync(ReadArea.Catalog, (nameof(GetCultureAsync), id), token => reader.ReadCultureAsync(key, token)),
             error => Task.FromResult(Result.Failure<CultureDetailsFromViewModel>(error)));
 
     public Task<Result<ProducerDetailsFromViewModel>> GetProducerAsync(int id)
-        => ProducerId.Create(id).Match(key => reader.ReadProducerAsync(key, default),
+        => ProducerId.Create(id).Match(key => cache.ReadAsync(ReadArea.Catalog, (nameof(GetProducerAsync), id), token => reader.ReadProducerAsync(key, token)),
             error => Task.FromResult(Result.Failure<ProducerDetailsFromViewModel>(error)));
 
     public Task<Result<SortDetailsFromViewModel>> UpdateSortAsync(SortEditModel model)

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Bonfire.Application.Caching;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 
@@ -15,15 +16,19 @@ public interface ISortOptionStore
 
 public interface IManageSortOptions
 {
+    long ReadVersion { get; }
+    void RefreshReadCache();
     Task<Result<ImmutableArray<SortOptionFromViewModel>>> ReadAsync(CancellationToken cancellationToken = default);
     Task<Result<SortOptionFromViewModel>> SaveAsync(SortOptionCategory category, Option<string> original, string name, CancellationToken cancellationToken = default);
     Task<Result<bool>> DeleteAsync(SortOptionCategory category, string name, CancellationToken cancellationToken = default);
 }
 
-public sealed class ManageSortOptions(ISortOptionStore store) : IManageSortOptions
+public sealed class ManageSortOptions(ISortOptionStore store, IReadModelCache cache) : IManageSortOptions
 {
+    public long ReadVersion => cache.Version(ReadArea.Catalog | ReadArea.SortOptions);
+    public void RefreshReadCache() => cache.Invalidate(ReadArea.Catalog | ReadArea.SortOptions);
     public Task<Result<ImmutableArray<SortOptionFromViewModel>>> ReadAsync(CancellationToken cancellationToken = default)
-        => store.ReadAsync(cancellationToken);
+        => cache.ReadAsync(ReadArea.Catalog | ReadArea.SortOptions, nameof(ManageSortOptions), store.ReadAsync, cancellationToken);
 
     public Task<Result<SortOptionFromViewModel>> SaveAsync(SortOptionCategory category, Option<string> original, string name, CancellationToken cancellationToken = default)
         => SortOptionName.Create(category, name).Bind(value => original.Match(
