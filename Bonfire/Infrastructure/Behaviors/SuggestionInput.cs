@@ -67,7 +67,15 @@ public static class SuggestionInput
             Rebuild();
         }
 
-        private void CollectionChanged(object? sender, NotifyCollectionChangedEventArgs args) => Rebuild();
+        private void CollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
+        {
+            if (_updating) return;
+            // Даём ComboBox завершить явный выбор и передать его текст в привязку.
+            box.Dispatcher.BeginInvoke(DispatcherPriority.DataBind, new Action(() =>
+            {
+                if (_loaded) Rebuild();
+            }));
+        }
 
         private void Rebuild()
         {

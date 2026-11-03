@@ -219,12 +219,12 @@
                    Text="Сорт" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
                    VerticalAlignment="Top" IsEditable="True" input:SuggestionInput.Enabled="True" ItemsSource="{Binding SortListView}"
-                   Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" KeyUp="ComboBox_OnKeyUp"/>
+                   Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="520,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Производитель" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="520,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
                    VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True" input:SuggestionInput.Enabled="True" KeyUp="ComboBox_OnKeyUp"
-                   ItemsSource="{Binding ProducerListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
+                   ItemsSource="{Binding ProducerListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }" IsSynchronizedWithCurrentItem="False"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="704,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                                Width="190" Text="Примечание" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="704,70,0,0" Style="{StaticResource SeedsTextBoxStyle}"

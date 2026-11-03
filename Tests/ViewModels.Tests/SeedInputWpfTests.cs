@@ -13,6 +13,45 @@ namespace ViewModels.Tests;
 public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutputHelper output)
 {
     [Fact]
+    public void SeedAdditionStartsEmpty_AndRefreshDoesNotSelectFirstSuggestion() => runtime.Invoke(() =>
+    {
+        var service = Substitute.For<ISeedsService>();
+        service.ReadSeedsAsync().Returns(Result.Success(System.Collections.Immutable.ImmutableArray<SeedReadFromViewModel>.Empty));
+        service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel([], [], [])
+        {
+            Catalog = Option.Some(new SeedCatalogFromViewModel(
+                [new(1, "Редис", "Овощи")], [new(1, "18 дней", 1, [1])], [new(1, "Аэлита")]))
+        }));
+        var vm = new SeedsViewModel(service, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
+        vm.LoadDataCommand.Execute(null);
+        var view = new SeedsWindow { DataContext = vm };
+        var window = new Window { Content = view, Width = 1600, Height = 900, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); WpfRuntime.Layout(view, 1600, 900);
+            ComboBox Input(string path) => WpfRuntime.Descendants<ComboBox>(view).Single(box =>
+                box.GetBindingExpression(ComboBox.TextProperty)?.ParentBinding.Path.Path == path);
+            foreach (var path in new[] { "AddCulture", "AddSort", "AddProducer" })
+            {
+                Assert.Empty(Input(path).Text); Assert.Null(Input(path).SelectedItem);
+            }
+            Assert.Empty(vm.AddCulture); Assert.Empty(vm.AddSort); Assert.Empty(vm.AddProducer);
+            vm.AddCulture = "Редис";
+            WpfRuntime.Layout(view, 1600, 900);
+            Assert.Empty(vm.AddSort); Assert.Empty(vm.AddProducer);
+            Input("AddSort").SelectedItem = vm.AddSortList[0];
+            Input("AddProducer").SelectedItem = vm.AddProducerList[0];
+            WpfRuntime.Layout(view, 1600, 900);
+            Assert.Equal("18 дней", vm.AddSort); Assert.Equal("Аэлита", vm.AddProducer);
+            vm.AddSort = string.Empty; vm.AddProducer = string.Empty;
+            vm.LoadDataCommand.Execute(null); WpfRuntime.Layout(view, 1600, 900);
+            Assert.Empty(Input("AddSort").Text); Assert.Empty(Input("AddProducer").Text);
+            Assert.Empty(vm.AddSort); Assert.Empty(vm.AddProducer);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public void EditableSuggestions_DoNotCompleteText_AndKeepSourceBinding() => runtime.Invoke(() =>
     {
         var source = new System.Collections.ObjectModel.ObservableCollection<string> { "скороспелый", "средний", "поздний" };
@@ -34,6 +73,7 @@ public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutpu
             Assert.Equal("свободное слово", editor.Text); Assert.Equal("свободное слово", box.Text);
             Assert.Empty(box.Items.Cast<object>());
             source.Add("свободное слово новое");
+            WpfRuntime.Layout(box, 200, 30);
             Assert.NotNull(BindingOperations.GetBindingExpression(box, ItemsControl.ItemsSourceProperty));
             Assert.Equal(4, source.Count);
             Assert.Equal("свободное слово новое", Assert.Single(box.Items.Cast<string>()));
