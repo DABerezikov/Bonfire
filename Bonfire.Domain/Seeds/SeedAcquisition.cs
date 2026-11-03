@@ -1,4 +1,4 @@
-using Bonfire.Domain.Functional;
+﻿using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 
 namespace Bonfire.Domain.Seeds;
@@ -32,11 +32,11 @@ public sealed class SeedAcquisition
         if (!double.IsFinite(values.PackCount) || values.PackCount < 0 || values.CostPack < 0)
             return Result.Failure<SeedAcquisition>(
                 "Количество упаковок и стоимость должны быть неотрицательными и конечными");
-        return LibraryName.Create(values.Culture).Bind(_ => LibraryName.Create(values.Sort).Bind(_ =>
-            LibraryName.Create(values.Producer).Bind(_ => SeedAmount.Create(values.QuantityInPack, values.Unit)
+        return LibraryName.Create(values.Culture).Bind(culture => LibraryName.Create(values.Sort).Bind(sort =>
+            LibraryName.Create(values.Producer).Bind(producer => SeedAmount.Create(values.QuantityInPack, values.Unit)
                 .Bind(_ =>
                     SeedAmount.Create(values.QuantityInPack * values.PackCount, values.Unit).Bind(total =>
-                        Result.Success(new SeedAcquisition(values, total)))))));
+                        Result.Success(new SeedAcquisition(values with { Culture = culture.Value, Sort = sort.Value, Producer = producer.Value }, total)))))));
     }
 
     public Result<SeedPackage> CreatePackage(DateTime purchasedAt)

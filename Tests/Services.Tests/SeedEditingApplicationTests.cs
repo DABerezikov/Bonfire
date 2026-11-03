@@ -1,4 +1,4 @@
-using Bonfire.Application.Seeds;
+﻿using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 
@@ -17,7 +17,7 @@ public class SeedEditingApplicationTests
         var result = await new EditSeed(_writer).ExecuteAsync(Request(), cancellation.Token);
         Assert.Equal(new SeedEditResultFromViewModel(1, 2), result.ValueOrThrow());
         await _writer.Received(1).SaveAsync(Arg.Is<SeedEdit>(edit => edit.SeedId.Value == 1
-            && edit.SortId.Value == 2 && edit.ProducerId.Value == 3 && edit.Characteristics.Name.Value == " Сорт "
+            && edit.SortId.Value == 2 && edit.ProducerId.Value == 3 && edit.Characteristics.Name.Value == "Сорт"
             && edit.Package.Values.AmountSeeds == 8), cancellation.Token);
     }
 

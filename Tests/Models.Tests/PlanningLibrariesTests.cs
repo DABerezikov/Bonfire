@@ -1,4 +1,4 @@
-using Bonfire.Domain.Functional;
+﻿using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 using Bonfire.Domain.Planning;
 using Bonfire.Domain.Planning.Regions;
@@ -35,11 +35,11 @@ public class PlanningLibrariesTests
     }
 
     [Fact]
-    public void Region_EmptyNoteIsSome_AndTextIsPreserved()
+    public void Region_EmptyNoteIsSome_AndNameIsNormalized()
     {
         var details = RegionReference.Empty with { Note = Option.Some(""), Source = Option.Some(" Источник ") };
         var region = RegionDefinition.Create(" Томск ", "Asia/Tomsk", details).ValueOrThrow();
-        Assert.Equal(" Томск ", region.Name.Value);
+        Assert.Equal("Томск", region.Name.Value);
         Assert.Equal(Option.Some(""), region.Reference.Note);
         Assert.Equal(Option.Some(" Источник "), region.Reference.Source);
     }

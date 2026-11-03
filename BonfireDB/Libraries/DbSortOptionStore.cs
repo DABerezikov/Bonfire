@@ -12,7 +12,7 @@ public sealed class DbSortOptionStore(IUnitOfWorkFactory units) : ISortOptionSto
 {
     private static string Category(SortOptionCategory category) => category == SortOptionCategory.Color ? "Цвет" : "Созревание";
     private static string? Text(PlantSort sort, SortOptionCategory category) => category == SortOptionCategory.Color ? sort.PlantColor : sort.Maturity;
-    private static bool Same(string? left, string right) => string.Equals(left?.Trim(), right, StringComparison.OrdinalIgnoreCase);
+    private static bool Same(string? left, string right) => string.Equals(LibraryName.NormalizeWhitespace(left ?? string.Empty), right, StringComparison.OrdinalIgnoreCase);
 
     public Task<Result<ImmutableArray<SortOptionFromViewModel>>> ReadAsync(CancellationToken cancellationToken)
         => DbRead.TryAsync(async () =>
@@ -26,9 +26,9 @@ public sealed class DbSortOptionStore(IUnitOfWorkFactory units) : ISortOptionSto
             foreach (var category in new[] { SortOptionCategory.Color, SortOptionCategory.Maturity })
             {
                 var used = sorts.Select(sort => category == SortOptionCategory.Color ? sort.PlantColor : sort.Maturity)
-                    .Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!.Trim())
+                    .Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => LibraryName.NormalizeWhitespace(value!))
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                var names = used.Concat(options.Where(option => option.Category == Category(category)).Select(option => option.Name.Trim()))
+                var names = used.Concat(options.Where(option => option.Category == Category(category)).Select(option => LibraryName.NormalizeWhitespace(option.Name)))
                     .Where(name => name.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(name => name);
                 result.AddRange(names.Select(name => new SortOptionFromViewModel(category, name, used.Contains(name))));
             }

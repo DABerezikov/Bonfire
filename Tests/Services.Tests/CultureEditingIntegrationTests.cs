@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Services.Tests;
 
@@ -29,12 +29,12 @@ public class CultureEditingIntegrationTests : IDisposable
             new() { Id = id, Name = " Томат ", Class = "Особый класс" });
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(" Томат ", result.ValueOrThrow().Name);
+        Assert.Equal("Томат", result.ValueOrThrow().Name);
         var seed = await _fixture.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo)
             .Include(s => s.Plant).ThenInclude(p => p.PlantCulture).SingleAsync());
         var seedling = await _fixture.QueryAsync(db => db.Seedlings.Include(s => s.Plant).ThenInclude(p => p.PlantCulture).SingleAsync());
         Assert.Equal(id, seed.Plant.PlantCulture.Id);
-        Assert.Equal(" Томат ", seed.Plant.PlantCulture.Name);
+        Assert.Equal("Томат", seed.Plant.PlantCulture.Name);
         Assert.Equal("Особый класс", seedling.Plant.PlantCulture.Class);
         Assert.Equal(8, seed.SeedsInfo.AmountSeeds);
         Assert.Equal(3, seedling.Quantity);

@@ -1,6 +1,7 @@
-using Bonfire.Application.Seeds;
+﻿using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
+using Bonfire.Domain.Libraries;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using Microsoft.EntityFrameworkCore;
@@ -57,12 +58,15 @@ public sealed class DbSeedEditWriter(IUnitOfWorkFactory units) : ISeedEditWriter
         => value.Match(async text =>
         {
             if (string.IsNullOrWhiteSpace(text)) return;
-            var name = text.Trim();
+            var name = LibraryName.NormalizeWhitespace(text);
             var options = unit.Repository<SortOption>();
-            if (!await options.Items
-                    .AnyAsync(option => option.Category == category && option.Name == name, cancellationToken)
-                    .ConfigureAwait(false))
-                await options.AddAsync(new SortOption { Category = category, Name = name }, cancellationToken)
-                    .ConfigureAwait(false);
+            var rows = await options.Rows.Where(option => option.Category == category)
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            var existing = rows.FirstOrDefault(option => option.Name == name)
+                ?? rows.FirstOrDefault(option => string.Equals(LibraryName.NormalizeWhitespace(option.Name), name,
+                    StringComparison.OrdinalIgnoreCase));
+            if (existing is null)
+                await options.AddAsync(new SortOption { Category = category, Name = name }, cancellationToken).ConfigureAwait(false);
+            else existing.Name = name;
         }, () => Task.CompletedTask);
 }

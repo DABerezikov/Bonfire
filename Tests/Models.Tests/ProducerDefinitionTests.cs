@@ -1,4 +1,4 @@
-using Bonfire.Domain.Libraries;
+﻿using Bonfire.Domain.Libraries;
 
 namespace Models.Tests;
 
@@ -24,7 +24,7 @@ public class ProducerDefinitionTests
         Assert.NotSame(original, updated);
         Assert.Equal(original.Id, updated.Id);
         Assert.Equal("Фирма", original.Name.Value);
-        Assert.Equal(" Другое имя ", updated.Name.Value);
+        Assert.Equal("Другое имя", updated.Name.Value);
     }
 
     [Fact]

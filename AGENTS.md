@@ -27,17 +27,18 @@ Bonfire — WPF-приложение для учёта семян, рассад�
 
 Для nullable ↔ Option используйте общие extension-методы `ToOption()`/`ToNullable()` из `Bonfire.Domain/Functional/OptionExtensions.cs`. Не дублируйте эти преобразования локальными методами или одинаковыми тернарными выражениями. Пустая строка, пробелы и ноль сохраняются как Some; только null означает None.
 
-Редактирование культуры проходит через `Application/Libraries/UpdateCulture` и `Domain/Libraries/CultureDefinition`; сохранение — через `BonfireDB/Libraries/DbCultureWriter`. Имя и класс обязательны, идентификатор — `CultureId`. Непустой текст и пользовательские классы сохраняются без неявной нормализации.
+Редактирование культуры проходит через `Application/Libraries/UpdateCulture` и `Domain/Libraries/CultureDefinition`; сохранение — через `BonfireDB/Libraries/DbCultureWriter`. Имя и класс обязательны, идентификатор — `CultureId`. Названия нормализует LibraryName: пробелы по краям убираются, последовательности
+Unicode-пробелов заменяются одним обычным пробелом. Пользовательские классы сохраняются.
 
 Редактирование производителя использует `ProducerDefinition`, `ProducerId`, `UpdateProducer` и `DbProducerWriter`. Общий value object `LibraryName` проверяет названия культуры и производителя; не дублируйте эту проверку в новых доменных моделях. Application возвращает DTO; LibraryService не зависит от EF, сущности принадлежат BonfireDB.
 
-Библиотечное редактирование сорта использует `SortLibraryEdit`, `SortId`, `UpdateSort` и `DbSortWriter`. Меняются только название (с Trim) и культура всех связанных растений. `CultureChange = None` сохраняет существующие связи; культура принадлежит Plant, а не PlantSort. Результат `UpdateSortAsync` — DTO со связями растение → культура для синхронизации UI; характеристики сорта здесь не сохраняйте.
+Библиотечное редактирование сорта использует `SortLibraryEdit`, `SortId`, `UpdateSort` и `DbSortWriter`. Меняются только название (с нормализацией LibraryName) и культура всех связанных растений. `CultureChange = None` сохраняет существующие связи; культура принадлежит Plant, а не PlantSort. Результат `UpdateSortAsync` — DTO со связями растение → культура для синхронизации UI; характеристики сорта здесь не сохраняйте.
 
-Редактирование пакета и характеристик проходит через `SeedEditMapper → Application/Seeds/EditSeed → Domain/Seeds/SeedEdit → BonfireDB/SeedEditing/DbSeedEditWriter`. Порт принимает только проверенную модель; пакет, общий сорт, производитель и варианты цвета/созревания сохраняются одним SaveChanges. `SeedPackage` и `SortCharacteristics` иммутабельны; `*Values` — входные значения, проверяемые фабриками. Nullable преобразуйте в Option на границе и обратно только при записи EF. В этом сценарии текст сорта не обрезается, CultureId не меняется. `SaveSeedEditAsync` возвращает Result: при отказе UI сохраняет черновик.
+Редактирование пакета и характеристик проходит через `SeedEditMapper → Application/Seeds/EditSeed → Domain/Seeds/SeedEdit → BonfireDB/SeedEditing/DbSeedEditWriter`. Порт принимает только проверенную модель; пакет, общий сорт, производитель и варианты цвета/созревания сохраняются одним SaveChanges. `SeedPackage` и `SortCharacteristics` иммутабельны; `*Values` — входные значения, проверяемые фабриками. Nullable преобразуйте в Option на границе и обратно только при записи EF. В этом сценарии название сорта, цвета и созревания нормализуются; CultureId не меняется. `SaveSeedEditAsync` возвращает Result: при отказе UI сохраняет черновик.
 
 `SeedsViewModel.EditedItem` — `SeedEditorDraft`, а не Seed. Пакет редактируется через `SeedPackageEditModel` поверх иммутабельного `SeedPackageValues`; характеристики — через существующий `SortEditModel`. Маппер редактора читает независимый снимок Application; сервис сохранения принимает `EditSeedFromViewModel`. Dirty пакета и производителя сравнивается с исходным снимком, не с живым кэшем. Отсутствие черновика допускается только на WPF-границе при снятом выборе; команда проверяет его явно. Новые EF-графы для редактирования не создавайте.
 
-Добавление/пополнение проходит через `SeedAcquisitionMapper → AcquireSeeds → SeedAcquisition → DbSeedAcquisitionWriter`. Не передавайте кэш EF из UI для принятия решения: порт читает свежие данные. Количества рассчитывает Domain, локальную дату покупки задаёт TimeProvider. Варианты результата — Created/Replenished внутри Result. Совпадение пакета — точные культура/сорт/производитель и год годности; смена производителя общего сорта сохраняет прежнюю семантику. Отсутствующий остаток в граммах возвращает отказ, не подставляйте ноль. Общий маппинг SeedsInfo ↔ SeedPackageValues находится в SeedPackageDbMapper.
+Добавление/пополнение проходит через `SeedAcquisitionMapper → AcquireSeeds → SeedAcquisition → DbSeedAcquisitionWriter`. Не передавайте кэш EF из UI для принятия решения: порт читает свежие данные. Количества рассчитывает Domain, локальную дату покупки задаёт TimeProvider. Варианты результата — Created/Replenished внутри Result. Совпадение пакета — культура/сорт/производитель после нормализации пробелов и год годности; смена производителя общего сорта сохраняет прежнюю семантику. Отсутствующий остаток в граммах возвращает отказ, не подставляйте ноль. Общий маппинг SeedsInfo ↔ SeedPackageValues находится в SeedPackageDbMapper.
 
 Удаление с причиной проходит через `SeedDeletion → DeleteSeed → DbSeedDeletionWriter`. Причина обрезается по краям, пустая строка допустима; null от диалога означает отмену до обращения к сервису. Один SaveChanges сохраняет DisposeComment и удаляет только Seed; SeedsInfo, общий Plant и рассада остаются. Результат — DTO с ID внутри Result, кэш и черновик UI меняются только после успеха. Подсказки семян перестраивайте общим RebuildSeedSuggestions.
 
@@ -441,3 +442,10 @@ LoadDataCommand с такой проверкой; явная кнопка обн
 RefreshReadCache. При неизменных версиях сохраняйте коллекции, выбор и черновики;
 фильтрация через CollectionViewSource выполняется в памяти. Актуальные проверки и
 ограничения: plans/application-read-cache.md.
+
+
+Правило владельца от 03.11.2026: названия перед сохранением нормализуются общим
+LibraryName.NormalizeWhitespace/Create. Не дублируйте Trim/Regex по writer-ам.
+Примечания, описания и прочий свободный текст сохраняют форматирование. Исторические
+пробелы учитываются в поиске существующих записей, чтобы пополнение не создавало
+новый пакет или библиотечные связи из-за различий пробелов. Чтение не исправляет БД.

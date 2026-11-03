@@ -9,6 +9,31 @@ namespace Services.Tests;
 
 public class SortOptionLibraryTests
 {
+    [Fact]
+    public async Task AcquisitionNormalizesNamesAndReusesLegacyWhitespaceRecords()
+    {
+        using var fixture = new SqliteUowFixture();
+        await fixture.ExecuteAsync(async db =>
+        {
+            var plant = new Plant { PlantCulture = new() { Name = " Малопа ", Class = "Цветы" },
+                PlantSort = new() { Name = " Розовая  фантазия ", Producer = new() { Name = " Свои  семена " } } };
+            db.Seeds.Add(new() { Plant = plant, SeedsInfo = new() { AmountSeeds = 5, QuantityPack = 5, ExpirationDate = new DateTime(2028,12,31) } });
+            await db.SaveChangesAsync();
+        });
+        var request = new Bonfire.Models.AddSeedRequest("Малопа", "Розовая фантазия", "Свои семена", "Цветы", "Куплено", Bonfire.Models.Units.PiecesOption, 5, 1, 0, new DateTime(2028,12,31), "  Примечание  ");
+        var result = await fixture.CreateSeedsService().AddOrUpdateSeedAsync(request);
+        Assert.IsType<Bonfire.Application.Seeds.AcquisitionResultFromViewModel.Replenished>(result.ValueOrThrow());
+        await fixture.ExecuteAsync(async db =>
+        {
+            Assert.Equal(1, await db.PlantsCulture.CountAsync()); Assert.Equal(1, await db.PlantsSort.CountAsync()); Assert.Equal(1, await db.Producers.CountAsync());
+            Assert.Equal("Малопа", await db.PlantsCulture.Select(row => row.Name).SingleAsync());
+            Assert.Equal("Розовая фантазия", await db.PlantsSort.Select(row => row.Name).SingleAsync());
+            Assert.Equal("Свои семена", await db.Producers.Select(row => row.Name).SingleAsync());
+            Assert.Equal(10, await db.SeedsInfo.Select(row => row.AmountSeeds).SingleAsync());
+            Assert.Equal("  Примечание  ", await db.SeedsInfo.Select(row => row.Note).SingleAsync());
+        });
+    }
+
     [Theory]
     [InlineData(SortOptionCategory.Color)]
     [InlineData(SortOptionCategory.Maturity)]

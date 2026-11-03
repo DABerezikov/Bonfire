@@ -1,4 +1,4 @@
-using Bonfire.Domain.Functional;
+﻿using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 
 namespace Bonfire.Domain.Seeds;
@@ -35,7 +35,11 @@ public sealed class SortCharacteristics
     {
         ArgumentNullException.ThrowIfNull(values);
         return LibraryName.Create(name).Bind(validName => IsValid(values)
-            ? Result.Success(new SortCharacteristics(validName, values))
+            ? Result.Success(new SortCharacteristics(validName, values with
+            {
+                PlantColor = values.PlantColor.Map(LibraryName.NormalizeWhitespace),
+                Maturity = values.Maturity.Map(LibraryName.NormalizeWhitespace)
+            }))
             : Result.Failure<SortCharacteristics>("Исправьте отрицательные значения и диапазоны характеристик сорта"));
     }
 

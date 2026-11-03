@@ -1,4 +1,4 @@
-using Bonfire.Application.Planning.Libraries;
+﻿using Bonfire.Application.Planning.Libraries;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 using Bonfire.Domain.Planning;
@@ -33,7 +33,7 @@ public class PlanningLibrariesIntegrationTests : IDisposable
         Assert.Empty((await store.ReadRegionsAsync(false, default)).ValueOrThrow());
         var saved = Assert.Single((await store.ReadRegionsAsync(true, default)).ValueOrThrow());
         Assert.Equal(edit.Reference, saved.Definition.Reference);
-        Assert.Equal(" Томск ", saved.Definition.Name.Value);
+        Assert.Equal("Томск", saved.Definition.Name.Value);
     }
 
     [Fact]
