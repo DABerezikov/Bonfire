@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -102,7 +102,13 @@ public sealed class PerennialPlanningViewModel : ViewModel
         }
     }
 
-    public ICommand LoadCommand => field ??= new LambdaCommandAsync(LoadAsync, () => !IsBusy);
+    private (long, long)? _loadedVersions;
+    public ICommand EnsureLoadedCommand => field ??= new LambdaCommandAsync(async () =>
+    {
+        if (_loadedVersions != (_service.ReadVersion, _planning.ReadVersion)) await LoadAsync();
+    });
+
+    public ICommand LoadCommand => field ??= new LambdaCommandAsync(async () => { _service.RefreshReadCache(); await LoadAsync(); }, () => !IsBusy);
     public ICommand NewCommand => field ??= new LambdaCommand(New, () => !IsBusy);
 
     public ICommand SaveCommand =>
@@ -132,6 +138,9 @@ public sealed class PerennialPlanningViewModel : ViewModel
 
     public async Task LoadAsync()
     {
+        var versions = (_service.ReadVersion, _planning.ReadVersion);
+        var complete = true;
+        int Fail(string error) { complete = false; return Error(error); }
         if (IsBusy) return;
         IsBusy = true;
         try
@@ -153,7 +162,7 @@ public sealed class PerennialPlanningViewModel : ViewModel
 
                 if (!Draft.IsDirty && Selected is { } selected) SetDraft(PerennialEditorDraft.Open(selected));
                 return 0;
-            }, Error);
+            }, Fail);
             (await _planning.ReadPlansAsync()).Match(items =>
             {
                 var id = SelectedPlan?.Id;
@@ -170,7 +179,7 @@ public sealed class PerennialPlanningViewModel : ViewModel
                 }
 
                 return 0;
-            }, Error);
+            }, Fail);
             var choices = await _planning.ReadChoicesAsync();
             var choice = Draft.Choice;
             choices.Match(items =>
@@ -179,7 +188,7 @@ public sealed class PerennialPlanningViewModel : ViewModel
                 foreach (var item in items) Choices.Add(item);
                 Draft.Choice = choice;
                 return 0;
-            }, Error);
+            }, Fail);
             var regions = await _planning.ReadRegionsAsync();
             var region = Draft.Region;
             regions.Match(items =>
@@ -188,9 +197,10 @@ public sealed class PerennialPlanningViewModel : ViewModel
                 foreach (var item in items) Regions.Add(item);
                 Draft.Region = region;
                 return 0;
-            }, Error);
+            }, Fail);
             EnsureOptions();
-            await LoadSeasonsAsync(true);
+            if (!await LoadSeasonsAsync(true)) complete = false;
+            if (complete) _loadedVersions = versions;
         }
         finally
         {
@@ -408,7 +418,7 @@ public sealed class PerennialPlanningViewModel : ViewModel
         }
     }
 
-    private async Task LoadSeasonsAsync(bool preserveDirty = false)
+    private async Task<bool> LoadSeasonsAsync(bool preserveDirty = false)
     {
         var plan = SelectedPlan;
         var revision = ++_seasonReadRevision;
@@ -417,18 +427,18 @@ public sealed class PerennialPlanningViewModel : ViewModel
             _seasons = [];
             OnPropertyChanged(nameof(SavedCount));
             ResetSeason();
-            return;
+            return true;
         }
 
         var result = await _service.ReadSeasonsAsync(plan.Id);
-        if (revision != _seasonReadRevision || SelectedPlan?.Id != plan.Id) return;
-        result.Match(items =>
+        if (revision != _seasonReadRevision || SelectedPlan?.Id != plan.Id) return false;
+        return result.Match(items =>
         {
             _seasons = items;
             OnPropertyChanged(nameof(SavedCount));
             if (!preserveDirty || Season.Values == Season.Original) ResetSeason();
-            return 0;
-        }, Error);
+            return true;
+        }, error => { Error(error); return false; });
     }
 
     private void ResetSeason()

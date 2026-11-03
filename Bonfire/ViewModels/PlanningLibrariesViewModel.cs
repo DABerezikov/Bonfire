@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -152,7 +152,13 @@ public sealed class PlanningLibrariesViewModel(IPlanningService service) : ViewM
         }
     }
 
-    public ICommand LoadCommand => field ??= new LambdaCommandAsync(LoadAsync, () => !IsBusy);
+    private long? _loadedVersions;
+    public ICommand EnsureLoadedCommand => field ??= new LambdaCommandAsync(async () =>
+    {
+        if (_loadedVersions != service.ReadVersion) await LoadAsync();
+    });
+
+    public ICommand LoadCommand => field ??= new LambdaCommandAsync(async () => { service.RefreshReadCache(); await LoadAsync(); }, () => !IsBusy);
 
     public ICommand NewRegionCommand => field ??= new LambdaCommand(() =>
     {
@@ -175,6 +181,9 @@ public sealed class PlanningLibrariesViewModel(IPlanningService service) : ViewM
 
     public async Task LoadAsync()
     {
+        var versions = service.ReadVersion;
+        var complete = true;
+        int Fail(string error) { complete = false; return Error(error); }
         var regions = await service.ReadRegionsAsync(true);
         regions.Match(items =>
         {
@@ -184,14 +193,15 @@ public sealed class PlanningLibrariesViewModel(IPlanningService service) : ViewM
             if (SelectedRegion is null)
                 SelectedRegion = Regions.FirstOrDefault(x => x.Id == selected) ?? Regions.FirstOrDefault();
             return 0;
-        }, Error);
+        }, Fail);
         var choices = await service.ReadChoicesAsync();
         choices.Match(items =>
         {
             Choices.Clear();
             foreach (var choice in items) Choices.Add(choice);
             return 0;
-        }, Error);
+        }, Fail);
+        if (complete) _loadedVersions = versions;
     }
 
     public async Task LoadContextAsync(bool force = false)

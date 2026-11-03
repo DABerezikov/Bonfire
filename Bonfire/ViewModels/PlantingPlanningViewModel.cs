@@ -169,13 +169,21 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         {
             if (Set(ref field, value) && value)
             {
-                if (Plans.Count == 0) _ = LoadAsync();
-                else _ = RefreshChoicesAsync();
+                if (_loadedVersion != _service.ReadVersion) _ = LoadAsync();
             }
         }
     }
 
-    public ICommand LoadCommand => field ??= new LambdaCommandAsync(LoadAsync, () => !IsBusy);
+    private long? _loadedVersion;
+    public ICommand EnsureLoadedCommand => field ??= new LambdaCommandAsync(async () =>
+    {
+        if (_loadedVersion != _service.ReadVersion) await LoadAsync();
+    }, () => !IsBusy);
+    public ICommand LoadCommand => field ??= new LambdaCommandAsync(async () =>
+    {
+        _service.RefreshReadCache();
+        await LoadAsync();
+    }, () => !IsBusy);
 
     public ICommand CreatePlanCommand =>
         field ??= new LambdaCommandAsync(CreatePlanAsync, () => !IsBusy && PlanningFieldRule.ValidateAll(NewPlanFieldRules.Values).IsSuccess);
@@ -228,6 +236,9 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
 
     public async Task LoadAsync()
     {
+        var revision = _service.ReadVersion;
+        var complete = true;
+        int Fail(string error) { complete = false; return Error(error); }
         var plans = await _service.ReadPlansAsync();
         plans.Match(items =>
         {
@@ -245,7 +256,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
             }
 
             return 0;
-        }, Error);
+        }, Fail);
         var regions = await _service.ReadRegionsAsync();
         regions.Match(items =>
         {
@@ -255,14 +266,14 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
             NewPlanRegion = Regions.FirstOrDefault(x => x.Id == id) ??
                             Regions.FirstOrDefault(x => x.Definition.Name.Value == "Томск") ?? Regions.FirstOrDefault();
             return 0;
-        }, Error);
-        await RefreshChoicesAsync();
+        }, Fail);
+        if (!await RefreshChoicesAsync()) complete = false;
         (await _service.ReadBedsAsync()).Match(items =>
         {
             Beds.Clear();
             foreach (var item in items) Beds.Add(item);
             return 0;
-        }, Error);
+        }, Fail);
         if (plans.IsFailure) return;
         if (OpenedPlan is { } opened)
         {
@@ -276,6 +287,7 @@ public sealed partial class PlantingPlanningViewModel : ViewModel
         {
             await OpenPlanAsync(Plans[0]);
         }
+        if (complete) _loadedVersion = revision;
     }
 
     public async Task OpenPlanAsync(PlantingPlanSummaryFromViewModel summary)

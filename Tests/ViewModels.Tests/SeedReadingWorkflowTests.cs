@@ -14,9 +14,11 @@ public class SeedReadingWorkflowTests
         var service = Substitute.For<ISeedsService>(); var dialog = Substitute.For<IUserDialog>();
         var options = new SeedEditorOptionsFromViewModel(["Красный"], [], []);
         service.GetEditorOptionsAsync().Returns(Result.Success(options));
+        service.ReadSeedsAsync().Returns(Result.Success(ImmutableArray.Create(original)));
         var vm = new SeedsViewModel(service, dialog, Substitute.For<IReportService>()) { Seeds = [original] };
         vm.LoadDataCommand.Execute(null); vm.SelectedItem = original; var draft = vm.EditedItem!;
         draft.Package.Note = "Правка";
+        service.OptionsVersion.Returns(1);
         service.GetEditorOptionsAsync().Returns(Result.Failure<SeedEditorOptionsFromViewModel>("Ошибка чтения вариантов"));
         vm.LoadDataCommand.Execute(null);
         Assert.Same(options, vm.EditorOptions); Assert.Same(original, vm.SelectedItem); Assert.Same(draft, vm.EditedItem);

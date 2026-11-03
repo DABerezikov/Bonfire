@@ -1,5 +1,7 @@
-using System;
+﻿using System;
 using System.IO;
+using System.Diagnostics;
+using System.Threading;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,6 +28,8 @@ internal static class Program
             Logging = new { LogLevel = new { Default = "Warning" } }
         }));
         Environment.CurrentDirectory = folder;
+        using var sql = new SqlCounter();
+        var warmSqlCount = -1L;
         var app = new Bonfire.App();
         app.InitializeComponent();
         var hidden = new Style(typeof(Window));
@@ -42,7 +46,7 @@ internal static class Program
         var checkedScreens = new List<string>();
         timer.Tick += (_, _) =>
         {
-            if ((DateTime.UtcNow - started).TotalSeconds > 20) { timer.Stop(); app.Shutdown(2); return; }
+            if ((DateTime.UtcNow - started).TotalSeconds > 30) { timer.Stop(); app.Shutdown(2); return; }
             if (app.MainWindow is { IsLoaded: true } window)
             {
                 reached = true;
@@ -72,7 +76,40 @@ internal static class Program
                             if (!HasRegion(Property(Property(model, "LibraryEditorViewModel"), "PlanningLibraries"))) return;
                             CheckView(window, "PlanningLibrariesView"); Navigate(model, "ShowSeedViewModelCommand"); break;
                         case 6:
-                            CheckView(window, "SeedsWindow"); closeRequested = true; window.Close(); break;
+                            CheckView(window, "SeedsWindow"); Navigate(model, "ShowSeedlingsViewModelCommand"); break;
+                        case 7:
+                            CheckView(window, "SeedlingsWindow"); Navigate(model, "ShowGardenPlanViewModelCommand"); break;
+                        case 8:
+                            CheckView(window, "GardenPlanView", false); Navigate(model, "ShowLibraryEditorViewModelCommand"); break;
+                        case 9:
+                            SelectLibraryTab(window, "Цвета и сроки созревания"); break;
+                        case 10:
+                            CheckView(window, "LibraryEditorWindow", false); Navigate(model, "ShowSeedViewModelCommand"); break;
+                        case 11:
+                            CheckView(window, "SeedsWindow");
+                            warmSqlCount = sql.Count;
+                            if (warmSqlCount <= 0) throw new Exception("Счётчик SQL не наблюдал первоначальную загрузку");
+                            Navigate(model, "ShowPlantingPlanningCommand"); break;
+                        case 12:
+                            CheckView(window, "PlantingPlanningView"); Navigate(model, "ShowHarvestJournalCommand"); break;
+                        case 13:
+                            CheckView(window, "HarvestJournalView"); Navigate(model, "ShowPerennialPlanningCommand"); break;
+                        case 14:
+                            CheckView(window, "PerennialPlanningView"); Navigate(model, "ShowLibraryEditorViewModelCommand"); break;
+                        case 15:
+                            SelectLibraryTab(window, "Планирование:"); break;
+                        case 16:
+                            CheckView(window, "PlanningLibrariesView"); SelectLibraryTab(window, "Цвета и сроки созревания"); break;
+                        case 17:
+                            CheckView(window, "LibraryEditorWindow", false); Navigate(model, "ShowSeedViewModelCommand"); break;
+                        case 18:
+                            CheckView(window, "SeedsWindow"); Navigate(model, "ShowSeedlingsViewModelCommand"); break;
+                        case 19:
+                            CheckView(window, "SeedlingsWindow"); Navigate(model, "ShowGardenPlanViewModelCommand"); break;
+                        case 20:
+                            CheckView(window, "GardenPlanView", false);
+                            if (sql.Count != warmSqlCount) throw new Exception($"Повторная навигация выполнила SQL: {sql.Count - warmSqlCount}");
+                            closeRequested = true; window.Close(); break;
                     }
                     stage++; loadedTicks = 0;
                 }
@@ -82,10 +119,10 @@ internal static class Program
         timer.Start();
         var exitCode = app.Run();
         timer.Stop();
-        if (!reached || exitCode != 0 || stage < 7) throw new Exception("Окно или новые экраны не прошли startup smoke", failure);
+        if (!reached || exitCode != 0 || stage < 21) throw new Exception("Окно или новые экраны не прошли startup smoke", failure);
         try { Bonfire.App.Host.Services.CreateScope(); throw new Exception("Host не освобождён"); }
         catch (ObjectDisposedException) { }
-        Console.WriteLine($"STARTUP_SMOKE_OK; Database={database}; WindowLoaded={reached}; HostDisposed=True; Screens={string.Join(",", checkedScreens)}");
+        Console.WriteLine($"STARTUP_SMOKE_OK; Database={database}; WindowLoaded={reached}; HostDisposed=True; RepeatNavigationSql={sql.Count - warmSqlCount}; Screens={string.Join(",", checkedScreens)}");
 
         void CheckView(Window window, string name, bool checkBindings = true)
         {
@@ -97,6 +134,37 @@ internal static class Program
             checkedScreens.Add(name);
         }
     }
+    private static void SelectLibraryTab(Window window, string header)
+    {
+        var tabs = Descendants(window).OfType<TabControl>().First(control => control.Items.OfType<TabItem>()
+            .Any(tab => tab.Header?.ToString()?.StartsWith("Планирование:") == true));
+        tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(tab => tab.Header?.ToString()?.StartsWith(header) == true);
+    }
+
+    private sealed class SqlCounter : IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object>>, IDisposable
+    {
+        private readonly List<IDisposable> _subscriptions = new();
+        private readonly IDisposable _listeners;
+        private long _count;
+        public SqlCounter() => _listeners = DiagnosticListener.AllListeners.Subscribe(this);
+        public long Count => Interlocked.Read(ref _count);
+        public void OnNext(DiagnosticListener listener)
+        {
+            if (listener.Name == "Microsoft.EntityFrameworkCore") _subscriptions.Add(listener.Subscribe(this));
+        }
+        public void OnNext(KeyValuePair<string, object> item)
+        {
+            if (item.Key.EndsWith(".CommandExecuted", StringComparison.Ordinal)) Interlocked.Increment(ref _count);
+        }
+        public void OnError(Exception error) => throw new Exception("Ошибка наблюдения SQL", error);
+        public void OnCompleted() { }
+        public void Dispose()
+        {
+            foreach (var subscription in _subscriptions) subscription.Dispose();
+            _listeners.Dispose();
+        }
+    }
+
     private static object Property(object model, string name) => model.GetType().GetProperty(name)?.GetValue(model) ?? throw new Exception($"Нет свойства {name}");
     private static bool HasRegion(object model) => Property(model, "Regions") is ICollection { Count: > 0 };
     private static void Navigate(object model, string name)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -34,6 +34,8 @@ public class GardenPlanViewModel(
     /// <summary>True — высаживаем рассаду; False — сеем семена напрямую.</summary>
     private bool _isFromSeedling = true;
 
+    private bool _plansLoaded;
+    private (long Seeds, long Seedlings)? _labelsVersion;
     private bool _isSavingElementProperties;
     private bool _isSavingGardenProperties;
     private bool _isSavingGreenhouseProperties;
@@ -364,7 +366,11 @@ public class GardenPlanViewModel(
     [field: AllowNull]
     [field: MaybeNull]
     public ICommand LoadDataCommand => field
-        ??= new LambdaCommandAsync(LoadDataAsync);
+        ??= new LambdaCommandAsync(async () =>
+        {
+            if (!_plansLoaded) await LoadDataAsync();
+            else await LoadPlantLabelsAsync();
+        });
 
     // ─────────────────────────────────────
     //  Управление планами
@@ -715,6 +721,7 @@ public class GardenPlanViewModel(
             return;
         }
 
+        _plansLoaded = true;
         Plans = new ObservableCollection<GardenPlanFromViewModel>(
             result.ValueOrThrow().Select(GardenPlanMapper.MapPlan));
         SelectedPlan = Plans.FirstOrDefault();
@@ -724,6 +731,8 @@ public class GardenPlanViewModel(
 
     private async Task LoadPlantLabelsAsync()
     {
+        var version = (seedsService.InventoryVersion, seedlingsService.ReadVersion);
+        if (_labelsVersion == version) return;
         // ── Рассада: из рассады сажают ВЗОШЕДШИЕ живые ростки штучно. ───────
         // Доступно = взошедшие живые − уже высаженные (вес рассады не при чём).
         var seedlingResult = await seedlingsService.ReadSeedlingsAsync();
@@ -796,6 +805,7 @@ public class GardenPlanViewModel(
             .ToList();
 
         AvailablePlantLabels = new ObservableCollection<string>(planLabels);
+        _labelsVersion = version;
     }
 
     private async Task LoadGardensAsync()

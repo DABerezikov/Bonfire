@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
@@ -36,6 +36,8 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     // Кэш загруженных семян: источник для списков и для выбора при создании рассады.
     private List<SeedReadFromViewModel> _seeds = [];
+    private long _loadedSeedVersion = -1;
+    private long _loadedSeedlingVersion = -1;
 
     private SeedlingReadModel? _selectedItem;
 
@@ -96,7 +98,7 @@ public class SeedlingsViewModel : SourceSelectionViewModel
         {
             if (!Set(ref field, value)) return;
             if (value && Seedlings != null)
-                _ = RefreshSeedlingsAsync();
+                _ = OnLoadDataCommandExecuted();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -444,10 +446,12 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task<Result<ImmutableArray<SeedlingReadFromViewModel>>> RefreshSeedlingsAsync()
     {
+        var revision = _seedlingsService.ReadVersion;
         var result = await _seedlingsService.ReadSeedlingsAsync();
         result.Match(items =>
         {
             Seedlings = new ObservableCollection<SeedlingReadModel>(items.Select(item => new SeedlingReadModel(item)));
+            _loadedSeedlingVersion = revision;
             UpdateCollectionViewSource();
             return true;
         }, error =>
@@ -735,22 +739,32 @@ public class SeedlingsViewModel : SourceSelectionViewModel
 
     private async Task OnLoadDataCommandExecuted()
     {
-        if (Seedlings != null) return;
-        var result = await _seedsService.ReadSeedsAsync();
-        if (result.IsFailure)
+        var initial = Seedlings is null;
+        var seedVersion = _seedsService.InventoryVersion;
+        var seedsChanged = _loadedSeedVersion != seedVersion;
+        var seedlingsChanged = initial || _loadedSeedlingVersion != _seedlingsService.ReadVersion;
+        if (!seedsChanged && !seedlingsChanged) return;
+        if (seedsChanged)
         {
-            _userDialog.Error(result.Match(_ => "", e => e));
-            return;
+            var result = await _seedsService.ReadSeedsAsync();
+            if (!result.Match(items =>
+            {
+                _seeds = items.ToList();
+                _loadedSeedVersion = seedVersion;
+                return true;
+            }, error => { _userDialog.Error(error); return false; })) return;
         }
-
-        _seeds = result.ValueOrThrow().ToList();
-        if ((await RefreshSeedlingsAsync()).IsFailure) return;
-        LoadListCulture();
-        LoadListPlant();
-        LoadListSort();
-        AddProducer = string.Empty;
-        AddSort = string.Empty;
-        PlantingDate = DateTime.Now;
+        if (seedlingsChanged && (await RefreshSeedlingsAsync()).IsFailure) return;
+        AddCultureList.Clear(); AddPlantList.Clear(); AddSortList.Clear();
+        ListCulture.Clear(); ListCulture.Add("-Выбрать все-");
+        LoadListCulture(); LoadListPlant(); LoadListSort();
+        if (CurrentSeed is { } selected) CurrentSeed = _seeds.FirstOrDefault(seed => seed.Id == selected.Id);
+        if (initial)
+        {
+            AddProducer = string.Empty;
+            AddSort = string.Empty;
+            PlantingDate = DateTime.Now;
+        }
     }
 
     private async Task OnSeedlingsChoiceClassCommandExecuted(object p)

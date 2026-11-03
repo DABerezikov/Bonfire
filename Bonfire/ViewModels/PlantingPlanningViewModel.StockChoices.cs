@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Bonfire.Application.Planning;
@@ -22,15 +22,15 @@ public sealed partial class PlantingPlanningViewModel
             ? "Семена есть в наличии."
             : "Семян этого сорта нет в наличии. Для посадки их нужно приобрести; партия остаётся в плане.";
 
-    private async Task RefreshChoicesAsync()
+    private async Task<bool> RefreshChoicesAsync()
     {
         var revision = ++_choicesRevision;
         var result = await _service.ReadChoicesAsync();
-        if (revision != _choicesRevision) return;
-        result.Match(items =>
+        if (revision != _choicesRevision) return false;
+        return result.Match(items =>
         {
-            _allChoices = items; _choicesLoaded = true; RebuildChoiceList(); return 0;
-        }, Error);
+            _allChoices = items; _choicesLoaded = true; RebuildChoiceList(); return true;
+        }, error => { Error(error); return false; });
     }
 
     private void RebuildChoiceList()

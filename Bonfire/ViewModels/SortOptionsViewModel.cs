@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -72,8 +72,13 @@ public sealed class SortOptionsViewModel(IManageSortOptions options, IUserDialog
         }
     }
 
+    private long? _loadedVersion;
     public bool IsEditable => !IsBusy;
-    public ICommand LoadCommand => field ??= new LambdaCommandAsync(ReloadAsync, () => !IsBusy);
+    public ICommand EnsureLoadedCommand => field ??= new LambdaCommandAsync(async () =>
+    {
+        if (_loadedVersion != options.ReadVersion) await ReloadAsync();
+    }, () => !IsBusy);
+    public ICommand LoadCommand => field ??= new LambdaCommandAsync(async () => { options.RefreshReadCache(); await ReloadAsync(); }, () => !IsBusy);
     public ICommand NewCommand => field ??= new LambdaCommand(() =>
     {
         Selected = null;
@@ -96,13 +101,18 @@ public sealed class SortOptionsViewModel(IManageSortOptions options, IUserDialog
         }
     }
 
-    private async Task<bool> LoadAsync() => (await options.ReadAsync()).Match(items =>
+    private async Task<bool> LoadAsync()
     {
-        Items = items;
-        OnPropertyChanged(nameof(Items));
-        OnPropertyChanged(nameof(FilteredItems));
-        return true;
-    }, Fail);
+        var version = options.ReadVersion;
+        return (await options.ReadAsync()).Match(items =>
+        {
+            Items = items;
+            _loadedVersion = version;
+            OnPropertyChanged(nameof(Items));
+            OnPropertyChanged(nameof(FilteredItems));
+            return true;
+        }, Fail);
+    }
 
     private bool Fail(string error)
     {

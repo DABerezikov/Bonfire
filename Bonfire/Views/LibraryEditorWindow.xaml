@@ -204,7 +204,7 @@
         </TabItem>
         <TabItem Header="Цвета и сроки созревания">
             <Grid DataContext="{Binding SortOptions}" Margin="16" IsEnabled="{Binding IsEditable}">
-                <i:Interaction.Triggers><i:EventTrigger EventName="Loaded"><i:InvokeCommandAction Command="{Binding LoadCommand}"/></i:EventTrigger></i:Interaction.Triggers>
+                <i:Interaction.Triggers><i:EventTrigger EventName="Loaded"><i:InvokeCommandAction Command="{Binding EnsureLoadedCommand}"/></i:EventTrigger></i:Interaction.Triggers>
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding Category}" Width="240" HorizontalAlignment="Left" Margin="0,0,0,10">
                     <ComboBoxItem Content="Цвета" Tag="{x:Static libraries:SortOptionCategory.Color}"/>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -122,7 +122,13 @@ public sealed class HarvestJournalViewModel(
         }
     }
 
-    public ICommand LoadCommand => field ??= new LambdaCommandAsync(LoadAsync, () => !IsBusy);
+    private (long, long)? _loadedVersions;
+    public ICommand EnsureLoadedCommand => field ??= new LambdaCommandAsync(async () =>
+    {
+        if (_loadedVersions != (service.ReadVersion, planning.ReadVersion)) await LoadAsync();
+    });
+
+    public ICommand LoadCommand => field ??= new LambdaCommandAsync(async () => { service.RefreshReadCache(); await LoadAsync(); }, () => !IsBusy);
     public ICommand SourcesCommand => field ??= new LambdaCommandAsync(LoadSourcesAsync, () => !IsBusy);
     public ICommand NewCommand => field ??= new LambdaCommand(New, () => !IsBusy);
     public ICommand NoSourceCommand => field ??= new LambdaCommand(() => Draft.Source = null, () => CanChooseIdentity);
@@ -142,6 +148,9 @@ public sealed class HarvestJournalViewModel(
 
     public async Task LoadAsync()
     {
+        var versions = (service.ReadVersion, planning.ReadVersion);
+        var complete = true;
+        int Fail(string error) { complete = false; return Error(error); }
         var revision = _dataRevision;
         var read = await service.ReadAsync();
         if (revision == _dataRevision)
@@ -150,7 +159,7 @@ public sealed class HarvestJournalViewModel(
                 _entries = items;
                 ApplyFilters();
                 return 0;
-            }, Error);
+            }, Fail);
         var choices = await planning.ReadChoicesAsync();
         var choice = Draft.Choice;
         choices.Match(items =>
@@ -160,7 +169,7 @@ public sealed class HarvestJournalViewModel(
             if (choice is not null && !Choices.Contains(choice)) Choices.Add(choice);
             Draft.Choice = choice;
             return 0;
-        }, Error);
+        }, Fail);
         var regions = await planning.ReadRegionsAsync();
         var region = Draft.Region;
         regions.Match(items =>
@@ -170,32 +179,33 @@ public sealed class HarvestJournalViewModel(
             if (region is not null && !Regions.Contains(region)) Regions.Add(region);
             Draft.Region = region ?? Regions.FirstOrDefault();
             return 0;
-        }, Error);
-        await LoadSourcesAsync();
+        }, Fail);
+        if (!await LoadSourcesAsync()) complete = false;
+        if (complete) _loadedVersions = versions;
     }
 
-    public async Task LoadSourcesAsync()
+    public async Task<bool> LoadSourcesAsync()
     {
         if (!int.TryParse(Draft.Season, out var year))
         {
             Status = "Укажите сезон для списка партий";
-            return;
+            return false;
         }
 
         var draft = Draft;
         var result = await service.ReadSourcesAsync(year);
         if (!ReferenceEquals(Draft, draft) || !int.TryParse(Draft.Season, out var currentYear) ||
-            currentYear != year) return;
+            currentYear != year) return false;
         var source = Draft.Source;
-        result.Match(items =>
+        return result.Match(items =>
         {
             Sources.Clear();
             foreach (var item in items) Sources.Add(item);
             if (source is not null && !Sources.Contains(source)) Sources.Add(source);
             Draft.Source = source;
             ApplyFilters();
-            return 0;
-        }, Error);
+            return true;
+        }, error => { Error(error); return false; });
     }
 
     public async Task SaveAsync()

@@ -32,6 +32,8 @@ public partial class SeedsViewModel : SourceSelectionViewModel
     private readonly IUserDialog _userDialog;
     private bool _ignoreDiscard;
     private bool _isSaving;
+    private long _loadedInventoryVersion = -1;
+    private long _loadedOptionsVersion = -1;
 
     private SeedReadFromViewModel? _selectedItem;
 
@@ -111,10 +113,8 @@ public partial class SeedsViewModel : SourceSelectionViewModel
         set
         {
             if (!Set(ref field, value)) return;
-            // Семена могли быть списаны в планировщике огорода (другой контекст) —
-            // перечитываем из БД при активации вкладки, чтобы остаток был актуален.
             if (value && Seeds != null)
-                _ = RefreshLibrariesAsync();
+                _ = OnLoadDataCommandExecuted();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -382,10 +382,12 @@ public partial class SeedsViewModel : SourceSelectionViewModel
 
     private async Task<Result<ImmutableArray<SeedReadFromViewModel>>> RefreshSeedsAsync()
     {
+        var revision = _seedsService.InventoryVersion;
         var result = await _seedsService.ReadSeedsAsync();
         result.Match(seeds =>
         {
             Seeds = new ObservableCollection<SeedReadFromViewModel>(seeds);
+            _loadedInventoryVersion = revision;
             UpdateCollectionViewSource();
             return true;
         }, error =>
@@ -666,9 +668,11 @@ public partial class SeedsViewModel : SourceSelectionViewModel
 
     private async Task<Result<bool>> ReloadEditorOptionsAsync()
     {
+        var revision = _seedsService.OptionsVersion;
         var result = (await _seedsService.GetEditorOptionsAsync()).Bind(options =>
         {
             EditorOptions = options;
+            _loadedOptionsVersion = revision;
             if (options.Catalog is Option<SeedCatalogFromViewModel>.Some catalog)
             {
                 _catalog = catalog.Value;
@@ -682,15 +686,14 @@ public partial class SeedsViewModel : SourceSelectionViewModel
 
     private async Task OnLoadDataCommandExecuted()
     {
-        if ((await ReloadEditorOptionsAsync()).IsFailure) return;
-        if (Seeds != null)
-        {
-            UpdateCollectionViewSource();
-            return;
-        }
-
+        if (_loadedOptionsVersion != _seedsService.OptionsVersion
+            && (await ReloadEditorOptionsAsync()).IsFailure) return;
+        if (Seeds is not null && _loadedInventoryVersion == _seedsService.InventoryVersion) return;
+        var dirty = HasUnsavedSeedChanges;
+        var selectedId = SelectedItem?.Id;
         if ((await RefreshSeedsAsync()).IsFailure) return;
         RebuildSeedSuggestions();
+        if (!dirty && selectedId is { } id) SelectedItem = Seeds?.FirstOrDefault(seed => seed.Id == id);
     }
 
     private async Task OnSeedsChoiceClassCommandExecuted(object p)

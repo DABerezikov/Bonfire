@@ -1,5 +1,14 @@
 ﻿# Проверки Bonfire
 
+## Кэш чтения и навигация — 03.11.2026
+
+Гейт **1855/1855**: Models 843, Services 589, ViewModels 382, Repository 35,
+SeedsFromViewModel 6. Проверены SQL-кэш, выборочная актуализация после записи,
+свежая проверка остатка в writer, отмена и параллельное чтение, повторные загрузки
+после частичного отказа. Startup/exit smoke: **RepeatNavigationSql=0** после
+первого обхода всех вкладок, WindowLoaded=True, HostDisposed=True.
+[Подробности](../plans/application-read-cache.md).
+
 ## Пустой выбор при добавлении семян — 03.11.2026
 
 Гейт **1837/1837**: Models 843, Services 579, ViewModels 374, Repository 35,
