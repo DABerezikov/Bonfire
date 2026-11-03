@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Bonfire.Application.Seeds;
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
@@ -33,7 +33,7 @@ public class SeedReadingWorkflowTests
         var library = Substitute.For<ILibraryService>();
         library.GetProducerAsync(1).Returns(Result.Success(new ProducerDetailsFromViewModel(1, "Старое")));
         library.UpdateProducerAsync(1, "Новое").Returns(Result.Success(new ProducerDetailsFromViewModel(1, "Новое")));
-        var vm = new LibraryEditorViewModel(library, dialog, seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>())) { SelectedProducer = new() { Id = 1 }, ProducerDetailName = "Новое" };
+        var vm = new LibraryEditorViewModel(library, dialog, seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>()) { SelectedProducer = new() { Id = 1 }, ProducerDetailName = "Новое" };
         vm.SaveProducerCommand.Execute(null);
         Assert.Equal("Новое", seeds.SelectedItem!.Plant.PlantSort.Producer.Name);
         Assert.Same(seeds.Seeds[0], seeds.SelectedItem); Assert.Same(draft, seeds.EditedItem);

@@ -314,12 +314,12 @@ public class PlanningEditorWpfTests(WpfRuntime runtime, ITestOutputHelper output
     {
         var service = Service(); var libraries = new PlanningLibrariesViewModel(service); libraries.LoadAsync().GetAwaiter().GetResult();
         var seeds = new SeedsViewModel(Substitute.For<ISeedsService>(), Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
-        var view = new Bonfire.Views.LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds, libraries) };
+        var view = new Bonfire.Views.LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds, libraries, Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>()) };
         WpfRuntime.Layout(view, 1280, 720);
         var root = WpfRuntime.Descendants<TabControl>(view).First();
         var folder = Path.Combine(Path.GetTempPath(), "BonfirePlanningUi", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         var original = Path.Combine(folder, "libraries-original-1280-144.png"); Render(view, 1280, 720, 144, original); output.WriteLine(original);
-        root.SelectedIndex = 1; WpfRuntime.Layout(view, 1280, 720);
+        root.SelectedItem = root.Items.OfType<TabItem>().Single(tab => Equals(tab.Header, "Планирование: регионы и агропрофили")); WpfRuntime.Layout(view, 1280, 720);
         var planning = Path.Combine(folder, "libraries-planning-1280-144.png"); Render(view, 1280, 720, 144, planning); output.WriteLine(planning);
         var inner = WpfRuntime.Descendants<TabControl>(view).Single(x => !ReferenceEquals(x, root)); inner.SelectedIndex = 1;
         libraries.CultureFields.LifeCycle.Mode = 2; libraries.CultureFields.LifeCycle.FirstHarvest = "2";

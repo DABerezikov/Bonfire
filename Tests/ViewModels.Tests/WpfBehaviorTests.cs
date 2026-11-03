@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using BonfireDB.Libraries;
@@ -45,7 +45,7 @@ public class WpfBehaviorTests(WpfRuntime runtime)
         {
             "Seeds" => new SeedsWindow { DataContext = seeds },
             "Seedlings" => new SeedlingsWindow { DataContext = new SeedlingsViewModel(seedlingService, seedService, Substitute.For<IUserDialog>(), Substitute.For<IReportService>()) },
-            "Library" => new LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>())) },
+            "Library" => new LibraryEditorWindow { DataContext = new LibraryEditorViewModel(Substitute.For<ILibraryService>(), Substitute.For<IUserDialog>(), seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>()) },
             "Garden" => new GardenPlanView { DataContext = garden },
             _ => new PlantingGridView { DataContext = garden }
         };
@@ -277,7 +277,7 @@ public class WpfBehaviorTests(WpfRuntime runtime)
         var vm = SeedsVm(null, SeedsWorkflowTests.Seed(1));
         var editor = new SeedDetailsEditor { DataContext = vm };
         WpfRuntime.Layout(editor, 1060, 500);
-        var header = WpfRuntime.Descendants<TextBlock>(editor).Single(t => t.Text == "Томат - Черри");
+        var header = WpfRuntime.Descendants<TextBox>(editor).Single(t => t.Text == "Томат - Черри");
         Assert.Equal(TextAlignment.Center, header.TextAlignment);
         var inputs = WpfRuntime.Descendants<TextBox>(editor).Where(box => BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path.StartsWith("SeedSortDetail.") == true && !box.AcceptsReturn);
         Assert.NotEmpty(inputs);

@@ -1,4 +1,4 @@
-using Bonfire.Application.Libraries;
+﻿using Bonfire.Application.Libraries;
 using BonfireDB.Libraries;
 using BonfireDB.Entities.Base;
 
@@ -34,7 +34,7 @@ public class LibraryEditorViewModelTests
         ObservableCollection<Seed>? seeds = null)
     {
         var seedsVm = CreateSeedsVm(sorts, cultures, producers, seeds);
-        return new LibraryEditorViewModel(_libraryService, _userDialog, seedsVm, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()));
+        return new LibraryEditorViewModel(_libraryService, _userDialog, seedsVm, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>());
     }
 
     // ── SelectedSort очищает SortDetail и запускает загрузку ─────────────────

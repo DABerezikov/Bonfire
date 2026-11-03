@@ -8,7 +8,7 @@ public class NavigationWorkflowTests
         new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()),
         new SeedlingsViewModel(Substitute.For<ISeedlingsService>(), Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()),
         new LibraryEditorViewModel(Substitute.For<ILibraryService>(), _dialog,
-            new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()), new PlanningLibrariesViewModel(Substitute.For<IPlanningService>())),
+            new SeedsViewModel(Substitute.For<ISeedsService>(), _dialog, Substitute.For<IReportService>()), new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>()),
         new GardenPlanViewModel(Substitute.For<IGardenService>(), _dialog, Substitute.For<ISeedlingsService>(), Substitute.For<ISeedsService>(), Substitute.For<IPlantingService>()),
         new PlantingPlanningViewModel(Substitute.For<IPlanningService>(), _dialog, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), TimeProvider.System, Substitute.For<IReportService>()),
         new HarvestJournalViewModel(Substitute.For<IHarvestService>(), Substitute.For<IPlanningService>(), _dialog, TimeProvider.System),

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
@@ -21,7 +21,7 @@ using Bonfire.ViewModels.Base;
 
 namespace Bonfire.ViewModels;
 
-public class SeedsViewModel : SourceSelectionViewModel
+public partial class SeedsViewModel : SourceSelectionViewModel
 {
     private readonly CollectionViewSource _cultureListView;
     private readonly CollectionViewSource _producerListView;
@@ -114,7 +114,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             // Семена могли быть списаны в планировщике огорода (другой контекст) —
             // перечитываем из БД при активации вкладки, чтобы остаток был актуален.
             if (value && Seeds != null)
-                _ = RefreshSeedsAsync();
+                _ = RefreshLibrariesAsync();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -272,7 +272,10 @@ public class SeedsViewModel : SourceSelectionViewModel
     public string AddClass
     {
         get;
-        set => Set(ref field, value);
+        set
+        {
+            if (Set(ref field, value)) OnAcquisitionClassChanged();
+        }
     } = string.Empty;
 
     // Выбор культуры
@@ -290,8 +293,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         get;
         set
         {
-            if (Set(ref field, value))
-                CultureListView?.Refresh();
+            if (Set(ref field, value)) OnAcquisitionCultureChanged();
         }
     } = string.Empty;
 
@@ -310,8 +312,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         get;
         set
         {
-            if (Set(ref field, value))
-                SortListView?.Refresh();
+            if (Set(ref field, value)) OnAcquisitionSortChanged();
         }
     } = string.Empty;
 
@@ -424,6 +425,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private void _CultureListView_Filter(object sender, FilterEventArgs e)
     {
+        if (_catalog is not null) { e.Accepted = MatchesAcquisitionCulture(e.Item); return; }
         if (e.Item is not CultureFromViewModel culture || string.IsNullOrEmpty(AddCulture)) return;
         if (culture.Name != null && !culture.Name.Contains(AddCulture, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
@@ -431,6 +433,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private void _SortListView_Filter(object sender, FilterEventArgs e)
     {
+        if (_catalog is not null) { e.Accepted = MatchesAcquisitionSort(e.Item); return; }
         if (e.Item is not SortFromSeedsViewModel sort || string.IsNullOrEmpty(AddSort)) return;
         if (sort.Name != null && !sort.Name.Contains(AddSort, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
@@ -438,6 +441,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private void _ProducerListView_Filter(object sender, FilterEventArgs e)
     {
+        if (_catalog is not null) { e.Accepted = MatchesAcquisitionProducer(e.Item); return; }
         if (!(e.Item is ProducerFromViewModel producer) || string.IsNullOrEmpty(AddProducer)) return;
         if (producer.Name != null && !producer.Name.Contains(AddProducer, StringComparison.OrdinalIgnoreCase))
             e.Accepted = false;
@@ -550,6 +554,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     private void RebuildSeedSuggestions()
     {
+        if (_catalog is not null) { RebuildCatalogSuggestions(); return; }
         AddCultureList.Clear();
         AddSortList.Clear();
         AddProducerList.Clear();
@@ -598,6 +603,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     internal void SyncAfterSortUpdate(SortDetailsFromViewModel updated)
     {
+        UpdateCatalogSort(updated);
         if (Seeds is { } seeds)
             for (var index = 0; index < seeds.Count; index++)
             {
@@ -624,6 +630,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     internal void SyncAfterCultureUpdate(CultureDetailsFromViewModel updated)
     {
+        UpdateCatalogCulture(updated);
         if (Seeds is { } seeds)
             for (var index = 0; index < seeds.Count; index++)
                 if (seeds[index] is { } seed && seed.Plant.PlantCulture.Id == updated.Id)
@@ -639,6 +646,7 @@ public class SeedsViewModel : SourceSelectionViewModel
 
     internal void SyncAfterProducerUpdate(ProducerDetailsFromViewModel updated)
     {
+        UpdateCatalogProducer(updated);
         if (Seeds is { } seeds)
             for (var index = 0; index < seeds.Count; index++)
                 if (seeds[index] is { } seed && seed.Plant.PlantSort.Producer.Id == updated.Id)
@@ -656,21 +664,25 @@ public class SeedsViewModel : SourceSelectionViewModel
         UpdateCollectionViewSource();
     }
 
-    private async Task<bool> ReloadEditorOptionsAsync()
-        => (await _seedsService.GetEditorOptionsAsync()).Match(options =>
+    private async Task<Result<bool>> ReloadEditorOptionsAsync()
+    {
+        var result = (await _seedsService.GetEditorOptionsAsync()).Bind(options =>
+        {
+            EditorOptions = options;
+            if (options.Catalog is Option<SeedCatalogFromViewModel>.Some catalog)
             {
-                EditorOptions = options;
-                return true;
-            },
-            error =>
-            {
-                _userDialog.Error(error);
-                return false;
-            });
+                _catalog = catalog.Value;
+                RebuildCatalogSuggestions();
+            }
+            return Result.Success(true);
+        });
+        result.Match(_ => true, error => { _userDialog.Error(error); return false; });
+        return result;
+    }
 
     private async Task OnLoadDataCommandExecuted()
     {
-        if (!await ReloadEditorOptionsAsync()) return;
+        if ((await ReloadEditorOptionsAsync()).IsFailure) return;
         if (Seeds != null)
         {
             UpdateCollectionViewSource();
@@ -678,9 +690,7 @@ public class SeedsViewModel : SourceSelectionViewModel
         }
 
         if ((await RefreshSeedsAsync()).IsFailure) return;
-        LoadListCulture();
-        LoadListSort();
-        LoadListProducer();
+        RebuildSeedSuggestions();
     }
 
     private async Task OnSeedsChoiceClassCommandExecuted(object p)
@@ -712,7 +722,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             {
                 _ignoreDiscard = true;
                 if ((await RefreshSeedsAsync()).IsFailure) return;
-                await ReloadEditorOptionsAsync();
+                if ((await ReloadEditorOptionsAsync()).IsFailure) return;
                 RebuildSeedSuggestions();
                 ClearFieldSeedView();
                 UpdateCollectionViewSource(receipt.SeedId);
@@ -782,7 +792,7 @@ public class SeedsViewModel : SourceSelectionViewModel
             {
                 _ignoreDiscard = true;
                 if ((await RefreshSeedsAsync()).IsFailure) return;
-                await ReloadEditorOptionsAsync();
+                if ((await ReloadEditorOptionsAsync()).IsFailure) return;
                 SelectedSeedsViewItem = SeedsView!.Cast<SeedsFromViewModel>().FirstOrDefault(s => s.Id == id);
                 RebuildSeedSuggestions();
             }, error =>

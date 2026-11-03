@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Bonfire.Application.Libraries;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
@@ -12,11 +13,12 @@ using Bonfire.ViewModels.Base;
 
 namespace Bonfire.ViewModels;
 
-public class LibraryEditorViewModel(
+public partial class LibraryEditorViewModel(
     ILibraryService libraryService,
     IUserDialog userDialog,
     SeedsViewModel seedsViewModel,
-    PlanningLibrariesViewModel planningLibraries)
+    PlanningLibrariesViewModel planningLibraries,
+    Bonfire.Application.Libraries.IManageSortOptions sortOptions)
     : ViewModel
 {
     private readonly ILibraryService _libraryService = libraryService;
@@ -24,6 +26,8 @@ public class LibraryEditorViewModel(
     private readonly IUserDialog _userDialog = userDialog;
     private string? _originalProducerName;
     public PlanningLibrariesViewModel PlanningLibraries { get; } = planningLibraries;
+
+    public SortOptionsViewModel SortOptions { get; } = new(sortOptions, userDialog, seedsViewModel);
 
     public IReadOnlyList<string> ClassList => PlantClassList.GetClassList();
 

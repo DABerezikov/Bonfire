@@ -1,4 +1,4 @@
-using Bonfire.Application.Libraries;
+﻿using Bonfire.Application.Libraries;
 using BonfireDB.Libraries;
 using Bonfire.Domain.Functional;
 
@@ -14,7 +14,7 @@ public class LibraryLoadingTests
         var pending = new TaskCompletionSource<Result<CultureDetailsFromViewModel>>();
         service.GetCultureAsync(1).Returns(pending.Task);
         service.GetCultureAsync(2).Returns(Result.Success(new CultureDetailsFromViewModel(2, "Новая", "Овощи")));
-        var vm = new LibraryEditorViewModel(service, Substitute.For<IUserDialog>(), seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()));
+        var vm = new LibraryEditorViewModel(service, Substitute.For<IUserDialog>(), seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>());
         vm.SelectedCulture = new() { Id = 1 }; vm.SelectedCulture = new() { Id = 2 };
         var draft = vm.CultureDetail!; draft.Name = "Черновик";
         pending.SetResult(Result.Success(new CultureDetailsFromViewModel(1, "Старая", "Цветы")));

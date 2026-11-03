@@ -1,5 +1,6 @@
-<UserControl x:Class="Bonfire.Views.GardenPlan.GardenPlanView"
+﻿<UserControl x:Class="Bonfire.Views.GardenPlan.GardenPlanView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:input="clr-namespace:Bonfire.Infrastructure.Behaviors"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -295,7 +296,7 @@
                             Margin="0,2,0,10" />
 
                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}" />
-                        <TextBox
+                        <TextBox MaxHeight="180" VerticalScrollBarVisibility="Auto"
                             Text="{Binding DataContext.GardenEditor.Note,
                                      RelativeSource={RelativeSource AncestorType=UserControl},
                                      NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
@@ -398,7 +399,7 @@
                             Margin="0,2,0,10" />
 
                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}" />
-                        <TextBox
+                        <TextBox MaxHeight="180" VerticalScrollBarVisibility="Auto"
                             Text="{Binding DataContext.ElementEditor.Note,
                                      RelativeSource={RelativeSource AncestorType=UserControl},
                                      NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
@@ -548,7 +549,7 @@
                                                FontSize="11" FontWeight="SemiBold"
                                                Foreground="#616161" Margin="0,0,0,4" />
                                     <ComboBox Width="220" Margin="0,0,0,4"
-                                              IsEditable="True"
+                                              IsEditable="True" input:SuggestionInput.Enabled="True"
                                               ItemsSource="{Binding AvailablePlantLabels}"
                                               Text="{Binding PlanPickerLabel, UpdateSourceTrigger=PropertyChanged}"
                                               ToolTip="Выберите культуру из рассады/семян или введите вручную" />
@@ -581,8 +582,8 @@
                                               ItemsSource="{Binding AvailableSeedlingItems}"
                                               SelectedItem="{Binding SelectedPlantSource}"
                                               DisplayMemberPath="Label"
-                                              IsEditable="True"
-                                              IsTextSearchEnabled="True"
+                                              IsEditable="True" input:SuggestionInput.Enabled="True"
+
                                               TextSearch.TextPath="Label"
                                               StaysOpenOnEdit="True"
                                               ToolTip="Начните вводить название для поиска"
@@ -594,8 +595,8 @@
                                               ItemsSource="{Binding AvailableSeedItems}"
                                               SelectedItem="{Binding SelectedPlantSource}"
                                               DisplayMemberPath="Label"
-                                              IsEditable="True"
-                                              IsTextSearchEnabled="True"
+                                              IsEditable="True" input:SuggestionInput.Enabled="True"
+
                                               TextSearch.TextPath="Label"
                                               StaysOpenOnEdit="True"
                                               ToolTip="Начните вводить название для поиска"
@@ -865,7 +866,7 @@
                                             Margin="0,2,0,10" />
 
                                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}" />
-                                        <TextBox
+                                        <TextBox MaxHeight="180" VerticalScrollBarVisibility="Auto"
                                             Text="{Binding DataContext.ElementEditor.Note,
                                                      RelativeSource={RelativeSource AncestorType=UserControl},
                                                      NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
@@ -1015,7 +1016,7 @@
                                             Margin="0,2,0,10" />
 
                                         <TextBlock Text="Примечание" Style="{StaticResource LabelStyle}" />
-                                        <TextBox
+                                        <TextBox MaxHeight="180" VerticalScrollBarVisibility="Auto"
                                             Text="{Binding DataContext.GreenhouseEditor.Note,
                                                      RelativeSource={RelativeSource AncestorType=UserControl}, NotifyOnValidationError=True, UpdateSourceTrigger=PropertyChanged}"
                                             TextWrapping="Wrap" MinHeight="40" AcceptsReturn="True" Margin="0,2,0,10" />
