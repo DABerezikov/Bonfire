@@ -13,6 +13,59 @@ namespace ViewModels.Tests;
 public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutputHelper output)
 {
     [Fact]
+    public void EntityPickerKeepsDistinctIdentitiesEvenWhenLabelsMatch() => runtime.Invoke(() =>
+    {
+        var first = new CultureFromViewModel { Id = 1, Name = "Название" };
+        var second = new CultureFromViewModel { Id = 2, Name = "Название" };
+        var box = new ComboBox { IsEditable = true, ItemsSource = new[] { first, second } };
+        box.SetBinding(ComboBox.SelectedItemProperty, new Binding("Chosen")
+            { Source = new { Chosen = second }, Mode = BindingMode.OneWay });
+        SuggestionInput.SetEnabled(box, true);
+        var window = new Window { Content = box, Width = 220, Height = 100, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); WpfRuntime.Layout(box, 220, 30);
+            Assert.Equal(2, box.Items.Count); Assert.Same(second, box.SelectedItem);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public void SuggestionsShowOneNamePerScope_WithoutChangingLibraryRecords() => runtime.Invoke(() =>
+    {
+        var trace = System.Diagnostics.PresentationTraceSources.DataBindingSource;
+        var level = trace.Switch.Level;
+        using var messages = new System.IO.StringWriter();
+        using var listener = new System.Diagnostics.TextWriterTraceListener(messages);
+        trace.Listeners.Add(listener); trace.Switch.Level = System.Diagnostics.SourceLevels.Error;
+        var source = new System.Collections.ObjectModel.ObservableCollection<CultureFromViewModel>
+        { new() { Id = 1, Name = "Малопа" }, new() { Id = 2, Name = "Малопа" }, new() { Id = 3, Name = "Малопа" } };
+        var filtered = new CollectionViewSource { Source = source };
+        var box = new ComboBox { IsEditable = true, IsSynchronizedWithCurrentItem = false, ItemsSource = filtered.View };
+        SuggestionInput.SetEnabled(box, true);
+        var window = new Window { Content = box, Width = 220, Height = 100, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); WpfRuntime.Layout(box, 220, 30);
+            Assert.Single(box.Items.Cast<object>()); Assert.Equal(3, source.Count); Assert.Empty(box.Text);
+            filtered.Filter += (_, args) => args.Accepted = ((CultureFromViewModel)args.Item).Id == 3;
+            filtered.View.Refresh(); WpfRuntime.Layout(box, 220, 30);
+            Assert.Equal(3, Assert.IsType<CultureFromViewModel>(Assert.Single(box.Items.Cast<object>())).Id);
+            box.SelectedIndex = 0; Assert.Equal("Малопа", box.Text);
+            box.IsDropDownOpen = true; WpfRuntime.Layout(box, 220, 30);
+            var container = Assert.IsType<ComboBoxItem>(box.ItemContainerGenerator.ContainerFromIndex(0));
+            Assert.Same(box, BindingOperations.GetBinding(container, Control.HorizontalContentAlignmentProperty)!.Source);
+            Assert.Same(box, BindingOperations.GetBinding(container, Control.VerticalContentAlignmentProperty)!.Source);
+        }
+        finally
+        {
+            window.Close(); listener.Flush();
+            trace.Listeners.Remove(listener); trace.Switch.Level = level;
+        }
+        Assert.DoesNotContain("Cannot find source", messages.ToString(), StringComparison.OrdinalIgnoreCase);
+    });
+
+    [Fact]
     public void SeedAdditionStartsEmpty_AndRefreshDoesNotSelectFirstSuggestion() => runtime.Invoke(() =>
     {
         var service = Substitute.For<ISeedsService>();

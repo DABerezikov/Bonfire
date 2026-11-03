@@ -17,14 +17,17 @@ public partial class SeedsViewModel
     private bool _updatingAcquisition;
     public string AcquisitionSelectionHint { get; private set; } = string.Empty;
 
-    private CultureDetailsFromViewModel? AcquisitionCulture => _catalog?.Cultures
-        .FirstOrDefault(culture => string.Equals(culture.Name, AddCulture, StringComparison.OrdinalIgnoreCase));
+    private CultureDetailsFromViewModel[] AcquisitionCultures => _catalog?.Cultures
+        .Where(culture => string.Equals(culture.Name, AddCulture, StringComparison.OrdinalIgnoreCase)).ToArray() ?? [];
+    private CultureDetailsFromViewModel? AcquisitionCulture => AcquisitionCultures
+        .FirstOrDefault(culture => culture.Class == AddClass) ?? AcquisitionCultures.FirstOrDefault();
     private CatalogSortFromViewModel[] AcquisitionSorts => _catalog?.Sorts.Where(sort =>
         string.Equals(sort.Name, AddSort, StringComparison.OrdinalIgnoreCase) && SortInScope(sort)).ToArray() ?? [];
 
     private bool SortInScope(CatalogSortFromViewModel sort)
     {
-        if (AcquisitionCulture is { } culture) return sort.CultureIds.Contains(culture.Id);
+        if (AcquisitionCulture is { } culture)
+            return AcquisitionCultures.Any(candidate => candidate.Class == culture.Class && sort.CultureIds.Contains(candidate.Id));
         if (!string.IsNullOrWhiteSpace(AddCulture)) return false;
         return string.IsNullOrEmpty(AddClass) || _catalog!.Cultures.Any(culture =>
             culture.Class == AddClass && sort.CultureIds.Contains(culture.Id));
@@ -65,8 +68,11 @@ public partial class SeedsViewModel
             }
             if (!string.IsNullOrEmpty(AddSort) && _catalog.Sorts.Any(sort => sort.Name == AddSort) && AcquisitionSorts.Length == 0)
             { AddSort = string.Empty; cleared = true; }
-            if (!IsCollected && !string.IsNullOrEmpty(AddProducer) && _catalog.Producers.FirstOrDefault(p => p.Name == AddProducer) is { } producer
-                && !MatchesAcquisitionProducer(new ProducerFromViewModel { Id = producer.Id, Name = producer.Name }))
+            var producers = _catalog.Producers.Where(producer =>
+                string.Equals(producer.Name, AddProducer, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (!IsCollected && !string.IsNullOrEmpty(AddProducer) && producers.Length > 0
+                && !producers.Any(producer => MatchesAcquisitionProducer(
+                    new ProducerFromViewModel { Id = producer.Id, Name = producer.Name })))
             { AddProducer = string.Empty; cleared = true; }
             AcquisitionSelectionHint = cleared ? "Несовместимые сорт или производитель сброшены. Проверьте выбор." : string.Empty;
             OnPropertyChanged(nameof(AcquisitionSelectionHint));

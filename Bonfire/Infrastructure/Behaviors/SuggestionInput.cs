@@ -22,6 +22,12 @@ public static class SuggestionInput
     {
         if (target is not ComboBox box || !(bool)args.NewValue) return;
         box.IsTextSearchEnabled = false;
+        var itemStyle = new Style(typeof(ComboBoxItem), box.ItemContainerStyle);
+        itemStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty,
+            new Binding(nameof(Control.HorizontalContentAlignment)) { Source = box }));
+        itemStyle.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty,
+            new Binding(nameof(Control.VerticalContentAlignment)) { Source = box }));
+        box.SetCurrentValue(ItemsControl.ItemContainerStyleProperty, itemStyle);
         var state = new State(box);
         box.Loaded += state.Load;
         box.Unloaded += state.Unload;
@@ -83,7 +89,12 @@ public static class SuggestionInput
             _updating = true;
             try
             {
-                _view = new ListCollectionView((_source?.Cast<object>() ?? []).ToList());
+                var items = _source?.Cast<object>() ?? [];
+                // Текстовые подсказки объединяем после фильтрации. Выбор конкретной партии сохраняет её ID.
+                if (!BindingOperations.IsDataBound(box, ComboBox.SelectedItemProperty)
+                    && !BindingOperations.IsDataBound(box, ComboBox.SelectedValueProperty))
+                    items = items.DistinctBy(DisplayText, StringComparer.OrdinalIgnoreCase);
+                _view = new ListCollectionView(items.ToList());
                 if (box.IsKeyboardFocusWithin)
                     _view.Filter = item => DisplayText(item).Contains(text, StringComparison.OrdinalIgnoreCase);
                 box.SetCurrentValue(ItemsControl.ItemsSourceProperty, _view);
