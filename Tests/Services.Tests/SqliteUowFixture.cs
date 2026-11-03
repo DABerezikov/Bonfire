@@ -1,4 +1,4 @@
-using BonfireDB.Entities.GardenPlanning;
+﻿using BonfireDB.Entities.GardenPlanning;
 using BonfireDB;
 using BonfireDB.Context;
 using BonfireDB.Entities.Base;
@@ -32,7 +32,7 @@ internal sealed class SqliteUowFixture : IDisposable
 
     public SeedsService CreateSeedsService() => new( new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory), new DbSeedEditorOptionsReader(Factory));
 
-    public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)));
+    public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)), new DeleteLibraryEntry(new DbLibraryEntryDeletionWriter(Factory)));
 
     public SeedlingsService CreateSeedlingsService()
     {

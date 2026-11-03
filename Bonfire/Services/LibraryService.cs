@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
@@ -12,8 +12,11 @@ internal class LibraryService(
     ILibraryReader reader,
     IUpdateCulture updateCulture,
     IUpdateProducer updateProducer,
-    IUpdateSort updateSort) : ILibraryService
+    IUpdateSort updateSort,
+    IDeleteLibraryEntry deleteEntry) : ILibraryService
 {
+    public Task<Result<bool>> DeleteEntryAsync(LibraryEntryKind kind, int id) => deleteEntry.ExecuteAsync(kind, id);
+
     public Task<Result<SortReadFromViewModel>> GetSortAsync(int id)
         => SortId.Create(id).Match(key => reader.ReadSortAsync(key, default),
             error => Task.FromResult(Result.Failure<SortReadFromViewModel>(error)));

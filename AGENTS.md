@@ -1,4 +1,4 @@
-# Repository Guidelines
+﻿# Repository Guidelines
 
 Этапы рефакторинга 6 и 7 завершены. Актуальная архитектура, доказательства и пределы
 проверки: [plans/refactoring-stage-7-audit.md](plans/refactoring-stage-7-audit.md).
@@ -387,8 +387,8 @@ UI-мапперы больше не принимают EF: только сним
 в BonfireDB; старые CopyInto и EF-перегрузки удалены, не восстанавливайте их.
 
 Варианты редактора читаются ISeedEditorOptionsReader через DbSeedEditorOptionsReader,
-возвращают immutable SeedEditorOptionsFromViewModel внутри Result. Три проекции без
-графов сохраняют прежнюю обработку подсказок, не меняя исходный текст БД. При отказе
+возвращают immutable SeedEditorOptionsFromViewModel внутри Result. Пять проекций без JOIN и
+графов возвращают полный каталог и связи; обработка подсказок сохраняется, не меняя исходный текст БД. При отказе
 UI сохраняет варианты/выбор/черновик и показывает причину; не подставляйте пустой список.
 
 EF-API семян/рассады и непроверенный ReturnSeedsFromSeedling удалены. Рабочие сервисы

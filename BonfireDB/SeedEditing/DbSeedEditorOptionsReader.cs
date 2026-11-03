@@ -16,7 +16,14 @@ public sealed class DbSeedEditorOptionsReader(IUnitOfWorkFactory units) : ISeedE
         await using var unit = units.Create();
         try
         {
-            var sorts = await unit.Repository<PlantSort>().Rows.Select(sort => new { sort.PlantColor, sort.Maturity })
+            var sorts = await unit.Repository<PlantSort>().Rows.Select(sort => new
+                { sort.Id, sort.Name, ProducerId = EF.Property<int>(sort, "ProducerId"), sort.PlantColor, sort.Maturity })
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            var links = await unit.Repository<Plant>().Rows.Select(plant => new
+                { SortId = EF.Property<int>(plant, "PlantSortId"), CultureId = EF.Property<int>(plant, "PlantCultureId") })
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            var cultures = await unit.Repository<PlantCulture>().Rows.OrderBy(culture => culture.Name)
+                .Select(culture => new CultureDetailsFromViewModel(culture.Id, culture.Name, culture.Class))
                 .ToArrayAsync(cancellationToken).ConfigureAwait(false);
             var options = await unit.Repository<SortOption>().Rows
                 .Select(option => new { option.Category, option.Name })
@@ -34,7 +41,13 @@ public sealed class DbSeedEditorOptionsReader(IUnitOfWorkFactory units) : ISeedE
                     .Concat(options.Where(option => option.Category == "Цвет").Select(option => option.Name))),
                 Values(sorts.Select(sort => sort.Maturity)
                     .Concat(options.Where(option => option.Category == "Созревание").Select(option => option.Name))),
-                producers.ToImmutableArray()));
+                producers.ToImmutableArray())
+            {
+                Catalog = Option.Some(new SeedCatalogFromViewModel(cultures.ToImmutableArray(),
+                    sorts.Select(sort => new CatalogSortFromViewModel(sort.Id, sort.Name, sort.ProducerId,
+                        links.Where(link => link.SortId == sort.Id).Select(link => link.CultureId).Distinct().ToImmutableArray()))
+                        .ToImmutableArray(), producers.ToImmutableArray()))
+            });
         }
         catch (DbException error)
         {

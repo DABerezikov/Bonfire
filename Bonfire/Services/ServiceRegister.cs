@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Bonfire.Application.Garden;
 using Bonfire.Application.Harvest;
 using Bonfire.Application.Libraries;
@@ -18,6 +18,8 @@ internal static class ServiceRegister
 {
     public static IServiceCollection AddServices(this IServiceCollection services) => services
         .AddSingleton<ISeedsService, SeedsService>()
+        .AddSingleton<IManageSortOptions, ManageSortOptions>()
+        .AddSingleton<IDeleteLibraryEntry, DeleteLibraryEntry>()
         .AddSingleton<ISeedlingsService, SeedlingsService>()
         .AddSingleton<ISowSeeds, SowSeeds>()
         .AddSingleton<IDeleteSeedling, DeleteSeedling>()

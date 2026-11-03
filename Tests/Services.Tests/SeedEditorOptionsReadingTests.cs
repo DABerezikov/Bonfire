@@ -6,7 +6,7 @@ namespace Services.Tests;
 public class SeedEditorOptionsReadingTests
 {
     [Fact]
-    public async Task Read_ProjectsThreeQueriesWithoutGraphs_PreservesRawValuesInStorage()
+    public async Task Read_ProjectsFiveQueriesWithoutGraphs_PreservesRawValuesInStorage()
     {
         var commands = new List<string>(); using var fixture = new SqliteUowFixture(commands.Add);
         await fixture.ExecuteAsync(async db =>
@@ -18,7 +18,7 @@ public class SeedEditorOptionsReadingTests
         });
         commands.Clear();
         var result = (await fixture.CreateSeedsService().GetEditorOptionsAsync()).ValueOrThrow();
-        Assert.Equal(3, commands.Count);
+        Assert.Equal(5, commands.Count);
         Assert.All(commands, sql => Assert.DoesNotContain("JOIN", sql, StringComparison.OrdinalIgnoreCase));
         Assert.Equal(new[] { "Белый", "Красный" }, result.Colors);
         Assert.Contains("Поздний", result.Maturities); Assert.Contains("Ранний", result.Maturities);

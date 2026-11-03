@@ -1,4 +1,4 @@
-using Bonfire.Application.Garden;
+﻿using Bonfire.Application.Garden;
 using Bonfire.Application.Harvest;
 using Bonfire.Application.Libraries;
 using Bonfire.Application.Planning;
@@ -25,6 +25,8 @@ public static class RepositoryRegister
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
+        .AddSingleton<ISortOptionStore, DbSortOptionStore>()
+        .AddSingleton<ILibraryEntryDeletionWriter, DbLibraryEntryDeletionWriter>()
         .AddSingleton<DbPlantingPlans>()
         .AddSingleton<IPlanningContextReader, DbPlanningContextReader>()
         .AddSingleton<ISeedShoppingStockReader, DbSeedShoppingStockReader>()
