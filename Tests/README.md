@@ -1,5 +1,13 @@
 ﻿# Проверки Bonfire
 
+## Нормализация названий и контейнеры списков — 03.11.2026
+
+Гейт **1864/1864**: Models 846, Services 590, ViewModels 387, Repository 35,
+SeedsFromViewModel 6. Проверены нормализация перед записью, повторное использование
+старого пакета с пробелами, сохранение примечаний, Unicode-пробелы в подсказках,
+восемь циклов выбора/фильтрации и выравнивание обычного ComboBox после отсоединения.
+Startup/exit smoke: WindowLoaded=True, HostDisposed=True, RepeatNavigationSql=0.
+
 ## Уникальные текстовые подсказки — 03.11.2026
 
 Гейт **1858/1858**: Models 843, Services 589, ViewModels 385, Repository 35,

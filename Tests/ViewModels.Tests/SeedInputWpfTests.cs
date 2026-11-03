@@ -13,6 +13,70 @@ namespace ViewModels.Tests;
 public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutputHelper output)
 {
     [Fact]
+    public void PlainComboContainersDoNotDependOnAnAncestorWhileDetached() => runtime.Invoke(() =>
+    {
+        var box = new ComboBox { ItemsSource = new[] { "Первый", "Второй" } };
+        var window = new Window { Content = box, Width = 220, Height = 100, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); box.IsDropDownOpen = true; WpfRuntime.Layout(box, 220, 30);
+            var item = Assert.IsType<ComboBoxItem>(box.ItemContainerGenerator.ContainerFromIndex(0));
+            var horizontal = BindingOperations.GetBinding(item, Control.HorizontalContentAlignmentProperty);
+            var vertical = BindingOperations.GetBinding(item, Control.VerticalContentAlignmentProperty);
+            Assert.NotEqual(RelativeSourceMode.FindAncestor, horizontal?.RelativeSource?.Mode);
+            Assert.NotEqual(RelativeSourceMode.FindAncestor, vertical?.RelativeSource?.Mode);
+            box.IsDropDownOpen = false;
+            window.Content = null;
+            WpfRuntime.Layout(new Border(), 220, 30);
+            Assert.NotEqual(RelativeSourceMode.FindAncestor,
+                BindingOperations.GetBinding(item, Control.HorizontalContentAlignmentProperty)?.RelativeSource?.Mode);
+            Assert.NotEqual(RelativeSourceMode.FindAncestor,
+                BindingOperations.GetBinding(item, Control.VerticalContentAlignmentProperty)?.RelativeSource?.Mode);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public void WhitespaceVariantsCollapseAndRepeatedSelectionDoesNotProduceBindingErrors() => runtime.Invoke(() =>
+    {
+        var trace = System.Diagnostics.PresentationTraceSources.DataBindingSource;
+        var level = trace.Switch.Level;
+        using var messages = new System.IO.StringWriter();
+        using var listener = new System.Diagnostics.TextWriterTraceListener(messages);
+        trace.Listeners.Add(listener); trace.Switch.Level = System.Diagnostics.SourceLevels.All;
+        var source = new System.Collections.ObjectModel.ObservableCollection<string>
+            { "Малопа", "Малопа ", "  Малопа", "Хризантелла", "Хризантелла\u00a0", "Розовая фантазия", "Розовая  фантазия" };
+        var filtered = new CollectionViewSource { Source = source };
+        var box = new ComboBox { IsEditable = true, IsSynchronizedWithCurrentItem = false, ItemsSource = filtered.View };
+        SuggestionInput.SetEnabled(box, true);
+        var window = new Window { Content = box, Width = 250, Height = 100, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); WpfRuntime.Layout(box, 250, 30);
+            // Сначала упражняем жизненный цикл контейнеров, затем проверяем уникальность текста.
+            for (var cycle = 0; cycle < 8; cycle++)
+            {
+                box.IsDropDownOpen = true; WpfRuntime.Layout(box, 250, 30);
+                box.SelectedIndex = box.Items.Count - 1;
+                filtered.Filter += OnlyMalopa;
+                filtered.View.Refresh(); WpfRuntime.Layout(box, 250, 30);
+                box.IsDropDownOpen = false;
+                filtered.Filter -= OnlyMalopa;
+                filtered.View.Refresh(); WpfRuntime.Layout(box, 250, 30);
+            }
+            listener.Flush();
+            Assert.DoesNotContain("Cannot find source", messages.ToString(), StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(3, box.Items.Count);
+            Assert.Equal(7, source.Count);
+        }
+        finally
+        {
+            window.Close(); trace.Listeners.Remove(listener); trace.Switch.Level = level;
+        }
+        static void OnlyMalopa(object sender, FilterEventArgs args) => args.Accepted = ((string)args.Item).Contains("Малопа");
+    });
+
+    [Fact]
     public void EntityPickerKeepsDistinctIdentitiesEvenWhenLabelsMatch() => runtime.Invoke(() =>
     {
         var first = new CultureFromViewModel { Id = 1, Name = "Название" };

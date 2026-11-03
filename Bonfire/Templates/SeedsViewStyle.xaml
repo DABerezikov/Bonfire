@@ -3,6 +3,12 @@
                     xmlns:templates="clr-namespace:Bonfire.Templates"
                     xmlns:collections="clr-namespace:System.Collections;assembly=System.Runtime">
 
+    <!-- Без FindAncestor: контейнер может временно отсоединяться при выборе и фильтрации. -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
     <Style x:Key="SeedsChoiceButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="40" />
         <Setter Property="HorizontalAlignment" Value="Left" />

@@ -13,8 +13,8 @@ public class SeedAcquisitionChoicesTests
         service.ReadSeedsAsync().Returns(Result.Success(System.Collections.Immutable.ImmutableArray<SeedReadFromViewModel>.Empty));
         service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel([], [], [])
         {
-            Catalog = Option.Some(new SeedCatalogFromViewModel([new(1, "Малопа", "Цветы"), new(2, "Малопа", "Цветы")],
-                [new(1, "Первая", 1, [1]), new(2, "Вторая", 2, [2])], [new(1, "Фирма"), new(2, "Фирма")]))
+            Catalog = Option.Some(new SeedCatalogFromViewModel([new(1, "Малопа", "Цветы"), new(2, "Малопа ", "Цветы")],
+                [new(1, "Первая", 1, [1]), new(2, " Вторая ", 2, [2])], [new(1, "Фирма"), new(2, "Фирма ")]))
         }));
         var vm = new SeedsViewModel(service, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
         vm.LoadDataCommand.Execute(null); vm.AddCulture = "Малопа";
@@ -23,7 +23,7 @@ public class SeedAcquisitionChoicesTests
         vm.AddProducer = "Фирма";
         vm.AddSort = "Вторая";
         Assert.Equal("Фирма", vm.AddProducer);
-        Assert.Equal("Фирма", Assert.Single(vm.ProducerListView.Cast<ProducerFromViewModel>()).Name);
+        Assert.Equal(2, Assert.Single(vm.ProducerListView.Cast<ProducerFromViewModel>()).Id);
     }
 
     [Fact]

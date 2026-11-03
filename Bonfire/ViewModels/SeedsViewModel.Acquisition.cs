@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Bonfire.Application.Libraries;
+using Bonfire.Domain.Libraries;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
 using Bonfire.Models;
@@ -17,12 +18,15 @@ public partial class SeedsViewModel
     private bool _updatingAcquisition;
     public string AcquisitionSelectionHint { get; private set; } = string.Empty;
 
+    private static bool SameAcquisitionName(string left, string right) => string.Equals(
+        LibraryName.NormalizeWhitespace(left), LibraryName.NormalizeWhitespace(right), StringComparison.OrdinalIgnoreCase);
+
     private CultureDetailsFromViewModel[] AcquisitionCultures => _catalog?.Cultures
-        .Where(culture => string.Equals(culture.Name, AddCulture, StringComparison.OrdinalIgnoreCase)).ToArray() ?? [];
+        .Where(culture => SameAcquisitionName(culture.Name, AddCulture)).ToArray() ?? [];
     private CultureDetailsFromViewModel? AcquisitionCulture => AcquisitionCultures
         .FirstOrDefault(culture => culture.Class == AddClass) ?? AcquisitionCultures.FirstOrDefault();
     private CatalogSortFromViewModel[] AcquisitionSorts => _catalog?.Sorts.Where(sort =>
-        string.Equals(sort.Name, AddSort, StringComparison.OrdinalIgnoreCase) && SortInScope(sort)).ToArray() ?? [];
+        SameAcquisitionName(sort.Name, AddSort) && SortInScope(sort)).ToArray() ?? [];
 
     private bool SortInScope(CatalogSortFromViewModel sort)
     {
@@ -66,10 +70,10 @@ public partial class SeedsViewModel
                 if (classChanged && culture.Class != AddClass) { AddCulture = string.Empty; cleared = true; }
                 else AddClass = culture.Class;
             }
-            if (!string.IsNullOrEmpty(AddSort) && _catalog.Sorts.Any(sort => sort.Name == AddSort) && AcquisitionSorts.Length == 0)
+            if (!string.IsNullOrEmpty(AddSort) && _catalog.Sorts.Any(sort => SameAcquisitionName(sort.Name, AddSort)) && AcquisitionSorts.Length == 0)
             { AddSort = string.Empty; cleared = true; }
             var producers = _catalog.Producers.Where(producer =>
-                string.Equals(producer.Name, AddProducer, StringComparison.OrdinalIgnoreCase)).ToArray();
+                SameAcquisitionName(producer.Name, AddProducer)).ToArray();
             if (!IsCollected && !string.IsNullOrEmpty(AddProducer) && producers.Length > 0
                 && !producers.Any(producer => MatchesAcquisitionProducer(
                     new ProducerFromViewModel { Id = producer.Id, Name = producer.Name })))

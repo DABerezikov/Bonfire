@@ -128,3 +128,7 @@ editable-подбор сохраняет явные привязки к свое
 
 Гейт рабочего дерева: **1864/1864** (Models 846, Services 590, ViewModels 387,
 Repository 35, SeedsFromViewModel 6). Сохранение и интерфейс фиксируются отдельно.
+
+Сохранение названий: коммит `3d8b567`. Финальный startup/exit smoke успешен: WindowLoaded=True,
+HostDisposed=True, RepeatNavigationSql=0. Контейнер обычного ComboBox проверен и
+после отсоединения от окна. Рабочая БД для разработки сохранена без массовой очистки.

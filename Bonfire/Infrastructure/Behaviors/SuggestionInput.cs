@@ -1,3 +1,4 @@
+﻿using Bonfire.Domain.Libraries;
 using System;
 using System.Collections;
 using System.Collections.Specialized;
@@ -93,10 +94,11 @@ public static class SuggestionInput
                 // Текстовые подсказки объединяем после фильтрации. Выбор конкретной партии сохраняет её ID.
                 if (!BindingOperations.IsDataBound(box, ComboBox.SelectedItemProperty)
                     && !BindingOperations.IsDataBound(box, ComboBox.SelectedValueProperty))
-                    items = items.DistinctBy(DisplayText, StringComparer.OrdinalIgnoreCase);
+                    items = items.DistinctBy(item => LibraryName.NormalizeWhitespace(DisplayText(item)), StringComparer.OrdinalIgnoreCase);
                 _view = new ListCollectionView(items.ToList());
                 if (box.IsKeyboardFocusWithin)
-                    _view.Filter = item => DisplayText(item).Contains(text, StringComparison.OrdinalIgnoreCase);
+                    _view.Filter = item => LibraryName.NormalizeWhitespace(DisplayText(item)).Contains(
+                        LibraryName.NormalizeWhitespace(text), StringComparison.OrdinalIgnoreCase);
                 box.SetCurrentValue(ItemsControl.ItemsSourceProperty, _view);
                 box.SetCurrentValue(ComboBox.TextProperty, text);
             }
@@ -115,7 +117,8 @@ public static class SuggestionInput
                 _updating = true;
                 try
                 {
-                    _view.Filter = item => DisplayText(item).Contains(text, StringComparison.OrdinalIgnoreCase);
+                    _view.Filter = item => LibraryName.NormalizeWhitespace(DisplayText(item)).Contains(
+                        LibraryName.NormalizeWhitespace(text), StringComparison.OrdinalIgnoreCase);
                     box.SetCurrentValue(ComboBox.TextProperty, text);
                     editor.Text = text;
                     editor.Select(start, length);
