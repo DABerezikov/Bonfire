@@ -99,7 +99,9 @@ function Remove-OldBackups([string]$TargetRoot, [string]$CurrentBackup) {
 }
 
 $targetRoot = Get-FullPath $Destination
-if ($targetRoot -eq ([IO.Path]::GetPathRoot($targetRoot)).TrimEnd('\', '/')) {
+# Штатный ресурс сам является папкой приложения, в том числе при ручном обновлении по SMB.
+$isDefaultApplicationShare = $targetRoot -ieq '\\MONOBLOCK\Bonfire'
+if ($targetRoot -eq ([IO.Path]::GetPathRoot($targetRoot)).TrimEnd('\', '/') -and -not $isDefaultApplicationShare) {
     throw 'Укажите папку приложения, а не корень диска или сетевого ресурса.'
 }
 

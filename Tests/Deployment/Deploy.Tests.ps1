@@ -39,6 +39,27 @@ function Test-Case($Name, $Action) {
     Write-Host "PASS: $Name"
 }
 
+Test-Case 'Штатный сетевой ресурс Bonfire допускается без обращения к сети в WhatIf' {
+    $f = New-Fixture
+    & {
+        function Test-Path {
+            param([string]$LiteralPath, [string]$PathType)
+            if ($LiteralPath -ieq '\\MONOBLOCK\Bonfire') { return $false }
+            Microsoft.PowerShell.Management\Test-Path @PSBoundParameters
+        }
+        foreach ($destination in @('\\MONOBLOCK\Bonfire', '\\monoblock\BONFIRE\')) {
+            & $scriptPath -PublishDirectory $f.Source -Destination $destination -WhatIf | Out-Null
+        }
+    }
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'Bonfire.exe')) -eq 'old executable') 'WhatIf изменил фикстуру.'
+}
+Test-Case 'Корни дисков и посторонних сетевых ресурсов запрещены' {
+    $f = New-Fixture
+    foreach ($destination in @([IO.Path]::GetPathRoot($f.Target), '\\MONOBLOCK\OtherShare', '\\OtherHost\Bonfire')) {
+        Expect-Failure { & $scriptPath -PublishDirectory $f.Source -Destination $destination -WhatIf }
+    }
+}
+
 Test-Case 'Резервная копия предшествует замене; данные и настройки неизменны' {
     $f = New-Fixture
     Write-FixtureFile $f.Source 'BonfireDB.db' 'DO NOT DEPLOY'
