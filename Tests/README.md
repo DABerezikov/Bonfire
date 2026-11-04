@@ -2,7 +2,7 @@
 
 ## Локальная команда git publish — 04.11.2026
 
-LocalPublish.Tests.ps1: **9/9** — порядок, отказы push/lock/проверок/установки,
+LocalPublish.Tests.ps1: **10/10** — порядок, отказы push/lock/проверок/установки,
 захваченный SHA и более новый remote, повтор уже установленного SHA, отключение
 облачной установки с сохранением CI. LocalPublish.Git.Tests.ps1 — настоящий Git:
 master/dirty/fetch/pushurl, блокировка, неизменяемый архив, отсутствие untracked

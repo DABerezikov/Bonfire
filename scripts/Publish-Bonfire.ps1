@@ -127,7 +127,13 @@ function Remove-BonfirePublishSnapshot($Snapshot) {
 function Invoke-BonfirePublish {
     param([string]$Destination='\\MONOBLOCK\Bonfire')
     $pushed=$false; $lock=$null; $snapshot=$null
+    $originalModulePath=$env:PSModulePath
     try {
+        if($PSEdition -eq 'Desktop') {
+            # Git alias наследует PSModulePath Core без нормализации, которую делает pwsh при прямом запуске powershell.exe.
+            $compatible=@($originalModulePath -split ';' | Where-Object {$_ -and $_ -notmatch '[\\/]PowerShell[\\/](?:[^\\;]+[\\/])?Modules[\\/]?$'})
+            $env:PSModulePath=[string]::Join(';',(@((Join-Path $PSHOME 'Modules'))+$compatible))
+        }
         $state=Get-BonfirePublishState
         if(-not $state.Success){return [pscustomobject]@{Success=$false;PushSucceeded=$false;Error=$state.Error}}
         $commit=$state.Commit
@@ -154,7 +160,7 @@ function Invoke-BonfirePublish {
         return [pscustomobject]@{Success=$true;PushSucceeded=$true;Commit=$commit;Status='Deployed'}
     }
     catch { return [pscustomobject]@{Success=$false;PushSucceeded=$pushed;Error="Системная ошибка локальной публикации: $($_.Exception.Message)"} }
-    finally { if($null -ne $lock -and $lock.Success){$lock.Handle.Dispose()} }
+    finally { $env:PSModulePath=$originalModulePath; if($null -ne $lock -and $lock.Success){$lock.Handle.Dispose()} }
 }
 
 if($MyInvocation.InvocationName -ne '.') {

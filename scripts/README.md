@@ -175,3 +175,7 @@ git config --local alias.publish '!powershell.exe -NoProfile -STA -ExecutionPoli
 
 Для изолированной проверки можно передать -Destination с тестовой папкой; обычная
 команда использует \\MONOBLOCK\Bonfire. [План и псевдокод](../plans/local-publish-after-push.md).
+
+На время git publish Windows PowerShell получает штатный PSModulePath без
+унаследованных путей PowerShell 7; после завершения прежнее окружение возвращается.
+Это обеспечивает доступность Get-FileHash и архивных команд при запуске через Git.

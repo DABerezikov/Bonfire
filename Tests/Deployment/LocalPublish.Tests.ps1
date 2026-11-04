@@ -5,7 +5,7 @@ function Assert-True($Value,$Message){if(-not $Value){throw $Message}}
 function Test-Case($Name,$Action){& $Action; $script:passed++; Write-Host "PASS: $Name"}
 function New-Fixture {
     $script:events=@(); $script:failure=''; $script:remoteChanged=$false
-    $script:remoteReads=0; $script:installed=$false; $script:current=$false
+    $script:remoteReads=0; $script:installed=$false; $script:current=$false; $script:checkModules=$false
     $script:commit='a'*40; $script:builtCommit=''; $script:updatedCommit=''
 }
 function Get-BonfirePublishState {
@@ -35,6 +35,11 @@ function New-BonfirePublishSnapshot($Commit){
 }
 function Build-BonfirePublishSnapshot($Snapshot,$Commit){
     $script:events+='build'
+    if($script:checkModules){
+        Assert-True (($env:PSModulePath -split ';')[0] -eq (Join-Path $PSHOME 'Modules')) 'Штатные модули Windows PowerShell не первыми.'
+        Assert-True ($env:PSModulePath -notmatch '[\\/]PowerShell[\\/]7[\\/]Modules') 'Сохранён несовместимый путь PowerShell 7.'
+        Assert-True ($null -ne (Get-Command Get-FileHash -ErrorAction SilentlyContinue)) 'Не доступен Get-FileHash.'
+    }
     Assert-True ($Commit -eq 'a'*40) 'Собирается изменённый HEAD.'
     return [pscustomobject]@{Success=($script:failure -ne 'build');Error='test/publish failed'}
 }
@@ -74,6 +79,18 @@ Test-Case 'Уже установленный SHA не пересобираетс
 Test-Case 'Отказ установки сохраняет снимок и сообщает отказ после успешного push' {
     New-Fixture; $script:failure='install'; $result=Invoke-BonfirePublish
     Assert-True (-not $result.Success -and $result.PushSucceeded -and $script:events -notcontains 'cleanup') 'Отказ установки скрыт.'
+}
+Test-Case 'Унаследованные модули PowerShell 7 исключаются на время публикации и восстанавливаются' {
+    New-Fixture; $script:checkModules=$true
+    $original=$env:PSModulePath
+    $inherited=(Join-Path $env:ProgramFiles 'PowerShell/7/Modules')+';'+$original
+    try {
+        $env:PSModulePath=$inherited
+        $result=Invoke-BonfirePublish
+        Assert-True $result.Success $result.Error
+        Assert-True ($env:PSModulePath -eq $inherited) 'Окружение вызывающего процесса не восстановлено.'
+    }
+    finally { $env:PSModulePath=$original }
 }
 Test-Case 'GitHub сохраняет проверки и архив, но не запускает вторую установку' {
     $workflow=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../.github/workflows/deploy-monoblock.yml') -Raw -Encoding UTF8

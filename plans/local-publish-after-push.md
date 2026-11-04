@@ -46,3 +46,11 @@ LocalPublish.Tests: 9 сценариев. LocalPublish.Git.Tests: настоящ
 PowerShell location и Environment.CurrentDirectory: относительный git-common-dir
 теперь разрешается от git rev-parse --show-toplevel. Добавлен прямой assert каталога
 блокировки фикстуры. Рабочий репозиторий и его настройки проверены, изменений нет.
+
+
+Второй сквозной запуск прошёл Git-фикстуру и выявил окружение Git alias: в PSModulePath
+унаследовались каталоги PowerShell 7, из-за чего PowerShell 5.1 не находил Get-FileHash.
+Подтверждено сравнением запуска напрямую/через alias. На время Invoke-BonfirePublish
+для Desktop ставятся первыми штатные модули PSHOME и исключаются пути Core;
+исходный PSModulePath возвращается в finally. LocalPublish.Tests: 10 сценариев,
+включая воспроизведение несовместимого пути и восстановление окружения.
