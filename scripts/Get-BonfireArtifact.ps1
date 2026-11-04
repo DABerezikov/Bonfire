@@ -56,7 +56,15 @@ function Invoke-BonfireArtifactTransfer($Uri, $Path, $TimeoutSeconds) {
     $info.EnvironmentVariables.Remove('GITHUB_TOKEN')
     $process = [Diagnostics.Process]::new(); $process.StartInfo = $info
     try {
-        if (-not $process.Start()) { return 127 }
+        # .NET Framework берёт кодировку stdin из Console.InputEncoding уже при Start.
+        # В PowerShell 5.1 нет ProcessStartInfo.StandardInputEncoding; исключаем BOM явно.
+        $originalInputEncoding = [Console]::InputEncoding
+        try {
+            [Console]::InputEncoding = [Text.UTF8Encoding]::new($false)
+            $started = $process.Start()
+        }
+        finally { [Console]::InputEncoding = $originalInputEncoding }
+        if (-not $started) { return 127 }
         # URL с временным SAS передаётся через stdin, не попадает в argv и журнал.
         $escapedUrl = $Uri.Replace('\', '\\').Replace('"', '\"')
         $escapedPath = $Path.Replace('\', '\\').Replace('"', '\"')

@@ -1,5 +1,13 @@
 ﻿# Проверки Bonfire
 
+## BOM в stdin curl на hosted runner — 04.11.2026
+
+ArtifactDownload.Tests.ps1: **11/11** в PowerShell 5.1 с принудительным
+Console.InputEncoding=UTF-8 с BOM. До правки воспроизведено `option BOM+url is unknown`;
+после неё настоящий curl выполняет Range/timeout, читает путь с кириллицей и пробелами.
+Исходная кодировка консоли восстанавливается. Кодировка workflow CP1251/CP1252
+проверена; общий Release-гейт **1875/1875**.
+
 ## Ограниченное скачивание с продолжением — 04.11.2026
 
 ArtifactDownload.Tests.ps1: **11/11** в PowerShell 5.1. Настоящий TCP/curl:

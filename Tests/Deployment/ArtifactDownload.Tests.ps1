@@ -118,16 +118,19 @@ Test-Case 'ZIP с выходом из каталога не публикуетс
     Assert-True (-not $result.Success -and -not (Test-Path -LiteralPath (Join-Path $script:fixture 'escaped.txt'))) 'ZIP вышел из staging.'
 }
 Test-Case 'Настоящий curl продолжает Range, ограничивает timeout и не передаёт Authorization' {
+    $originalInputEncoding = [Console]::InputEncoding
     $serverRoot=Join-Path $root 'server'; [IO.Directory]::CreateDirectory($serverRoot) | Out-Null
     $data=[byte[]](0..255); [IO.File]::WriteAllBytes((Join-Path $serverRoot 'data.bin'),$data)
     $serverScript = Join-Path $PSScriptRoot 'ArtifactDownload.Server.ps1'
     $serverProcess = Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $serverScript + '"'),('"' + $serverRoot + '"')) -WindowStyle Hidden -PassThru
     try {
+        [Console]::InputEncoding = [Text.UTF8Encoding]::new($true)
         $wait=[Diagnostics.Stopwatch]::StartNew()
         while (-not (Test-Path -LiteralPath (Join-Path $serverRoot 'port.txt')) -and $wait.Elapsed.TotalSeconds -lt 10) { Start-Sleep -Milliseconds 50 }
         Assert-True (Test-Path -LiteralPath (Join-Path $serverRoot 'port.txt')) 'TCP-сервер не запущен.'
-        $port=[IO.File]::ReadAllText((Join-Path $serverRoot 'port.txt')); $part=Join-Path $serverRoot 'partial.bin'
+        $port=[IO.File]::ReadAllText((Join-Path $serverRoot 'port.txt')); $part=Join-Path $serverRoot 'частичный файл.bin'
         $code=& $realTransfer "http://127.0.0.1:$port/resume" $part 3
+        Assert-True ([Console]::InputEncoding.CodePage -eq 65001 -and [Console]::InputEncoding.GetPreamble().Length -eq 3) 'Кодировка консоли не восстановлена.'
         Assert-True ($code -eq 18 -and (Get-Item -LiteralPath $part).Length -eq 10) 'Обрыв не сохранил partial.'
         $code=& $realTransfer "http://127.0.0.1:$port/resume" $part 3
         Assert-True ($code -eq 0) 'Range не продолжен.'
@@ -145,6 +148,6 @@ Test-Case 'Настоящий curl продолжает Range, ограничи�
         $requests=[IO.File]::ReadAllText((Join-Path $serverRoot 'requests.txt'))
         Assert-True ($requests -match '\|10\|' -and $requests -notmatch 'Authorization:') 'Range отсутствует или утекла авторизация.'
     }
-    finally { if (-not $serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }; $serverProcess.Dispose() }
+    finally { if (-not $serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }; $serverProcess.Dispose(); [Console]::InputEncoding = $originalInputEncoding }
 }
 Write-Host "ARTIFACT_DOWNLOAD_OK: $script:passed"

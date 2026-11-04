@@ -35,3 +35,11 @@ failure // destination and installed application untouched
 Настоящие GitHub API metadata/redirect проверены без скачивания большого архива.
 Deploy 20, Runner 12, InteractiveUpdate 9, ClosedUpdate integration и кодировка
 workflow CP1251/CP1252 также прошли. Сетевые проблемы Azure не маскируются успехом.
+
+
+Уточнение кодировки после CI: .NET Framework создаёт stdin StreamWriter из
+Console.InputEncoding при Process.Start и может сразу послать BOM. Локальный OEM
+этого не выявлял. Теперь на время Start задаётся UTF8Encoding(false), прежнее
+значение восстанавливается в finally до записи конфигурации. Регрессия принудительно
+включает UTF-8 с BOM, проверяет реальный curl, путь с кириллицей/пробелами и
+восстановление исходной кодировки. Ошибка CI воспроизведена до правки, затем 11/11.
