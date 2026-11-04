@@ -60,6 +60,20 @@ Test-Case 'Корни дисков и посторонних сетевых ре
     }
 }
 
+Test-Case 'Открытый пользовательский документ с разрешением чтения копируется без закрытия' {
+    $f = New-Fixture
+    Write-FixtureFile $f.Target 'notes.xlsx' 'user workbook'
+    $stream = [IO.File]::Open((Join-Path $f.Target 'notes.xlsx'), 'Open', 'ReadWrite', 'ReadWrite')
+    try {
+        $result = & $scriptPath -PublishDirectory $f.Source -Destination $f.Target
+        Assert-True ($stream.CanWrite) 'Поток пользовательского документа закрыт.'
+        Assert-True ([IO.File]::ReadAllText((Join-Path $result.BackupPath 'notes.xlsx')) -eq 'user workbook') 'Книга не проверена в резервной копии.'
+        Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'Bonfire.exe')) -eq 'new executable') 'Приложение не обновлено.'
+    }
+    finally { $stream.Dispose() }
+    Assert-True ([IO.File]::ReadAllText((Join-Path $f.Target 'notes.xlsx')) -eq 'user workbook') 'Пользовательский документ изменён.'
+}
+
 Test-Case 'Резервная копия предшествует замене; данные и настройки неизменны' {
     $f = New-Fixture
     Write-FixtureFile $f.Source 'BonfireDB.db' 'DO NOT DEPLOY'

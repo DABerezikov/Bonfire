@@ -53,8 +53,11 @@ function Get-Inventory([string]$Root, [switch]$Installed) {
 function Copy-Checked([string]$Source, [string]$Target) {
     [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($Target)) | Out-Null
     [IO.File]::Copy($Source, $Target, $true)
-    if ((Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash -ne
-        (Get-FileHash -LiteralPath $Target -Algorithm SHA256).Hash) {
+    # Документ, открытый редактором с разрешённым чтением, не требует закрытия ради бэкапа.
+    $sourceStream = [IO.File]::Open($Source, 'Open', 'Read', 'ReadWrite')
+    try { $sourceHash = (Get-FileHash -InputStream $sourceStream -Algorithm SHA256).Hash }
+    finally { $sourceStream.Dispose() }
+    if ($sourceHash -ne (Get-FileHash -LiteralPath $Target -Algorithm SHA256).Hash) {
         throw "Не совпала контрольная сумма: $Target"
     }
 }
