@@ -86,10 +86,15 @@ public static class SuggestionInput
 
         private void Rebuild()
         {
-            var text = box.Text;
+            var textBinding = BindingOperations.GetBindingBase(box, ComboBox.TextProperty);
             _updating = true;
             try
             {
+                // При смене родительского фильтра значение VM уже может быть новее текста редактора.
+                box.GetBindingExpression(ComboBox.TextProperty)?.UpdateTarget();
+                var text = box.Text;
+                // Освобождение старого ComboBoxItem может записать его текст обратно во VM.
+                if (textBinding is not null) BindingOperations.ClearBinding(box, ComboBox.TextProperty);
                 var items = _source?.Cast<object>() ?? [];
                 // Текстовые подсказки объединяем после фильтрации. Выбор конкретной партии сохраняет её ID.
                 if (!BindingOperations.IsDataBound(box, ComboBox.SelectedItemProperty)
@@ -101,8 +106,13 @@ public static class SuggestionInput
                         LibraryName.NormalizeWhitespace(text), StringComparison.OrdinalIgnoreCase);
                 box.SetCurrentValue(ItemsControl.ItemsSourceProperty, _view);
                 box.SetCurrentValue(ComboBox.TextProperty, text);
+                if (_view.IsEmpty || HasExactMatch(text)) box.IsDropDownOpen = false;
             }
-            finally { _updating = false; }
+            finally
+            {
+                if (textBinding is not null) BindingOperations.SetBinding(box, ComboBox.TextProperty, textBinding);
+                _updating = false;
+            }
         }
 
         private void TextChanged(object sender, TextChangedEventArgs args)
@@ -122,11 +132,15 @@ public static class SuggestionInput
                     box.SetCurrentValue(ComboBox.TextProperty, text);
                     editor.Text = text;
                     editor.Select(start, length);
-                    box.IsDropDownOpen = _view.Count > 0;
+                    box.IsDropDownOpen = _view.Count > 0 && !HasExactMatch(text);
                 }
                 finally { _updating = false; }
             }));
         }
+
+        private bool HasExactMatch(string text) => !string.IsNullOrWhiteSpace(text) && _view is not null
+            && _view.Cast<object>().Any(item => string.Equals(LibraryName.NormalizeWhitespace(DisplayText(item)),
+                LibraryName.NormalizeWhitespace(text), StringComparison.OrdinalIgnoreCase));
 
         private string DisplayText(object item) => string.IsNullOrEmpty(box.DisplayMemberPath)
             ? item.ToString() ?? string.Empty

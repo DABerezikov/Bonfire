@@ -12,6 +12,77 @@ namespace ViewModels.Tests;
 [Collection("WPF runtime")]
 public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutputHelper output)
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExactTextOrExplicitSelectionClosesSuggestions(bool manual) => runtime.Invoke(() =>
+    {
+        var box = new ComboBox { IsEditable = true, IsSynchronizedWithCurrentItem = false,
+            ItemsSource = new[] { "Руккола", "Руккола дикая" } };
+        SuggestionInput.SetEnabled(box, true);
+        var window = new Window { Content = box, Width = 250, Height = 100, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); box.ApplyTemplate();
+            var editor = (TextBox)box.Template.FindName("PART_EditableTextBox", box);
+            Keyboard.Focus(editor); editor.Text = "Рук"; WpfRuntime.Layout(box, 250, 30);
+            Assert.True(box.IsDropDownOpen);
+            if (manual) box.SelectedItem = "Руккола";
+            else editor.Text = "Руккола";
+            WpfRuntime.Layout(box, 250, 30);
+            Assert.Equal("Руккола", box.Text); Assert.False(box.IsDropDownOpen);
+            editor.Text = "Рукк"; WpfRuntime.Layout(box, 250, 30);
+            Assert.True(box.IsDropDownOpen);
+        }
+        finally { window.Close(); }
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExplicitClassWithNoCulturesWinsOverPendingCultureUpdates(bool settleSelection) => runtime.Invoke(() =>
+    {
+        var service = Substitute.For<ISeedsService>();
+        service.ReadSeedsAsync().Returns(Result.Success(System.Collections.Immutable.ImmutableArray<SeedReadFromViewModel>.Empty));
+        service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel([], [], [])
+        {
+            Catalog = Option.Some(new SeedCatalogFromViewModel(
+                [new(1, "Руккола ", "Зелень"), new(2, "Руккола", "Овощи")],
+                [new(1, "Индау", 1, [1]), new(2, "Дикая", 1, [2])], [new(1, "Фирма")]))
+        }));
+        var vm = new SeedsViewModel(service, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
+        vm.LoadDataCommand.Execute(null);
+        var view = new SeedsWindow { DataContext = vm };
+        var window = new Window { Content = view, Width = 1600, Height = 900, Left = -10000, Top = -10000, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); WpfRuntime.Layout(view, 1600, 900);
+            var classes = WpfRuntime.Descendants<ComboBox>(view).Single(box =>
+                box.GetBindingExpression(ComboBox.SelectedItemProperty)?.ParentBinding.Path.Path == "AddClass");
+            var cultures = WpfRuntime.Descendants<ComboBox>(view).Single(box =>
+                box.GetBindingExpression(ComboBox.TextProperty)?.ParentBinding.Path.Path == "AddCulture");
+            classes.SelectedItem = "Овощи"; WpfRuntime.Layout(view, 1600, 900);
+            cultures.ApplyTemplate(); Keyboard.Focus((TextBox)cultures.Template.FindName("PART_EditableTextBox", cultures));
+            cultures.IsDropDownOpen = true;
+            cultures.SelectedItem = Assert.Single(cultures.Items.Cast<CultureFromViewModel>());
+            if (settleSelection) WpfRuntime.Layout(view, 1600, 900);
+            var classesSeen = new System.Collections.Generic.List<string>();
+            vm.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(vm.AddClass)) classesSeen.Add(vm.AddClass);
+            };
+            classes.Focus(); classes.SelectedItem = "Фрукты";
+            WpfRuntime.Layout(view, 1600, 900);
+            Assert.All(classesSeen, value => Assert.Equal("Фрукты", value));
+            Assert.Equal("Фрукты", vm.AddClass); Assert.Equal("Фрукты", classes.SelectedItem);
+            Assert.Empty(vm.AddCulture); Assert.Empty(cultures.Text); Assert.False(cultures.IsDropDownOpen);
+            Assert.Empty(vm.CultureListView!.Cast<object>());
+            Assert.Equal(BindingStatus.Active, cultures.GetBindingExpression(ComboBox.TextProperty)!.Status);
+            Assert.Equal("AddCulture", cultures.GetBindingExpression(ComboBox.TextProperty)!.ParentBinding.Path.Path);
+        }
+        finally { window.Close(); }
+    });
+
     [Fact]
     public void PlainComboContainersDoNotDependOnAnAncestorWhileDetached() => runtime.Invoke(() =>
     {
