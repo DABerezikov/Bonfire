@@ -29,6 +29,8 @@ jobs:
         run: dotnet test Bonfire.sln -c Release --nologo --logger trx --results-directory artifacts/tests
       - name: Проверки развёртывания
         run: |
+          & ./Tests/Deployment/LocalPublish.Tests.ps1
+          & ./Tests/Deployment/LocalPublish.Git.Tests.ps1
           & ./Tests/Deployment/ArtifactDownload.Tests.ps1
           & ./Tests/Deployment/Deploy.Tests.ps1
           & ./Tests/Deployment/Runner.Tests.ps1
@@ -55,33 +57,3 @@ jobs:
           name: test-results
           path: artifacts/tests/*.trx
           if-no-files-found: warn
-
-  deploy:
-    name: Обновление с подтверждением
-    if: github.ref == 'refs/heads/master'
-    needs: build
-    permissions:
-      contents: read
-      actions: read
-    runs-on: [self-hosted, Windows, X64, bonfire-monoblock, interactive]
-    timeout-minutes: 60
-    defaults:
-      run:
-        shell: powershell
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          persist-credentials: false
-      - name: Проверка компьютера
-        run: ./scripts/Assert-BonfireRunner.ps1
-      - name: Скачивание и проверка публикации
-        timeout-minutes: 48
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          & ./scripts/Get-BonfireArtifact.ps1 -Repository $env:GITHUB_REPOSITORY -RunId $env:GITHUB_RUN_ID -Destination ./artifacts/publish
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Подтверждение и установка
-        run: |
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File ./scripts/Update-BonfireInteractive.ps1 -PublishDirectory ./artifacts/publish -Version $env:GITHUB_SHA
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

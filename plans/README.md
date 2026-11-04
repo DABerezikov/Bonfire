@@ -68,3 +68,5 @@
 
 
 Устойчивое получение публикации: [скачивание с продолжением и SHA-256](resumable-artifact-download.md).
+
+Локальная установка после успешного push: [git publish](local-publish-after-push.md).
