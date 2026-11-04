@@ -4,21 +4,25 @@ using Bonfire.Domain.Libraries;
 namespace Bonfire.Application.Libraries;
 
 public sealed record UpdateProducerFromViewModel(int Id, string Name);
+
 public sealed record ProducerDetailsFromViewModel(int Id, string Name);
 
 public interface IProducerWriter
 {
-    Task<Result<ProducerDetailsFromViewModel>> SaveAsync(ProducerDefinition producer, CancellationToken cancellationToken);
+    Task<Result<ProducerDetailsFromViewModel>> SaveAsync(ProducerDefinition producer,
+        CancellationToken cancellationToken);
 }
 
 public interface IUpdateProducer
 {
-    Task<Result<ProducerDetailsFromViewModel>> ExecuteAsync(UpdateProducerFromViewModel request, CancellationToken cancellationToken = default);
+    Task<Result<ProducerDetailsFromViewModel>> ExecuteAsync(UpdateProducerFromViewModel request,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class UpdateProducer(IProducerWriter writer) : IUpdateProducer
 {
-    public async Task<Result<ProducerDetailsFromViewModel>> ExecuteAsync(UpdateProducerFromViewModel request, CancellationToken cancellationToken = default)
+    public async Task<Result<ProducerDetailsFromViewModel>> ExecuteAsync(UpdateProducerFromViewModel request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();

@@ -5,32 +5,32 @@ namespace BonfireDB.Entities;
 public class PlantSort : NamedEntity
 {
     /// <summary>
-    /// Описание сорта
+    ///     Описание сорта
     /// </summary>
-    public string? Description { get; set; } 
+    public string? Description { get; set; }
 
     /// <summary>
-    /// Производитель семян
+    ///     Производитель семян
     /// </summary>
     public Producer Producer { get; set; } = null!;
 
     /// <summary>
-    /// Минимальный срок прорастания, дней
+    ///     Минимальный срок прорастания, дней
     /// </summary>
     public int? MinGerminationTime { get; set; }
 
     /// <summary>
-    /// Максимальный срок прорастания, дней
+    ///     Максимальный срок прорастания, дней
     /// </summary>
     public int? MaxGerminationTime { get; set; }
 
     /// <summary>
-    /// Возраст рассады на высадку, дней
+    ///     Возраст рассады на высадку, дней
     /// </summary>
     public int? AgeOfSeedlings { get; set; }
 
     /// <summary>
-    /// Минимальный вегетационный период, дней
+    ///     Минимальный вегетационный период, дней
     /// </summary>
     public int? GrowingSeason { get; set; }
 
@@ -38,17 +38,17 @@ public class PlantSort : NamedEntity
     public int? MaxGrowingSeason { get; set; }
 
     /// <summary>
-    /// Схема посадки, см
+    ///     Схема посадки, см
     /// </summary>
     public int? LandingPattern { get; set; }
 
     /// <summary>
-    /// Высота растения, см
+    ///     Высота растения, см
     /// </summary>
     public int? PlantHeight { get; set; }
 
     /// <summary>
-    /// Цвет растения
+    ///     Цвет растения
     /// </summary>
     public string? PlantColor { get; set; }
 

@@ -3,7 +3,7 @@
 public class Entity : IEntity
 {
     /// <summary>
-    /// Идентификатор
+    ///     Идентификатор
     /// </summary>
     public int Id { get; set; }
 }

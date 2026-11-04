@@ -13,7 +13,7 @@ public class SeedlingsViewModelTests
     {
         _seedsService.ReadSeedsAsync().Returns(Array.Empty<Seed>().ReadSeeds());
         _seedlingsService.ReadSeedlingsAsync().Returns(Array.Empty<Seedling>().ReadSeedlings());
-        _seedlingsService.Lunar.Returns(new MoonPhase());
+        _seedlingsService.Lunar.Returns(new Bonfire.Infrastructure.MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator()));
         return new SeedlingsViewModel(_seedlingsService, _seedsService, _userDialog, _reportService);
     }
 

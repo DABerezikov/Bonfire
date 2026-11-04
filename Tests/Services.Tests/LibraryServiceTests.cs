@@ -1,4 +1,4 @@
-using Bonfire.Models;
+﻿using Bonfire.Models;
 using Bonfire.Services.Interfaces;
 using Bonfire.Application.Libraries;
 using BonfireDB.Libraries;
@@ -22,7 +22,7 @@ public class LibraryServiceTests
     private LibraryService CreateService()
     {
         var factory = _uow.ToFactory();
-        return new(new DbLibraryReader(factory), new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)));
+        return new(new DbLibraryReader(factory), new UpdateCulture(new DbCultureWriter(factory)), new UpdateProducer(new DbProducerWriter(factory)), new UpdateSort(new DbSortWriter(factory)), new DeleteLibraryEntry(new DbLibraryEntryDeletionWriter(factory)), new Bonfire.Application.Caching.ReadModelCache());
     }
 
     // ── GetSortAsync ──────────────────────────────────────────────────────────

@@ -1,13 +1,15 @@
 using System;
 using Bonfire.Application.Seeds;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 
 namespace Bonfire.Models.Mappers;
 
 internal static class SeedEditMapper
 {
     public static SeedEditorDraft FromSeed(SeedReadFromViewModel seed)
-        => new(seed.Id, seed.Plant.PlantCulture.Name, seed.Plant.PlantSort.Name, seed.Plant.PlantSort.Producer.Id, seed.SeedsInfo);
+        => new(seed.Id, seed.Plant.PlantCulture.Name, seed.Plant.PlantSort.Name, seed.Plant.PlantSort.Producer.Id,
+            seed.SeedsInfo);
 
     public static Result<EditSeedFromViewModel> ToRequest(SeedEditorDraft draft, SortEditModel sort, int producerId)
     {
@@ -17,7 +19,7 @@ internal static class SeedEditMapper
             return Result.Failure<EditSeedFromViewModel>("Название не может быть пустым");
         return Result.Success(new EditSeedFromViewModel(draft.Id, sort.Id, producerId, name,
             draft.Package.Values,
-            new()
+            new SortCharacteristicsValues
             {
                 Description = sort.Description.ToOption(),
                 MinGerminationTime = sort.MinGerminationTime.ToOption(),

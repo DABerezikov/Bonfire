@@ -5,6 +5,9 @@ using System.Globalization;
 using System.IO;
 using Bonfire.Services.Interfaces;
 using OfficeOpenXml;
+using Bonfire.Application.Planning;
+using Bonfire.Domain.Planning;
+using Bonfire.Domain.Libraries;
 
 namespace Services.Tests;
 
@@ -14,6 +17,23 @@ public class ReportFilesystemCollection;
 [Collection("Report filesystem")]
 public class ReportServiceBehaviorTests : IDisposable
 {
+    [Fact]
+    public void ShoppingReport_WritesDeficitAndUncountedGramStockWithoutFakeBuyQuantity()
+    {
+        var key = new SeedPurchaseKey(CultureId.Create(1).ValueOrThrow(), SortId.Create(2).ValueOrThrow());
+        var shopping = new SeedShoppingListFromViewModel(1, 2, "План", 2027, DateTimeOffset.UtcNow,
+        [new("Арбуз", "Алый", new(key, 10, 2, Option.None<decimal>(), Option.Some(8m), false), new DateOnly(2027, 4, 1)),
+         new("Морковь", "Сорт", new(key, 20, 0, Option.Some(.2m), Option.None<decimal>(), true), new DateOnly(2027, 5, 1))]);
+        Assert.True(CreateService().CreateSeedShoppingReport(shopping).IsSuccess);
+        using var package = OpenOnlyReport(); var sheet = package.Workbook.Worksheets["Покупка семян"];
+        Assert.Equal("Купить, шт.", sheet.Cells[5, 6].Text);
+        Assert.Equal(8, sheet.Cells[6, 6].GetValue<int>());
+        Assert.Equal("01.04.2027", sheet.Cells[6, 7].Text);
+        Assert.Null(sheet.Cells[7, 6].Value);
+        Assert.Equal(.2m, sheet.Cells[7, 5].GetValue<decimal>());
+        Assert.Contains("Уточнить", sheet.Cells[7, 8].Text);
+    }
+
     private readonly string _previousDirectory = Directory.GetCurrentDirectory();
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "BonfireReports-" + Guid.NewGuid().ToString("N"));
     private readonly CultureInfo _previousCulture = CultureInfo.CurrentCulture;

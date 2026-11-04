@@ -1,0 +1,85 @@
+﻿<UserControl x:Class="Bonfire.Views.Planning.HarvestJournalView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary Source="PlanningStyles.xaml" />
+    </UserControl.Resources>
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Журнал сборов урожая" FontSize="22" FontWeight="SemiBold" />
+            <WrapPanel>
+                <Button Content="Обновить журнал" Command="{Binding LoadCommand}" />
+                <Button Content="Новый сбор" Command="{Binding NewCommand}" />
+                <Button Content="Сохранить" Command="{Binding SaveCommand}" />
+                <Button Content="Отменить изменения" Command="{Binding CancelCommand}" />
+                <Button Content="Удалить сбор" Command="{Binding DeleteCommand}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,5" />
+            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,5" />
+        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="6*" />
+            </Grid.ColumnDefinitions>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="Фильтры: сезон (пусто — все), культура, сорт, ID партии" TextWrapping="Wrap" />
+                    <UniformGrid Columns="2">
+                        <TextBox Text="{Binding FilterSeason, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Text="{Binding FilterCulture, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Text="{Binding FilterSort, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Text="{Binding FilterBatch, UpdateSourceTrigger=PropertyChanged}" />
+                    </UniformGrid>
+                    <TextBlock Text="ID межсезонной посадки (пусто — все)" />
+                    <TextBox Text="{Binding FilterPerennial, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <ListBox ItemsSource="{Binding Entries}" SelectedItem="{Binding Selected}"
+                         HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Owner}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <TextBlock Text="{Binding Draft.IdentityText}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <StackPanel IsEnabled="{Binding CanChooseIdentity}">
+                        <TextBlock Text="Сезон для нового сбора и списка партий" />
+                        <TextBox Text="{Binding Draft.Season, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Content="Обновить партии сезона" Command="{Binding SourcesCommand}"
+                                HorizontalAlignment="Left" />
+                        <TextBlock Text="Принадлежность: выберите партию либо заполните данные без партии"
+                                   TextWrapping="Wrap" />
+                        <ComboBox ItemsSource="{Binding Sources}" SelectedItem="{Binding Draft.Source}"
+                                  DisplayMemberPath="Label" />
+                        <Button Content="Без партии" Command="{Binding NoSourceCommand}" HorizontalAlignment="Left" />
+                        <TextBlock Text="Культура / сорт для сбора без партии" />
+                        <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Draft.Choice}"
+                                  ItemTemplate="{StaticResource PlanningPairTemplate}" />
+                        <TextBlock Text="Регион для сбора без партии" />
+                        <ComboBox ItemsSource="{Binding Regions}" SelectedItem="{Binding Draft.Region}"
+                                  DisplayMemberPath="Definition.Name.Value" />
+                    </StackPanel>
+                    <TextBlock Text="Дата сбора, дд.мм.гггг" />
+                    <TextBlock Text="{Binding Draft.Error}" TextWrapping="Wrap" Foreground="#A03020" />
+                    <TextBox x:Name="HarvestDateInput"
+                             Text="{Binding Draft.Date, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                    <TextBlock Text="Масса сбора, кг" />
+                    <TextBox x:Name="HarvestMassInput"
+                             Text="{Binding Draft.MassKg, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                    <TextBlock Text="Примечание" />
+                    <TextBox MaxHeight="180" VerticalScrollBarVisibility="Auto" Text="{Binding Draft.Note, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                             AcceptsReturn="True" MinHeight="70" TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="Сбор сохраняет фактическую дату и положительную массу. При исправлении принадлежность сохраняется; дату, массу и примечание можно изменить."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</UserControl>

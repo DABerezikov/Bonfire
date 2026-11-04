@@ -2,17 +2,19 @@ namespace MoonCalendar;
 
 public class MoonPhase
 {
-    /// <summary> Текущий лунный день </summary>
-    public static double MoonAge {
-        get
-        {
-            var julianDay = CalculateJulianDay(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
-            return CalculateMoonAge(julianDay);
-        }
+    private readonly ILunarPhaseCalculator _calculator;
+
+    public MoonPhase(ILunarPhaseCalculator calculator)
+    {
+        ArgumentNullException.ThrowIfNull(calculator);
+        _calculator = calculator;
     }
 
+    /// <summary>Число суток с последнего астрономического новолуния.</summary>
+    public double MoonAge => _calculator.GetMoonAge(DateTimeOffset.UtcNow);
+
     /// <summary> Текущая фаза Луны </summary>
-    public string LunarPhase => MoonPhaseCalc(MoonAge);
+    public string LunarPhase => GetMoonPhase(DateTime.UtcNow);
 
     /// <summary> Текущее расстояние до Луны </summary>
     public double MoonDistance => GetMoonDistance(DateTime.Now);
@@ -27,17 +29,18 @@ public class MoonPhase
     public string Zodiac => GetZodiac(MoonLongitude);
 
     /// <summary>Лунный день в указанную дату </summary>
-    public double GetMoonAge(DateTime date)
-    {
-        var julianDay = CalculateJulianDay(date.Year, date.Month, date.Day);
-        return CalculateMoonAge(julianDay);
-    }
+    public double GetMoonAge(DateTime date) => GetMoonAge(new DateTimeOffset(date.ToUniversalTime()));
+
+    public double GetMoonAge(DateTimeOffset moment) => _calculator.GetMoonAge(moment);
+
+    /// <summary>Общий источник фаз: угол Луна–Солнце, [0;360), 0 — новолуние, 180 — полнолуние.</summary>
+    public double GetPhaseAngle(DateTimeOffset moment) => _calculator.GetPhaseAngle(moment);
 
     /// <summary>Фаза Луны в указанную дату </summary>
     public string GetMoonPhase(DateTime date)
     {
-        var moonAge = GetMoonAge(date);
-        return MoonPhaseCalc(moonAge);
+        // Unspecified, как у прежнего DateTime-API приложения, означает местное время компьютера.
+        return LunarPhaseNames.FromAngle(GetPhaseAngle(new DateTimeOffset(date.ToUniversalTime())));
     }
 
     /// <summary>Расстояние до Луны в указанную дату</summary>
@@ -50,8 +53,8 @@ public class MoonPhase
         var synodicMonthRadian = Normalize((julianDay - 2451550.1) / 29.530588853) * 2 * Math.PI;
         var anomalyMonthRadian = 2 * Math.PI * Normalize((julianDay - 2451562.2) / 27.55454988);
         return 60.4 - 3.3 * Math.Cos(anomalyMonthRadian) -
-            0.6 * Math.Cos(2 * synodicMonthRadian - anomalyMonthRadian) -
-            0.5 * Math.Cos(2 * synodicMonthRadian);
+               0.6 * Math.Cos(2 * synodicMonthRadian - anomalyMonthRadian) -
+               0.5 * Math.Cos(2 * synodicMonthRadian);
     }
 
     /// <summary>Широта затмения Луны в указанную дату</summary>
@@ -76,8 +79,8 @@ public class MoonPhase
         var anomalyMonthRadian = 2 * Math.PI * Normalize((julianDay - 2451562.2) / 27.55454988);
         var tropicalMonthRadian = Normalize((julianDay - 2451555.8) / 27.321582241);
         return 360 * tropicalMonthRadian + 6.3 * Math.Sin(anomalyMonthRadian) +
-            1.3 * Math.Sin(2 * synodicMonthRadian - anomalyMonthRadian) +
-            0.7 * Math.Sin(2 * synodicMonthRadian);
+               1.3 * Math.Sin(2 * synodicMonthRadian - anomalyMonthRadian) +
+               0.7 * Math.Sin(2 * synodicMonthRadian);
     }
 
     /// <summary>Знак зодиака Луны в указанную дату</summary>
@@ -107,11 +110,6 @@ public class MoonPhase
         };
     }
 
-    private static double CalculateMoonAge(int julianDay)
-    {
-        return Normalize((julianDay - 2451550.1) / 29.530588853) * 29.53;
-    }
-
     private static int CalculateJulianDay(int year, int month, int day)
     {
         var julianYear = year - (int)Math.Floor((12.0 - month) / 10.0);
@@ -125,22 +123,6 @@ public class MoonPhase
         if (julianDay > 2299160)
             julianDay -= factor3;
         return julianDay;
-    }
-
-    private static string MoonPhaseCalc(double moonsAge)
-    {
-        return moonsAge switch
-        {
-            < 1.84566 => "Новолуние",
-            < 5.53699 => "Растущий серп",
-            < 9.22831 => "Первая четверть",
-            < 12.91963 => "Растущая луна",
-            < 16.61096 => "Полнолуние",
-            < 20.30228 => "Убывающая луна",
-            < 23.99361 => "Третья четверть",
-            < 27.68493 => "Убывающий месяц",
-            _ => "Новолуние"
-        };
     }
 
     private static double Normalize(double v)

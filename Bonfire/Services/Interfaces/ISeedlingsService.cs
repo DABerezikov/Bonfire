@@ -1,15 +1,15 @@
-using System.Collections.Immutable;
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
-using MoonCalendar;
-using Bonfire.Domain.Functional;
 using Bonfire.Application.Seedlings;
+using Bonfire.Domain.Functional;
 
 namespace Bonfire.Services.Interfaces;
 
 public interface ISeedlingsService
 {
-    MoonPhase Lunar { get; }
+    long ReadVersion { get; }
+
+    ILunarCalendar Lunar { get; }
     Task<Result<SowingReceipt>> SowAsync(SowingRequest request);
     Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(DeleteSeedlingFromViewModel request);
     Task<Result<SeedlingChangeResultFromViewModel>> ChangeAsync(ChangeSeedlingFromViewModel request);

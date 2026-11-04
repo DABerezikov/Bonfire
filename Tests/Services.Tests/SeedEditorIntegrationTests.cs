@@ -1,4 +1,4 @@
-using BonfireDB.SeedEditing;
+﻿using BonfireDB.SeedEditing;
 using BonfireDB.Libraries;
 using Microsoft.EntityFrameworkCore;
 using Bonfire.Application.Seeds;
@@ -97,7 +97,7 @@ public class SeedEditorIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task SaveSeedEditAsync_OptionalValues_PreservesNullEmptyZeroAndRawText()
+    public async Task SaveSeedEditAsync_OptionalValues_PreservesNullEmptyZeroAndNormalizesNames()
     {
         var (id, _, producer) = await CreatePackages();
         var service = _fx.CreateSeedsService();
@@ -120,13 +120,13 @@ public class SeedEditorIntegrationTests : IDisposable
         await SaveAsync(service, edit, sort, producer);
         var saved = (await _fx.LoadAsync<Seed>(id))!;
         Assert.Equal(SeedPackageDbMapper.Read(edit.SeedsInfo), SeedPackageDbMapper.Read(saved.SeedsInfo));
-        Assert.Equal(" Черри ", saved.Plant.PlantSort.Name);
+        Assert.Equal("Черри", saved.Plant.PlantSort.Name);
         Assert.Equal("", saved.Plant.PlantSort.Description);
         Assert.Null(saved.Plant.PlantSort.MinGerminationTime);
         Assert.Equal(0, saved.Plant.PlantSort.MaxGerminationTime);
         Assert.Null(saved.Plant.PlantSort.AgeOfSeedlings);
         Assert.Equal(0, saved.Plant.PlantSort.MaxAgeOfSeedlings);
-        Assert.Equal(" Полосатый ", saved.Plant.PlantSort.PlantColor);
+        Assert.Equal("Полосатый", saved.Plant.PlantSort.PlantColor);
         Assert.Null(saved.Plant.PlantSort.Maturity);
         Assert.Equal("Томат", saved.Plant.PlantCulture.Name);
         Assert.Contains("Полосатый", (await service.GetEditorOptionsAsync()).ValueOrThrow().Colors);

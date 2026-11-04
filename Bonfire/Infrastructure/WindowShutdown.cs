@@ -12,11 +12,21 @@ internal sealed class WindowShutdown(Func<Task> stop, Action close, Action<Excep
     public async Task OnClosingAsync(CancelEventArgs args)
     {
         if (args.Cancel || _ready) return;
+
         args.Cancel = true;
+
         if (_pending) return;
+
         _pending = true;
-        try { await stop(); }
-        catch (Exception error) { reportError(error); }
+
+        try
+        {
+            await stop();
+        }
+        catch (Exception error)
+        {
+            reportError(error);
+        }
         finally
         {
             // Даже синхронная остановка должна выйти из исходного события Closing до нового Close.

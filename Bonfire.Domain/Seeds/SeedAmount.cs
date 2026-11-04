@@ -2,14 +2,17 @@ using Bonfire.Domain.Functional;
 
 namespace Bonfire.Domain.Seeds;
 
-public enum SeedUnit { Pieces, Grams }
+public enum SeedUnit
+{
+    Pieces,
+    Grams
+}
 
 public sealed record SeedAmount
 {
+    private SeedAmount(double value, SeedUnit unit) => (Value, Unit) = (value, unit);
     public double Value { get; }
     public SeedUnit Unit { get; }
-
-    private SeedAmount(double value, SeedUnit unit) => (Value, Unit) = (value, unit);
 
     public static Result<SeedAmount> Create(double value, SeedUnit unit) =>
         !Enum.IsDefined(unit)

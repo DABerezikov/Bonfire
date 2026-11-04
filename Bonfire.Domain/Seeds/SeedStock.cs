@@ -4,13 +4,13 @@ namespace Bonfire.Domain.Seeds;
 
 public sealed class SeedStock
 {
-    public SeedAmount Available { get; }
-
     public SeedStock(SeedAmount available)
     {
         ArgumentNullException.ThrowIfNull(available);
         Available = available;
     }
+
+    public SeedAmount Available { get; }
 
     public Result<SeedStock> WithReturned(SeedAmount returned)
     {
@@ -47,8 +47,7 @@ public sealed class SeedStock
 
 public sealed class SowingChange
 {
+    internal SowingChange(SeedStock remaining, SeedAmount sown) => (Remaining, Sown) = (remaining, sown);
     public SeedStock Remaining { get; }
     public SeedAmount Sown { get; }
-
-    internal SowingChange(SeedStock remaining, SeedAmount sown) => (Remaining, Sown) = (remaining, sown);
 }

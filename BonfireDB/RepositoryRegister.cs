@@ -1,15 +1,23 @@
+﻿using Bonfire.Application.Caching;
+using Bonfire.Application.Garden;
+using Bonfire.Application.Harvest;
+using Bonfire.Application.Libraries;
+using Bonfire.Application.Planning;
+using Bonfire.Application.Planning.Libraries;
+using Bonfire.Application.Seedlings;
+using Bonfire.Application.Seeds;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
-using Microsoft.Extensions.DependencyInjection;
-using Bonfire.Application.Seedlings;
-using BonfireDB.Sowing;
-using Bonfire.Application.Libraries;
+using BonfireDB.Entities.Planning;
+using BonfireDB.Harvest;
 using BonfireDB.Libraries;
-using Bonfire.Application.Seeds;
-using BonfireDB.SeedEditing;
-using Bonfire.Application.Garden;
+using BonfireDB.Planning;
+using BonfireDB.Planning.Libraries;
 using BonfireDB.Planting;
+using BonfireDB.SeedEditing;
+using BonfireDB.Sowing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BonfireDB;
 
@@ -17,7 +25,35 @@ public static class RepositoryRegister
 {
     public static IServiceCollection AddRepositoriesInDb(this IServiceCollection services) => services
         // Фабрика единиц работы создаёт DI-область на операцию (короткий DbContext).
+        .AddSingleton<IReadModelCache, ReadModelCache>()
         .AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
+        .AddSingleton<ISortOptionStore, DbSortOptionStore>()
+        .AddSingleton<ILibraryEntryDeletionWriter, DbLibraryEntryDeletionWriter>()
+        .AddSingleton<DbPlantingPlans>()
+        .AddSingleton<IPlanningContextReader, DbPlanningContextReader>()
+        .AddSingleton<ISeedShoppingStockReader, DbSeedShoppingStockReader>()
+        .AddSingleton<IPlanningBedReader, DbPlanningBedReader>()
+        .AddSingleton<DbPerennialPlanning>()
+        .AddSingleton<IPerennialPlanningReader>(provider => provider.GetRequiredService<DbPerennialPlanning>())
+        .AddSingleton<IPerennialPlanningWriter>(provider => provider.GetRequiredService<DbPerennialPlanning>())
+        .AddScoped<IRepository<PerennialPlantingRow>, DbRepository<PerennialPlantingRow>>()
+        .AddScoped<IRepository<PerennialSeasonRow>, DbRepository<PerennialSeasonRow>>()
+        .AddSingleton<DbHarvestJournal>()
+        .AddSingleton<IHarvestJournalReader>(provider => provider.GetRequiredService<DbHarvestJournal>())
+        .AddSingleton<IHarvestJournalWriter>(provider => provider.GetRequiredService<DbHarvestJournal>())
+        .AddSingleton<IHarvestSourceReader>(provider => provider.GetRequiredService<DbHarvestJournal>())
+        .AddScoped<IRepository<HarvestEntryRow>, DbRepository<HarvestEntryRow>>()
+        .AddSingleton<IPlantingPlanReader>(provider => provider.GetRequiredService<DbPlantingPlans>())
+        .AddSingleton<IPlantingPlanWriter>(provider => provider.GetRequiredService<DbPlantingPlans>())
+        .AddScoped<IRepository<SeasonalPlantingPlanRow>, DbRepository<SeasonalPlantingPlanRow>>()
+        .AddScoped<IRepository<PlannedBatchRow>, DbRepository<PlannedBatchRow>>()
+        .AddSingleton<DbPlanningLibraries>()
+        .AddSingleton<IPlanningLibraryReader>(provider => provider.GetRequiredService<DbPlanningLibraries>())
+        .AddSingleton<IPlanningLibraryWriter>(provider => provider.GetRequiredService<DbPlanningLibraries>())
+        .AddScoped<IRepository<PlanningRegionRow>, DbRepository<PlanningRegionRow>>()
+        .AddScoped<IRepository<CultureGrowingProfileRow>, DbRepository<CultureGrowingProfileRow>>()
+        .AddScoped<IRepository<SortPlanningSettingsRow>, DbRepository<SortPlanningSettingsRow>>()
+        .AddScoped<IRepository<RegionalPlantingWindowRow>, DbRepository<RegionalPlantingWindowRow>>()
         .AddSingleton<ISowingSessionFactory, DbSowingSessionFactory>()
         .AddSingleton<ISeedlingDeletionWriter, DbSeedlingDeletionWriter>()
         .AddSingleton<ISeedlingChangeWriter, DbSeedlingChangeWriter>()
@@ -64,7 +100,5 @@ public static class RepositoryRegister
         .AddScoped<IRepository<Garden>, GardenRepository>()
         .AddScoped<IRepository<Greenhouse>, GreenhouseRepository>()
         .AddScoped<IRepository<GardenElement>, GardenElementRepository>()
-        .AddScoped<IRepository<PlantingSpot>, DbRepository<PlantingSpot>>()
-        ;
-
+        .AddScoped<IRepository<PlantingSpot>, DbRepository<PlantingSpot>>();
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Bonfire.Application.Seedlings;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
@@ -11,7 +12,8 @@ namespace BonfireDB.Sowing;
 
 public sealed class DbSeedlingDeletionWriter(IUnitOfWorkFactory units) : ISeedlingDeletionWriter
 {
-    public async Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(SeedlingId id, SeedlingRemoval removal, CancellationToken cancellationToken)
+    public async Task<Result<SeedlingDeletionResultFromViewModel>> DeleteAsync(SeedlingId id, SeedlingRemoval removal,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(removal);
@@ -24,8 +26,9 @@ public sealed class DbSeedlingDeletionWriter(IUnitOfWorkFactory units) : ISeedli
         var prepared = removal switch
         {
             SeedlingRemoval.Discard => Result.Success(Option.None<ReturnedSeedStockFromViewModel>()),
-            SeedlingRemoval.CorrectSowing correction => await ReturnAsync(unit, batch, correction, cancellationToken).ConfigureAwait(false),
-            _ => throw new System.Diagnostics.UnreachableException()
+            SeedlingRemoval.CorrectSowing correction => await ReturnAsync(unit, batch, correction, cancellationToken)
+                .ConfigureAwait(false),
+            _ => throw new UnreachableException()
         };
 
         return await prepared.Match(async returned =>
@@ -42,7 +45,8 @@ public sealed class DbSeedlingDeletionWriter(IUnitOfWorkFactory units) : ISeedli
             }
             catch (DbUpdateException error)
             {
-                return Result.Failure<SeedlingDeletionResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+                return Result.Failure<SeedlingDeletionResultFromViewModel>(
+                    $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
             }
         }, error => Task.FromResult(Result.Failure<SeedlingDeletionResultFromViewModel>(error))).ConfigureAwait(false);
     }
@@ -52,7 +56,8 @@ public sealed class DbSeedlingDeletionWriter(IUnitOfWorkFactory units) : ISeedli
     {
         var seed = await unit.Repository<Seed>().GetAsync(batch.SeedId, cancellationToken).ConfigureAwait(false);
         if (seed is null)
-            return Result.Failure<Option<ReturnedSeedStockFromViewModel>>("Исходный пакет семян удалён. Можно удалить рассаду без возврата семян.");
+            return Result.Failure<Option<ReturnedSeedStockFromViewModel>>(
+                "Исходный пакет семян удалён. Можно удалить рассаду без возврата семян.");
 
         return SeedPackage.Create(SeedPackageDbMapper.Read(seed.SeedsInfo))
             .Bind(package => correction.ReturnTo(package, batch.Quantity, batch.Weight))

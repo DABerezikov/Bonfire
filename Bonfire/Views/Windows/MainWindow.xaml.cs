@@ -1,19 +1,14 @@
 ﻿using System.Windows;
+using Bonfire.ViewModels;
 
 namespace Bonfire;
 
 /// <summary>
-/// Interaction logic for MainWindow.xaml
+///     Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window
 {
     private bool _shutdownCommitted;
-
-    internal void CompleteShutdown()
-    {
-        _shutdownCommitted = true;
-        Close();
-    }
 
     public MainWindow()
     {
@@ -21,9 +16,17 @@ public partial class MainWindow : Window
         Closing += (_, e) =>
         {
             if (_shutdownCommitted) return;
-            if (DataContext is Bonfire.ViewModels.MainWindowViewModel
-                { CurrentViewModel: Bonfire.ViewModels.SeedsViewModel seeds }
+            if (DataContext is MainWindowViewModel
+                {
+                    CurrentViewModel: SeedsViewModel seeds
+                }
                 && !seeds.TryDiscardSeedChanges()) e.Cancel = true;
         };
+    }
+
+    internal void CompleteShutdown()
+    {
+        _shutdownCommitted = true;
+        Close();
     }
 }

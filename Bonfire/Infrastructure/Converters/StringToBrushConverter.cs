@@ -16,7 +16,11 @@ public class StringToBrushConverter : IValueConverter
             if (value is string hex && !string.IsNullOrWhiteSpace(hex))
                 return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
         }
-        catch { /* некорректный цвет — прозрачный */ }
+        catch
+        {
+            /* некорректный цвет — прозрачный */
+        }
+
         return Brushes.Transparent;
     }
 

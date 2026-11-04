@@ -7,31 +7,40 @@ public sealed record AcquireSeedsFromViewModel(SeedAcquisitionValues Values);
 
 public abstract record AcquisitionResultFromViewModel
 {
-    public int SeedId { get; }
     private AcquisitionResultFromViewModel(int seedId) => SeedId = seedId;
+    public int SeedId { get; }
+
     public sealed record Created : AcquisitionResultFromViewModel
     {
-        public Created(int seedId) : base(seedId) { }
+        public Created(int seedId) : base(seedId)
+        {
+        }
     }
+
     public sealed record Replenished : AcquisitionResultFromViewModel
     {
-        public Replenished(int seedId) : base(seedId) { }
+        public Replenished(int seedId) : base(seedId)
+        {
+        }
     }
 }
 
 public interface ISeedAcquisitionWriter
 {
-    Task<Result<AcquisitionResultFromViewModel>> SaveAsync(SeedAcquisition acquisition, DateTime purchasedAt, CancellationToken cancellationToken);
+    Task<Result<AcquisitionResultFromViewModel>> SaveAsync(SeedAcquisition acquisition, DateTime purchasedAt,
+        CancellationToken cancellationToken);
 }
 
 public interface IAcquireSeeds
 {
-    Task<Result<AcquisitionResultFromViewModel>> ExecuteAsync(AcquireSeedsFromViewModel request, CancellationToken cancellationToken = default);
+    Task<Result<AcquisitionResultFromViewModel>> ExecuteAsync(AcquireSeedsFromViewModel request,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class AcquireSeeds(ISeedAcquisitionWriter writer, TimeProvider time) : IAcquireSeeds
 {
-    public async Task<Result<AcquisitionResultFromViewModel>> ExecuteAsync(AcquireSeedsFromViewModel request, CancellationToken cancellationToken = default)
+    public async Task<Result<AcquisitionResultFromViewModel>> ExecuteAsync(AcquireSeedsFromViewModel request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();

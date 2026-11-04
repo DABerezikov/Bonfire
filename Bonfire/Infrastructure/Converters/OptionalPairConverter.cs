@@ -19,7 +19,7 @@ public sealed class OptionalPairConverter : IMultiValueConverter
             (null, var second) => $"до {Format(second)}",
             (var first, null) when parameter as string == "x" => $"до {Format(first)}",
             (var first, null) => $"от {Format(first)}",
-            (var first, var second) => $"{Format(first)} {parameter as string ?? "-"} {Format(second)}"
+            var (first, second) => $"{Format(first)} {parameter as string ?? "-"} {Format(second)}"
         };
     }
 

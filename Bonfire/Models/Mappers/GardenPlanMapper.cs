@@ -7,8 +7,8 @@ using Bonfire.Domain.Garden.States;
 namespace Bonfire.Models.Mappers;
 
 /// <summary>
-/// Маппинг независимых снимков Application в модели UI.
-/// Чистые функции без зависимостей от ViewModel — легко тестируются.
+///     Маппинг независимых снимков Application в модели UI.
+///     Чистые функции без зависимостей от ViewModel — легко тестируются.
 /// </summary>
 internal static class GardenPlanMapper
 {
@@ -31,7 +31,8 @@ internal static class GardenPlanMapper
         var state = new PlannedState();
         var house = new GreenhouseFromViewModel
         {
-            Id = saved.Properties.Id, ContainerCanvasWidth = saved.Container.Width, ContainerCanvasHeight = saved.Container.Height,
+            Id = saved.Properties.Id, ContainerCanvasWidth = saved.Container.Width,
+            ContainerCanvasHeight = saved.Container.Height,
             StateTypeName = nameof(PlannedState), StateDisplayName = state.DisplayName, StateColor = state.StatusColor
         };
         GreenhouseEditorMapper.Apply(saved.Properties, house);
@@ -61,29 +62,46 @@ internal static class GardenPlanMapper
     public static GardenFromViewModel MapGarden(GardenReadFromViewModel snapshot)
     {
         var garden = MapGarden(snapshot.Properties);
-        garden.Elements = new(snapshot.Elements.Select(e => MapElement(e, garden.CanvasWidth, garden.CanvasHeight)));
-        garden.Greenhouses = new(snapshot.Greenhouses.Select(h => MapGreenhouse(h, garden.CanvasWidth, garden.CanvasHeight)));
-        foreach (var element in garden.Elements) { element.ContainerElements = garden.Elements; element.ContainerGreenhouses = garden.Greenhouses; }
-        foreach (var house in garden.Greenhouses) { house.ContainerElements = garden.Elements; house.ContainerGreenhouses = garden.Greenhouses; }
+        garden.Elements =
+            new ObservableCollection<GardenElementFromViewModel>(
+                snapshot.Elements.Select(e => MapElement(e, garden.CanvasWidth, garden.CanvasHeight)));
+        garden.Greenhouses = new ObservableCollection<GreenhouseFromViewModel>(
+            snapshot.Greenhouses.Select(h => MapGreenhouse(h, garden.CanvasWidth, garden.CanvasHeight)));
+        foreach (var element in garden.Elements)
+        {
+            element.ContainerElements = garden.Elements;
+            element.ContainerGreenhouses = garden.Greenhouses;
+        }
+
+        foreach (var house in garden.Greenhouses)
+        {
+            house.ContainerElements = garden.Elements;
+            house.ContainerGreenhouses = garden.Greenhouses;
+        }
+
         return garden;
     }
 
-    public static GardenElementFromViewModel MapElement(ElementReadFromViewModel snapshot, double containerW = 0, double containerH = 0)
+    public static GardenElementFromViewModel MapElement(ElementReadFromViewModel snapshot, double containerW = 0,
+        double containerH = 0)
     {
         var state = GardenElementState.From(snapshot.StateTypeName);
         var element = new GardenElementFromViewModel
         {
-            Id = snapshot.Properties.Id, ElementType = snapshot.ElementType, ContainerCanvasWidth = containerW, ContainerCanvasHeight = containerH,
+            Id = snapshot.Properties.Id, ElementType = snapshot.ElementType, ContainerCanvasWidth = containerW,
+            ContainerCanvasHeight = containerH,
             Rotation = snapshot.Rotation, IsLocked = snapshot.IsLocked, StateTypeName = snapshot.StateTypeName,
-            StateDisplayName = state.DisplayName, StateColor = state.StatusColor, CanAddPlanting = state.CanAddPlanting, CanModifyGrid = state.CanModifyGrid,
+            StateDisplayName = state.DisplayName, StateColor = state.StatusColor, CanAddPlanting = state.CanAddPlanting,
+            CanModifyGrid = state.CanModifyGrid,
             GridRows = snapshot.GridRows, GridColumns = snapshot.GridColumns, Shape = snapshot.Shape.ToNullable(),
-            PlantingSpots = new(snapshot.Spots.Select(MapSpot))
+            PlantingSpots = new ObservableCollection<PlantingSpotFromViewModel>(snapshot.Spots.Select(MapSpot))
         };
         ElementEditorMapper.Apply(snapshot.Properties, element);
         return element;
     }
 
-    public static GreenhouseFromViewModel MapGreenhouse(GreenhouseReadFromViewModel snapshot, double containerW = 0, double containerH = 0)
+    public static GreenhouseFromViewModel MapGreenhouse(GreenhouseReadFromViewModel snapshot, double containerW = 0,
+        double containerH = 0)
     {
         var state = GardenElementState.From(snapshot.StateTypeName);
         var house = new GreenhouseFromViewModel
@@ -94,8 +112,14 @@ internal static class GardenPlanMapper
         };
         GreenhouseEditorMapper.Apply(snapshot.Properties, house);
         CanvasGeometryMapper.Apply(snapshot.Rectangle, house);
-        house.InnerElements = new(snapshot.Elements.Select(e => MapElement(e, house.InnerCanvasWidth, house.InnerCanvasHeight)));
-        foreach (var element in house.InnerElements) { element.ContainerElements = house.InnerElements; element.ContainerGreenhouses = []; }
+        house.InnerElements = new ObservableCollection<GardenElementFromViewModel>(
+            snapshot.Elements.Select(e => MapElement(e, house.InnerCanvasWidth, house.InnerCanvasHeight)));
+        foreach (var element in house.InnerElements)
+        {
+            element.ContainerElements = house.InnerElements;
+            element.ContainerGreenhouses = [];
+        }
+
         return house;
     }
 }

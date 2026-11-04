@@ -6,8 +6,12 @@ namespace Bonfire.Infrastructure.Validation;
 
 public sealed class PlotDimensionRule : ValidationRule
 {
-    public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+    public override ValidationResult Validate(object? value, CultureInfo cultureInfo)
         => double.TryParse(value?.ToString(), NumberStyles.Any, cultureInfo, out var meters)
-            ? PlotDimensions.Create(meters, 0, 1).Match(_ => ValidationResult.ValidResult, error => new ValidationResult(false, error))
+            ? PlotDimensions
+                .Create(meters, 0, 1)
+                .Match(
+                    _ => ValidationResult.ValidResult,
+                error => new ValidationResult(false, error))
             : new ValidationResult(false, "Введите число");
 }

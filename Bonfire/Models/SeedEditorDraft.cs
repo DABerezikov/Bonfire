@@ -7,12 +7,6 @@ namespace Bonfire.Models;
 public sealed class SeedEditorDraft : ViewModel
 {
     private readonly SeedPackageValues _originalPackage;
-    public int Id { get; }
-    public string CultureName { get; }
-    public string SortName { get; }
-    public int OriginalProducerId { get; }
-    public SeedPackageEditModel Package { get; }
-    public bool HasPackageChanges => Package.Values != _originalPackage;
 
     public SeedEditorDraft(int id, string cultureName, string sortName, int producerId, SeedPackageValues package)
     {
@@ -28,4 +22,11 @@ public sealed class SeedEditorDraft : ViewModel
                 OnPropertyChanged(nameof(HasPackageChanges));
         };
     }
+
+    public int Id { get; }
+    public string CultureName { get; }
+    public string SortName { get; }
+    public int OriginalProducerId { get; }
+    public SeedPackageEditModel Package { get; }
+    public bool HasPackageChanges => Package.Values != _originalPackage;
 }

@@ -1,4 +1,4 @@
-using BonfireDB.Entities.GardenPlanning;
+﻿using BonfireDB.Entities.GardenPlanning;
 using BonfireDB;
 using BonfireDB.Context;
 using BonfireDB.Entities.Base;
@@ -27,17 +27,18 @@ internal sealed class SqliteUowFixture : IDisposable
     private readonly ServiceProvider _provider;
 
     public IUnitOfWorkFactory Factory { get; }
+    public Bonfire.Application.Caching.IReadModelCache Cache => _provider.GetRequiredService<Bonfire.Application.Caching.IReadModelCache>();
 
-    public GardenService CreateGardenService() => new( new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(Factory)), new EditGardenProperties(new DbGardenPropertiesWriter(Factory)), new SetGardenLock(new DbGardenLockWriter(Factory)), new DeleteGardenElement(new DbElementDeletionWriter(Factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(Factory)), new DeleteGarden(new DbGardenDeletionWriter(Factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(Factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(Factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(Factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(Factory)), new DbGardenReader(Factory));
+    public GardenService CreateGardenService() => new( new ResizeGrid(new DbGridWriter(Factory)), new ChangeGardenState(new DbGardenStateWriter(Factory)), new SaveGardenGeometry(new DbGardenGeometryWriter(Factory)), new EditElementProperties(new DbElementPropertiesWriter(Factory)), new EditGreenhouseProperties(new DbGreenhousePropertiesWriter(Factory)), new EditGardenProperties(new DbGardenPropertiesWriter(Factory)), new SetGardenLock(new DbGardenLockWriter(Factory)), new DeleteGardenElement(new DbElementDeletionWriter(Factory)), new DeleteGreenhouse(new DbGreenhouseDeletionWriter(Factory)), new DeleteGarden(new DbGardenDeletionWriter(Factory)), new DeleteGardenPlan(new DbGardenPlanDeletionWriter(Factory)), new CreateGardenPlan(new DbGardenPlanCreationWriter(Factory), TimeProvider.System), new CreateGarden(new DbGardenCreationWriter(Factory)), new CreateGardenObjects(new DbGardenObjectCreationWriter(Factory)), new DbGardenReader(Factory), Cache);
 
-    public SeedsService CreateSeedsService() => new( new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory), new DbSeedEditorOptionsReader(Factory));
+    public SeedsService CreateSeedsService() => new( new EditSeed(new DbSeedEditWriter(Factory)), new AcquireSeeds(new DbSeedAcquisitionWriter(Factory), TimeProvider.System), new DeleteSeed(new DbSeedDeletionWriter(Factory)), new BonfireDB.SeedEditing.DbSeedReader(Factory), new DbSeedEditorOptionsReader(Factory), Cache);
 
-    public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)));
+    public LibraryService CreateLibraryService() => new(new DbLibraryReader(Factory), new UpdateCulture(new DbCultureWriter(Factory)), new UpdateProducer(new DbProducerWriter(Factory)), new UpdateSort(new DbSortWriter(Factory)), new DeleteLibraryEntry(new DbLibraryEntryDeletionWriter(Factory)), Cache);
 
     public SeedlingsService CreateSeedlingsService()
     {
-        var lunar = new MoonPhase();
-        return new SeedlingsService(lunar, new SowSeeds(new DbSowingSessionFactory(Factory), new MoonPhaseCalendar(lunar)), new DeleteSeedling(new DbSeedlingDeletionWriter(Factory)), new ChangeSeedling(new DbSeedlingChangeWriter(Factory)), new EditSeedling(new DbSeedlingEditWriter(Factory), new MoonPhaseCalendar(lunar)), new DbSeedlingReader(Factory));
+        var lunar = new MoonPhaseCalendar(new AstronomyLunarPhaseCalculator());
+        return new SeedlingsService(lunar, new SowSeeds(new DbSowingSessionFactory(Factory), lunar), new DeleteSeedling(new DbSeedlingDeletionWriter(Factory)), new ChangeSeedling(new DbSeedlingChangeWriter(Factory)), new EditSeedling(new DbSeedlingEditWriter(Factory), lunar), new DbSeedlingReader(Factory), Cache);
     }
 
     public SqliteUowFixture(Action<string>? commandLog = null)

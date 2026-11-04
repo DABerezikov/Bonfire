@@ -1,14 +1,14 @@
-using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using Bonfire.ViewModels;
 
 namespace Bonfire.Views;
 
 /// <summary>
-/// Interaction logic for SeedsWindow.xaml
+///     Interaction logic for SeedsWindow.xaml
 /// </summary>
 public partial class SeedsWindow : UserControl
 {
@@ -24,6 +24,7 @@ public partial class SeedsWindow : UserControl
             if (source is T result) return result;
             source = source is Visual ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
         }
+
         return null;
     }
 
@@ -61,10 +62,8 @@ public partial class SeedsWindow : UserControl
     }
 
 
-
     private void ComboBox_OnKeyUp(object sender, KeyEventArgs e)
     {
-
         if (sender is UserControl control && e.Key == Key.Escape &&
             (DataGrid)(control.Content as Grid)?.Children[0]! != null)
         {
@@ -73,11 +72,12 @@ public partial class SeedsWindow : UserControl
                 e.Handled = true;
                 return;
             }
+
             var dataGrid = (DataGrid)(control.Content as Grid)!.Children[0];
             dataGrid.SelectedIndex = -1;
             dataGrid.UnselectAllCells();
-                   
         }
+
         if (sender is not ComboBox box || e.Key != Key.Enter) return;
         box.Focus();
         if (Keyboard.PrimaryDevice == null) return;
@@ -86,5 +86,4 @@ public partial class SeedsWindow : UserControl
             Key.Tab) { RoutedEvent = Keyboard.KeyDownEvent };
         InputManager.Current.ProcessInput(e1);
     }
-        
 }

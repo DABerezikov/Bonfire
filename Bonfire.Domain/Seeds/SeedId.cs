@@ -4,8 +4,9 @@ namespace Bonfire.Domain.Seeds;
 
 public sealed record SeedId
 {
-    public int Value { get; }
     private SeedId(int value) => Value = value;
+    public int Value { get; }
+
     public static Result<SeedId> Create(int value) => value > 0
         ? Result.Success(new SeedId(value))
         : Result.Failure<SeedId>("Некорректный идентификатор семян");

@@ -1,6 +1,6 @@
-using BonfireDB.Entities.Base;
-using Bonfire.Domain.Garden.SpotStates;
 using System.ComponentModel.DataAnnotations.Schema;
+using Bonfire.Domain.Garden.SpotStates;
+using BonfireDB.Entities.Base;
 
 namespace BonfireDB.Entities.GardenPlanning;
 
@@ -20,8 +20,11 @@ public class PlantingSpot : Entity
     // Состояние ячейки (полиморфное без enum)
     public string StateTypeName { get; set; } = nameof(EmptySpotState);
 
-    [NotMapped]
-    public PlantingSpotState State => PlantingSpotState.From(StateTypeName);
+    [NotMapped] public PlantingSpotState State => PlantingSpotState.From(StateTypeName);
+
+    public DateTime? PlantedDate { get; set; }
+    public DateTime? HarvestDate { get; set; }
+    public string? Note { get; set; }
 
     public void TransitionTo(PlantingSpotState newState)
     {
@@ -29,8 +32,4 @@ public class PlantingSpot : Entity
             state => state.GetType().Name,
             error => throw new InvalidOperationException(error));
     }
-
-    public DateTime? PlantedDate { get; set; }
-    public DateTime? HarvestDate { get; set; }
-    public string? Note { get; set; }
 }

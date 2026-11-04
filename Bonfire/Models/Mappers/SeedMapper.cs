@@ -18,5 +18,4 @@ internal static class SeedMapper
         AmountSeedsQuantity = seed.SeedsInfo.AmountSeeds,
         AmountSeedsWeight = seed.SeedsInfo.AmountSeedsWeight.ToNullable()
     };
-
 }

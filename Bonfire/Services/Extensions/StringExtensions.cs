@@ -7,7 +7,8 @@ public static class StringExtension
 {
     public static double DoubleParseAdvanced(this string strToParse, char decimalSymbol = ',')
     {
-        var tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?").Value;
+        var tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?")
+            .Value;
 
         if (tmp.Length <= 0 || !strToParse.Contains(tmp)) return 0;
 
@@ -17,12 +18,12 @@ public static class StringExtension
         tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
 
         return double.Parse(tmp);
-
     }
 
     public static decimal DecimalParseAdvanced(this string strToParse, char decimalSymbol = ',')
     {
-        var tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?").Value;
+        var tmp = Regex.Match(strToParse, @"([-]?[0-9]+)([\s])?([0-9]+)?[." + decimalSymbol + "]?([0-9 ]+)?([0-9]+)?")
+            .Value;
 
         if (tmp.Length <= 0 || !strToParse.Contains(tmp)) return 0;
 
@@ -32,6 +33,5 @@ public static class StringExtension
         tmp = tmp.Replace(",", curDecSeparator).Replace(decimalSymbol.ToString(), curDecSeparator);
 
         return decimal.Parse(tmp);
-
     }
 }

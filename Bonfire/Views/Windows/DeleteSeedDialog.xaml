@@ -12,26 +12,26 @@
         FocusManager.FocusedElement="{Binding ElementName=ReasonInput}">
     <Grid Margin="18">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding Prompt}" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding Prompt}" TextWrapping="Wrap" />
         <Label Grid.Row="1" Content="Причина удаления" Target="{Binding ElementName=ReasonInput}"
-               Margin="0,14,0,5" Padding="0"/>
+               Margin="0,14,0,5" Padding="0" />
         <TextBox x:Name="ReasonInput" Grid.Row="2"
                  Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
                  Height="85" AcceptsReturn="True" TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto"/>
+                 VerticalScrollBarVisibility="Auto" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Да, удалить" MinWidth="100" Padding="8,4"
-                    Click="ConfirmDelete_Click"/>
+                    Click="ConfirmDelete_Click" />
             <Button Content="Нет" IsCancel="True" MinWidth="80"
-                    Margin="10,0,0,0" Padding="8,4"/>
+                    Margin="10,0,0,0" Padding="8,4" />
         </StackPanel>
     </Grid>
 </Window>

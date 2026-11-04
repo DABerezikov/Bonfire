@@ -18,8 +18,6 @@ internal abstract class Command : ICommand
         }
     }
 
-    public event EventHandler? ExecutableChanged;
-
     event EventHandler? ICommand.CanExecuteChanged
     {
         add => CommandManager.RequerySuggested += value;
@@ -40,6 +38,8 @@ internal abstract class Command : ICommand
             CommandExceptionHandler.Report(ex);
         }
     }
+
+    public event EventHandler? ExecutableChanged;
 
     protected virtual bool CanExecute(object p) => true;
 

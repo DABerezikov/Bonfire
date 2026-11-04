@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Bonfire.Application.Seeds;
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
@@ -14,9 +14,11 @@ public class SeedReadingWorkflowTests
         var service = Substitute.For<ISeedsService>(); var dialog = Substitute.For<IUserDialog>();
         var options = new SeedEditorOptionsFromViewModel(["Красный"], [], []);
         service.GetEditorOptionsAsync().Returns(Result.Success(options));
+        service.ReadSeedsAsync().Returns(Result.Success(ImmutableArray.Create(original)));
         var vm = new SeedsViewModel(service, dialog, Substitute.For<IReportService>()) { Seeds = [original] };
         vm.LoadDataCommand.Execute(null); vm.SelectedItem = original; var draft = vm.EditedItem!;
         draft.Package.Note = "Правка";
+        service.OptionsVersion.Returns(1);
         service.GetEditorOptionsAsync().Returns(Result.Failure<SeedEditorOptionsFromViewModel>("Ошибка чтения вариантов"));
         vm.LoadDataCommand.Execute(null);
         Assert.Same(options, vm.EditorOptions); Assert.Same(original, vm.SelectedItem); Assert.Same(draft, vm.EditedItem);
@@ -33,7 +35,7 @@ public class SeedReadingWorkflowTests
         var library = Substitute.For<ILibraryService>();
         library.GetProducerAsync(1).Returns(Result.Success(new ProducerDetailsFromViewModel(1, "Старое")));
         library.UpdateProducerAsync(1, "Новое").Returns(Result.Success(new ProducerDetailsFromViewModel(1, "Новое")));
-        var vm = new LibraryEditorViewModel(library, dialog, seeds) { SelectedProducer = new() { Id = 1 }, ProducerDetailName = "Новое" };
+        var vm = new LibraryEditorViewModel(library, dialog, seeds, new PlanningLibrariesViewModel(Substitute.For<IPlanningService>()), Substitute.For<Bonfire.Application.Libraries.IManageSortOptions>()) { SelectedProducer = new() { Id = 1 }, ProducerDetailName = "Новое" };
         vm.SaveProducerCommand.Execute(null);
         Assert.Equal("Новое", seeds.SelectedItem!.Plant.PlantSort.Producer.Name);
         Assert.Same(seeds.Seeds[0], seeds.SelectedItem); Assert.Same(draft, seeds.EditedItem);

@@ -17,7 +17,7 @@ public partial class PlantingServiceTests : IDisposable
 
     public void Dispose() => _fx.Dispose();
 
-    private PlantingService CreateService() => new(new PlantInSpot(new DbPlantingWriter(_fx.Factory), new MoonPhaseCalendar(new MoonPhase())));
+    private PlantingService CreateService() => new(new PlantInSpot(new DbPlantingWriter(_fx.Factory), new MoonPhaseCalendar(new Bonfire.Infrastructure.AstronomyLunarPhaseCalculator())));
 
     private static readonly DateTime PlantedDate = new(2026, 5, 1);
 

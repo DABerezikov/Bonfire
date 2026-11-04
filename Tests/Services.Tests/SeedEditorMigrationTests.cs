@@ -54,8 +54,9 @@ public class SeedEditorMigrationTests
         var options = new DbContextOptionsBuilder<DbBonfire>().UseSqlite(connection).Options;
         await using var db = new DbBonfire(options);
         var migrations = db.Database.GetMigrations().ToArray();
-        Assert.EndsWith("AddFruitSize", migrations[^1]);
-        var previous = migrations[^2];
+        var fruitSizeMigration = Array.FindIndex(migrations, migration => migration.EndsWith("AddFruitSize", StringComparison.Ordinal));
+        Assert.True(fruitSizeMigration > 0);
+        var previous = migrations[fruitSizeMigration - 1];
         var migrator = db.GetService<IMigrator>();
         await migrator.MigrateAsync(previous);
         await db.Database.ExecuteSqlRawAsync("INSERT INTO Producers (Name) VALUES ('Фирма')");

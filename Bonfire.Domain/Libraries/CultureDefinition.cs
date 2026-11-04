@@ -4,12 +4,12 @@ namespace Bonfire.Domain.Libraries;
 
 public sealed class CultureDefinition
 {
+    private CultureDefinition(CultureId id, LibraryName name, string plantClass)
+        => (Id, Name, Class) = (id, name, plantClass);
+
     public CultureId Id { get; }
     public LibraryName Name { get; }
     public string Class { get; }
-
-    private CultureDefinition(CultureId id, LibraryName name, string plantClass)
-        => (Id, Name, Class) = (id, name, plantClass);
 
     public static Result<CultureDefinition> Create(int id, string name, string plantClass)
         => CultureId.Create(id).Bind(identity => LibraryName.Create(name).Bind(validName =>

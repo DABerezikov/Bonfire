@@ -1,6 +1,6 @@
 using System;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Models;
@@ -27,10 +27,11 @@ public sealed record PlantRequest(
     string? PlantPlace);
 
 /// <summary>
-/// Бизнес-операция «посадить в ячейку»: списание инвентаря (рассада/семена),
-/// создание записи о рассаде и перевод ячейки в состояние «Посажено».
+///     Бизнес-операция «посадить в ячейку»: списание инвентаря (рассада/семена),
+///     создание записи о рассаде и перевод ячейки в состояние «Посажено».
 /// </summary>
 public interface IPlantingService
 {
-    Task<Result<PlantingResultFromViewModel>> PlantAsync(PlantRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PlantingResultFromViewModel>> PlantAsync(PlantRequest request,
+        CancellationToken cancellationToken = default);
 }

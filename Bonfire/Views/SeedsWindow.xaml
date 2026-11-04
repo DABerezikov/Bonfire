@@ -1,5 +1,6 @@
 ﻿<UserControl x:Class="Bonfire.Views.SeedsWindow"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:input="clr-namespace:Bonfire.Infrastructure.Behaviors"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="d" 
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
@@ -179,7 +180,7 @@
 
         <ComboBox  Grid.Row="0" Grid.Column="2" Margin="210,5,0,5" Style="{StaticResource SeedsChoiceComboBoxStyle}"
                    Text="{Binding SeedFilter, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding ListCulture}"
-                   IsEditable="True" />
+                   IsEditable="True" input:SuggestionInput.Enabled="True" />
 
         <CheckBox Grid.Row="0" Grid.Column="2" Margin="530,14,0,8" HorizontalAlignment="Left" IsChecked="{Binding IsHaving}"  />
         <TextBlock Grid.Row="0" Grid.Column="2"  Margin="560,0,0,0" Style="{StaticResource SeedsTextBlockStyle}"
@@ -194,6 +195,7 @@
 
 
 
+        <TextBlock Grid.Row="3" Grid.Column="2" Margin="0,178,0,0" Text="{Binding AcquisitionSelectionHint}" Foreground="DarkOrange" VerticalAlignment="Top"/>
         <TextBlock Margin="318,5,0,0" Grid.Row="3" Grid.Column="2" Style="{StaticResource SeedsTextBlockStyle}"
                    TextWrapping="Wrap" Text="Добавление семян" Width="200" FontSize="18" FontWeight="Bold" Height="30"/>
         <RadioButton Grid.Row="3" Grid.Column="0" Margin="20, 55, 0, 0" Style="{StaticResource SeedsRadioButtonStyle}"
@@ -210,19 +212,20 @@
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="154,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Культура" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="160,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddCultureList}" 
+                   VerticalAlignment="Top" IsEditable="True" input:SuggestionInput.Enabled="True" ItemsSource="{Binding CultureListView}"
                    Text="{Binding AddCulture, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
 
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="334,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Сорт" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="340,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-                   VerticalAlignment="Top" IsEditable="True" ItemsSource="{Binding AddSortList}"
-                   Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" KeyUp="ComboBox_OnKeyUp"/>
+                   VerticalAlignment="Top" IsEditable="True" input:SuggestionInput.Enabled="True" input:OverflowTextScroll.Enabled="True"
+                   ToolTip="{Binding AddSort}" ItemsSource="{Binding SortListView}"
+                   Text="{Binding AddSort, UpdateSourceTrigger=PropertyChanged }" IsSynchronizedWithCurrentItem="False" KeyUp="ComboBox_OnKeyUp"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="520,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                    Text="Производитель" />
         <ComboBox Grid.Row="3" Grid.Column="2" Margin="520,70,0,0" Style="{StaticResource SeedsComboBoxStyle}"
-                   VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True" KeyUp="ComboBox_OnKeyUp"
-                   ItemsSource="{Binding AddProducerList}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }"/>
+                   VerticalAlignment="Top" IsReadOnly="{Binding IsCollected}" IsEditable="True" input:SuggestionInput.Enabled="True" KeyUp="ComboBox_OnKeyUp"
+                   ItemsSource="{Binding ProducerListView}" Text="{Binding AddProducer, UpdateSourceTrigger=PropertyChanged }" IsSynchronizedWithCurrentItem="False"/>
         <TextBlock Grid.Row="3" Grid.Column="2" Margin="704,40,0,0" Style="{StaticResource SeedsTextBlockStyle}"
                                Width="190" Text="Примечание" />
         <TextBox Grid.Row="3" Grid.Column="2" Margin="704,70,0,0" Style="{StaticResource SeedsTextBoxStyle}"
@@ -286,7 +289,7 @@
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 150, 20, 0" VerticalAlignment="Top"
                    Text="{Binding SelectedItem.SeedsInfo.CostPack}" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="25, 170, 20, 0" VerticalAlignment="Top" 
-                   Text="Дата покупки - " TextAlignment="Left"  FontWeight="DemiBold" />
+                   Text="Дата поступления - " TextAlignment="Left"  FontWeight="DemiBold" />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" HorizontalAlignment="Left" Margin="150, 170, 20, 0" VerticalAlignment="Top"
                    Text="{Binding SelectedItem.SeedsInfo.PurchaseDate, StringFormat=dd.MM.yyyy }" TextAlignment="Left"  />
         <TextBlock Grid.Column="3" Grid.Row="1" Height="30" Width="140" HorizontalAlignment="Left" Margin="240, 65, 20, 0" VerticalAlignment="Top" 

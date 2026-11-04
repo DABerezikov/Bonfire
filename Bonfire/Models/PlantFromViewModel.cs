@@ -11,5 +11,4 @@ public class PlantFromViewModel
     public DateTime ExpirationDate { get; set; }
 
     public override string ToString() => Producer + " " + ExpirationDate.Year;
-    
 }

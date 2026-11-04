@@ -3,7 +3,7 @@
 public class NamedEntity : Entity
 {
     /// <summary>
-    /// Имя/название
+    ///     Имя/название
     /// </summary>
     public string Name { get; set; } = string.Empty;
 }

@@ -9,7 +9,8 @@ namespace BonfireDB.Libraries;
 
 public sealed class DbProducerWriter(IUnitOfWorkFactory units) : IProducerWriter
 {
-    public async Task<Result<ProducerDetailsFromViewModel>> SaveAsync(ProducerDefinition producer, CancellationToken cancellationToken)
+    public async Task<Result<ProducerDetailsFromViewModel>> SaveAsync(ProducerDefinition producer,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(producer);
         await using var unit = units.Create();
@@ -31,7 +32,8 @@ public sealed class DbProducerWriter(IUnitOfWorkFactory units) : IProducerWriter
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<ProducerDetailsFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<ProducerDetailsFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

@@ -4,7 +4,9 @@ namespace Bonfire.Domain.Garden.SpotStates;
 
 public abstract class PlantingSpotState
 {
-    private protected PlantingSpotState() { }
+    private protected PlantingSpotState()
+    {
+    }
 
     public abstract string DisplayName { get; }
     public abstract string CellColor { get; }
@@ -27,11 +29,11 @@ public abstract class PlantingSpotState
 
     public static PlantingSpotState From(string typeName) => typeName switch
     {
-        nameof(EmptySpotState)     => new EmptySpotState(),
-        nameof(ReservedSpotState)  => new ReservedSpotState(),
-        nameof(PlantedSpotState)   => new PlantedSpotState(),
+        nameof(EmptySpotState) => new EmptySpotState(),
+        nameof(ReservedSpotState) => new ReservedSpotState(),
+        nameof(PlantedSpotState) => new PlantedSpotState(),
         nameof(HarvestedSpotState) => new HarvestedSpotState(),
-        nameof(DeadSpotState)      => new DeadSpotState(),
-        _                          => new EmptySpotState()
+        nameof(DeadSpotState) => new DeadSpotState(),
+        _ => new EmptySpotState()
     };
 }

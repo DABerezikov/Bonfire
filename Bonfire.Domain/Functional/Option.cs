@@ -4,21 +4,8 @@ namespace Bonfire.Domain.Functional;
 
 public abstract record Option<T>
 {
-    private Option() { }
-
-    public sealed record Some : Option<T>
+    private Option()
     {
-        public T Value { get; }
-        internal Some(T value)
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            Value = value;
-        }
-    }
-
-    public sealed record None : Option<T>
-    {
-        internal None() { }
     }
 
     public TResult Match<TResult>(Func<T, TResult> present, Func<TResult> absent)
@@ -31,6 +18,24 @@ public abstract record Option<T>
             None => absent(),
             _ => throw new UnreachableException()
         };
+    }
+
+    public sealed record Some : Option<T>
+    {
+        internal Some(T value)
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            Value = value;
+        }
+
+        public T Value { get; }
+    }
+
+    public sealed record None : Option<T>
+    {
+        internal None()
+        {
+        }
     }
 }
 

@@ -1,0 +1,110 @@
+﻿<UserControl x:Class="Bonfire.Views.Planning.GrowingProfileEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:p="clr-namespace:Bonfire.Models.Planning"
+             xmlns:local="clr-namespace:Bonfire.Views.Planning">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="PlanningStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel>
+        <Grid Visibility="{Binding ShowRanges, Converter={StaticResource PlanningBoolVisibility}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="170" /><ColumnDefinition /><ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Column="1" Text="От, дней" /><TextBlock Grid.Column="2" Text="До, дней" />
+            <TextBlock Grid.Row="1" Text="{Binding GerminationLabel}" Style="{StaticResource PlanningLabel}" />
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding GermMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBox Grid.Row="1" Grid.Column="2"
+                     Text="{Binding GermMaxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBlock Grid.Row="2" Text="{Binding SeedlingAgeLabel}" Style="{StaticResource PlanningLabel}"
+                       Visibility="{Binding ShowSeedlingFields, Converter={StaticResource PlanningBoolVisibility}}" />
+            <TextBox Grid.Row="2" Grid.Column="1"
+                     Text="{Binding AgeMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                     Visibility="{Binding ShowSeedlingFields, Converter={StaticResource PlanningBoolVisibility}}" />
+            <TextBox Grid.Row="2" Grid.Column="2"
+                     Text="{Binding AgeMaxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                     Visibility="{Binding ShowSeedlingFields, Converter={StaticResource PlanningBoolVisibility}}" />
+            <TextBlock Grid.Row="3" Text="Вегетация от всходов" Style="{StaticResource PlanningLabel}" />
+            <TextBox Grid.Row="3" Grid.Column="1"
+                     Text="{Binding VegetationMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBox Grid.Row="3" Grid.Column="2"
+                     Text="{Binding VegetationMaxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+        </Grid>
+        <Grid Visibility="{Binding ShowSeedlingFields, Converter={StaticResource PlanningBoolVisibility}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="170" /><ColumnDefinition /><ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Пикировка" Style="{StaticResource PlanningLabel}" />
+            <ComboBox Grid.Column="1" Grid.ColumnSpan="2" ItemsSource="{x:Static p:PlanningLookups.Operations}"
+                      SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding PrickingMode}" />
+            <TextBlock Grid.Row="1" Text="{Binding PrickingRangeRule.Caption}" Style="{StaticResource PlanningLabel}" />
+            <TextBox Grid.Row="1" Grid.Column="1" IsEnabled="{Binding PrickingEnabled}"
+                     Text="{Binding PrickingMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBox Grid.Row="1" Grid.Column="2" IsEnabled="{Binding PrickingEnabled}"
+                     Text="{Binding PrickingMaxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBlock Grid.Row="2" Text="Закаливание" Style="{StaticResource PlanningLabel}" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                      ItemsSource="{x:Static p:PlanningLookups.Operations}" SelectedValuePath="Value"
+                      DisplayMemberPath="Label" SelectedValue="{Binding HardeningMode}" />
+            <TextBlock Grid.Row="3" Text="{Binding HardeningRangeRule.Caption}" Style="{StaticResource PlanningLabel}" />
+            <TextBox Grid.Row="3" Grid.Column="1" IsEnabled="{Binding HardeningEnabled}"
+                     Text="{Binding HardeningMinText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBox Grid.Row="3" Grid.Column="2" IsEnabled="{Binding HardeningEnabled}"
+                     Text="{Binding HardeningMaxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+        </Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="170" /><ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="{Binding GerminationPercentLabel}" Style="{StaticResource PlanningLabel}" />
+            <TextBox Grid.Column="1"
+                     Text="{Binding GermPercentText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBlock Grid.Row="1" Text="{Binding LossPercentLabel}" Style="{StaticResource PlanningLabel}" />
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding LossPercentText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBlock Grid.Row="2" Text="Лунная группа" Style="{StaticResource PlanningLabel}" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{x:Static p:PlanningLookups.LunarGroups}"
+                      SelectedValuePath="Value" DisplayMemberPath="Label" SelectedValue="{Binding LunarMode}" />
+            <TextBlock Grid.Row="3" Text="Температура почвы, °C (справочно)" Style="{StaticResource PlanningLabel}"
+                       Visibility="{Binding ShowSoilTemperature, Converter={StaticResource PlanningBoolVisibility}}" />
+            <TextBox Grid.Row="3" Grid.Column="1"
+                     Text="{Binding SoilTemperatureText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                     Visibility="{Binding ShowSoilTemperature, Converter={StaticResource PlanningBoolVisibility}}" />
+        </Grid>
+        <StackPanel Visibility="{Binding ShowSoilTemperature, Converter={StaticResource PlanningBoolVisibility}}">
+            <TextBlock Text="Независимые нормы урожайности, кг/растение и кг/м²" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition /><ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBox
+                    Text="{Binding YieldPerPlantText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Column="1"
+                         Text="{Binding YieldPerM2Text, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </Grid>
+            <TextBlock
+                Text="Пусто — наследование/неизвестно. Прежнее поле урожайности не переносится без указания базы."
+                TextWrapping="Wrap" />
+        </StackPanel>
+        <Expander Header="Жизненный цикл, цветение и плодоношение" Margin="0,6">
+            <local:LifeCycleEditor DataContext="{Binding LifeCycle}" />
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -1,4 +1,4 @@
-using Bonfire.Domain.Libraries;
+﻿using Bonfire.Domain.Libraries;
 
 namespace Models.Tests;
 
@@ -32,10 +32,10 @@ public class CultureDefinitionTests
     }
 
     [Fact]
-    public void Create_NonemptyLegacyText_PreservesWhitespaceAndCustomClass()
+    public void Create_NonemptyLegacyText_NormalizesNameAndPreservesCustomClass()
     {
         var culture = CultureDefinition.Create(1, " Томат ", "Особый класс").ValueOrThrow();
-        Assert.Equal(" Томат ", culture.Name.Value);
+        Assert.Equal("Томат", culture.Name.Value);
         Assert.Equal("Особый класс", culture.Class);
     }
 

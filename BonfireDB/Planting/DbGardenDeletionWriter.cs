@@ -9,7 +9,8 @@ namespace BonfireDB.Planting;
 
 public sealed class DbGardenDeletionWriter(IUnitOfWorkFactory units) : IGardenDeletionWriter
 {
-    public async Task<Result<GardenDeletionResultFromViewModel>> DeleteAsync(GardenId id, CancellationToken cancellationToken)
+    public async Task<Result<GardenDeletionResultFromViewModel>> DeleteAsync(GardenId id,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
         cancellationToken.ThrowIfCancellationRequested();
@@ -33,7 +34,8 @@ public sealed class DbGardenDeletionWriter(IUnitOfWorkFactory units) : IGardenDe
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<GardenDeletionResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<GardenDeletionResultFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

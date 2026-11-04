@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Services.Tests;
 
@@ -40,15 +40,15 @@ public class ProducerEditingIntegrationTests : IDisposable
 
         var result = await _fixture.CreateLibraryService().UpdateProducerAsync(id, " Новая фирма ");
 
-        Assert.Equal(" Новая фирма ", result.ValueOrThrow().Name);
+        Assert.Equal("Новая фирма", result.ValueOrThrow().Name);
         var seed = await _fixture.QueryAsync(db => db.Seeds.Include(s => s.SeedsInfo)
             .Include(s => s.Plant).ThenInclude(p => p.PlantCulture)
             .Include(s => s.Plant).ThenInclude(p => p.PlantSort).ThenInclude(s => s.Producer).SingleAsync());
         var seedling = await _fixture.QueryAsync(db => db.Seedlings
             .Include(s => s.Plant).ThenInclude(p => p.PlantSort).ThenInclude(s => s.Producer).SingleAsync());
         Assert.Equal(id, seed.Plant.PlantSort.Producer.Id);
-        Assert.Equal(" Новая фирма ", seed.Plant.PlantSort.Producer.Name);
-        Assert.Equal(" Новая фирма ", seedling.Plant.PlantSort.Producer.Name);
+        Assert.Equal("Новая фирма", seed.Plant.PlantSort.Producer.Name);
+        Assert.Equal("Новая фирма", seedling.Plant.PlantSort.Producer.Name);
         Assert.Equal("Томат", seed.Plant.PlantCulture.Name);
         Assert.Equal("Сорт", seed.Plant.PlantSort.Name);
         Assert.Equal(8, seed.SeedsInfo.AmountSeeds);

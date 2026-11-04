@@ -1,4 +1,4 @@
-using Bonfire.Domain.Functional;
+﻿using Bonfire.Domain.Functional;
 using Bonfire.Domain.Libraries;
 
 namespace Bonfire.Domain.Seeds;
@@ -27,14 +27,19 @@ public sealed record SortCharacteristicsValues
 
 public sealed class SortCharacteristics
 {
+    private SortCharacteristics(LibraryName name, SortCharacteristicsValues values) => (Name, Values) = (name, values);
     public LibraryName Name { get; }
     public SortCharacteristicsValues Values { get; }
-    private SortCharacteristics(LibraryName name, SortCharacteristicsValues values) => (Name, Values) = (name, values);
+
     public static Result<SortCharacteristics> Create(string name, SortCharacteristicsValues values)
     {
         ArgumentNullException.ThrowIfNull(values);
         return LibraryName.Create(name).Bind(validName => IsValid(values)
-            ? Result.Success(new SortCharacteristics(validName, values))
+            ? Result.Success(new SortCharacteristics(validName, values with
+            {
+                PlantColor = values.PlantColor.Map(LibraryName.NormalizeWhitespace),
+                Maturity = values.Maturity.Map(LibraryName.NormalizeWhitespace)
+            }))
             : Result.Failure<SortCharacteristics>("Исправьте отрицательные значения и диапазоны характеристик сорта"));
     }
 
@@ -54,8 +59,9 @@ public sealed class SortCharacteristics
 
     private static bool ValidRange(Option<double> min, Option<double> max)
         => min.Match(value => double.IsFinite(value) && value >= 0
-                && max.Match(upper => value <= upper, () => true), () => true)
-            && max.Match(value => double.IsFinite(value) && value >= 0, () => true);
+                                                     && max.Match(upper => value <= upper, () => true), () => true)
+           && max.Match(value => double.IsFinite(value) && value >= 0, () => true);
 
-    public Result<SortCharacteristics> WithDetails(string name, SortCharacteristicsValues values) => Create(name, values);
+    public Result<SortCharacteristics> WithDetails(string name, SortCharacteristicsValues values) =>
+        Create(name, values);
 }

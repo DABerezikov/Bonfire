@@ -1,4 +1,4 @@
-using Bonfire.Domain.Functional;
+﻿using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 
 namespace Models.Tests;
@@ -68,17 +68,17 @@ public class SeedEditingModelsTests
         => Assert.True(SortCharacteristics.Create(name!, new()).IsFailure);
 
     [Fact]
-    public void Characteristics_WithDetails_PreservesTextOptionalBoundsAndOriginal()
+    public void Characteristics_WithDetails_NormalizesNamesAndPreservesOptionalBoundsAndOriginal()
     {
         var original = SortCharacteristics.Create(" Сорт ", new()
             { MaxPlantHeight = Option.Some(0), PlantColor = Option.Some(" Полосатый ") }).ValueOrThrow();
         var changed = original.WithDetails("Новый", original.Values with { Description = Option.Some("") }).ValueOrThrow();
         Assert.NotSame(original, changed);
-        Assert.Equal(" Сорт ", original.Name.Value);
+        Assert.Equal("Сорт", original.Name.Value);
         Assert.Equal("Новый", changed.Name.Value);
         Assert.IsType<Option<string>.None>(original.Values.Description);
         Assert.Equal("", Assert.IsType<Option<string>.Some>(changed.Values.Description).Value);
-        Assert.Equal(" Полосатый ", Assert.IsType<Option<string>.Some>(changed.Values.PlantColor).Value);
+        Assert.Equal("Полосатый", Assert.IsType<Option<string>.Some>(changed.Values.PlantColor).Value);
         Assert.IsType<Option<int>.None>(changed.Values.PlantHeight);
         Assert.Equal(0, Assert.IsType<Option<int>.Some>(changed.Values.MaxPlantHeight).Value);
         Assert.True(original.WithDetails("", original.Values).IsFailure);

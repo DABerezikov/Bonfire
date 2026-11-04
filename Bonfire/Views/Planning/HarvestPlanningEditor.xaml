@@ -1,0 +1,70 @@
+﻿<UserControl x:Class="Bonfire.Views.Planning.HarvestPlanningEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary Source="PlanningStyles.xaml" />
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock Text="{Binding ModeHint}" TextWrapping="Wrap" Margin="0,0,0,6" /><TextBlock Text="{Binding BedSource}" />
+        <CheckBox Content="{Binding FieldRules[UseLayout].Caption}" IsChecked="{Binding UseLayout}" />
+        <StackPanel Visibility="{Binding UseLayout, Converter={StaticResource PlanningBoolVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition /><ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="{Binding FieldRules[Length].Caption}" /><TextBlock Grid.Column="1" Text="{Binding FieldRules[Width].Caption}" />
+                <TextBox Grid.Row="1"
+                         Text="{Binding Length, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="1" Grid.Column="1"
+                         Text="{Binding Width, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBlock Grid.Row="2" Text="{Binding FieldRules[PlantStep].Caption}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FieldRules[RowStep].Caption}" />
+                <TextBox Grid.Row="3"
+                         Text="{Binding PlantStep, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="3" Grid.Column="1"
+                         Text="{Binding RowStep, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBlock Grid.Row="4" Text="{Binding FieldRules[StartMargin].Caption}" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding FieldRules[EndMargin].Caption}" />
+                <TextBox Grid.Row="5"
+                         Text="{Binding StartMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="5" Grid.Column="1"
+                         Text="{Binding EndMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBlock Grid.Row="6" Text="{Binding FieldRules[LeftMargin].Caption}" />
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FieldRules[RightMargin].Caption}" />
+                <TextBox Grid.Row="7"
+                         Text="{Binding LeftMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Row="7" Grid.Column="1"
+                         Text="{Binding RightMargin, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </Grid>
+            <CheckBox Content="Ряды вдоль ширины" IsChecked="{Binding RowsAcross}" />
+        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition /><ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="{Binding PerPlantLabel}" /><TextBlock Grid.Column="1" Text="{Binding PerM2Label}" />
+            <TextBox Grid.Row="1"
+                     Text="{Binding PerPlantKg, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding PerM2Kg, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBlock Grid.Row="2" Text="{Binding TargetLabel}" />
+            <TextBlock Grid.Row="2" Grid.Column="1" Text="Выделено под урожай, м²" />
+            <TextBox Grid.Row="3"
+                     Text="{Binding TargetKg, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            <TextBox Grid.Row="3" Grid.Column="1"
+                     Text="{Binding YieldAreaM2, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+        </Grid>
+        <TextBlock
+            Text="Пустые нормы наследуются из сорта/культуры. Площадь урожая задаётся явно с учётом проходов. Для цели на м² число растений оценивается по схеме."
+            TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

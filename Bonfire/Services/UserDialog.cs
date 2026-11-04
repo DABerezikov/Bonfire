@@ -1,31 +1,18 @@
-using Bonfire.Services.Interfaces;
-using Microsoft.Win32;
-using System.IO;
-using System.Windows;
 using System;
+using System.IO;
 using System.Linq;
-using Bonfire.ViewModels;
-using Bonfire.Views.Windows;
+using System.Windows;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
+using Bonfire.Services.Interfaces;
+using Bonfire.ViewModels;
+using Bonfire.Views.Windows;
+using Microsoft.Win32;
 
 namespace Bonfire.Services;
 
 public class UserDialog : IUserDialog
 {
-    public virtual Option<SeedlingRemoval> RequestSeedlingRemoval(string sortName)
-    {
-        var model = new DeleteSeedlingDialogViewModel(sortName);
-        var dialog = new DeleteSeedlingDialog { DataContext = model, Owner = CurrentWindow };
-        return dialog.ShowDialog() == true ? model.Choice : Option.None<SeedlingRemoval>();
-    }
-    public virtual string? RequestDeleteReason(string sortName, string? previousReason = null)
-    {
-        var model = new DeleteSeedDialogViewModel(sortName, previousReason);
-        var dialog = new DeleteSeedDialog { DataContext = model, Owner = CurrentWindow };
-        return dialog.ShowDialog() == true ? model.Reason : null;
-    }
-
     /// <summary>Активное окно приложения</summary>
     protected static Window? ActiveWindow =>
         System.Windows.Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
@@ -36,6 +23,20 @@ public class UserDialog : IUserDialog
 
     /// <summary>Текущее окно приложения</summary>
     protected static Window? CurrentWindow => FocusedWindow ?? ActiveWindow;
+
+    public virtual Option<SeedlingRemoval> RequestSeedlingRemoval(string sortName)
+    {
+        var model = new DeleteSeedlingDialogViewModel(sortName);
+        var dialog = new DeleteSeedlingDialog { DataContext = model, Owner = CurrentWindow };
+        return dialog.ShowDialog() == true ? model.Choice : Option.None<SeedlingRemoval>();
+    }
+
+    public virtual string? RequestDeleteReason(string sortName, string? previousReason = null)
+    {
+        var model = new DeleteSeedDialogViewModel(sortName, previousReason);
+        var dialog = new DeleteSeedDialog { DataContext = model, Owner = CurrentWindow };
+        return dialog.ShowDialog() == true ? model.Reason : null;
+    }
 
 
     /// <summary>Открыть диалога выбора файла для чтения</summary>
@@ -52,16 +53,16 @@ public class UserDialog : IUserDialog
         {
             Title = title,
             RestoreDirectory = true,
-            Filter = filter ?? throw new ArgumentNullException(nameof(filter)),
+            Filter = filter ?? throw new ArgumentNullException(nameof(filter))
         };
         if (defaultFilePath is { Length: > 0 })
             dialog.FileName = defaultFilePath;
 
         return dialog.ShowDialog(CurrentWindow) == true
-            ? new(dialog.FileName)
+            ? new FileInfo(dialog.FileName)
             : defaultFilePath is null
                 ? null
-                : new(defaultFilePath);
+                : new FileInfo(defaultFilePath);
     }
 
     /// <summary>Открыть диалога выбора файла для записи</summary>
@@ -76,16 +77,16 @@ public class UserDialog : IUserDialog
         {
             Title = title,
             RestoreDirectory = true,
-            Filter = filter ?? throw new ArgumentNullException(nameof(filter)),
+            Filter = filter ?? throw new ArgumentNullException(nameof(filter))
         };
         if (defaultFilePath is { Length: > 0 })
             dialog.FileName = defaultFilePath;
 
         return dialog.ShowDialog(CurrentWindow) == true
-            ? new(dialog.FileName)
+            ? new FileInfo(dialog.FileName)
             : defaultFilePath is null
                 ? null
-                : new(defaultFilePath);
+                : new FileInfo(defaultFilePath);
     }
 
     /// <summary>Диалог с текстовым вопросом и вариантами выбора Yes/No</summary>
@@ -161,6 +162,4 @@ public class UserDialog : IUserDialog
     //    var window = new EditParcelWindow { DataContext = viewModel };
     //    var result = window.ShowDialog();
     //    return result ?? false;
-
-
 }

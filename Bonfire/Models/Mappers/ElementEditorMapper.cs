@@ -8,8 +8,10 @@ internal static class ElementEditorMapper
 {
     public static ElementEditorDraft Open(GardenElementFromViewModel element) => new(element.Id, Read(element));
 
-    public static ElementEditorValues Read(GardenElementFromViewModel element) => new(new(element.Name, element.Note.ToOption(), element.SoilType.ToOption(), element.Orientation.ToOption(), element.CoverMaterial.ToOption()),
-            element.X, element.Y, element.Width, element.Height);
+    public static ElementEditorValues Read(GardenElementFromViewModel element) => new(
+        new ElementDetailsValues(element.Name, element.Note.ToOption(), element.SoilType.ToOption(),
+            element.Orientation.ToOption(), element.CoverMaterial.ToOption()),
+        element.X, element.Y, element.Width, element.Height);
 
     public static ElementEditorValues Values(ElementPropertiesResultFromViewModel saved)
         => new(saved.Details, saved.Rectangle.X, saved.Rectangle.Y, saved.Rectangle.Width, saved.Rectangle.Height);

@@ -12,7 +12,7 @@ namespace Bonfire;
 public class Program
 {
     [STAThread]
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         var app = new App();
         try
@@ -23,7 +23,10 @@ public class Program
         finally
         {
             // Резервная очистка на границе процесса, когда цикл Dispatcher уже завершён.
-            try { app.CompleteExitAsync().GetAwaiter().GetResult(); }
+            try
+            {
+                app.CompleteExitAsync().GetAwaiter().GetResult();
+            }
             catch (Exception error)
             {
                 Console.Error.WriteLine(error);
@@ -35,7 +38,7 @@ public class Program
     public static IHostBuilder CreateHostBuilder(string[] args) => Host
         .CreateDefaultBuilder(args)
         .ConfigureAppConfiguration(configuration => configuration.AddJsonFile(
-            Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true, reloadOnChange: true))
+            Path.Combine(AppContext.BaseDirectory, "appsettings.json"), true, true))
         .UseDefaultServiceProvider((_, options) =>
         {
             options.ValidateScopes = true;

@@ -9,5 +9,9 @@ internal static class ViewModelRegister
         .AddSingleton<SeedsViewModel>()
         .AddSingleton<SeedlingsViewModel>()
         .AddSingleton<LibraryEditorViewModel>()
-        .AddSingleton<GardenPlanViewModel>();
+        .AddSingleton<GardenPlanViewModel>()
+        .AddSingleton<PlanningLibrariesViewModel>()
+        .AddSingleton<HarvestJournalViewModel>()
+        .AddSingleton<PerennialPlanningViewModel>()
+        .AddSingleton<PlantingPlanningViewModel>();
 }

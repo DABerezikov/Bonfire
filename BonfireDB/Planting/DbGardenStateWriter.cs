@@ -1,30 +1,35 @@
+using System.Diagnostics;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden;
+using Bonfire.Domain.Garden.States;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
-using Bonfire.Domain.Garden.States;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonfireDB.Planting;
 
 public sealed class DbGardenStateWriter(IUnitOfWorkFactory units) : IGardenStateWriter
 {
-    public async Task<Result<GardenStateResultFromViewModel>> ApplyAsync(GardenStateChange change, CancellationToken cancellationToken)
+    public async Task<Result<GardenStateResultFromViewModel>> ApplyAsync(GardenStateChange change,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(change);
         cancellationToken.ThrowIfCancellationRequested();
         await using var unit = units.Create();
         return await (change.Target switch
         {
-            StateChangeTarget.Element element => ChangeElementAsync(unit, change.EntityId, element.State, cancellationToken),
-            StateChangeTarget.Greenhouse greenhouse => ChangeGreenhouseAsync(unit, change.EntityId, greenhouse.State, cancellationToken),
+            StateChangeTarget.Element element => ChangeElementAsync(unit, change.EntityId, element.State,
+                cancellationToken),
+            StateChangeTarget.Greenhouse greenhouse => ChangeGreenhouseAsync(unit, change.EntityId, greenhouse.State,
+                cancellationToken),
             StateChangeTarget.Spot spot => ChangeSpotAsync(unit, change.EntityId, spot.Change, cancellationToken),
-            _ => throw new System.Diagnostics.UnreachableException()
+            _ => throw new UnreachableException()
         }).ConfigureAwait(false);
     }
 
-    private static async Task<Result<GardenStateResultFromViewModel>> ChangeElementAsync(IUnitOfWork unit, int id, GardenElementState target, CancellationToken token)
+    private static async Task<Result<GardenStateResultFromViewModel>> ChangeElementAsync(IUnitOfWork unit, int id,
+        GardenElementState target, CancellationToken token)
     {
         var element = await unit.Repository<GardenElement>().GetAsync(id, token).ConfigureAwait(false);
         if (element is null) return Result.Failure<GardenStateResultFromViewModel>("Элемент уже удалён");
@@ -35,7 +40,8 @@ public sealed class DbGardenStateWriter(IUnitOfWorkFactory units) : IGardenState
         }, error => Task.FromResult(Result.Failure<GardenStateResultFromViewModel>(error))).ConfigureAwait(false);
     }
 
-    private static async Task<Result<GardenStateResultFromViewModel>> ChangeGreenhouseAsync(IUnitOfWork unit, int id, GardenElementState target, CancellationToken token)
+    private static async Task<Result<GardenStateResultFromViewModel>> ChangeGreenhouseAsync(IUnitOfWork unit, int id,
+        GardenElementState target, CancellationToken token)
     {
         var greenhouse = await unit.Repository<Greenhouse>().GetAsync(id, token).ConfigureAwait(false);
         if (greenhouse is null) return Result.Failure<GardenStateResultFromViewModel>("Теплица уже удалена");
@@ -46,7 +52,8 @@ public sealed class DbGardenStateWriter(IUnitOfWorkFactory units) : IGardenState
         }, error => Task.FromResult(Result.Failure<GardenStateResultFromViewModel>(error))).ConfigureAwait(false);
     }
 
-    private static async Task<Result<GardenStateResultFromViewModel>> ChangeSpotAsync(IUnitOfWork unit, int id, SpotChange change, CancellationToken token)
+    private static async Task<Result<GardenStateResultFromViewModel>> ChangeSpotAsync(IUnitOfWork unit, int id,
+        SpotChange change, CancellationToken token)
     {
         var spot = await unit.Repository<PlantingSpot>().GetAsync(id, token).ConfigureAwait(false);
         if (spot is null) return Result.Failure<GardenStateResultFromViewModel>("Ячейка уже удалена");
@@ -57,7 +64,8 @@ public sealed class DbGardenStateWriter(IUnitOfWorkFactory units) : IGardenState
         }, error => Task.FromResult(Result.Failure<GardenStateResultFromViewModel>(error))).ConfigureAwait(false);
     }
 
-    private static async Task<Result<GardenStateResultFromViewModel>> SaveAsync(IUnitOfWork unit, Func<GardenStateResultFromViewModel> receipt, CancellationToken token)
+    private static async Task<Result<GardenStateResultFromViewModel>> SaveAsync(IUnitOfWork unit,
+        Func<GardenStateResultFromViewModel> receipt, CancellationToken token)
     {
         try
         {
@@ -70,7 +78,8 @@ public sealed class DbGardenStateWriter(IUnitOfWorkFactory units) : IGardenState
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<GardenStateResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<GardenStateResultFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

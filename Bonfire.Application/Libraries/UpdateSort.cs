@@ -4,7 +4,9 @@ using Bonfire.Domain.Libraries;
 namespace Bonfire.Application.Libraries;
 
 public sealed record UpdateSortFromViewModel(int Id, string Name, Option<int> CultureChange);
+
 public sealed record SortPlantCultureFromViewModel(int PlantId, CultureDetailsFromViewModel Culture);
+
 public sealed record SortDetailsFromViewModel(int Id, string Name, IReadOnlyList<SortPlantCultureFromViewModel> Plants);
 
 public interface ISortWriter
@@ -14,12 +16,14 @@ public interface ISortWriter
 
 public interface IUpdateSort
 {
-    Task<Result<SortDetailsFromViewModel>> ExecuteAsync(UpdateSortFromViewModel request, CancellationToken cancellationToken = default);
+    Task<Result<SortDetailsFromViewModel>> ExecuteAsync(UpdateSortFromViewModel request,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class UpdateSort(ISortWriter writer) : IUpdateSort
 {
-    public async Task<Result<SortDetailsFromViewModel>> ExecuteAsync(UpdateSortFromViewModel request, CancellationToken cancellationToken = default)
+    public async Task<Result<SortDetailsFromViewModel>> ExecuteAsync(UpdateSortFromViewModel request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();

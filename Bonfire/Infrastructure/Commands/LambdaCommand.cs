@@ -9,7 +9,6 @@ internal class LambdaCommand(Action<object> execute, Func<object, bool>? canExec
     public LambdaCommand(Action execute, Func<bool>? canExecute = null)
         : this(p => execute(), canExecute is null ? null : p => canExecute())
     {
-
     }
 
     protected override bool CanExecute(object p) => canExecute?.Invoke(p) ?? true;

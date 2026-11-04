@@ -9,11 +9,33 @@ using Bonfire.Application.Seedlings;
 using Bonfire.Application.Libraries;
 using Bonfire.Application.Seeds;
 using Bonfire.Application.Garden;
+using Bonfire.Application.Planning;
+using Bonfire.Domain.Planning;
+using MoonCalendar;
 
 namespace Services.Tests;
 
 public class CompositionBehaviorTests
 {
+    [Fact]
+    public void LunarComposition_ReplacingSingleCalculator_ChangesBothCalendarConsumers()
+    {
+        var calculator = Substitute.For<ILunarPhaseCalculator>();
+        calculator.GetPhaseAngle(Arg.Any<DateTimeOffset>()).Returns(180d);
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Type"] = "SQLite", ["ConnectionStrings:SQLite"] = "Data Source=:memory:"
+        }).Build();
+        using var provider = new ServiceCollection().AddLogging().AddDatabase(configuration).AddServices()
+            .AddSingleton(calculator).BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
+        var actual = provider.GetRequiredService<ILunarCalendar>();
+        var planning = provider.GetRequiredService<ILunarTrendCalendar>();
+        Assert.Equal("Полнолуние", actual.GetPhase(new DateTime(2027, 2, 20, 23, 23, 0, DateTimeKind.Utc)));
+        Assert.Equal(LunarTrend.Waning, planning.GetTrend(new(2027, 2, 21), TimeZoneInfo.Utc).ValueOrThrow());
+        Assert.Same(actual, provider.GetRequiredService<ISeedlingsService>().Lunar);
+        calculator.Received(2).GetPhaseAngle(Arg.Any<DateTimeOffset>());
+    }
+
     [Fact]
     public void CompositionRoot_StrictScopes_ResolvesInitializerOnlyInsideScope()
     {
@@ -50,6 +72,12 @@ public class CompositionBehaviorTests
         Assert.NotNull(provider.GetRequiredService<IDeleteSeed>());
         Assert.NotNull(provider.GetRequiredService<ISeedDeletionWriter>());
         Assert.NotNull(provider.GetRequiredService<TimeProvider>());
+        Assert.NotNull(provider.GetRequiredService<IPlanningService>());
+        Assert.NotNull(provider.GetRequiredService<IPlanningContextReader>());
+        Assert.NotNull(provider.GetRequiredService<IPlantingPlanReader>());
+        Assert.NotNull(provider.GetRequiredService<IPlantingPlanWriter>());
+        Assert.NotNull(provider.GetRequiredService<ICalculatePlannedBatch>());
+        Assert.NotNull(provider.GetRequiredService<IManagePlantingPlans>());
         Assert.NotNull(provider.GetRequiredService<MainWindowViewModel>());
     }
 

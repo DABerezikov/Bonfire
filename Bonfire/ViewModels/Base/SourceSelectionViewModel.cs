@@ -1,13 +1,11 @@
-using Bonfire.Models;
-
 using Bonfire.Domain.Seeds;
 
 namespace Bonfire.ViewModels.Base;
 
 /// <summary>
-/// Базовый VM с выбором источника получения (радиокнопки) — общий для семян и рассады.
-/// Содержит общие флаги «Куплено»/«Подарено»; третий вариант специфичен для наследника
-/// (Собрано — у семян, Из семян — у рассады) и уведомляется через <see cref="OnSourceChanged"/>.
+///     Базовый VM с выбором источника получения (радиокнопки) — общий для семян и рассады.
+///     Содержит общие флаги «Куплено»/«Подарено»; третий вариант специфичен для наследника
+///     (Собрано — у семян, Из семян — у рассады) и уведомляется через <see cref="OnSourceChanged" />.
 /// </summary>
 public abstract class SourceSelectionViewModel : ViewModel
 {
@@ -26,18 +24,26 @@ public abstract class SourceSelectionViewModel : ViewModel
         }
     }
 
-    /// <summary>Уведомить о специфичном для наследника флаге-источнике.</summary>
-    protected virtual void OnSourceChanged() { }
-
     public bool IsSold
     {
         get => _source == PlantSources.Purchased;
-        set { if (value) SourceValue = PlantSources.Purchased; }
+        set
+        {
+            if (value) SourceValue = PlantSources.Purchased;
+        }
     }
 
     public bool IsDonated
     {
         get => _source == PlantSources.Donated;
-        set { if (value) SourceValue = PlantSources.Donated; }
+        set
+        {
+            if (value) SourceValue = PlantSources.Donated;
+        }
+    }
+
+    /// <summary>Уведомить о специфичном для наследника флаге-источнике.</summary>
+    protected virtual void OnSourceChanged()
+    {
     }
 }

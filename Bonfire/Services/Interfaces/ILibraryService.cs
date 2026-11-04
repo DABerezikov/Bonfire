@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
 using Bonfire.Models;
@@ -7,6 +7,7 @@ namespace Bonfire.Services.Interfaces;
 
 public interface ILibraryService
 {
+    Task<Result<bool>> DeleteEntryAsync(LibraryEntryKind kind, int id);
     Task<Result<SortReadFromViewModel>> GetSortAsync(int id);
     Task<Result<CultureDetailsFromViewModel>> GetCultureAsync(int id);
     Task<Result<ProducerDetailsFromViewModel>> GetProducerAsync(int id);

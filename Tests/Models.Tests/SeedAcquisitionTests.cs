@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seeds;
 
@@ -34,13 +34,13 @@ public class SeedAcquisitionTests
     [Theory]
     [InlineData(SeedUnit.Pieces)]
     [InlineData(SeedUnit.Grams)]
-    public void CreatePackage_ValidAcquisition_CalculatesUnitsAndKeepsRawText(SeedUnit unit)
+    public void CreatePackage_ValidAcquisition_CalculatesUnitsNormalizesNamesAndKeepsNotes(SeedUnit unit)
     {
         var acquisition = SeedAcquisition.Create(Values(unit)).ValueOrThrow();
         var time = new DateTime(2026, 10, 25, 12, 30, 0);
         var package = acquisition.CreatePackage(time).ValueOrThrow().Values;
         Assert.Equal(6, acquisition.Total.Value);
-        Assert.Equal(" Томат ", acquisition.Values.Culture);
+        Assert.Equal("Томат", acquisition.Values.Culture);
         Assert.Equal(time, package.PurchaseDate);
         Assert.Equal(12, package.CostPack);
         Assert.Equal("", Assert.IsType<Option<string>.Some>(package.Note).Value);

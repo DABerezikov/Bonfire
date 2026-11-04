@@ -8,7 +8,7 @@ public class Replanting : Entity
     public DateTime ReplantingDate { get; set; }
 
     /// <summary> Объем горшка, л </summary>
-    public double? PotVolume { get;set; }
+    public double? PotVolume { get; set; }
 
     /// <summary> Поле комментариев </summary>
     public string? ReplantingNote { get; set; }

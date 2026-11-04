@@ -4,8 +4,8 @@ namespace Bonfire.Domain.Libraries;
 
 public sealed record CultureId
 {
-    public int Value { get; }
     private CultureId(int value) => Value = value;
+    public int Value { get; }
 
     public static Result<CultureId> Create(int value) => value > 0
         ? Result.Success(new CultureId(value))

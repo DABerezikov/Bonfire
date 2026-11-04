@@ -14,15 +14,9 @@ public static class Producers
 public static class Units
 {
     /// <summary>Варианты выпадающего списка при добавлении семян.</summary>
-    public const string GramsOption  = "Граммы";
-    public const string PiecesOption = "Штуки";
+    public const string GramsOption = "Граммы";
 
-    public static Result<SeedUnit> ResolveSeedUnit(string value) => value switch
-    {
-        GramsOption => Result.Success(SeedUnit.Grams),
-        PiecesOption => Result.Success(SeedUnit.Pieces),
-        _ => Result.Failure<SeedUnit>("Выберите единицу количества семян")
-    };
+    public const string PiecesOption = "Штуки";
 
     /// <summary>Краткая подпись грамм при добавлении рассады.</summary>
     public const string GramsAbbr = "гр.";
@@ -32,4 +26,11 @@ public static class Units
 
     /// <summary>Краткая подпись штук.</summary>
     public const string PiecesAbbr = "шт.";
+
+    public static Result<SeedUnit> ResolveSeedUnit(string value) => value switch
+    {
+        GramsOption => Result.Success(SeedUnit.Grams),
+        PiecesOption => Result.Success(SeedUnit.Pieces),
+        _ => Result.Failure<SeedUnit>("Выберите единицу количества семян")
+    };
 }

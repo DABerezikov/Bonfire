@@ -3,8 +3,13 @@ using Bonfire.Domain.Seeds;
 
 namespace Bonfire.Application.Seedlings;
 
-public sealed record SowingRequest(int SeedId, double Amount, SeedUnit Unit,
-    DateTime Date, string Source, Option<string> Place);
+public sealed record SowingRequest(
+    int SeedId,
+    double Amount,
+    SeedUnit Unit,
+    DateTime Date,
+    string Source,
+    Option<string> Place);
 
 public sealed record SowingDetails(DateTime Date, string Source, Option<string> Place, string LunarPhase);
 

@@ -11,12 +11,13 @@ public class ScrollIntoViewBehavior : Behavior<DataGrid>
     {
         base.OnAttached();
         AssociatedObject.SelectionChanged +=
-            new SelectionChangedEventHandler(AssociatedObjectSelectionChanged);
+            AssociatedObjectSelectionChanged;
     }
+
     protected override void OnDetaching()
     {
         AssociatedObject.SelectionChanged -=
-            new SelectionChangedEventHandler(AssociatedObjectSelectionChanged);
+            AssociatedObjectSelectionChanged;
         base.OnDetaching();
     }
 
@@ -28,13 +29,9 @@ public class ScrollIntoViewBehavior : Behavior<DataGrid>
         if (item == null) return;
 
         if (grid.Dispatcher.CheckAccess())
-        {
             Action();
-        }
         else
-        {
             await grid.Dispatcher.BeginInvoke((Action?)Action);
-        }
 
         return;
 

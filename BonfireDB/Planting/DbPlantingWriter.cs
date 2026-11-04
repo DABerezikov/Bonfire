@@ -1,11 +1,12 @@
+using System.Diagnostics;
 using Bonfire.Application.Garden;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Garden;
+using Bonfire.Domain.Garden.SpotStates;
 using Bonfire.Domain.Seeds;
 using BonfireDB.Entities;
 using BonfireDB.Entities.Base;
 using BonfireDB.Entities.GardenPlanning;
-using Bonfire.Domain.Garden.SpotStates;
 using BonfireDB.SeedEditing;
 using BonfireDB.Sowing;
 using Microsoft.EntityFrameworkCore;
@@ -14,13 +15,15 @@ namespace BonfireDB.Planting;
 
 public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
 {
-    public async Task<Result<PlantingResultFromViewModel>> ApplyAsync(SpotPlanting planting, string lunarPhase, CancellationToken cancellationToken)
+    public async Task<Result<PlantingResultFromViewModel>> ApplyAsync(SpotPlanting planting, string lunarPhase,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(planting);
         ArgumentNullException.ThrowIfNull(lunarPhase);
         cancellationToken.ThrowIfCancellationRequested();
         await using var unit = units.Create();
-        var spot = await unit.Repository<PlantingSpot>().GetAsync(planting.SpotId, cancellationToken).ConfigureAwait(false);
+        var spot = await unit.Repository<PlantingSpot>().GetAsync(planting.SpotId, cancellationToken)
+            .ConfigureAwait(false);
         if (spot is null) return Result.Failure<PlantingResultFromViewModel>("Ячейка уже удалена");
         var state = new PlantedSpotState();
         if (!spot.State.CanTransitionTo(state))
@@ -28,9 +31,10 @@ public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
 
         var prepared = await (planting.Source switch
         {
-            PlantingSource.Seedlings source => FromSeedlingsAsync(unit, planting, source, lunarPhase, cancellationToken),
+            PlantingSource.Seedlings source =>
+                FromSeedlingsAsync(unit, planting, source, lunarPhase, cancellationToken),
             PlantingSource.Seeds source => FromSeedsAsync(unit, planting, source, lunarPhase, cancellationToken),
-            _ => throw new System.Diagnostics.UnreachableException()
+            _ => throw new UnreachableException()
         }).ConfigureAwait(false);
 
         return await prepared.Match(async change =>
@@ -42,7 +46,8 @@ public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
             try
             {
                 await unit.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return Result.Success(new PlantingResultFromViewModel(spot.Id, change.Info.Id, change.Consumed, change.Remaining));
+                return Result.Success(new PlantingResultFromViewModel(spot.Id, change.Info.Id, change.Consumed,
+                    change.Remaining));
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -50,7 +55,8 @@ public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
             }
             catch (DbUpdateException error)
             {
-                return Result.Failure<PlantingResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+                return Result.Failure<PlantingResultFromViewModel>(
+                    $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
             }
         }, error => Task.FromResult(Result.Failure<PlantingResultFromViewModel>(error))).ConfigureAwait(false);
     }
@@ -58,7 +64,8 @@ public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
     private static async Task<Result<PreparedPlanting>> FromSeedlingsAsync(IUnitOfWork unit, SpotPlanting planting,
         PlantingSource.Seedlings source, string phase, CancellationToken cancellationToken)
     {
-        var batch = await unit.Repository<Seedling>().GetAsync(source.Id.Value, cancellationToken).ConfigureAwait(false);
+        var batch = await unit.Repository<Seedling>().GetAsync(source.Id.Value, cancellationToken)
+            .ConfigureAwait(false);
         if (batch is null) return Result.Failure<PreparedPlanting>("Партия рассады уже удалена");
         if (batch.IsPlantedInBed) return Result.Failure<PreparedPlanting>("Эта партия уже высажена в грядку");
         return SeedlingBatchDbMapper.Read(batch).Bind(model => model.PlantOut(planting.Amount.Value)).Bind(change =>
@@ -66,7 +73,8 @@ public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
             batch.PlantedOut = change.Remaining.PlantedOut;
             var consumed = SeedAmount.Create(change.Quantity, SeedUnit.Pieces).ValueOrThrow();
             var remaining = SeedAmount.Create(change.Remaining.AvailableCount, SeedUnit.Pieces).ValueOrThrow();
-            return Result.Success(new PreparedPlanting(CreateBatch(unit, batch.Plant, batch.SeedId, consumed, planting, phase), consumed, remaining));
+            return Result.Success(new PreparedPlanting(
+                CreateBatch(unit, batch.Plant, batch.SeedId, consumed, planting, phase), consumed, remaining));
         });
     }
 
@@ -75,17 +83,21 @@ public sealed class DbPlantingWriter(IUnitOfWorkFactory units) : IPlantingWriter
     {
         var seed = await unit.Repository<Seed>().GetAsync(source.Id.Value, cancellationToken).ConfigureAwait(false);
         if (seed is null) return Result.Failure<PreparedPlanting>("Пакет семян уже удалён");
-        return SeedPackageDbMapper.ReadStock(seed.SeedsInfo, source.Unit).Bind(stock => stock.SowUpTo(planting.Amount)).Bind(change =>
-        {
-            if (source.Unit == SeedUnit.Pieces)
-                seed.SeedsInfo.AmountSeeds = change.Remaining.Available.Value;
-            else
-                seed.SeedsInfo.AmountSeedsWeight = change.Remaining.Available.Value;
-            return Result.Success(new PreparedPlanting(CreateBatch(unit, seed.Plant, seed.Id, change.Sown, planting, phase), change.Sown, change.Remaining.Available));
-        });
+        return SeedPackageDbMapper.ReadStock(seed.SeedsInfo, source.Unit).Bind(stock => stock.SowUpTo(planting.Amount))
+            .Bind(change =>
+            {
+                if (source.Unit == SeedUnit.Pieces)
+                    seed.SeedsInfo.AmountSeeds = change.Remaining.Available.Value;
+                else
+                    seed.SeedsInfo.AmountSeedsWeight = change.Remaining.Available.Value;
+                return Result.Success(new PreparedPlanting(
+                    CreateBatch(unit, seed.Plant, seed.Id, change.Sown, planting, phase), change.Sown,
+                    change.Remaining.Available));
+            });
     }
 
-    private static SeedlingInfo CreateBatch(IUnitOfWork unit, Plant plant, int seedId, SeedAmount amount, SpotPlanting planting, string phase)
+    private static SeedlingInfo CreateBatch(IUnitOfWork unit, Plant plant, int seedId, SeedAmount amount,
+        SpotPlanting planting, string phase)
     {
         var place = planting.Place.ToNullable();
         var info = new SeedlingInfo

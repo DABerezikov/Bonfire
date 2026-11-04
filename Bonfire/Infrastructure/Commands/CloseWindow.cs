@@ -1,5 +1,5 @@
-﻿using Bonfire.Infrastructure.Commands.Base;
-using System.Windows;
+﻿using System.Windows;
+using Bonfire.Infrastructure.Commands.Base;
 
 namespace Bonfire.Infrastructure.Commands;
 

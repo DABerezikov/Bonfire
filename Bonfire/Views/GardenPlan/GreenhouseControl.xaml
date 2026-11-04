@@ -11,10 +11,10 @@
              Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
     <UserControl.Style>
         <Style TargetType="UserControl">
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Cursor" Value="Hand" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsLocked}" Value="True">
-                    <Setter Property="Cursor" Value="Arrow"/>
+                    <Setter Property="Cursor" Value="Arrow" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -22,25 +22,25 @@
 
     <UserControl.ToolTip>
         <StackPanel>
-            <TextBlock FontWeight="SemiBold" Text="{Binding Name}"/>
+            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
             <TextBlock Foreground="#757575">
-                <Run Text="{Binding TypeLabel, Mode=OneWay}"/>
-                <Run Text="·"/>
-                <Run Text="{Binding StateDisplayName, Mode=OneWay}"/>
+                <Run Text="{Binding TypeLabel, Mode=OneWay}" />
+                <Run Text="·" />
+                <Run Text="{Binding StateDisplayName, Mode=OneWay}" />
             </TextBlock>
             <TextBlock Margin="0,2,0,0">
-                <Run Text="Д"/>
-                <Run Text="{Binding WidthMeters,  Mode=OneWay, StringFormat={}{0:F2}}"/>
-                <Run Text="м  Ш"/>
-                <Run Text="{Binding HeightMeters, Mode=OneWay, StringFormat={}{0:F2}}"/>
-                <Run Text="м  ("/>
-                <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}"/>
-                <Run Text="м²)"/>
+                <Run Text="Д" />
+                <Run Text="{Binding WidthMeters,  Mode=OneWay, StringFormat={}{0:F2}}" />
+                <Run Text="м  Ш" />
+                <Run Text="{Binding HeightMeters, Mode=OneWay, StringFormat={}{0:F2}}" />
+                <Run Text="м  (" />
+                <Run Text="{Binding AreaSquareMeters, Mode=OneWay, StringFormat={}{0:F1}}" />
+                <Run Text="м²)" />
             </TextBlock>
             <TextBlock Foreground="#9E9E9E" Margin="0,4,0,0" FontSize="10">
-                <Run Text="Двойной клик — открыть теплицу"/>
-                <LineBreak/>
-                <Run Text="Правый клик — контекстное меню"/>
+                <Run Text="Двойной клик — открыть теплицу" />
+                <LineBreak />
+                <Run Text="Правый клик — контекстное меню" />
             </TextBlock>
         </StackPanel>
     </UserControl.ToolTip>
@@ -55,14 +55,14 @@
             <i:InvokeCommandAction
                 Command="{Binding Tag.OpenGreenhouseCommand,
                     RelativeSource={RelativeSource AncestorType=UserControl}}"
-                CommandParameter="{Binding}"/>
+                CommandParameter="{Binding}" />
         </i:EventTrigger>
         <!-- Правый клик — выделить теплицу -->
         <i:EventTrigger EventName="MouseRightButtonDown">
             <i:InvokeCommandAction
                 Command="{Binding Tag.SelectGreenhouseCommand,
                     RelativeSource={RelativeSource AncestorType=UserControl}}"
-                CommandParameter="{Binding}"/>
+                CommandParameter="{Binding}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
@@ -70,14 +70,14 @@
         <Border Background="#F3E5F5" CornerRadius="6" Padding="6,4">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="BorderBrush" Value="#7B1FA2"/>
-                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="BorderBrush" Value="#7B1FA2" />
+                    <Setter Property="BorderThickness" Value="2" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                            <Setter Property="BorderThickness" Value="3"/>
+                            <Setter Property="BorderThickness" Value="3" />
                             <Setter Property="Effect">
                                 <Setter.Value>
-                                    <DropShadowEffect Color="#7B1FA2" BlurRadius="10" ShadowDepth="0"/>
+                                    <DropShadowEffect Color="#7B1FA2" BlurRadius="10" ShadowDepth="0" />
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
@@ -88,18 +88,18 @@
             <DockPanel>
                 <!-- Иконка + название (шрифт адаптируется к зуму) -->
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                    <TextBlock Text="🏠" FontSize="13" Margin="0,0,4,0"/>
+                    <TextBlock Text="🏠" FontSize="13" Margin="0,0,4,0" />
                     <TextBlock Text="{Binding Name}" FontWeight="Bold"
                                FontSize="{Binding AdaptiveFontSize}"
-                               TextTrimming="CharacterEllipsis"/>
+                               TextTrimming="CharacterEllipsis" />
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Top"
                            FontSize="{Binding AdaptiveFontSizeSmall}"
                            Foreground="#9C27B0">
-                    <Run Text="{Binding WidthMeters, StringFormat={}{0:F0}}"/>
-                    <Run Text="×"/>
-                    <Run Text="{Binding HeightMeters, StringFormat={}{0:F0}}"/>
-                    <Run Text=" м"/>
+                    <Run Text="{Binding WidthMeters, StringFormat={}{0:F0}}" />
+                    <Run Text="×" />
+                    <Run Text="{Binding HeightMeters, StringFormat={}{0:F0}}" />
+                    <Run Text=" м" />
                 </TextBlock>
 
                 <!-- Статус -->
@@ -107,13 +107,13 @@
                         Background="{Binding StateColor, Converter={StaticResource StringToBrushConverter}}"
                         CornerRadius="3" Padding="3,1" HorizontalAlignment="Left" Margin="0,4,0,0">
                     <TextBlock Text="{Binding StateDisplayName}" Foreground="White"
-                               FontSize="{Binding AdaptiveFontSizeTiny}"/>
+                               FontSize="{Binding AdaptiveFontSizeTiny}" />
                 </Border>
 
                 <!-- Подсказка двойного клика -->
                 <TextBlock DockPanel.Dock="Bottom" Text="[двойной клик — открыть]"
                            FontSize="{Binding AdaptiveFontSizeTiny}"
-                           Foreground="#9E9E9E" Margin="0,2,0,0"/>
+                           Foreground="#9E9E9E" Margin="0,2,0,0" />
             </DockPanel>
         </Border>
 
@@ -127,9 +127,9 @@
                 CommandParameter="{Binding}">
             <Grid>
                 <fa5:ImageAwesome Icon="Solid_Lock" Height="10" Foreground="#E53935"
-                                  Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}"/>
+                                  Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}" />
                 <fa5:ImageAwesome Icon="Solid_LockOpen" Height="10" Foreground="#BDBDBD"
-                                  Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}"/>
+                                  Visibility="{Binding IsLocked, Converter={StaticResource NotBoolToVisibility}}" />
             </Grid>
         </Button>
 
@@ -145,7 +145,7 @@
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SaveGreenhousePositionCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}"/>
+                        CommandParameter="{Binding}" />
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </Thumb>
@@ -160,7 +160,7 @@
                DragCompleted="ResizeThumb_DragCompleted">
             <Thumb.Template>
                 <ControlTemplate TargetType="Thumb">
-                    <Rectangle Fill="#7B1FA2" Width="10" Height="10" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Fill="#7B1FA2" Width="10" Height="10" RadiusX="2" RadiusY="2" />
                 </ControlTemplate>
             </Thumb.Template>
             <i:Interaction.Triggers>
@@ -169,7 +169,7 @@
                     <i:InvokeCommandAction
                         Command="{Binding Tag.SaveGreenhousePositionCommand,
                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}"/>
+                        CommandParameter="{Binding}" />
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </Thumb>
@@ -186,43 +186,43 @@
                       Command="{Binding PlacementTarget.Tag.OpenGreenhouseCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext,
-                          RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-            <Separator/>
+                          RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+            <Separator />
             <MenuItem Header="Запланирована"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPlanned,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="PlannedState"/>
+                      CommandParameter="PlannedState" />
             <MenuItem Header="Подготовлена"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToPrepared,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="PreparedState"/>
+                      CommandParameter="PreparedState" />
             <MenuItem Header="Активна"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToActive,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="ActiveState"/>
+                      CommandParameter="ActiveState" />
             <MenuItem Header="Под паром"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToFallow,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="FallowState"/>
+                      CommandParameter="FallowState" />
             <MenuItem Header="Зимовка"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanGoToResting,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Command="{Binding PlacementTarget.Tag.ChangeGreenhouseStateCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      CommandParameter="RestingState"/>
-            <Separator/>
+                      CommandParameter="RestingState" />
+            <Separator />
             <MenuItem Header="Удалить"
                       Command="{Binding PlacementTarget.Tag.DeleteGreenhouseCommand,
                           RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                      Foreground="Red"/>
+                      Foreground="Red" />
         </ContextMenu>
     </UserControl.ContextMenu>
 </UserControl>

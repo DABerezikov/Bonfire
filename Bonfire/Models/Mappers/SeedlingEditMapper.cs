@@ -18,8 +18,9 @@ public static class SeedlingEditMapper
             Place = (batch.PlantPlace ?? metadata?.PlantPlace).ToOption(), Note = (metadata?.Note).ToOption(),
             LunarPhase = batch.LunarPhase ?? metadata?.LunarPhase ?? string.Empty
         };
-        return new(batch.Id, values, batch.SeedlingInfos.Select(info => new SeedlingEntryEditModel(
-            new(info.Id, info.SeedlingNumber, info.GerminationDate.ToOption(), info.DeathNote.ToOption()))));
+        return new SeedlingEditorDraft(batch.Id, values, batch.SeedlingInfos.Select(info => new SeedlingEntryEditModel(
+            new SeedlingEntryEdit(info.Id, info.SeedlingNumber, info.GerminationDate.ToOption(),
+                info.DeathNote.ToOption()))));
     }
 
     public static EditSeedlingFromViewModel ToRequest(SeedlingEditorDraft draft)

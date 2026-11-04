@@ -9,7 +9,8 @@ namespace BonfireDB.Planting;
 
 public sealed class DbGardenPlanCreationWriter(IUnitOfWorkFactory units) : IGardenPlanCreationWriter
 {
-    public async Task<Result<GardenPlanResultFromViewModel>> CreateAsync(GardenPlanDefinition definition, CancellationToken cancellationToken)
+    public async Task<Result<GardenPlanResultFromViewModel>> CreateAsync(GardenPlanDefinition definition,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(definition);
         cancellationToken.ThrowIfCancellationRequested();
@@ -19,11 +20,13 @@ public sealed class DbGardenPlanCreationWriter(IUnitOfWorkFactory units) : IGard
         {
             await unit.Repository<GardenPlan>().AddAsync(row, cancellationToken).ConfigureAwait(false);
             await unit.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return Result.Success(new GardenPlanResultFromViewModel(row.Id, row.Name, row.Year, row.Description.ToOption()));
+            return Result.Success(
+                new GardenPlanResultFromViewModel(row.Id, row.Name, row.Year, row.Description.ToOption()));
         }
         catch (DbUpdateException error)
         {
-            return Result.Failure<GardenPlanResultFromViewModel>($"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
+            return Result.Failure<GardenPlanResultFromViewModel>(
+                $"Ошибка БД: {error.InnerException?.Message ?? error.Message}");
         }
     }
 }

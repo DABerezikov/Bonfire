@@ -1,8 +1,8 @@
+using System.Collections.Immutable;
 using Bonfire.Application.Seedlings;
 using Bonfire.Domain.Functional;
 using Bonfire.Domain.Seedlings;
 using BonfireDB.Entities;
-using System.Collections.Immutable;
 
 namespace BonfireDB.Sowing;
 
@@ -14,7 +14,8 @@ public static class SeedlingBatchDbMapper
         {
             DeathNote = info.DeathNote.ToOption(),
             Replants = (info.Replants ?? []).Select(replant => new ReplantingEntry(Option.Some(replant.Id),
-                replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption())).ToImmutableArray()
+                    replant.ReplantingDate, replant.PotVolume.ToOption(), replant.ReplantingNote.ToOption()))
+                .ToImmutableArray()
         }), batch.PlantedOut);
 
     public static void Apply(SeedlingBatch model, Seedling target)

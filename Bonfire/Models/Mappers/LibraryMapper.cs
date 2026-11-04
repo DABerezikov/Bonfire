@@ -1,5 +1,6 @@
 using Bonfire.Application.Libraries;
 using Bonfire.Domain.Functional;
+using Bonfire.Domain.Seeds;
 
 namespace Bonfire.Models.Mappers;
 
@@ -8,7 +9,8 @@ internal static class LibraryMapper
     public static SortEditModel ToEditModel(SortReadFromViewModel sort)
         => ToEditModel(sort.Id, sort.Name, sort.CultureId, sort.Characteristics);
 
-    private static SortEditModel ToEditModel(int id, string name, Option<int> cultureId, Bonfire.Domain.Seeds.SortCharacteristicsValues values)
+    private static SortEditModel ToEditModel(int id, string name, Option<int> cultureId,
+        SortCharacteristicsValues values)
     {
         var model = new SortEditModel
         {
@@ -49,5 +51,4 @@ internal static class LibraryMapper
         model.ResetDirty();
         return model;
     }
-
 }
