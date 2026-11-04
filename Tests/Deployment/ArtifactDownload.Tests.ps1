@@ -62,6 +62,14 @@ Test-Case 'Пятнадцать минут на попытку разрешен�
     $result=Receive-BonfireArtifact -Repository 'owner/repo' -RunId 17 -Destination $f.Destination -CacheDirectory $f.CacheDirectory -AttemptTimeoutSeconds 901
     Assert-True (-not $result.Success -and $script:offsets.Count -eq 0) 'Превышение лимита не отклонено до сети.'
 }
+Test-Case 'Бюджеты workflow вмещают скачивание с повторами и установку' {
+    $workflow=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../../.github/workflows/deploy-monoblock.yml') -Raw -Encoding UTF8
+    $deploy=($workflow -split '(?m)^  deploy:',2)[1]
+    $jobLimit=[int][regex]::Match($deploy,'(?m)^    timeout-minutes: (\d+)').Groups[1].Value
+    $downloadLimit=[int][regex]::Match($deploy,'(?m)^        timeout-minutes: (\d+)').Groups[1].Value
+    Assert-True ($downloadLimit -ge (3*900/60+2)) 'Шаг обрывает три попытки по 15 минут без запаса на API и распаковку.'
+    Assert-True ($jobLimit -ge $downloadLimit+10) 'Нет запаса на подтверждение, бэкап и установку.'
+}
 Test-Case 'Неверный SHA не распаковывается и не создаёт выход' {
     $f = New-Fixture; $script:mode='bad'; $result=Receive-TestArtifact $f
     Assert-True (-not $result.Success -and $script:offsets.Count -eq 3) 'Нет ограниченного отказа.'
