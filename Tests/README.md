@@ -1,5 +1,15 @@
 ﻿# Проверки Bonfire
 
+## Ограниченное скачивание с продолжением — 04.11.2026
+
+ArtifactDownload.Tests.ps1: **11/11** в PowerShell 5.1. Настоящий TCP/curl:
+обрыв/Range, сервер игнорирует Range, HTTP 416, timeout и отсутствие Authorization.
+Проверены свежая ссылка, сохранение partial после HTTP-ошибки, предел попыток,
+digest, повреждённый ZIP, выход из staging, готовый кеш и непустой выход.
+GitHub API metadata/redirect проверены отдельно без загрузки большого файла.
+Deploy 20, Runner 12, InteractiveUpdate 9, ClosedUpdate integration и кодировки
+CP1251/CP1252 прошли. Полный Release-гейт: **1875/1875**.
+
 ## Открытые документы при резервном копировании — 04.11.2026
 
 Deploy.Tests.ps1: **20/20** в Windows PowerShell 5.1. Воспроизведён отказ

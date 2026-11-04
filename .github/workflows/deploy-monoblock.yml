@@ -29,6 +29,7 @@ jobs:
         run: dotnet test Bonfire.sln -c Release --nologo --logger trx --results-directory artifacts/tests
       - name: Проверки развёртывания
         run: |
+          & ./Tests/Deployment/ArtifactDownload.Tests.ps1
           & ./Tests/Deployment/Deploy.Tests.ps1
           & ./Tests/Deployment/Runner.Tests.ps1
           & ./Tests/Deployment/InteractiveUpdate.Tests.ps1
@@ -59,6 +60,9 @@ jobs:
     name: Обновление с подтверждением
     if: github.ref == 'refs/heads/master'
     needs: build
+    permissions:
+      contents: read
+      actions: read
     runs-on: [self-hosted, Windows, X64, bonfire-monoblock, interactive]
     timeout-minutes: 20
     defaults:
@@ -70,10 +74,13 @@ jobs:
           persist-credentials: false
       - name: Проверка компьютера
         run: ./scripts/Assert-BonfireRunner.ps1
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0 (Node.js 24)
-        with:
-          name: bonfire-win-x64
-          path: artifacts/publish
+      - name: Скачивание и проверка публикации
+        timeout-minutes: 8
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          & ./scripts/Get-BonfireArtifact.ps1 -Repository $env:GITHUB_REPOSITORY -RunId $env:GITHUB_RUN_ID -Destination ./artifacts/publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Подтверждение и установка
         run: |
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File ./scripts/Update-BonfireInteractive.ps1 -PublishDirectory ./artifacts/publish -Version $env:GITHUB_SHA
