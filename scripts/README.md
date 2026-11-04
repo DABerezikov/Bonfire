@@ -85,3 +85,11 @@ XAML-подтверждение на 5 минут; согласие разреш
 Отказ/тайм-аут отменяют установку. Запуск Bonfire во время подготовки запрещает
 запись без нового согласия. После успеха `.bonfire-version.json` содержит
 commit и путь резервной копии. Автоматического запуска новой версии нет.
+
+
+Действия артефактов закреплены SHA: upload-artifact v6.0.0 и download-artifact
+v7.0.0. В action.yml обоих подтверждён `runs.using: node24`; runner должен быть
+не ниже 2.327.1 (то же требование уже есть у checkout v5). Выгрузка и загрузка
+по имени `bonfire-win-x64` сохраняются. Официальные релизы:
+[upload-artifact v6.0.0](https://github.com/actions/upload-artifact/releases/tag/v6.0.0),
+[download-artifact v7.0.0](https://github.com/actions/download-artifact/releases/tag/v7.0.0).

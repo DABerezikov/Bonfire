@@ -1,4 +1,5 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
+using System.Globalization;
 using Bonfire.Application.Harvest;
 using Bonfire.Application.Planning;
 using Bonfire.Application.Planning.Libraries;
@@ -34,17 +35,25 @@ public class HarvestJournalWorkflowTests
         draft.MassKg = "не число"; Assert.False(vm.SaveCommand.CanExecute(null)); Assert.Equal("не число", draft.MassKg);
     }
 
-    [Fact]
-    public async Task Filters_DoNotCompareUnassignedFactsOrAnotherSeasonToBatch()
+    [Theory]
+    [InlineData("ru-RU", "11,25", "1,25")]
+    [InlineData("en-US", "11.25", "1.25")]
+    public async Task Filters_DoNotCompareUnassignedFactsOrAnotherSeasonToBatch(string culture, string total, string batchTotal)
     {
-        var service = Substitute.For<IHarvestService>(); var vm = Model(service);
-        var request = vm.Draft.Build().ValueOrThrow();
-        var linked = Receipt(request, 1);
-        var owner = HarvestIdentity.Create(request.Identity.CultureId, request.Identity.SortId, "Томат", "Черри", 2027, "Томск", "Asia/Tomsk", Option.None<PlannedBatchId>(), Option.None<PerennialPlantingId>()).ValueOrThrow();
-        service.ReadAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray.Create(linked, Receipt(request with { Identity = owner, MassKg = 10m }, 2))));
-        await vm.LoadAsync(); Assert.Contains("11,25", vm.Summary);
-        vm.FilterBatch = "7"; Assert.Single(vm.Entries); Assert.Contains("1,25", vm.Summary); Assert.Contains("прогноз", vm.Summary);
-        vm.FilterSeason = "2026"; Assert.Empty(vm.Entries); Assert.Contains("недоступен", vm.Summary);
+        var previous = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            var service = Substitute.For<IHarvestService>(); var vm = Model(service);
+            var request = vm.Draft.Build().ValueOrThrow();
+            var linked = Receipt(request, 1);
+            var owner = HarvestIdentity.Create(request.Identity.CultureId, request.Identity.SortId, "Томат", "Черри", 2027, "Томск", "Asia/Tomsk", Option.None<PlannedBatchId>(), Option.None<PerennialPlantingId>()).ValueOrThrow();
+            service.ReadAsync(Arg.Any<CancellationToken>()).Returns(Result.Success(ImmutableArray.Create(linked, Receipt(request with { Identity = owner, MassKg = 10m }, 2))));
+            await vm.LoadAsync(); Assert.Contains(total, vm.Summary);
+            vm.FilterBatch = "7"; Assert.Single(vm.Entries); Assert.Contains(batchTotal, vm.Summary); Assert.Contains("прогноз", vm.Summary);
+            vm.FilterSeason = "2026"; Assert.Empty(vm.Entries); Assert.Contains("недоступен", vm.Summary);
+        }
+        finally { CultureInfo.CurrentCulture = previous; }
     }
 
     internal static HarvestJournalViewModel Model(IHarvestService service)
