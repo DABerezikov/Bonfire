@@ -29,7 +29,10 @@ function Get-BonfirePublishState {
     if(-not $head.Success -or -not $root.Success -or -not $common.Success) {
         return [pscustomobject]@{Success=$false;Error='Не удалось определить состояние репозитория.'}
     }
-    return [pscustomobject]@{Success=$true;Commit=($head.Lines -join '');Root=($root.Lines -join '');CommonDirectory=[IO.Path]::GetFullPath(($common.Lines -join ''))}
+    $repositoryRoot=$root.Lines -join ''
+    $commonPath=$common.Lines -join ''
+    if(-not [IO.Path]::IsPathRooted($commonPath)){$commonPath=Join-Path $repositoryRoot $commonPath}
+    return [pscustomobject]@{Success=$true;Commit=($head.Lines -join '');Root=$repositoryRoot;CommonDirectory=[IO.Path]::GetFullPath($commonPath)}
 }
 
 function Open-BonfirePublishLock($Directory) {

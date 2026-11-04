@@ -21,6 +21,7 @@ try {
     Git-Fixture @('commit','-m','fixture') | Out-Null
     $state=Get-BonfirePublishState
     Assert-True $state.Success $state.Error
+    Assert-True ($state.CommonDirectory -eq (Join-Path $fixture '.git')) 'Общий каталог Git разрешён относительно другой папки процесса.'
     [IO.File]::WriteAllText((Join-Path $fixture 'untracked.txt'),'not published')
     Assert-True (Get-BonfirePublishState).Success 'Неотслеживаемый файл блокирует архив отслеживаемых данных.'
     $first=Open-BonfirePublishLock $state.CommonDirectory
