@@ -6,6 +6,34 @@ namespace ViewModels.Tests;
 
 public class SeedAcquisitionChoicesTests
 {
+    [Theory]
+    [InlineData("Овощи", "Фирма")]
+    [InlineData("Фрукты", "Фирма")]
+    [InlineData("Овощи", "Новая фирма")]
+    [InlineData("Фрукты", "Новая фирма")]
+    public void ChangingClassClearsProducerEvenWhenCompatibleOrNew(string targetClass, string producer)
+    {
+        var service = Substitute.For<ISeedsService>();
+        service.ReadSeedsAsync().Returns(Result.Success(System.Collections.Immutable.ImmutableArray<SeedReadFromViewModel>.Empty));
+        service.GetEditorOptionsAsync().Returns(Result.Success(new SeedEditorOptionsFromViewModel([], [], [])
+        {
+            Catalog = Option.Some(new SeedCatalogFromViewModel(
+                [new(1, "Томат", "Овощи"), new(2, "Астра", "Цветы")],
+                [new(1, "Черри", 1, [1]), new(2, "Белая", 1, [2])], [new(1, "Фирма")]))
+        }));
+        var vm = new SeedsViewModel(service, Substitute.For<IUserDialog>(), Substitute.For<IReportService>());
+        vm.LoadDataCommand.Execute(null);
+        vm.AddCulture = "Астра"; vm.AddSort = "Белая"; vm.AddProducer = producer;
+        vm.AddClass = targetClass;
+        Assert.Equal(targetClass, vm.AddClass);
+        Assert.Empty(vm.AddCulture); Assert.Empty(vm.AddSort); Assert.Empty(vm.AddProducer);
+        Assert.NotEmpty(vm.AcquisitionSelectionHint);
+        vm.AddProducer = producer; vm.AddClass = targetClass;
+        Assert.Equal(producer, vm.AddProducer);
+        vm.IsCollected = true; vm.AddClass = "Цветы";
+        Assert.Equal(Producers.Own, vm.AddProducer);
+    }
+
     [Fact]
     public void DuplicateCultureNamesKeepSortAndProducerLinksFromEveryMatchingId()
     {

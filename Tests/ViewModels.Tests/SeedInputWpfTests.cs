@@ -66,6 +66,11 @@ public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutpu
             cultures.IsDropDownOpen = true;
             cultures.SelectedItem = Assert.Single(cultures.Items.Cast<CultureFromViewModel>());
             if (settleSelection) WpfRuntime.Layout(view, 1600, 900);
+            var producers = WpfRuntime.Descendants<ComboBox>(view).Single(box =>
+                box.GetBindingExpression(ComboBox.TextProperty)?.ParentBinding.Path.Path == "AddProducer");
+            producers.SelectedItem = Assert.Single(producers.Items.Cast<ProducerFromViewModel>());
+            Assert.Equal("Фирма", vm.AddProducer);
+            if (settleSelection) WpfRuntime.Layout(view, 1600, 900);
             var classesSeen = new System.Collections.Generic.List<string>();
             vm.PropertyChanged += (_, args) =>
             {
@@ -76,6 +81,7 @@ public class SeedInputWpfTests(WpfRuntime runtime, Xunit.Abstractions.ITestOutpu
             Assert.All(classesSeen, value => Assert.Equal("Фрукты", value));
             Assert.Equal("Фрукты", vm.AddClass); Assert.Equal("Фрукты", classes.SelectedItem);
             Assert.Empty(vm.AddCulture); Assert.Empty(cultures.Text); Assert.False(cultures.IsDropDownOpen);
+            Assert.Empty(vm.AddProducer); Assert.Empty(producers.Text);
             Assert.Empty(vm.CultureListView!.Cast<object>());
             Assert.Equal(BindingStatus.Active, cultures.GetBindingExpression(ComboBox.TextProperty)!.Status);
             Assert.Equal("AddCulture", cultures.GetBindingExpression(ComboBox.TextProperty)!.ParentBinding.Path.Path);

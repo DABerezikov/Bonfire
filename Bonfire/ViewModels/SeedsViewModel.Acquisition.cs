@@ -53,7 +53,12 @@ public partial class SeedsViewModel
         return linked.Length == 0 || linked.Any(candidate => candidate.ProducerId == producer.Id);
     }
 
-    private void OnAcquisitionClassChanged() => UpdateAcquisition(true);
+    private void OnAcquisitionClassChanged()
+    {
+        if (_updatingAcquisition) return;
+        if (!IsCollected) AddProducer = string.Empty;
+        UpdateAcquisition(true);
+    }
     private void OnAcquisitionCultureChanged() => UpdateAcquisition(false);
     private void OnAcquisitionSortChanged() => UpdateAcquisition(false);
 
@@ -78,7 +83,7 @@ public partial class SeedsViewModel
                 && !producers.Any(producer => MatchesAcquisitionProducer(
                     new ProducerFromViewModel { Id = producer.Id, Name = producer.Name })))
             { AddProducer = string.Empty; cleared = true; }
-            AcquisitionSelectionHint = cleared ? "Несовместимые сорт или производитель сброшены. Проверьте выбор." : string.Empty;
+            AcquisitionSelectionHint = cleared ? "Зависимые поля сброшены. Проверьте выбор." : string.Empty;
             OnPropertyChanged(nameof(AcquisitionSelectionHint));
             RefreshAcquisitionViews();
         }
