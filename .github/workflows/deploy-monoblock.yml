@@ -64,7 +64,7 @@ jobs:
       contents: read
       actions: read
     runs-on: [self-hosted, Windows, X64, bonfire-monoblock, interactive]
-    timeout-minutes: 20
+    timeout-minutes: 60
     defaults:
       run:
         shell: powershell
@@ -75,7 +75,7 @@ jobs:
       - name: Проверка компьютера
         run: ./scripts/Assert-BonfireRunner.ps1
       - name: Скачивание и проверка публикации
-        timeout-minutes: 8
+        timeout-minutes: 48
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

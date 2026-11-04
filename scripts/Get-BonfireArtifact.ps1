@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param([string]$Repository = $env:GITHUB_REPOSITORY, [long]$RunId = $env:GITHUB_RUN_ID,
     [string]$Destination = './artifacts/publish', [string]$CacheDirectory,
-    [int]$Attempts = 3, [int]$AttemptTimeoutSeconds = 120)
+    [int]$Attempts = 3, [int]$AttemptTimeoutSeconds = 900)
 
 function Get-BonfireArtifactMetadata($Repository, $RunId, $Name) {
     if (-not $env:GH_TOKEN) { return [pscustomobject]@{Success=$false; Error='Не задан GH_TOKEN.'} }
@@ -101,10 +101,10 @@ function Expand-BonfireVerifiedArtifact($Archive, $Destination) {
 
 function Receive-BonfireArtifact {
     param([string]$Repository, [long]$RunId, [string]$Destination, [string]$CacheDirectory,
-        [int]$Attempts = 3, [int]$AttemptTimeoutSeconds = 120)
+        [int]$Attempts = 3, [int]$AttemptTimeoutSeconds = 900)
     if ($Repository -notmatch '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$' -or $RunId -le 0 -or
         [string]::IsNullOrWhiteSpace($Destination) -or $Attempts -lt 1 -or $Attempts -gt 3 -or
-        $AttemptTimeoutSeconds -lt 1 -or $AttemptTimeoutSeconds -gt 120) {
+        $AttemptTimeoutSeconds -lt 1 -or $AttemptTimeoutSeconds -gt 900) {
         return [pscustomobject]@{Success=$false; Error='Неверные параметры загрузки.'}
     }
     $output = [IO.Path]::GetFullPath($Destination)
